@@ -1,5 +1,5 @@
 (function() {
-  var Connection, FunctionApplication, Input, Literal, Nib, Node, Output, animate, boxes, camera, connecting_object, connection_view, dragging_object, dragging_offset, evaluate_program, execute_program, functions, get_nib_position, height, last, make_arrow, make_box, make_connection, make_nib_view, make_node, make_node_view, mouse_coords, mouse_down, mouse_move, mouse_up, program_outputs, projector, ray_cast_mouse, renderer, scene, system_arrow, update, width;
+  var Connection, FunctionApplication, Input, Literal, Nib, Node, Output, animate, boxes, camera, connecting_object, connection_view, dragging_object, dragging_offset, evaluate_program, execute_program, five, functions, get_nib_position, height, last, make_arrow, make_box, make_connection, make_nib_view, make_node, make_node_view, mouse_coords, mouse_down, mouse_move, mouse_up, out, plus, program_outputs, projector, ray_cast_mouse, renderer, scene, system_arrow, three, update, width;
   var __hasProp = Object.prototype.hasOwnProperty, __extends = function(child, parent) {
     for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; }
     function ctor() { this.constructor = child; }
@@ -202,7 +202,7 @@
       this.value = value;
       Literal.__super__.constructor.call(this);
       this.inputs = [];
-      this.outputs = new Output(this, 'O');
+      this.outputs = [new Output(this, 'O')];
     }
     __extends(Literal, Node);
     return Literal;
@@ -311,8 +311,9 @@
         information = functions[text];
         node = new FunctionApplication(position, text, information);
         if (text === 'out') {
-          return program_outputs.push(node);
+          program_outputs.push(node);
         }
+        return node;
       }
     }
   };
@@ -402,7 +403,6 @@
   dragging_object = null;
   connecting_object = null;
   dragging_offset = V(0, 0);
-  make_node('out', V(200, 100));
   system_arrow = make_arrow(V(0, 0), V(1, 0));
   scene.remove(system_arrow);
   mouse_down = function(event) {
@@ -474,4 +474,11 @@
       return execute_program();
     });
   });
+  out = make_node('out', V(200, 100));
+  plus = make_node('+', V(200, 300));
+  new Connection(out.inputs[0], plus.outputs[0]);
+  five = make_node('5', V(150, 500));
+  new Connection(plus.inputs[0], five.outputs[0]);
+  three = make_node('3', V(250, 500));
+  new Connection(plus.inputs[1], three.outputs[0]);
 }).call(this);

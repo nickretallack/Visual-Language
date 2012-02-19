@@ -116,7 +116,7 @@ class Literal extends Node
     constructor:(@position, @text, @value) ->
         super()
         @inputs = []
-        @outputs = new Output @, 'O'
+        @outputs = [new Output(@, 'O')]
     
 class Nib  # Abstract. Do not instantiate
     constructor: ->
@@ -190,17 +190,18 @@ make_node = (text, position=V(250,250)) ->
     if (text[0] is last text) and (text[0] in ["'",'"'])
         # it's a string
         value = text[1...text.length-1]
-        new Literal position, text, value
+        return new Literal position, text, value
     else
         as_number = parseFloat text
         if not isNaN as_number
             # it's a number
-            new Literal position, text, as_number
+            return new Literal position, text, as_number
         else if text of functions
             # it's a function
             information = functions[text]
             node = new FunctionApplication position, text, information
             program_outputs.push node if text is 'out'
+            return node
 
 make_connection = (source, target) ->
     if source.model instanceof Input
@@ -276,7 +277,6 @@ dragging_object = null
 connecting_object = null
 dragging_offset = V 0,0
 
-make_node 'out', V 200,100
 system_arrow = make_arrow V(0,0), V(1,0)
 scene.remove system_arrow
 
@@ -333,3 +333,13 @@ $ ->
         event.preventDefault()
         event.stopPropagation()
         execute_program()
+
+
+out = make_node 'out', V 200,100
+plus = make_node '+', V 200,300
+new Connection out.inputs[0], plus.outputs[0]
+five = make_node '5', V 150, 500
+new Connection plus.inputs[0], five.outputs[0]
+three = make_node '3', V 250, 500
+new Connection plus.inputs[1], three.outputs[0]
+
