@@ -56,9 +56,8 @@ evaluate_program = (nib) ->
         # collect input values
         input_values = []
         for input in data.inputs# input.data.connections[0].nib
-            nib = input.data.connections[0].nib
-            do (nib) ->
-                input_values.push -> evaluate_program nib
+            do (input) ->
+                input_values.push -> evaluate_program input.data.connections[0].nib
         return data.value.apply null, input_values
             
 

@@ -71,15 +71,14 @@
     if (data.data_type === 'function') {
       input_values = [];
       _ref = data.inputs;
-      _fn = function(nib) {
+      _fn = function(input) {
         return input_values.push(function() {
-          return evaluate_program(nib);
+          return evaluate_program(input.data.connections[0].nib);
         });
       };
       for (_i = 0, _len = _ref.length; _i < _len; _i++) {
         input = _ref[_i];
-        nib = input.data.connections[0].nib;
-        _fn(nib);
+        _fn(input);
       }
       return data.value.apply(null, input_values);
     }
