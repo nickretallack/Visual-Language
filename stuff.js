@@ -169,8 +169,8 @@
       var index, text;
       this.position = position;
       this.text = text;
-      FunctionApplication.__super__.constructor.call(this);
       this.value = information.definition;
+      FunctionApplication.__super__.constructor.call(this);
       this.inputs = (function() {
         var _len, _ref, _results;
         _ref = information.inputs;
@@ -200,9 +200,9 @@
       this.position = position;
       this.text = text;
       this.value = value;
+      Literal.__super__.constructor.call(this);
       this.inputs = [];
       this.outpus = new Output(this, 'O');
-      Literal.__super__.constructor.call(this);
     }
     __extends(Literal, Node);
     return Literal;
@@ -218,7 +218,7 @@
       this.node = node;
       this.text = text;
       this.index = index != null ? index : 0;
-      this.siblings = siblings != null ? siblings : 1;
+      this.siblings = siblings != null ? siblings : 0;
       this.type = 'input';
       Input.__super__.constructor.call(this);
     }
@@ -230,7 +230,7 @@
       this.node = node;
       this.text = text;
       this.index = index != null ? index : 0;
-      this.siblings = siblings != null ? siblings : 1;
+      this.siblings = siblings != null ? siblings : 0;
       this.type = 'output';
       Output.__super__.constructor.call(this);
     }
@@ -249,10 +249,7 @@
     main_box_size = V(50, 50);
     color = 0x888888;
     main_box = make_box(node.text, main_box_size, 10, color, node.position);
-    main_box.data = {
-      type: 'box',
-      model: node
-    };
+    main_box.model = node;
     scene.add(main_box);
     return boxes[main_box.id] = main_box;
   };
@@ -263,10 +260,12 @@
     y_offset = 20;
     x_position = -20 + 40 * nib.index / nib.siblings;
     y_position = y_offset * (nib.type === 'input' ? 1 : -1);
-    parent = nib.node.view;
     sub_box = make_box(nib.text, sub_box_size, 5, sub_box_color, V(x_position, y_position));
+    sub_box.model = nib;
+    parent = nib.node.view;
     return parent.add(sub_box);
   };
+  /* CORE RENDERING */
   make_box = function(name, size, text_size, color, position) {
     var box, centerOffset, geometry, material, mesh, text, text_color, text_geometry;
     box = new THREE.Object3D();
@@ -318,9 +317,22 @@
     line = new THREE.Line(line_geometry, line_material);
     scene.add(line);
     return line;
-    arrow.add(line);
-    return arrow;
   };
+  ray_cast_mouse = function() {
+    var forward, intersections, mouse, ray;
+    mouse = mouse_coords(event).three();
+    mouse.z = 1;
+    forward = new THREE.Vector3(0, 0, -1);
+    ray = new THREE.Ray(mouse, forward);
+    intersections = ray.intersectObjects(_.values(boxes));
+    if (intersections.length > 0) {
+      return (last(intersections)).object.parent;
+    }
+  };
+  get_nib_position = function(nib) {
+    return Vector.from(nib.position).plus(nib.parent.position).three();
+  };
+  /* INTERACTION */
   system_arrow = make_arrow(V(0, 0), V(1, 0));
   scene.remove(system_arrow);
   make_node('out', V(200, 100));
@@ -364,27 +376,13 @@
       arrow: arrow.geometry.vertices[1]
     });
   };
-  ray_cast_mouse = function() {
-    var forward, intersections, mouse, ray;
-    mouse = mouse_coords(event).three();
-    mouse.z = 1;
-    forward = new THREE.Vector3(0, 0, -1);
-    ray = new THREE.Ray(mouse, forward);
-    intersections = ray.intersectObjects(_.values(boxes));
-    if (intersections.length > 0) {
-      return (last(intersections)).object.parent;
-    }
-  };
-  get_nib_position = function(nib) {
-    return Vector.from(nib.position).plus(nib.parent.position).three();
-  };
   mouse_down = function(event) {
     var target;
     target = ray_cast_mouse();
     if (target) {
-      if (target.data.type === 'box') {
+      if (target.model instanceof Node) {
         return dragging_object = target;
-      } else if (target.data.type === 'input' || target.data.type === 'output') {
+      } else if (target.model instanceof Nib) {
         system_arrow.geometry.vertices[0].position = system_arrow.geometry.vertices[1].position = get_nib_position(target);
         scene.add(system_arrow);
         return connecting_object = target;

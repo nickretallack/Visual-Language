@@ -112,28 +112,28 @@ class Node
 
 class FunctionApplication extends Node
     constructor:(@position, @text, information) ->
-        super()
         @value = information.definition
+        super()
         @inputs = (new Input @, text, index, information.inputs.length-1 for text, index in information.inputs)
         @outpus = (new Output @, text, index, information.outputs.length-1 for text, index in information.outputs)
 
 class Literal extends Node
     constructor:(@position, @text, @value) ->
+        super()
         @inputs = []
         @outpus = new Output @, 'O'
-        super()
     
 class Nib  # Abstract. Do not instantiate
     constructor: ->
         @view = make_nib_view @
 
 class Input extends Nib
-    constructor:(@node, @text, @index=0, @siblings=1) ->
+    constructor:(@node, @text, @index=0, @siblings=0) ->
         @type = 'input'
         super()
         
 class Output extends Nib
-    constructor:(@node, @text, @index=0, @siblings=1) ->
+    constructor:(@node, @text, @index=0, @siblings=0) ->
         @type = 'output'
         super()
 
@@ -144,10 +144,7 @@ make_node_view = (node) -> #(position, data_type, name, value, inputs, outputs) 
     main_box_size = V 50,50
     color = 0x888888
     main_box = make_box node.text, main_box_size, 10, color, node.position
-    main_box.data =
-        type:'box'
-        model:node
-
+    main_box.model = node
     scene.add main_box
     boxes[main_box.id] = main_box
 
@@ -159,10 +156,14 @@ make_nib_view = (nib) ->
 
     x_position = -20 + 40* nib.index/nib.siblings
     y_position = y_offset * if nib.type is 'input' then 1 else -1
-    parent = nib.node.view
 
     sub_box = make_box nib.text, sub_box_size, 5, sub_box_color, V x_position,y_position
+    sub_box.model = nib
+
+    parent = nib.node.view
     parent.add sub_box
+
+### CORE RENDERING ###
 
 make_box = (name, size, text_size, color, position) ->
     box = new THREE.Object3D()
@@ -203,11 +204,19 @@ make_arrow = (source, target) ->
     scene.add line
     return line
 
-    arrow.add line
-    return arrow
+ray_cast_mouse = ->
+    mouse = mouse_coords(event).three()
+    mouse.z = 1
+    forward = new THREE.Vector3 0,0,-1
+    ray = new THREE.Ray mouse, forward
+    intersections = ray.intersectObjects _.values boxes
+    if intersections.length > 0
+        (last intersections).object.parent
 
-    # TODO: make a triangle at the end of the line
-    #scene.add(line); 
+get_nib_position = (nib) ->
+    Vector.from(nib.position).plus(nib.parent.position).three()
+
+### INTERACTION ###
 
 system_arrow = make_arrow V(0,0), V(1,0)
 scene.remove system_arrow
@@ -254,28 +263,12 @@ make_connection = (source, target) ->
         nib:source
         arrow:arrow.geometry.vertices[1]
 
-    
-
-
-ray_cast_mouse = ->
-    mouse = mouse_coords(event).three()
-    mouse.z = 1
-    forward = new THREE.Vector3 0,0,-1
-    ray = new THREE.Ray mouse, forward
-    intersections = ray.intersectObjects _.values boxes
-    if intersections.length > 0
-        (last intersections).object.parent
-
-get_nib_position = (nib) ->
-    Vector.from(nib.position).plus(nib.parent.position).three()
-    
-
 mouse_down = (event) ->
     target = ray_cast_mouse()
     if target
-        if target.data.type is 'box'
+        if target.model instanceof Node
             dragging_object = target
-        else if target.data.type is 'input' or target.data.type is 'output'
+        else if target.model instanceof Nib
             system_arrow.geometry.vertices[0].position = system_arrow.geometry.vertices[1].position = get_nib_position target
             scene.add system_arrow
             connecting_object = target
