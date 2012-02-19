@@ -27,6 +27,10 @@ functions =
         inputs:['L','R']
         outputs:['R']
         definition: (left, right) -> left + right
+    '-':
+        inputs:['L','R']
+        outputs:['R']
+        definition: (left, right) -> left - right
     'out':
         inputs:['I']
         outputs:[]
@@ -35,39 +39,38 @@ functions =
 last = (list) -> list[list.length-1]
 
 
-###
-evaluate_program = (input) ->
-    data = input.parent.data
+evaluate_program = (nib) ->
+    data = nib.parent.data
     if data.data_type is 'literal'
         return data.value
     if data.data_type is 'function'
         # collect input values
         input_values = []
-        for input in data.inputs
-            input_values.push evaluate_program input
+        for input in data.inputs# input.data.connections[0].nib
+            input_values.push evaluate_program input.data.connections[0].nib
+        return data.value.apply null, input_values
+            
 
 
 program_outputs = []
 execute_program = ->
     for output_function in program_outputs
-        for connection in output_function.data.inputs[0].connections
-            console.log connection
-###
+        console.log evaluate_program output_function.data.inputs[0].data.connections[0].nib
     
 
 make_function = (name, location=V(250,250)) ->
     if (name[0] is last name) and (name[0] in ["'",'"'])
         # it's a string
-        make_top_box location, 'literal', name, [], 'R'
+        make_top_box location, 'literal', name, name, [], 'R'
     else
         as_number = parseFloat name
         if not isNaN as_number
             # it's a number
-            make_top_box location, 'literal', name, [], 'R'
+            make_top_box location, 'literal', name, as_number, [], 'R'
         else if name of functions
             # it's a function
             information = functions[name]
-            box = make_top_box location, 'function', name, information['inputs'], information['outputs']
+            box = make_top_box location, 'function', name, information.definition, information['inputs'], information['outputs']
             program_outputs.push box if name is 'out'
             
 
@@ -87,14 +90,14 @@ make_nibs = (parent, list, type, y_position) ->
                 type:type
                 connections:[]
 
-make_top_box = (position, data_type, name, inputs, outputs) ->
+make_top_box = (position, data_type, name, value, inputs, outputs) ->
     main_box_size = V 50,50
     color = 0x888888
     main_box = make_box name, main_box_size, 10, color, position
     main_box.data =
         type:'box'
         data_type:data_type
-        value:name
+        value:value
         inputs:[]
         outputs:[]
         nibs:[]

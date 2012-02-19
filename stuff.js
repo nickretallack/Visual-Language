@@ -1,5 +1,5 @@
 (function() {
-  var animate, boxes, camera, connecting_object, dragging_object, dragging_offset, functions, get_nib_position, height, input_nodes, last, make_arrow, make_box, make_connection, make_function, make_nibs, make_top_box, mouse_coords, mouse_down, mouse_move, mouse_up, output_nodes, projector, ray_cast_mouse, renderer, scene, system_arrow, update, width;
+  var animate, boxes, camera, connecting_object, dragging_object, dragging_offset, evaluate_program, execute_program, functions, get_nib_position, height, input_nodes, last, make_arrow, make_box, make_connection, make_function, make_nibs, make_top_box, mouse_coords, mouse_down, mouse_move, mouse_up, output_nodes, program_outputs, projector, ray_cast_mouse, renderer, scene, system_arrow, update, width;
   height = window.innerHeight;
   width = window.innerWidth;
   camera = new THREE.OrthographicCamera(0, width, height, 0, -2000, 1000);
@@ -26,6 +26,13 @@
         return left + right;
       }
     },
+    '-': {
+      inputs: ['L', 'R'],
+      outputs: ['R'],
+      definition: function(left, right) {
+        return left - right;
+      }
+    },
     'out': {
       inputs: ['I'],
       outputs: [],
@@ -37,38 +44,46 @@
   last = function(list) {
     return list[list.length - 1];
   };
-  /*
-  evaluate_program = (input) ->
-      data = input.parent.data
-      if data.data_type is 'literal'
-          return data.value
-      if data.data_type is 'function'
-          # collect input values
-          input_values = []
-          for input in data.inputs
-              input_values.push evaluate_program input
-  
-  
-  program_outputs = []
-  execute_program = ->
-      for output_function in program_outputs
-          for connection in output_function.data.inputs[0].connections
-              console.log connection
-  */
+  evaluate_program = function(nib) {
+    var data, input, input_values, _i, _len, _ref;
+    data = nib.parent.data;
+    if (data.data_type === 'literal') {
+      return data.value;
+    }
+    if (data.data_type === 'function') {
+      input_values = [];
+      _ref = data.inputs;
+      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+        input = _ref[_i];
+        input_values.push(evaluate_program(input.data.connections[0].nib));
+      }
+      return data.value.apply(null, input_values);
+    }
+  };
+  program_outputs = [];
+  execute_program = function() {
+    var output_function, _i, _len, _results;
+    _results = [];
+    for (_i = 0, _len = program_outputs.length; _i < _len; _i++) {
+      output_function = program_outputs[_i];
+      _results.push(console.log(evaluate_program(output_function.data.inputs[0].data.connections[0].nib)));
+    }
+    return _results;
+  };
   make_function = function(name, location) {
     var as_number, box, information, _ref;
     if (location == null) {
       location = V(250, 250);
     }
     if ((name[0] === last(name)) && ((_ref = name[0]) === "'" || _ref === '"')) {
-      return make_top_box(location, 'literal', name, [], 'R');
+      return make_top_box(location, 'literal', name, name, [], 'R');
     } else {
       as_number = parseFloat(name);
       if (!isNaN(as_number)) {
-        return make_top_box(location, 'literal', name, [], 'R');
+        return make_top_box(location, 'literal', name, as_number, [], 'R');
       } else if (name in functions) {
         information = functions[name];
-        box = make_top_box(location, 'function', name, information['inputs'], information['outputs']);
+        box = make_top_box(location, 'function', name, information.definition, information['inputs'], information['outputs']);
         if (name === 'out') {
           return program_outputs.push(box);
         }
@@ -96,7 +111,7 @@
       return _results;
     }
   };
-  make_top_box = function(position, data_type, name, inputs, outputs) {
+  make_top_box = function(position, data_type, name, value, inputs, outputs) {
     var color, main_box, main_box_size;
     main_box_size = V(50, 50);
     color = 0x888888;
@@ -104,7 +119,7 @@
     main_box.data = {
       type: 'box',
       data_type: data_type,
-      value: name,
+      value: value,
       inputs: [],
       outputs: [],
       nibs: []
