@@ -168,10 +168,10 @@ class Connection
     toJSON: ->
         input:
             index:@input.index
-            node:@input.node.id
+            node_id:@input.node.id
         output:
             index:@output.index
-            node:@output.node.id
+            node_id:@output.node.id
 
 ### VIEWS ###
             
@@ -358,26 +358,26 @@ $ ->
         event.stopPropagation()
         execute_program()
 
-###
-out = make_node 'out', V 200,100
-plus = make_node '+', V 200,300
-five = make_node '5', V 150, 500
-three = make_node '3', V 250, 500
-c1 = five.outputs[0].connect plus.inputs[0]
-c2 = three.outputs[0].connect plus.inputs[1]
-c3 = plus.outputs[0].connect out.inputs[0]
+make_basic_program = ->
+    out = make_node 'out', V 200,100
+    plus = make_node '+', V 200,300
+    five = make_node '5', V 150, 500
+    three = make_node '3', V 250, 500
+    c1 = five.outputs[0].connect plus.inputs[0]
+    c2 = three.outputs[0].connect plus.inputs[1]
+    c3 = plus.outputs[0].connect out.inputs[0]
 
-console.log JSON.stringify
-    nodes:[out,plus,five,three]
-    connections:[c1,c2,c3]
-###
+    console.log JSON.stringify
+        nodes:[out,plus,five,three]
+        connections:[c1,c2,c3]
 
-program = JSON.parse """{"nodes":[{"position":{"x":200,"y":100},"text":"out","id":"8fec44185d39d0e8f1ed09ea4a847718"},{"position":{"x":200,"y":300},"text":"+","id":"31cec90bf94eba7aa324ce32964c5537"},{"position":{"x":150,"y":500},"text":"5","id":"86986624bf0a12d23b9df135ebccab43"},{"position":{"x":250,"y":500},"text":"3","id":"ac5f46e9a911723b4d1dff267b0f4212"}],"connections":[{"input":{"index":0,"node":"31cec90bf94eba7aa324ce32964c5537"},"output":{"index":0,"node":"86986624bf0a12d23b9df135ebccab43"}},{"input":{"index":1,"node":"31cec90bf94eba7aa324ce32964c5537"},"output":{"index":0,"node":"ac5f46e9a911723b4d1dff267b0f4212"}},{"input":{"index":0,"node":"8fec44185d39d0e8f1ed09ea4a847718"},"output":{"index":0,"node":"31cec90bf94eba7aa324ce32964c5537"}}]}"""
+load_basic_program = ->
+    program = JSON.parse """{"nodes":[{"position":{"x":200,"y":100},"text":"out","id":"a3a19afbbc5b944012036668230eb819"},{"position":{"x":200,"y":300},"text":"+","id":"4c19f385dd04884ab84eb27f71011054"},{"position":{"x":150,"y":500},"text":"5","id":"c532ec59ef6b57af6bd7323be2d27d93"},{"position":{"x":250,"y":500},"text":"3","id":"1191a8be50c4c7cd7b1f259b82c04365"}],"connections":[{"input":{"index":0,"node_id":"4c19f385dd04884ab84eb27f71011054"},"output":{"index":0,"node_id":"c532ec59ef6b57af6bd7323be2d27d93"}},{"input":{"index":1,"node_id":"4c19f385dd04884ab84eb27f71011054"},"output":{"index":0,"node_id":"1191a8be50c4c7cd7b1f259b82c04365"}},{"input":{"index":0,"node_id":"a3a19afbbc5b944012036668230eb819"},"output":{"index":0,"node_id":"4c19f385dd04884ab84eb27f71011054"}}]}"""
 
-for node in program.nodes
-    make_node node.text, Vector.from(node.position), node.id
+    for node in program.nodes
+        make_node node.text, Vector.from(node.position), node.id
 
-for connection in program.connections
-    source_node = node_registry[connection.output.node]
-    sink_node = node_registry[connection.input.node] # todo: node_id
-    source_node.outputs[connection.output.index].connect sink_node.inputs[connection.input.index]
+    for connection in program.connections
+        source_node = node_registry[connection.output.node_id]
+        sink_node = node_registry[connection.input.node_id] # todo: node_id
+        source_node.outputs[connection.output.index].connect sink_node.inputs[connection.input.index]

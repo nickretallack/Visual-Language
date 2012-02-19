@@ -1,5 +1,5 @@
 (function() {
-  var Connection, FunctionApplication, Input, Literal, Nib, Node, Output, animate, boxes, camera, connecting_object, connection, connection_view, current_scope, dragging_object, dragging_offset, evaluate_program, execute_program, functions, get_nib_position, height, last, make_arrow, make_box, make_connection, make_nib_view, make_node, make_node_view, mouse_coords, mouse_down, mouse_move, mouse_up, node, node_registry, program, program_outputs, projector, ray_cast_mouse, renderer, scene, sink_node, source_node, system_arrow, update, width, _i, _j, _len, _len2, _ref, _ref2;
+  var Connection, FunctionApplication, Input, Literal, Nib, Node, Output, animate, boxes, camera, connecting_object, connection_view, current_scope, dragging_object, dragging_offset, evaluate_program, execute_program, functions, get_nib_position, height, last, load_basic_program, make_arrow, make_basic_program, make_box, make_connection, make_nib_view, make_node, make_node_view, mouse_coords, mouse_down, mouse_move, mouse_up, node_registry, program_outputs, projector, ray_cast_mouse, renderer, scene, system_arrow, update, width;
   var __hasProp = Object.prototype.hasOwnProperty, __extends = function(child, parent) {
     for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; }
     function ctor() { this.constructor = child; }
@@ -284,11 +284,11 @@
       return {
         input: {
           index: this.input.index,
-          node: this.input.node.id
+          node_id: this.input.node.id
         },
         output: {
           index: this.output.index,
-          node: this.output.node.id
+          node_id: this.output.node.id
         }
       };
     };
@@ -510,30 +510,36 @@
       return execute_program();
     });
   });
-  /*
-  out = make_node 'out', V 200,100
-  plus = make_node '+', V 200,300
-  five = make_node '5', V 150, 500
-  three = make_node '3', V 250, 500
-  c1 = five.outputs[0].connect plus.inputs[0]
-  c2 = three.outputs[0].connect plus.inputs[1]
-  c3 = plus.outputs[0].connect out.inputs[0]
-  
-  console.log JSON.stringify
-      nodes:[out,plus,five,three]
-      connections:[c1,c2,c3]
-  */
-  program = JSON.parse("{\"nodes\":[{\"position\":{\"x\":200,\"y\":100},\"text\":\"out\",\"id\":\"8fec44185d39d0e8f1ed09ea4a847718\"},{\"position\":{\"x\":200,\"y\":300},\"text\":\"+\",\"id\":\"31cec90bf94eba7aa324ce32964c5537\"},{\"position\":{\"x\":150,\"y\":500},\"text\":\"5\",\"id\":\"86986624bf0a12d23b9df135ebccab43\"},{\"position\":{\"x\":250,\"y\":500},\"text\":\"3\",\"id\":\"ac5f46e9a911723b4d1dff267b0f4212\"}],\"connections\":[{\"input\":{\"index\":0,\"node\":\"31cec90bf94eba7aa324ce32964c5537\"},\"output\":{\"index\":0,\"node\":\"86986624bf0a12d23b9df135ebccab43\"}},{\"input\":{\"index\":1,\"node\":\"31cec90bf94eba7aa324ce32964c5537\"},\"output\":{\"index\":0,\"node\":\"ac5f46e9a911723b4d1dff267b0f4212\"}},{\"input\":{\"index\":0,\"node\":\"8fec44185d39d0e8f1ed09ea4a847718\"},\"output\":{\"index\":0,\"node\":\"31cec90bf94eba7aa324ce32964c5537\"}}]}");
-  _ref = program.nodes;
-  for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-    node = _ref[_i];
-    make_node(node.text, Vector.from(node.position), node.id);
-  }
-  _ref2 = program.connections;
-  for (_j = 0, _len2 = _ref2.length; _j < _len2; _j++) {
-    connection = _ref2[_j];
-    source_node = node_registry[connection.output.node];
-    sink_node = node_registry[connection.input.node];
-    source_node.outputs[connection.output.index].connect(sink_node.inputs[connection.input.index]);
-  }
+  make_basic_program = function() {
+    var c1, c2, c3, five, out, plus, three;
+    out = make_node('out', V(200, 100));
+    plus = make_node('+', V(200, 300));
+    five = make_node('5', V(150, 500));
+    three = make_node('3', V(250, 500));
+    c1 = five.outputs[0].connect(plus.inputs[0]);
+    c2 = three.outputs[0].connect(plus.inputs[1]);
+    c3 = plus.outputs[0].connect(out.inputs[0]);
+    return console.log(JSON.stringify({
+      nodes: [out, plus, five, three],
+      connections: [c1, c2, c3]
+    }));
+  };
+  load_basic_program = function() {
+    var connection, node, program, sink_node, source_node, _i, _j, _len, _len2, _ref, _ref2, _results;
+    program = JSON.parse("{\"nodes\":[{\"position\":{\"x\":200,\"y\":100},\"text\":\"out\",\"id\":\"a3a19afbbc5b944012036668230eb819\"},{\"position\":{\"x\":200,\"y\":300},\"text\":\"+\",\"id\":\"4c19f385dd04884ab84eb27f71011054\"},{\"position\":{\"x\":150,\"y\":500},\"text\":\"5\",\"id\":\"c532ec59ef6b57af6bd7323be2d27d93\"},{\"position\":{\"x\":250,\"y\":500},\"text\":\"3\",\"id\":\"1191a8be50c4c7cd7b1f259b82c04365\"}],\"connections\":[{\"input\":{\"index\":0,\"node_id\":\"4c19f385dd04884ab84eb27f71011054\"},\"output\":{\"index\":0,\"node_id\":\"c532ec59ef6b57af6bd7323be2d27d93\"}},{\"input\":{\"index\":1,\"node_id\":\"4c19f385dd04884ab84eb27f71011054\"},\"output\":{\"index\":0,\"node_id\":\"1191a8be50c4c7cd7b1f259b82c04365\"}},{\"input\":{\"index\":0,\"node_id\":\"a3a19afbbc5b944012036668230eb819\"},\"output\":{\"index\":0,\"node_id\":\"4c19f385dd04884ab84eb27f71011054\"}}]}");
+    _ref = program.nodes;
+    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+      node = _ref[_i];
+      make_node(node.text, Vector.from(node.position), node.id);
+    }
+    _ref2 = program.connections;
+    _results = [];
+    for (_j = 0, _len2 = _ref2.length; _j < _len2; _j++) {
+      connection = _ref2[_j];
+      source_node = node_registry[connection.output.node_id];
+      sink_node = node_registry[connection.input.node_id];
+      _results.push(source_node.outputs[connection.output.index].connect(sink_node.inputs[connection.input.index]));
+    }
+    return _results;
+  };
 }).call(this);
