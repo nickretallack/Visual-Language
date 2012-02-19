@@ -157,27 +157,25 @@
   };
   /* MODELS */
   SubRoutine = (function() {
-    function SubRoutine(name, information) {
+    function SubRoutine(name, inputs, outputs) {
       var index, text;
       this.name = name;
       this.view = make_subroutine_view(this);
       this.inputs = (function() {
-        var _len, _ref, _results;
-        _ref = information.inputs;
+        var _len, _results;
         _results = [];
-        for (index = 0, _len = _ref.length; index < _len; index++) {
-          text = _ref[index];
-          _results.push(new Output(this, text, index, information.inputs.length - 1));
+        for (index = 0, _len = inputs.length; index < _len; index++) {
+          text = inputs[index];
+          _results.push(new Output(this, text, index, inputs.length - 1));
         }
         return _results;
       }).call(this);
       this.outputs = (function() {
-        var _len, _ref, _results;
-        _ref = information.outputs;
+        var _len, _results;
         _results = [];
-        for (index = 0, _len = _ref.length; index < _len; index++) {
-          text = _ref[index];
-          _results.push(new Input(this, text, index, information.outputs.length - 1));
+        for (index = 0, _len = outputs.length; index < _len; index++) {
+          text = outputs[index];
+          _results.push(new Input(this, text, index, outputs.length - 1));
         }
         return _results;
       }).call(this);
@@ -326,9 +324,10 @@
   })();
   /* VIEWS */
   make_subroutine_view = function(subroutine) {
-    var box, box_size;
+    var box, box_size, position;
     box_size = V(500, 500);
-    box = make_box(subroutine.name, box_size, 10, 0xFFFFFF, V(0, 0), true);
+    position = box_size.scale(1 / 2.0).plus(V(20, 20));
+    box = make_box(subroutine.name, box_size, 10, 0xEEEEEE, position, false);
     box.model = subroutine;
     scene.add(box);
     return box;
@@ -350,7 +349,7 @@
     parent_size = is_node ? V(60, 60) : V(490, 490);
     y_offset = parent_size.y / 2.0;
     x_position = -parent_size.x / 2.0 + parent_size.x * nib.index / nib.siblings;
-    y_position = y_offset * (nib instanceof Input ? 1 : -1);
+    y_position = y_offset * (nib instanceof Input ? 1 : -1) * (is_node ? 1 : -1);
     sub_box = make_box(nib.text, sub_box_size, 5, sub_box_color, V(x_position, y_position));
     sub_box.model = nib;
     parent = nib.parent.view;
@@ -585,5 +584,5 @@
     }
     return _results;
   };
-  load_basic_program();
+  current_scope = new SubRoutine('main', [], ['OUT']);
 }).call(this);

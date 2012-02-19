@@ -100,11 +100,11 @@ execute_program = ->
 ### MODELS ###
 
 class SubRoutine
-    constructor:(@name, information) ->
+    constructor:(@name, inputs, outputs) ->
         @view = make_subroutine_view @
         # These are intentionally reversed.  The inputs to a subroutine show up as outputs inside it
-        @inputs = (new Output @, text, index, information.inputs.length-1 for text, index in information.inputs)
-        @outputs = (new Input @, text, index, information.outputs.length-1 for text, index in information.outputs)
+        @inputs = (new Output @, text, index, inputs.length-1 for text, index in inputs)
+        @outputs = (new Input @, text, index, outputs.length-1 for text, index in outputs)
         @nodes = []
         @connections = []
     
@@ -187,7 +187,8 @@ class Connection
 
 make_subroutine_view = (subroutine) ->
     box_size = V 500,500
-    box = make_box subroutine.name, box_size, 10, 0xFFFFFF, V(0,0), true
+    position = box_size.scale(1/2.0).plus V(20,20)
+    box = make_box subroutine.name, box_size, 10, 0xEEEEEE, position, false
     box.model = subroutine
     scene.add box
     return box
@@ -210,7 +211,7 @@ make_nib_view = (nib, is_node) ->
     y_offset = parent_size.y / 2.0
 
     x_position = -parent_size.x / 2.0 + parent_size.x * nib.index/nib.siblings
-    y_position = y_offset * if nib instanceof Input then 1 else -1
+    y_position = y_offset * (if nib instanceof Input then 1 else -1) * (if is_node then 1 else -1)
 
     sub_box = make_box nib.text, sub_box_size, 5, sub_box_color, V x_position,y_position
     sub_box.model = nib
@@ -402,4 +403,7 @@ load_basic_program = ->
         sink = node_registry[connection.input.parent_id] # todo: node_id
         source.outputs[connection.output.index].connect sink.inputs[connection.input.index]
 
-load_basic_program()
+#load_basic_program()
+
+
+current_scope = new SubRoutine 'main', [], ['OUT']
