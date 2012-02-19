@@ -186,7 +186,7 @@ mouse_up = (event) ->
 
     if connecting_object
         target = ray_cast_mouse()
-        if target
+        if target?.data.type is 'input' or target?.data.type is 'output'
             make_connection connecting_object, target
         connecting_object = null
         scene.remove system_arrow

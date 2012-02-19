@@ -224,7 +224,7 @@
     dragging_object = null;
     if (connecting_object) {
       target = ray_cast_mouse();
-      if (target) {
+      if ((target != null ? target.data.type : void 0) === 'input' || (target != null ? target.data.type : void 0) === 'output') {
         make_connection(connecting_object, target);
       }
       connecting_object = null;
