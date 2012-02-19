@@ -37,20 +37,41 @@
   last = function(list) {
     return list[list.length - 1];
   };
+  /*
+  evaluate_program = (input) ->
+      data = input.parent.data
+      if data.data_type is 'literal'
+          return data.value
+      if data.data_type is 'function'
+          # collect input values
+          input_values = []
+          for input in data.inputs
+              input_values.push evaluate_program input
+  
+  
+  program_outputs = []
+  execute_program = ->
+      for output_function in program_outputs
+          for connection in output_function.data.inputs[0].connections
+              console.log connection
+  */
   make_function = function(name, location) {
-    var as_number, information, _ref;
+    var as_number, box, information, _ref;
     if (location == null) {
       location = V(250, 250);
     }
     if ((name[0] === last(name)) && ((_ref = name[0]) === "'" || _ref === '"')) {
-      return make_top_box(name, location, [], 'R');
+      return make_top_box(location, 'literal', name, [], 'R');
     } else {
       as_number = parseFloat(name);
       if (!isNaN(as_number)) {
-        return make_top_box(name, location, [], 'R');
+        return make_top_box(location, 'literal', name, [], 'R');
       } else if (name in functions) {
         information = functions[name];
-        return make_top_box(name, location, information['inputs'], information['outputs']);
+        box = make_top_box(location, 'function', name, information['inputs'], information['outputs']);
+        if (name === 'out') {
+          return program_outputs.push(box);
+        }
       }
     }
   };
@@ -75,13 +96,15 @@
       return _results;
     }
   };
-  make_top_box = function(name, position, inputs, outputs) {
+  make_top_box = function(position, data_type, name, inputs, outputs) {
     var color, main_box, main_box_size;
     main_box_size = V(50, 50);
     color = 0x888888;
     main_box = make_box(name, main_box_size, 10, color, position);
     main_box.data = {
       type: 'box',
+      data_type: data_type,
+      value: name,
       inputs: [],
       outputs: [],
       nibs: []
@@ -228,10 +251,11 @@
     }
   };
   $(function() {
-    var field, function_form, function_input;
+    var field, function_form, function_input, run_button;
     field = $("#field");
     function_form = $('#add_function');
     function_input = $('#function_name');
+    run_button = $('#run_button');
     field.append(renderer.domElement);
     animate();
     field.mousedown(mouse_down);
@@ -243,6 +267,11 @@
       function_name = function_input.val();
       function_input.val('');
       return make_function(function_name);
+    });
+    run_button.click(function(event) {
+      event.preventDefault();
+      event.stopPropagation();
+      return execute_program();
     });
     return field.click(function(event) {});
   });

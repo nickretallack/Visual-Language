@@ -34,19 +34,41 @@ functions =
 
 last = (list) -> list[list.length-1]
 
+
+###
+evaluate_program = (input) ->
+    data = input.parent.data
+    if data.data_type is 'literal'
+        return data.value
+    if data.data_type is 'function'
+        # collect input values
+        input_values = []
+        for input in data.inputs
+            input_values.push evaluate_program input
+
+
+program_outputs = []
+execute_program = ->
+    for output_function in program_outputs
+        for connection in output_function.data.inputs[0].connections
+            console.log connection
+###
+    
+
 make_function = (name, location=V(250,250)) ->
     if (name[0] is last name) and (name[0] in ["'",'"'])
         # it's a string
-        make_top_box name, location, [], 'R'
+        make_top_box location, 'literal', name, [], 'R'
     else
         as_number = parseFloat name
         if not isNaN as_number
             # it's a number
-            make_top_box name, location, [], 'R'
+            make_top_box location, 'literal', name, [], 'R'
         else if name of functions
             # it's a function
             information = functions[name]
-            make_top_box name, location, information['inputs'], information['outputs']
+            box = make_top_box location, 'function', name, information['inputs'], information['outputs']
+            program_outputs.push box if name is 'out'
             
 
 make_nibs = (parent, list, type, y_position) ->
@@ -65,12 +87,14 @@ make_nibs = (parent, list, type, y_position) ->
                 type:type
                 connections:[]
 
-make_top_box = (name, position, inputs, outputs) ->
+make_top_box = (position, data_type, name, inputs, outputs) ->
     main_box_size = V 50,50
     color = 0x888888
     main_box = make_box name, main_box_size, 10, color, position
     main_box.data =
         type:'box'
+        data_type:data_type
+        value:name
         inputs:[]
         outputs:[]
         nibs:[]
@@ -200,6 +224,7 @@ $ ->
     field = $("#field")
     function_form = $('#add_function')
     function_input = $('#function_name')
+    run_button = $('#run_button')
 
     field.append renderer.domElement
     animate()
@@ -212,6 +237,11 @@ $ ->
         function_name = function_input.val()
         function_input.val ''
         make_function function_name
+
+    run_button.click (event) ->
+        event.preventDefault()
+        event.stopPropagation()
+        execute_program()
 
     #field.addEventListener 'mousedown', mouse_down, false
     #field.addEventListener 'mouseup', mouse_up, false
