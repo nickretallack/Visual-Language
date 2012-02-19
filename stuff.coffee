@@ -110,6 +110,9 @@ class Node
     constructor: ->
         @view = make_node_view @
 
+    set_position:(@position) ->
+        @view.position.copy @position
+
 class FunctionApplication extends Node
     constructor:(@position, @text, information) ->
         @value = information.definition
@@ -289,10 +292,12 @@ mouse_down = (event) ->
 mouse_move = (event) ->
     vector = mouse_coords(event).three()
     if dragging_object
-        dragging_object.position.copy vector
+        dragging_object.model.set_position vector
+        ###
         for nib in dragging_object.data.nibs
             for connection in nib.data.connections
                 connection.arrow.position.copy get_nib_position nib
+        ###
     if connecting_object
         system_arrow.geometry.vertices[1].position = vector
 

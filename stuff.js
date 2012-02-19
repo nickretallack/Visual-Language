@@ -162,6 +162,10 @@
     function Node() {
       this.view = make_node_view(this);
     }
+    Node.prototype.set_position = function(position) {
+      this.position = position;
+      return this.view.position.copy(this.position);
+    };
     return Node;
   })();
   FunctionApplication = (function() {
@@ -407,19 +411,15 @@
     }
   };
   mouse_move = function(event) {
-    var connection, nib, vector, _i, _j, _len, _len2, _ref, _ref2;
+    var vector;
     vector = mouse_coords(event).three();
     if (dragging_object) {
-      dragging_object.position.copy(vector);
-      _ref = dragging_object.data.nibs;
-      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-        nib = _ref[_i];
-        _ref2 = nib.data.connections;
-        for (_j = 0, _len2 = _ref2.length; _j < _len2; _j++) {
-          connection = _ref2[_j];
-          connection.arrow.position.copy(get_nib_position(nib));
-        }
-      }
+      dragging_object.model.set_position(vector);
+      /*
+              for nib in dragging_object.data.nibs
+                  for connection in nib.data.connections
+                      connection.arrow.position.copy get_nib_position nib
+              */
     }
     if (connecting_object) {
       return system_arrow.geometry.vertices[1].position = vector;
