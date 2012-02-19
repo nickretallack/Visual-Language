@@ -125,7 +125,6 @@ class Nib  # Abstract. Do not instantiate
 
 class Input extends Nib
     constructor:(@node, @text, @index=0, @siblings=0) ->
-        @type = 'input'
         super()
 
     _add_connection: (connection, vertex) ->
@@ -140,7 +139,6 @@ class Input extends Nib
         
 class Output extends Nib
     constructor:(@node, @text, @index=0, @siblings=0) ->
-        @type = 'output'
         super()
 
     _add_connection: (connection, vertex) ->
@@ -159,7 +157,7 @@ class Connection
 
 ### VIEWS ###
             
-make_node_view = (node) -> #(position, data_type, name, value, inputs, outputs) ->
+make_node_view = (node) ->
     main_box_size = V 50,50
     color = 0x888888
     main_box = make_box node.text, main_box_size, 10, color, node.position
@@ -174,7 +172,7 @@ make_nib_view = (nib) ->
     y_offset = 20
 
     x_position = -20 + 40* nib.index/nib.siblings
-    y_position = y_offset * if nib.type is 'input' then 1 else -1
+    y_position = y_offset * if nib instanceof Input then 1 else -1
 
     sub_box = make_box nib.text, sub_box_size, 5, sub_box_color, V x_position,y_position
     sub_box.model = nib

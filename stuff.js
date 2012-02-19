@@ -220,7 +220,6 @@
       this.text = text;
       this.index = index != null ? index : 0;
       this.siblings = siblings != null ? siblings : 0;
-      this.type = 'input';
       Input.__super__.constructor.call(this);
     }
     __extends(Input, Nib);
@@ -243,7 +242,6 @@
       this.text = text;
       this.index = index != null ? index : 0;
       this.siblings = siblings != null ? siblings : 0;
-      this.type = 'output';
       Output.__super__.constructor.call(this);
     }
     __extends(Output, Nib);
@@ -286,7 +284,7 @@
     sub_box_color = 0x888888;
     y_offset = 20;
     x_position = -20 + 40 * nib.index / nib.siblings;
-    y_position = y_offset * (nib.type === 'input' ? 1 : -1);
+    y_position = y_offset * (nib instanceof Input ? 1 : -1);
     sub_box = make_box(nib.text, sub_box_size, 5, sub_box_color, V(x_position, y_position));
     sub_box.model = nib;
     parent = nib.node.view;
