@@ -80,6 +80,20 @@
       definition: function(left, right) {
         return left() === right();
       }
+    },
+    '>': {
+      inputs: ['L', 'R'],
+      outputs: ['R'],
+      definition: function(left, right) {
+        return left() > right();
+      }
+    },
+    '>=': {
+      inputs: ['L', 'R'],
+      outputs: ['R'],
+      definition: function(left, right) {
+        return left() >= right();
+      }
     }
   };
   /* EVALUATION */

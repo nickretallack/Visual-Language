@@ -51,7 +51,14 @@ functions =
         inputs:['L','R']
         outputs:['R']
         definition: (left, right) -> left() is right()
-        
+    '>':
+        inputs:['L','R']
+        outputs:['R']
+        definition: (left, right) -> left() > right()
+    '>=':
+        inputs:['L','R']
+        outputs:['R']
+        definition: (left, right) -> left() >= right()
 
 ### EVALUATION ###
 
