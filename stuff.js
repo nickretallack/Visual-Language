@@ -1,5 +1,5 @@
 (function() {
-  var animate, camera, dragging_object, dragging_offset, height, make_box, mouse_coords, mouse_down, mouse_move, mouse_up, objects, projector, renderer, scene, update, width;
+  var animate, arrow_object, arrow_source, boxes, camera, dragging_object, dragging_offset, functions, height, input_nodes, last, make_arrow, make_box, make_connection, make_function, make_top_box, mouse_coords, mouse_down, mouse_move, mouse_up, output_nodes, projector, ray_cast_mouse, renderer, scene, update, width;
   height = window.innerHeight;
   width = window.innerWidth;
   camera = new THREE.OrthographicCamera(0, width, height, 0, -2000, 1000);
@@ -8,7 +8,9 @@
   renderer = new THREE.CanvasRenderer();
   renderer.setSize(width, height);
   projector = new THREE.Projector();
-  objects = [];
+  boxes = {};
+  input_nodes = {};
+  output_nodes = {};
   update = function() {
     return renderer.render(scene, camera);
   };
@@ -16,12 +18,61 @@
     requestAnimationFrame(animate);
     return update();
   };
-  make_box = function() {
-    var centerOffset, color, geometry, material, mesh, object, position, size, text, text_color, text_geometry;
-    size = V(100, 100);
+  functions = {
+    '+': {
+      inputs: ['L', 'R'],
+      outputs: ['result'],
+      definition: function(left, right) {
+        return left + right;
+      }
+    }
+  };
+  last = function(list) {
+    return list[list.length - 1];
+  };
+  make_function = function(name) {
+    var as_number, information, _ref;
+    if ((name[0] === last(name)) && ((_ref = name[0]) === "'" || _ref === '"')) {
+      return make_top_box(name);
+    } else {
+      as_number = parseFloat(name);
+      if (!isNaN(as_number)) {
+        return make_top_box(name);
+      } else if (name in functions) {
+        information = functions[name];
+        return make_top_box(name, information['inputs']);
+      }
+    }
+  };
+  make_top_box = function(name, inputs, outputs) {
+    var color, index, input, main_box, main_box_size, position, sub_box, sub_box_color, sub_box_size, x_position, _len;
+    main_box_size = V(50, 50);
     color = 0x888888;
     position = V(250, 250);
-    object = new THREE.Object3D();
+    main_box = make_box(name, main_box_size, 10, color, position);
+    sub_box_size = V(20, 20);
+    sub_box_color = 0x888888;
+    if (inputs) {
+      for (index = 0, _len = inputs.length; index < _len; index++) {
+        input = inputs[index];
+        x_position = -20 + 40 * (index / (inputs.length - 1));
+        sub_box = make_box(input, sub_box_size, 5, sub_box_color, V(x_position, +20));
+        main_box.add(sub_box);
+        input_nodes[sub_box.id] = sub_box;
+        sub_box.data = {
+          type: 'input'
+        };
+      }
+    }
+    scene.add(main_box);
+    boxes[main_box.id] = main_box;
+    return main_box.data = {
+      type: 'box'
+    };
+  };
+  make_box = function(name, size, text_size, color, position) {
+    var box, centerOffset, geometry, material, mesh, text, text_color, text_geometry;
+    box = new THREE.Object3D();
     geometry = (function(func, args, ctor) {
       ctor.prototype = func.prototype;
       var child = new ctor, result = func.apply(child, args);
@@ -31,9 +82,10 @@
       color: color
     });
     mesh = new THREE.Mesh(geometry, material);
-    object.add(mesh);
-    text_geometry = new THREE.TextGeometry("Text", {
-      size: 20,
+    mesh.position = V(0, 0).three();
+    box.add(mesh);
+    text_geometry = new THREE.TextGeometry(name, {
+      size: text_size,
       font: 'helvetiker',
       curveSegments: 2
     });
@@ -45,46 +97,87 @@
     });
     text = new THREE.Mesh(text_geometry, text_color);
     text.position.x = centerOffset;
-    object.position = position.three();
-    object.add(text);
-    scene.add(object);
-    return objects.push(object);
+    box.position = position.three();
+    box.add(text);
+    return box;
   };
-  make_box();
+  make_arrow = function(source, target) {
+    var arrow, line, line_geometry, line_material;
+    arrow = new THREE.Object3D();
+    line_geometry = new THREE.Geometry();
+    line_material = new THREE.LineBasicMaterial();
+    line_geometry.vertices.push(source, target);
+    line = new THREE.Line(line_geometry, line_material);
+    arrow.add(line);
+    return arrow;
+  };
+  make_function('+');
   mouse_coords = function(event) {
     return V(event.clientX, height - event.clientY);
   };
   dragging_object = null;
+  arrow_source = null;
+  arrow_object = null;
   dragging_offset = V(0, 0);
   mouse_up = function(event) {
-    return dragging_object = null;
+    var arrow_target;
+    dragging_object = null;
+    if (arrow_source) {
+      arrow_target = ray_cast_mouse();
+      if (arrow_source) {
+        make_connection(arrow_source, arrow_target);
+      }
+      return arrow_source = null;
+    }
   };
-  mouse_down = function(event) {
+  make_connection = function(source, target) {};
+  ray_cast_mouse = function() {
     var forward, intersections, mouse, ray;
     mouse = mouse_coords(event).three();
     mouse.z = 1;
     forward = new THREE.Vector3(0, 0, -1);
     ray = new THREE.Ray(mouse, forward);
-    intersections = ray.intersectObjects(objects);
+    intersections = ray.intersectObjects(_.values(boxes));
     if (intersections.length > 0) {
-      return dragging_object = intersections[0].object.parent;
+      return (last(intersections)).object.parent;
+    }
+  };
+  mouse_down = function(event) {
+    var target;
+    target = ray_cast_mouse();
+    console.log(target);
+    if (target) {
+      if (target.data.type === 'box') {
+        return dragging_object = target;
+      } else if (target.data.type === 'input') {
+        return arrow_source = target;
+      }
     }
   };
   mouse_move = function(event) {
     var vector;
+    vector = mouse_coords(event).three();
     if (dragging_object) {
-      vector = mouse_coords(event).three();
       return dragging_object.position.copy(vector);
     }
   };
   $(function() {
-    var field;
+    var field, function_form, function_input;
     field = $("#field");
+    function_form = $('#add_function');
+    function_input = $('#function_name');
     field.append(renderer.domElement);
     animate();
     field.mousedown(mouse_down);
     field.mouseup(mouse_up);
     field.mousemove(mouse_move);
+    function_form.submit(function(event) {
+      var function_name;
+      event.preventDefault();
+      function_name = function_input.val();
+      function_input.val('');
+      return make_function(function_name);
+    });
     return field.click(function(event) {});
   });
 }).call(this);
