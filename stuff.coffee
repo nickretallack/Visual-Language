@@ -113,18 +113,21 @@ class Node
     set_position:(@position) ->
         @view.position.copy @position
 
+    get_nibs: ->
+        @inputs.concat @outputs
+
 class FunctionApplication extends Node
     constructor:(@position, @text, information) ->
         @value = information.definition
         super()
         @inputs = (new Input @, text, index, information.inputs.length-1 for text, index in information.inputs)
-        @outpus = (new Output @, text, index, information.outputs.length-1 for text, index in information.outputs)
+        @outputs = (new Output @, text, index, information.outputs.length-1 for text, index in information.outputs)
 
 class Literal extends Node
     constructor:(@position, @text, @value) ->
         super()
         @inputs = []
-        @outpus = new Output @, 'O'
+        @outputs = new Output @, 'O'
     
 class Nib  # Abstract. Do not instantiate
     constructor: ->
@@ -292,12 +295,11 @@ mouse_down = (event) ->
 mouse_move = (event) ->
     vector = mouse_coords(event).three()
     if dragging_object
-        dragging_object.model.set_position vector
-        ###
-        for nib in dragging_object.data.nibs
-            for connection in nib.data.connections
-                connection.arrow.position.copy get_nib_position nib
-        ###
+        node = dragging_object.model
+        node.set_position vector
+        for nib in node.get_nibs()
+            for connection in nib.connections
+                connection.vertex.position.copy get_nib_position nib.view
     if connecting_object
         system_arrow.geometry.vertices[1].position = vector
 

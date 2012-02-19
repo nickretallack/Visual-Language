@@ -166,6 +166,9 @@
       this.position = position;
       return this.view.position.copy(this.position);
     };
+    Node.prototype.get_nibs = function() {
+      return this.inputs.concat(this.outputs);
+    };
     return Node;
   })();
   FunctionApplication = (function() {
@@ -185,7 +188,7 @@
         }
         return _results;
       }).call(this);
-      this.outpus = (function() {
+      this.outputs = (function() {
         var _len, _ref, _results;
         _ref = information.outputs;
         _results = [];
@@ -206,7 +209,7 @@
       this.value = value;
       Literal.__super__.constructor.call(this);
       this.inputs = [];
-      this.outpus = new Output(this, 'O');
+      this.outputs = new Output(this, 'O');
     }
     __extends(Literal, Node);
     return Literal;
@@ -411,15 +414,20 @@
     }
   };
   mouse_move = function(event) {
-    var vector;
+    var connection, nib, node, vector, _i, _j, _len, _len2, _ref, _ref2;
     vector = mouse_coords(event).three();
     if (dragging_object) {
-      dragging_object.model.set_position(vector);
-      /*
-              for nib in dragging_object.data.nibs
-                  for connection in nib.data.connections
-                      connection.arrow.position.copy get_nib_position nib
-              */
+      node = dragging_object.model;
+      node.set_position(vector);
+      _ref = node.get_nibs();
+      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+        nib = _ref[_i];
+        _ref2 = nib.connections;
+        for (_j = 0, _len2 = _ref2.length; _j < _len2; _j++) {
+          connection = _ref2[_j];
+          connection.vertex.position.copy(get_nib_position(nib.view));
+        }
+      }
     }
     if (connecting_object) {
       return system_arrow.geometry.vertices[1].position = vector;
