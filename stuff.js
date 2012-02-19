@@ -57,6 +57,20 @@
       definition: function() {
         return console.log("OH NO!");
       }
+    },
+    'prompt': {
+      inputs: ['M'],
+      outputs: ['R'],
+      definition: function(message) {
+        return prompt(message());
+      }
+    },
+    '=': {
+      inputs: ['L', 'R'],
+      outputs: ['R'],
+      definition: function(left, right) {
+        return left() === right();
+      }
     }
   };
   last = function(list) {
@@ -90,7 +104,7 @@
   };
   program_outputs = [];
   execute_program = function() {
-    var nib, output_function, _i, _len, _results;
+    var nib, output_function, result, _i, _len, _results;
     _results = [];
     for (_i = 0, _len = program_outputs.length; _i < _len; _i++) {
       output_function = program_outputs[_i];
@@ -101,7 +115,9 @@
           if (!nib) {
             throw "NotConnected";
           }
-          return console.log(evaluate_program(nib));
+          result = evaluate_program(nib);
+          console.log(result);
+          return alert(result);
         } catch (exception) {
           if (exception === "NotConnected") {
             return alert("Your program is not fully connected");
@@ -119,7 +135,7 @@
       location = V(250, 250);
     }
     if ((name[0] === last(name)) && ((_ref = name[0]) === "'" || _ref === '"')) {
-      return make_top_box(location, 'literal', name, name, [], 'R');
+      return make_top_box(location, 'literal', name, name.slice(1, name.length - 1), [], 'R');
     } else {
       as_number = parseFloat(name);
       if (!isNaN(as_number)) {
@@ -228,9 +244,6 @@
   };
   system_arrow = make_arrow(V(0, 0), V(1, 0));
   scene.remove(system_arrow);
-  make_function('5', V(150, 500));
-  make_function('3', V(250, 500));
-  make_function('+', V(200, 300));
   make_function('out', V(200, 100));
   mouse_coords = function(event) {
     return V(event.clientX, height - event.clientY);

@@ -43,6 +43,14 @@ functions =
         inputs:[]
         outputs:['R']
         definition: -> console.log "OH NO!"
+    'prompt':
+        inputs:['M']
+        outputs:['R']
+        definition: (message) -> prompt message()
+    '=':
+        inputs:['L','R']
+        outputs:['R']
+        definition: (left, right) -> left() is right()
         
 
 last = (list) -> list[list.length-1]
@@ -71,7 +79,10 @@ execute_program = ->
         try
             nib = output_function.data.inputs[0].data.connections[0]?.nib
             throw "NotConnected" unless nib
-            console.log evaluate_program nib
+            result = evaluate_program nib
+            console.log result
+            alert result
+            
         catch exception
             if exception is "NotConnected"
                 alert "Your program is not fully connected"
@@ -82,7 +93,7 @@ execute_program = ->
 make_function = (name, location=V(250,250)) ->
     if (name[0] is last name) and (name[0] in ["'",'"'])
         # it's a string
-        make_top_box location, 'literal', name, name, [], 'R'
+        make_top_box location, 'literal', name, name[1...name.length-1], [], 'R'
     else
         as_number = parseFloat name
         if not isNaN as_number
@@ -177,9 +188,6 @@ make_arrow = (source, target) ->
 system_arrow = make_arrow V(0,0), V(1,0)
 scene.remove system_arrow
 
-make_function '5', V 150,500
-make_function '3', V 250,500
-make_function '+', V 200,300
 make_function 'out', V 200,100
 
 mouse_coords = (event) ->
