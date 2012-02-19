@@ -68,19 +68,19 @@ functions =
 
 # TODO: support multiple outputs
 evaluate_program = (output) ->
-    node = output.node
-    if node instanceof Literal
-        return node.value
-    if node instanceof FunctionApplication
+    parent = output.parent
+    if parent instanceof Literal
+        return parent.value
+    if parent instanceof FunctionApplication
         # collect input values
         input_values = []
-        for input in node.inputs
+        for input in parent.inputs
             do (input) ->
                 input_values.push ->
                     output = input.connections[0]?.connection.output
                     throw "NotConnected" unless output
                     evaluate_program output
-        return node.value.apply null, input_values
+        return parent.value.apply null, input_values
 
 program_outputs = []
 execute_program = ->
@@ -139,12 +139,12 @@ class Literal extends Node
     
 class Nib  # Abstract. Do not instantiate
     constructor: ->
-        @view = make_nib_view @, @node instanceof Node
+        @view = make_nib_view @, @parent instanceof Node
         @connections = []
 
 # TODO: change nib 'node' to parent since it might not be a node
 class Input extends Nib
-    constructor:(@node, @text, @index=0, @siblings=0) ->
+    constructor:(@parent, @text, @index=0, @siblings=0) ->
         super()
 
     _add_connection: (connection, vertex) ->
@@ -158,7 +158,7 @@ class Input extends Nib
         new Connection @ output
         
 class Output extends Nib
-    constructor:(@node, @text, @index=0, @siblings=0) ->
+    constructor:(@parent, @text, @index=0, @siblings=0) ->
         super()
 
     _add_connection: (connection, vertex) ->
@@ -178,10 +178,10 @@ class Connection
     toJSON: ->
         input:
             index:@input.index
-            node_id:@input.node.id
+            parent_id:@input.parent.id
         output:
             index:@output.index
-            node_id:@output.node.id
+            parent_id:@output.parent.id
 
 ### VIEWS ###
 
@@ -215,7 +215,7 @@ make_nib_view = (nib, is_node) ->
     sub_box = make_box nib.text, sub_box_size, 5, sub_box_color, V x_position,y_position
     sub_box.model = nib
 
-    parent = nib.node.view
+    parent = nib.parent.view
     parent.add sub_box
     return sub_box
 
@@ -392,14 +392,14 @@ make_basic_program = ->
         connections:[c1,c2,c3]
 
 load_basic_program = ->
-    program = JSON.parse """{"nodes":[{"position":{"x":200,"y":100},"text":"out","id":"a3a19afbbc5b944012036668230eb819"},{"position":{"x":200,"y":300},"text":"+","id":"4c19f385dd04884ab84eb27f71011054"},{"position":{"x":150,"y":500},"text":"5","id":"c532ec59ef6b57af6bd7323be2d27d93"},{"position":{"x":250,"y":500},"text":"3","id":"1191a8be50c4c7cd7b1f259b82c04365"}],"connections":[{"input":{"index":0,"node_id":"4c19f385dd04884ab84eb27f71011054"},"output":{"index":0,"node_id":"c532ec59ef6b57af6bd7323be2d27d93"}},{"input":{"index":1,"node_id":"4c19f385dd04884ab84eb27f71011054"},"output":{"index":0,"node_id":"1191a8be50c4c7cd7b1f259b82c04365"}},{"input":{"index":0,"node_id":"a3a19afbbc5b944012036668230eb819"},"output":{"index":0,"node_id":"4c19f385dd04884ab84eb27f71011054"}}]}"""
+    program = JSON.parse """{"nodes":[{"position":{"x":200,"y":100},"text":"out","id":"76ce2c7f246768722538e935dd8eca2b"},{"position":{"x":200,"y":300},"text":"+","id":"e78ff69100d10e0941e4212e4949975f"},{"position":{"x":150,"y":500},"text":"5","id":"5a49650be7f844da2236ce1f1ff94222"},{"position":{"x":250,"y":500},"text":"3","id":"1045e2acb8067109826f33f89d58e264"}],"connections":[{"input":{"index":0,"parent_id":"e78ff69100d10e0941e4212e4949975f"},"output":{"index":0,"parent_id":"5a49650be7f844da2236ce1f1ff94222"}},{"input":{"index":1,"parent_id":"e78ff69100d10e0941e4212e4949975f"},"output":{"index":0,"parent_id":"1045e2acb8067109826f33f89d58e264"}},{"input":{"index":0,"parent_id":"76ce2c7f246768722538e935dd8eca2b"},"output":{"index":0,"parent_id":"e78ff69100d10e0941e4212e4949975f"}}]}"""
 
     for node in program.nodes
         make_node node.text, Vector.from(node.position), node.id
 
     for connection in program.connections
-        source_node = node_registry[connection.output.node_id]
-        sink_node = node_registry[connection.input.node_id] # todo: node_id
-        source_node.outputs[connection.output.index].connect sink_node.inputs[connection.input.index]
+        source = node_registry[connection.output.parent_id]
+        sink = node_registry[connection.input.parent_id] # todo: node_id
+        source.outputs[connection.output.index].connect sink.inputs[connection.input.index]
 
 load_basic_program()

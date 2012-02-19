@@ -103,14 +103,14 @@
   };
   /* EVALUATION */
   evaluate_program = function(output) {
-    var input, input_values, node, _fn, _i, _len, _ref;
-    node = output.node;
-    if (node instanceof Literal) {
-      return node.value;
+    var input, input_values, parent, _fn, _i, _len, _ref;
+    parent = output.parent;
+    if (parent instanceof Literal) {
+      return parent.value;
     }
-    if (node instanceof FunctionApplication) {
+    if (parent instanceof FunctionApplication) {
       input_values = [];
-      _ref = node.inputs;
+      _ref = parent.inputs;
       _fn = function(input) {
         return input_values.push(function() {
           var _ref2;
@@ -125,7 +125,7 @@
         input = _ref[_i];
         _fn(input);
       }
-      return node.value.apply(null, input_values);
+      return parent.value.apply(null, input_values);
     }
   };
   program_outputs = [];
@@ -254,14 +254,14 @@
   })();
   Nib = (function() {
     function Nib() {
-      this.view = make_nib_view(this, this.node instanceof Node);
+      this.view = make_nib_view(this, this.parent instanceof Node);
       this.connections = [];
     }
     return Nib;
   })();
   Input = (function() {
-    function Input(node, text, index, siblings) {
-      this.node = node;
+    function Input(parent, text, index, siblings) {
+      this.parent = parent;
       this.text = text;
       this.index = index != null ? index : 0;
       this.siblings = siblings != null ? siblings : 0;
@@ -282,8 +282,8 @@
     return Input;
   })();
   Output = (function() {
-    function Output(node, text, index, siblings) {
-      this.node = node;
+    function Output(parent, text, index, siblings) {
+      this.parent = parent;
       this.text = text;
       this.index = index != null ? index : 0;
       this.siblings = siblings != null ? siblings : 0;
@@ -314,11 +314,11 @@
       return {
         input: {
           index: this.input.index,
-          node_id: this.input.node.id
+          parent_id: this.input.parent.id
         },
         output: {
           index: this.output.index,
-          node_id: this.output.node.id
+          parent_id: this.output.parent.id
         }
       };
     };
@@ -353,7 +353,7 @@
     y_position = y_offset * (nib instanceof Input ? 1 : -1);
     sub_box = make_box(nib.text, sub_box_size, 5, sub_box_color, V(x_position, y_position));
     sub_box.model = nib;
-    parent = nib.node.view;
+    parent = nib.parent.view;
     parent.add(sub_box);
     return sub_box;
   };
@@ -568,8 +568,8 @@
     }));
   };
   load_basic_program = function() {
-    var connection, node, program, sink_node, source_node, _i, _j, _len, _len2, _ref, _ref2, _results;
-    program = JSON.parse("{\"nodes\":[{\"position\":{\"x\":200,\"y\":100},\"text\":\"out\",\"id\":\"a3a19afbbc5b944012036668230eb819\"},{\"position\":{\"x\":200,\"y\":300},\"text\":\"+\",\"id\":\"4c19f385dd04884ab84eb27f71011054\"},{\"position\":{\"x\":150,\"y\":500},\"text\":\"5\",\"id\":\"c532ec59ef6b57af6bd7323be2d27d93\"},{\"position\":{\"x\":250,\"y\":500},\"text\":\"3\",\"id\":\"1191a8be50c4c7cd7b1f259b82c04365\"}],\"connections\":[{\"input\":{\"index\":0,\"node_id\":\"4c19f385dd04884ab84eb27f71011054\"},\"output\":{\"index\":0,\"node_id\":\"c532ec59ef6b57af6bd7323be2d27d93\"}},{\"input\":{\"index\":1,\"node_id\":\"4c19f385dd04884ab84eb27f71011054\"},\"output\":{\"index\":0,\"node_id\":\"1191a8be50c4c7cd7b1f259b82c04365\"}},{\"input\":{\"index\":0,\"node_id\":\"a3a19afbbc5b944012036668230eb819\"},\"output\":{\"index\":0,\"node_id\":\"4c19f385dd04884ab84eb27f71011054\"}}]}");
+    var connection, node, program, sink, source, _i, _j, _len, _len2, _ref, _ref2, _results;
+    program = JSON.parse("{\"nodes\":[{\"position\":{\"x\":200,\"y\":100},\"text\":\"out\",\"id\":\"76ce2c7f246768722538e935dd8eca2b\"},{\"position\":{\"x\":200,\"y\":300},\"text\":\"+\",\"id\":\"e78ff69100d10e0941e4212e4949975f\"},{\"position\":{\"x\":150,\"y\":500},\"text\":\"5\",\"id\":\"5a49650be7f844da2236ce1f1ff94222\"},{\"position\":{\"x\":250,\"y\":500},\"text\":\"3\",\"id\":\"1045e2acb8067109826f33f89d58e264\"}],\"connections\":[{\"input\":{\"index\":0,\"parent_id\":\"e78ff69100d10e0941e4212e4949975f\"},\"output\":{\"index\":0,\"parent_id\":\"5a49650be7f844da2236ce1f1ff94222\"}},{\"input\":{\"index\":1,\"parent_id\":\"e78ff69100d10e0941e4212e4949975f\"},\"output\":{\"index\":0,\"parent_id\":\"1045e2acb8067109826f33f89d58e264\"}},{\"input\":{\"index\":0,\"parent_id\":\"76ce2c7f246768722538e935dd8eca2b\"},\"output\":{\"index\":0,\"parent_id\":\"e78ff69100d10e0941e4212e4949975f\"}}]}");
     _ref = program.nodes;
     for (_i = 0, _len = _ref.length; _i < _len; _i++) {
       node = _ref[_i];
@@ -579,9 +579,9 @@
     _results = [];
     for (_j = 0, _len2 = _ref2.length; _j < _len2; _j++) {
       connection = _ref2[_j];
-      source_node = node_registry[connection.output.node_id];
-      sink_node = node_registry[connection.input.node_id];
-      _results.push(source_node.outputs[connection.output.index].connect(sink_node.inputs[connection.input.index]));
+      source = node_registry[connection.output.parent_id];
+      sink = node_registry[connection.input.parent_id];
+      _results.push(source.outputs[connection.output.index].connect(sink.inputs[connection.input.index]));
     }
     return _results;
   };
