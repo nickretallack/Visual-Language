@@ -253,6 +253,16 @@
   make_connection = function(source, target) {
     var arrow;
     arrow = make_arrow(get_nib_position(source), get_nib_position(target));
+    /*
+        # don't allow double-connections at an input
+        input = if source.data.type is 'input' then source else target
+        if input.data.connections.length
+            connection = input.data.connections[0]
+            scene.remove connection.arrow
+            input.data.connections = []
+            # NOTE: leaves the hanging source connection =[
+            # NOTE: oh shit we don't really have a handle on the object.  Just a vertex.
+        */
     source.data.connections.push({
       nib: target,
       arrow: arrow.geometry.vertices[0]
