@@ -55,7 +55,6 @@ functions =
 
 last = (list) -> list[list.length-1]
 
-
 evaluate_program = (nib) ->
     data = nib.parent.data
     if data.data_type is 'literal'
@@ -90,7 +89,7 @@ execute_program = ->
             
     
 
-make_function = (name, location=V(250,250)) ->
+make_node = (name, location=V(250,250)) ->
     if (name[0] is last name) and (name[0] in ["'",'"'])
         # it's a string
         make_top_box location, 'literal', name, name[1...name.length-1], [], 'R'
@@ -188,7 +187,7 @@ make_arrow = (source, target) ->
 system_arrow = make_arrow V(0,0), V(1,0)
 scene.remove system_arrow
 
-make_function 'out', V 200,100
+make_node 'out', V 200,100
 
 mouse_coords = (event) ->
     V event.clientX, height-event.clientY
@@ -269,8 +268,8 @@ mouse_move = (event) ->
 
 $ ->
     field = $("#field")
-    function_form = $('#add_function')
-    function_input = $('#function_name')
+    node_form = $('#add_node')
+    node_input = $('#node_name')
     run_button = $('#run_button')
 
     field.append renderer.domElement
@@ -279,11 +278,11 @@ $ ->
     field.mouseup mouse_up
     field.mousemove mouse_move
 
-    function_form.submit (event) ->
+    node_form.submit (event) ->
         event.preventDefault()
-        function_name = function_input.val()
-        function_input.val ''
-        make_function function_name
+        node_name = node_input.val()
+        node_input.val ''
+        make_node node_name
 
     run_button.click (event) ->
         event.preventDefault()

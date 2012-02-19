@@ -1,5 +1,5 @@
 (function() {
-  var animate, boxes, camera, connecting_object, dragging_object, dragging_offset, evaluate_program, execute_program, functions, get_nib_position, height, input_nodes, last, make_arrow, make_box, make_connection, make_function, make_nibs, make_top_box, mouse_coords, mouse_down, mouse_move, mouse_up, output_nodes, program_outputs, projector, ray_cast_mouse, renderer, scene, system_arrow, update, width;
+  var animate, boxes, camera, connecting_object, dragging_object, dragging_offset, evaluate_program, execute_program, functions, get_nib_position, height, input_nodes, last, make_arrow, make_box, make_connection, make_nibs, make_node, make_top_box, mouse_coords, mouse_down, mouse_move, mouse_up, output_nodes, program_outputs, projector, ray_cast_mouse, renderer, scene, system_arrow, update, width;
   height = window.innerHeight;
   width = window.innerWidth;
   camera = new THREE.OrthographicCamera(0, width, height, 0, -2000, 1000);
@@ -129,7 +129,7 @@
     }
     return _results;
   };
-  make_function = function(name, location) {
+  make_node = function(name, location) {
     var as_number, box, information, _ref;
     if (location == null) {
       location = V(250, 250);
@@ -244,7 +244,7 @@
   };
   system_arrow = make_arrow(V(0, 0), V(1, 0));
   scene.remove(system_arrow);
-  make_function('out', V(200, 100));
+  make_node('out', V(200, 100));
   mouse_coords = function(event) {
     return V(event.clientX, height - event.clientY);
   };
@@ -332,22 +332,22 @@
     }
   };
   $(function() {
-    var field, function_form, function_input, run_button;
+    var field, node_form, node_input, run_button;
     field = $("#field");
-    function_form = $('#add_function');
-    function_input = $('#function_name');
+    node_form = $('#add_node');
+    node_input = $('#node_name');
     run_button = $('#run_button');
     field.append(renderer.domElement);
     animate();
     field.mousedown(mouse_down);
     field.mouseup(mouse_up);
     field.mousemove(mouse_move);
-    function_form.submit(function(event) {
-      var function_name;
+    node_form.submit(function(event) {
+      var node_name;
       event.preventDefault();
-      function_name = function_input.val();
-      function_input.val('');
-      return make_function(function_name);
+      node_name = node_input.val();
+      node_input.val('');
+      return make_node(node_name);
     });
     run_button.click(function(event) {
       event.preventDefault();
