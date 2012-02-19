@@ -1,5 +1,5 @@
 (function() {
-  var Connection, FunctionApplication, Input, Literal, Nib, Node, Output, animate, boxes, camera, connecting_object, connection_view, dragging_object, dragging_offset, evaluate_program, execute_program, functions, get_nib_position, height, input_nodes, last, make_arrow, make_box, make_connection, make_nib_view, make_node, make_node_view, mouse_coords, mouse_down, mouse_move, mouse_up, output_nodes, program_outputs, projector, ray_cast_mouse, renderer, scene, system_arrow, update, width;
+  var Connection, FunctionApplication, Input, Literal, Nib, Node, Output, animate, boxes, camera, connecting_object, connection_view, dragging_object, dragging_offset, evaluate_program, execute_program, functions, get_nib_position, height, last, make_arrow, make_box, make_connection, make_nib_view, make_node, make_node_view, mouse_coords, mouse_down, mouse_move, mouse_up, program_outputs, projector, ray_cast_mouse, renderer, scene, system_arrow, update, width;
   var __hasProp = Object.prototype.hasOwnProperty, __extends = function(child, parent) {
     for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; }
     function ctor() { this.constructor = child; }
@@ -16,9 +16,10 @@
   renderer = new THREE.CanvasRenderer();
   renderer.setSize(width, height);
   projector = new THREE.Projector();
+  last = function(list) {
+    return list[list.length - 1];
+  };
   boxes = {};
-  input_nodes = {};
-  output_nodes = {};
   update = function() {
     return renderer.render(scene, camera);
   };
@@ -81,9 +82,7 @@
       }
     }
   };
-  last = function(list) {
-    return list[list.length - 1];
-  };
+  /* EVALUATION */
   evaluate_program = function(output) {
     var input, input_values, node, _fn, _i, _len, _ref;
     node = output.node;
@@ -137,27 +136,7 @@
     }
     return _results;
   };
-  make_node = function(text, position) {
-    var as_number, information, node, value, _ref;
-    if (position == null) {
-      position = V(250, 250);
-    }
-    if ((text[0] === last(text)) && ((_ref = text[0]) === "'" || _ref === '"')) {
-      value = text.slice(1, text.length - 1);
-      return new Literal(position, text, value);
-    } else {
-      as_number = parseFloat(text);
-      if (!isNaN(as_number)) {
-        return new Literal(position, text, as_number);
-      } else if (text in functions) {
-        information = functions[text];
-        node = new FunctionApplication(position, text, information);
-        if (text === 'out') {
-          return program_outputs.push(node);
-        }
-      }
-    }
-  };
+  /* MODELS */
   Node = (function() {
     function Node() {
       this.view = make_node_view(this);
@@ -270,6 +249,7 @@
     }
     return Connection;
   })();
+  /* VIEWS */
   make_node_view = function(node) {
     var color, main_box, main_box_size;
     main_box_size = V(50, 50);
@@ -292,6 +272,46 @@
     parent = nib.node.view;
     parent.add(sub_box);
     return sub_box;
+  };
+  connection_view = function(connection) {
+    var arrow, point1, point2;
+    point1 = get_nib_position(connection.input.view);
+    point2 = get_nib_position(connection.output.view);
+    arrow = make_arrow(point1, point2);
+    return [arrow, arrow.geometry.vertices[0], arrow.geometry.vertices[1]];
+  };
+  /* FACTORIES */
+  make_node = function(text, position) {
+    var as_number, information, node, value, _ref;
+    if (position == null) {
+      position = V(250, 250);
+    }
+    if ((text[0] === last(text)) && ((_ref = text[0]) === "'" || _ref === '"')) {
+      value = text.slice(1, text.length - 1);
+      return new Literal(position, text, value);
+    } else {
+      as_number = parseFloat(text);
+      if (!isNaN(as_number)) {
+        return new Literal(position, text, as_number);
+      } else if (text in functions) {
+        information = functions[text];
+        node = new FunctionApplication(position, text, information);
+        if (text === 'out') {
+          return program_outputs.push(node);
+        }
+      }
+    }
+  };
+  make_connection = function(source, target) {
+    var input, output;
+    if (source.model instanceof Input) {
+      input = source.model;
+      output = target.model;
+    } else {
+      input = target.model;
+      output = source.model;
+    }
+    return new Connection(input, output);
   };
   /* CORE RENDERING */
   make_box = function(name, size, text_size, color, position) {
@@ -346,6 +366,7 @@
     scene.add(line);
     return line;
   };
+  /* CORE HELPERS */
   ray_cast_mouse = function() {
     var forward, intersections, mouse, ray;
     mouse = mouse_coords(event).three();
@@ -357,49 +378,19 @@
       return (last(intersections)).object.parent;
     }
   };
+  mouse_coords = function(event) {
+    return V(event.clientX, height - event.clientY);
+  };
   get_nib_position = function(nib) {
     return Vector.from(nib.position).plus(nib.parent.position).three();
   };
   /* INTERACTION */
-  system_arrow = make_arrow(V(0, 0), V(1, 0));
-  scene.remove(system_arrow);
-  make_node('out', V(200, 100));
-  mouse_coords = function(event) {
-    return V(event.clientX, height - event.clientY);
-  };
   dragging_object = null;
   connecting_object = null;
   dragging_offset = V(0, 0);
-  mouse_up = function(event) {
-    var target;
-    dragging_object = null;
-    if (connecting_object) {
-      target = ray_cast_mouse();
-      if ((target != null ? target.model : void 0) instanceof Nib) {
-        make_connection(connecting_object, target);
-      }
-      connecting_object = null;
-      return scene.remove(system_arrow);
-    }
-  };
-  make_connection = function(source, target) {
-    var input, output;
-    if (source.model instanceof Input) {
-      input = source.model;
-      output = target.model;
-    } else {
-      input = target.model;
-      output = source.model;
-    }
-    return new Connection(input, output);
-  };
-  connection_view = function(connection) {
-    var arrow, point1, point2;
-    point1 = get_nib_position(connection.input.view);
-    point2 = get_nib_position(connection.output.view);
-    arrow = make_arrow(point1, point2);
-    return [arrow, arrow.geometry.vertices[0], arrow.geometry.vertices[1]];
-  };
+  make_node('out', V(200, 100));
+  system_arrow = make_arrow(V(0, 0), V(1, 0));
+  scene.remove(system_arrow);
   mouse_down = function(event) {
     var target;
     target = ray_cast_mouse();
@@ -411,6 +402,18 @@
         scene.add(system_arrow);
         return connecting_object = target;
       }
+    }
+  };
+  mouse_up = function(event) {
+    var target;
+    dragging_object = null;
+    if (connecting_object) {
+      target = ray_cast_mouse();
+      if ((target != null ? target.model : void 0) instanceof Nib) {
+        make_connection(connecting_object, target);
+      }
+      connecting_object = null;
+      return scene.remove(system_arrow);
     }
   };
   mouse_move = function(event) {
@@ -451,11 +454,10 @@
       node_input.val('');
       return make_node(node_name);
     });
-    run_button.click(function(event) {
+    return run_button.click(function(event) {
       event.preventDefault();
       event.stopPropagation();
       return execute_program();
     });
-    return field.click(function(event) {});
   });
 }).call(this);

@@ -10,9 +10,9 @@ renderer = new THREE.CanvasRenderer()
 renderer.setSize width, height #window.innerWidth, window.innerHeight
 projector = new THREE.Projector()
 
+last = (list) -> list[list.length-1]
+
 boxes = {}
-input_nodes = {}
-output_nodes = {}
 
 update = ->
     renderer.render scene, camera
@@ -53,9 +53,7 @@ functions =
         definition: (left, right) -> left() is right()
         
 
-last = (list) -> list[list.length-1]
-
-
+### EVALUATION ###
 
 # TODO: support multiple outputs
 evaluate_program = (output) ->
@@ -72,8 +70,6 @@ evaluate_program = (output) ->
                     throw "NotConnected" unless output
                     evaluate_program output
         return node.value.apply null, input_values
-            
-
 
 program_outputs = []
 execute_program = ->
@@ -89,22 +85,8 @@ execute_program = ->
             if exception is "NotConnected"
                 alert "Your program is not fully connected"
             else throw exception
-            
-make_node = (text, position=V(250,250)) ->
-    if (text[0] is last text) and (text[0] in ["'",'"'])
-        # it's a string
-        value = text[1...text.length-1]
-        new Literal position, text, value
-    else
-        as_number = parseFloat text
-        if not isNaN as_number
-            # it's a number
-            new Literal position, text, as_number
-        else if text of functions
-            # it's a function
-            information = functions[text]
-            node = new FunctionApplication position, text, information
-            program_outputs.push node if text is 'out'
+
+### MODELS ###
     
 class Node
     constructor: ->
@@ -161,6 +143,8 @@ class Connection
         [@view, input_vertex, output_vertex] = connection_view @
         @input.add_connection @, input_vertex
         @output.add_connection @, output_vertex
+
+### VIEWS ###
             
 make_node_view = (node) -> #(position, data_type, name, value, inputs, outputs) ->
     main_box_size = V 50,50
@@ -170,7 +154,6 @@ make_node_view = (node) -> #(position, data_type, name, value, inputs, outputs) 
     scene.add main_box
     boxes[main_box.id] = main_box
     return main_box
-
 
 make_nib_view = (nib) ->
     sub_box_size = V 20,20
@@ -186,6 +169,40 @@ make_nib_view = (nib) ->
     parent = nib.node.view
     parent.add sub_box
     return sub_box
+
+connection_view = (connection) ->
+    point1 = get_nib_position connection.input.view
+    point2 = get_nib_position connection.output.view
+    arrow = make_arrow point1, point2
+    [arrow, arrow.geometry.vertices[0], arrow.geometry.vertices[1]]
+            
+
+### FACTORIES ###
+
+make_node = (text, position=V(250,250)) ->
+    if (text[0] is last text) and (text[0] in ["'",'"'])
+        # it's a string
+        value = text[1...text.length-1]
+        new Literal position, text, value
+    else
+        as_number = parseFloat text
+        if not isNaN as_number
+            # it's a number
+            new Literal position, text, as_number
+        else if text of functions
+            # it's a function
+            information = functions[text]
+            node = new FunctionApplication position, text, information
+            program_outputs.push node if text is 'out'
+
+make_connection = (source, target) ->
+    if source.model instanceof Input
+        input = source.model
+        output = target.model
+    else
+        input = target.model
+        output = source.model
+    new Connection input, output
 
 ### CORE RENDERING ###
 
@@ -228,6 +245,8 @@ make_arrow = (source, target) ->
     scene.add line
     return line
 
+### CORE HELPERS ###
+
 ray_cast_mouse = ->
     mouse = mouse_coords(event).three()
     mouse.z = 1
@@ -237,49 +256,22 @@ ray_cast_mouse = ->
     if intersections.length > 0
         (last intersections).object.parent
 
+mouse_coords = (event) ->
+    V event.clientX, height-event.clientY
+    #V ((event.clientX / window.innerWidth) * 2 - 1), (-(event.clientY / window.innerHeight) * 2 + 1)
+
 get_nib_position = (nib) ->
     Vector.from(nib.position).plus(nib.parent.position).three()
 
 ### INTERACTION ###
 
-system_arrow = make_arrow V(0,0), V(1,0)
-scene.remove system_arrow
-
-make_node 'out', V 200,100
-
-mouse_coords = (event) ->
-    V event.clientX, height-event.clientY
-    #V ((event.clientX / window.innerWidth) * 2 - 1), (-(event.clientY / window.innerHeight) * 2 + 1)
-
 dragging_object = null
 connecting_object = null
-
 dragging_offset = V 0,0
 
-mouse_up = (event) ->
-    dragging_object = null
-
-    if connecting_object
-        target = ray_cast_mouse()
-        if target?.model instanceof Nib
-            make_connection connecting_object, target
-        connecting_object = null
-        scene.remove system_arrow
-
-make_connection = (source, target) ->
-    if source.model instanceof Input
-        input = source.model
-        output = target.model
-    else
-        input = target.model
-        output = source.model
-    new Connection input, output
-
-connection_view = (connection) ->
-    point1 = get_nib_position connection.input.view
-    point2 = get_nib_position connection.output.view
-    arrow = make_arrow point1, point2
-    [arrow, arrow.geometry.vertices[0], arrow.geometry.vertices[1]]
+make_node 'out', V 200,100
+system_arrow = make_arrow V(0,0), V(1,0)
+scene.remove system_arrow
 
 mouse_down = (event) ->
     target = ray_cast_mouse()
@@ -291,6 +283,15 @@ mouse_down = (event) ->
             scene.add system_arrow
             connecting_object = target
 
+mouse_up = (event) ->
+    dragging_object = null
+
+    if connecting_object
+        target = ray_cast_mouse()
+        if target?.model instanceof Nib
+            make_connection connecting_object, target
+        connecting_object = null
+        scene.remove system_arrow
 
 mouse_move = (event) ->
     vector = mouse_coords(event).three()
@@ -325,9 +326,3 @@ $ ->
         event.preventDefault()
         event.stopPropagation()
         execute_program()
-
-    #field.addEventListener 'mousedown', mouse_down, false
-    #field.addEventListener 'mouseup', mouse_up, false
-    #field.addEventListener 'mousemove', mouse_move, false
-
-    field.click (event) ->
