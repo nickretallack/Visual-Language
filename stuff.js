@@ -1,5 +1,5 @@
 (function() {
-  var animate, arrow_object, arrow_source, boxes, camera, dragging_object, dragging_offset, functions, height, input_nodes, last, make_arrow, make_box, make_connection, make_function, make_nibs, make_top_box, mouse_coords, mouse_down, mouse_move, mouse_up, output_nodes, projector, ray_cast_mouse, renderer, scene, update, width;
+  var animate, boxes, camera, connecting_object, dragging_object, dragging_offset, functions, get_nib_position, height, input_nodes, last, make_arrow, make_box, make_connection, make_function, make_nibs, make_top_box, mouse_coords, mouse_down, mouse_move, mouse_up, output_nodes, projector, ray_cast_mouse, renderer, scene, system_arrow, update, width;
   height = window.innerHeight;
   width = window.innerWidth;
   camera = new THREE.OrthographicCamera(0, width, height, 0, -2000, 1000);
@@ -65,8 +65,11 @@
         x_position = -20 + 40 * (index / (list.length - 1));
         sub_box = make_box(item, sub_box_size, 5, sub_box_color, V(x_position, y_position));
         parent.add(sub_box);
+        parent.data["" + type + "s"].push(sub_box);
+        parent.data.nibs.push(sub_box);
         _results.push(sub_box.data = {
-          type: type
+          type: type,
+          connections: []
         });
       }
       return _results;
@@ -77,13 +80,16 @@
     main_box_size = V(50, 50);
     color = 0x888888;
     main_box = make_box(name, main_box_size, 10, color, position);
+    main_box.data = {
+      type: 'box',
+      inputs: [],
+      outputs: [],
+      nibs: []
+    };
     make_nibs(main_box, inputs, 'input', +20);
     make_nibs(main_box, outputs, 'output', -20);
     scene.add(main_box);
-    boxes[main_box.id] = main_box;
-    return main_box.data = {
-      type: 'box'
-    };
+    return boxes[main_box.id] = main_box;
   };
   make_box = function(name, size, text_size, color, position) {
     var box, centerOffset, geometry, material, mesh, text, text_color, text_geometry;
@@ -117,15 +123,30 @@
     return box;
   };
   make_arrow = function(source, target) {
-    var arrow, line, line_geometry, line_material;
+    var arrow, color, line, line_geometry, line_material;
     arrow = new THREE.Object3D();
+    color = 0x888888;
+    if ('three' in source) {
+      source = source.three();
+    }
+    if ('three' in target) {
+      target = target.three();
+    }
     line_geometry = new THREE.Geometry();
-    line_material = new THREE.LineBasicMaterial();
-    line_geometry.vertices.push(source, target);
+    line_material = new THREE.LineBasicMaterial({
+      color: color,
+      lineWidth: 1
+    });
+    line_geometry.vertices.push(new THREE.Vertex(source));
+    line_geometry.vertices.push(new THREE.Vertex(target));
     line = new THREE.Line(line_geometry, line_material);
+    scene.add(line);
+    return line;
     arrow.add(line);
     return arrow;
   };
+  system_arrow = make_arrow(V(0, 0), V(1, 0));
+  scene.remove(system_arrow);
   make_function('5', V(150, 500));
   make_function('3', V(250, 500));
   make_function('+', V(200, 300));
@@ -134,21 +155,32 @@
     return V(event.clientX, height - event.clientY);
   };
   dragging_object = null;
-  arrow_source = null;
-  arrow_object = null;
+  connecting_object = null;
   dragging_offset = V(0, 0);
   mouse_up = function(event) {
-    var arrow_target;
+    var target;
     dragging_object = null;
-    if (arrow_source) {
-      arrow_target = ray_cast_mouse();
-      if (arrow_source) {
-        make_connection(arrow_source, arrow_target);
+    if (connecting_object) {
+      target = ray_cast_mouse();
+      if (target) {
+        make_connection(connecting_object, target);
       }
-      return arrow_source = null;
+      connecting_object = null;
+      return scene.remove(system_arrow);
     }
   };
-  make_connection = function(source, target) {};
+  make_connection = function(source, target) {
+    var arrow;
+    arrow = make_arrow(get_nib_position(source), get_nib_position(target));
+    source.data.connections.push({
+      nib: target,
+      arrow: arrow.geometry.vertices[0]
+    });
+    return target.data.connections.push({
+      nib: source,
+      arrow: arrow.geometry.vertices[1]
+    });
+  };
   ray_cast_mouse = function() {
     var forward, intersections, mouse, ray;
     mouse = mouse_coords(event).three();
@@ -160,23 +192,39 @@
       return (last(intersections)).object.parent;
     }
   };
+  get_nib_position = function(nib) {
+    return Vector.from(nib.position).plus(nib.parent.position).three();
+  };
   mouse_down = function(event) {
     var target;
     target = ray_cast_mouse();
-    console.log(target);
     if (target) {
       if (target.data.type === 'box') {
         return dragging_object = target;
-      } else if (target.data.type === 'input') {
-        return arrow_source = target;
+      } else if (target.data.type === 'input' || target.data.type === 'output') {
+        system_arrow.geometry.vertices[0].position = system_arrow.geometry.vertices[1].position = get_nib_position(target);
+        scene.add(system_arrow);
+        return connecting_object = target;
       }
     }
   };
   mouse_move = function(event) {
-    var vector;
+    var connection, nib, vector, _i, _j, _len, _len2, _ref, _ref2;
     vector = mouse_coords(event).three();
     if (dragging_object) {
-      return dragging_object.position.copy(vector);
+      dragging_object.position.copy(vector);
+      _ref = dragging_object.data.nibs;
+      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+        nib = _ref[_i];
+        _ref2 = nib.data.connections;
+        for (_j = 0, _len2 = _ref2.length; _j < _len2; _j++) {
+          connection = _ref2[_j];
+          connection.arrow.position.copy(get_nib_position(nib));
+        }
+      }
+    }
+    if (connecting_object) {
+      return system_arrow.geometry.vertices[1].position = vector;
     }
   };
   $(function() {
