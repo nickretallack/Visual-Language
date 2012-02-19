@@ -35,6 +35,11 @@ functions =
         inputs:['I']
         outputs:[]
         definition: (input) -> console.log input
+    'if':
+        inputs:['T','C','F']
+        outputs:['R']
+        definition: (true_result, condition, false_result) ->
+            if condition then true_result else false_result
 
 last = (list) -> list[list.length-1]
 

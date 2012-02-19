@@ -39,6 +39,17 @@
       definition: function(input) {
         return console.log(input);
       }
+    },
+    'if': {
+      inputs: ['T', 'C', 'F'],
+      outputs: ['R'],
+      definition: function(true_result, condition, false_result) {
+        if (condition) {
+          return true_result;
+        } else {
+          return false_result;
+        }
+      }
     }
   };
   last = function(list) {
