@@ -57,7 +57,10 @@ evaluate_program = (nib) ->
         input_values = []
         for input in data.inputs# input.data.connections[0].nib
             do (input) ->
-                input_values.push -> evaluate_program input.data.connections[0].nib
+                input_values.push ->
+                    nib = input.data.connections[0]?.nib
+                    throw "NotConnected" unless nib
+                    evaluate_program nib
         return data.value.apply null, input_values
             
 
@@ -65,7 +68,15 @@ evaluate_program = (nib) ->
 program_outputs = []
 execute_program = ->
     for output_function in program_outputs
-        console.log evaluate_program output_function.data.inputs[0].data.connections[0].nib
+        try
+            nib = output_function.data.inputs[0].data.connections[0]?.nib
+            throw "NotConnected" unless nib
+            console.log evaluate_program nib
+        catch exception
+            if exception is "NotConnected"
+                alert "Your program is not fully connected"
+            else throw exception
+            
     
 
 make_function = (name, location=V(250,250)) ->

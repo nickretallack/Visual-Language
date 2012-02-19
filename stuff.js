@@ -73,7 +73,12 @@
       _ref = data.inputs;
       _fn = function(input) {
         return input_values.push(function() {
-          return evaluate_program(input.data.connections[0].nib);
+          var _ref2;
+          nib = (_ref2 = input.data.connections[0]) != null ? _ref2.nib : void 0;
+          if (!nib) {
+            throw "NotConnected";
+          }
+          return evaluate_program(nib);
         });
       };
       for (_i = 0, _len = _ref.length; _i < _len; _i++) {
@@ -85,11 +90,26 @@
   };
   program_outputs = [];
   execute_program = function() {
-    var output_function, _i, _len, _results;
+    var nib, output_function, _i, _len, _results;
     _results = [];
     for (_i = 0, _len = program_outputs.length; _i < _len; _i++) {
       output_function = program_outputs[_i];
-      _results.push(console.log(evaluate_program(output_function.data.inputs[0].data.connections[0].nib)));
+      _results.push((function() {
+        var _ref;
+        try {
+          nib = (_ref = output_function.data.inputs[0].data.connections[0]) != null ? _ref.nib : void 0;
+          if (!nib) {
+            throw "NotConnected";
+          }
+          return console.log(evaluate_program(nib));
+        } catch (exception) {
+          if (exception === "NotConnected") {
+            return alert("Your program is not fully connected");
+          } else {
+            throw exception;
+          }
+        }
+      })());
     }
     return _results;
   };
