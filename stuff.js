@@ -224,13 +224,16 @@
       Input.__super__.constructor.call(this);
     }
     __extends(Input, Nib);
-    Input.prototype.add_connection = function(connection, vertex) {
+    Input.prototype._add_connection = function(connection, vertex) {
       return this.connections = [
         {
           connection: connection,
           vertex: vertex
         }
       ];
+    };
+    Input.prototype.connect = function(output) {
+      return new Connection(this(output));
     };
     return Input;
   })();
@@ -244,11 +247,14 @@
       Output.__super__.constructor.call(this);
     }
     __extends(Output, Nib);
-    Output.prototype.add_connection = function(connection, vertex) {
+    Output.prototype._add_connection = function(connection, vertex) {
       return this.connections.push({
         connection: connection,
         vertex: vertex
       });
+    };
+    Output.prototype.connect = function(input) {
+      return new Connection(input, this);
     };
     return Output;
   })();
@@ -258,8 +264,8 @@
       this.input = input;
       this.output = output;
       _ref = connection_view(this), this.view = _ref[0], input_vertex = _ref[1], output_vertex = _ref[2];
-      this.input.add_connection(this, input_vertex);
-      this.output.add_connection(this, output_vertex);
+      this.input._add_connection(this, input_vertex);
+      this.output._add_connection(this, output_vertex);
     }
     return Connection;
   })();
@@ -476,9 +482,9 @@
   });
   out = make_node('out', V(200, 100));
   plus = make_node('+', V(200, 300));
-  new Connection(out.inputs[0], plus.outputs[0]);
   five = make_node('5', V(150, 500));
-  new Connection(plus.inputs[0], five.outputs[0]);
   three = make_node('3', V(250, 500));
-  new Connection(plus.inputs[1], three.outputs[0]);
+  five.outputs[0].connect(plus.inputs[0]);
+  three.outputs[0].connect(plus.inputs[1]);
+  plus.outputs[0].connect(out.inputs[0]);
 }).call(this);

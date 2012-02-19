@@ -128,28 +128,34 @@ class Input extends Nib
         @type = 'input'
         super()
 
-    add_connection: (connection, vertex) ->
+    _add_connection: (connection, vertex) ->
         # TODO: delete other connections
         @connections = [
             connection:connection
             vertex:vertex
         ]
+
+    connect:(output) ->
+        new Connection @ output
         
 class Output extends Nib
     constructor:(@node, @text, @index=0, @siblings=0) ->
         @type = 'output'
         super()
 
-    add_connection: (connection, vertex) ->
+    _add_connection: (connection, vertex) ->
         @connections.push
             connection:connection
             vertex:vertex
 
+    connect:(input) ->
+        new Connection input, @
+
 class Connection
     constructor:(@input, @output) ->
         [@view, input_vertex, output_vertex] = connection_view @
-        @input.add_connection @, input_vertex
-        @output.add_connection @, output_vertex
+        @input._add_connection @, input_vertex
+        @output._add_connection @, output_vertex
 
 ### VIEWS ###
             
@@ -337,9 +343,8 @@ $ ->
 
 out = make_node 'out', V 200,100
 plus = make_node '+', V 200,300
-new Connection out.inputs[0], plus.outputs[0]
 five = make_node '5', V 150, 500
-new Connection plus.inputs[0], five.outputs[0]
 three = make_node '3', V 250, 500
-new Connection plus.inputs[1], three.outputs[0]
-
+five.outputs[0].connect plus.inputs[0]
+three.outputs[0].connect plus.inputs[1]
+plus.outputs[0].connect out.inputs[0]
