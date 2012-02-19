@@ -27,6 +27,10 @@ functions =
         inputs:['L','R']
         outputs:['R']
         definition: (left, right) -> left + right
+    'out':
+        inputs:['I']
+        outputs:[]
+        definition: (input) -> console.log input
 
 last = (list) -> list[list.length-1]
 
@@ -113,6 +117,7 @@ make_arrow = (source, target) ->
 make_function '5', V 150,500
 make_function '3', V 250,500
 make_function '+', V 200,300
+make_function 'out', V 200,100
 
 mouse_coords = (event) ->
     V event.clientX, height-event.clientY

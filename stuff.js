@@ -25,6 +25,13 @@
       definition: function(left, right) {
         return left + right;
       }
+    },
+    'out': {
+      inputs: ['I'],
+      outputs: [],
+      definition: function(input) {
+        return console.log(input);
+      }
     }
   };
   last = function(list) {
@@ -122,6 +129,7 @@
   make_function('5', V(150, 500));
   make_function('3', V(250, 500));
   make_function('+', V(200, 300));
+  make_function('out', V(200, 100));
   mouse_coords = function(event) {
     return V(event.clientX, height - event.clientY);
   };
