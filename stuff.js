@@ -1,5 +1,5 @@
 (function() {
-  var Connection, FunctionApplication, Input, Literal, Nib, Node, Output, animate, boxes, camera, connecting_object, connection_view, dragging_object, dragging_offset, evaluate_program, execute_program, five, functions, get_nib_position, height, last, make_arrow, make_box, make_connection, make_nib_view, make_node, make_node_view, mouse_coords, mouse_down, mouse_move, mouse_up, out, plus, program_outputs, projector, ray_cast_mouse, renderer, scene, system_arrow, three, update, width;
+  var Connection, FunctionApplication, Input, Literal, Nib, Node, Output, animate, boxes, camera, connecting_object, connection, connection_view, current_scope, dragging_object, dragging_offset, evaluate_program, execute_program, functions, get_nib_position, height, last, make_arrow, make_box, make_connection, make_nib_view, make_node, make_node_view, mouse_coords, mouse_down, mouse_move, mouse_up, node, node_registry, program, program_outputs, projector, ray_cast_mouse, renderer, scene, sink_node, source_node, system_arrow, update, width, _i, _j, _len, _len2, _ref, _ref2;
   var __hasProp = Object.prototype.hasOwnProperty, __extends = function(child, parent) {
     for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; }
     function ctor() { this.constructor = child; }
@@ -20,12 +20,17 @@
     return list[list.length - 1];
   };
   boxes = {};
+  node_registry = {};
   update = function() {
     return renderer.render(scene, camera);
   };
   animate = function() {
     requestAnimationFrame(animate);
     return update();
+  };
+  current_scope = {
+    nodes: [],
+    connections: []
   };
   functions = {
     '+': {
@@ -154,6 +159,7 @@
   Node = (function() {
     function Node() {
       this.view = make_node_view(this);
+      node_registry[this.id] = this;
     }
     Node.prototype.set_position = function(position) {
       this.position = position;
@@ -162,13 +168,21 @@
     Node.prototype.get_nibs = function() {
       return this.inputs.concat(this.outputs);
     };
+    Node.prototype.toJSON = function() {
+      return {
+        position: this.position,
+        text: this.text,
+        id: this.id
+      };
+    };
     return Node;
   })();
   FunctionApplication = (function() {
-    function FunctionApplication(position, text, information) {
+    function FunctionApplication(position, text, information, id) {
       var index, text;
       this.position = position;
       this.text = text;
+      this.id = id != null ? id : UUID();
       this.value = information.definition;
       FunctionApplication.__super__.constructor.call(this);
       this.inputs = (function() {
@@ -196,10 +210,11 @@
     return FunctionApplication;
   })();
   Literal = (function() {
-    function Literal(position, text, value) {
+    function Literal(position, text, value, id) {
       this.position = position;
       this.text = text;
       this.value = value;
+      this.id = id != null ? id : UUID();
       Literal.__super__.constructor.call(this);
       this.inputs = [];
       this.outputs = [new Output(this, 'O')];
@@ -265,6 +280,18 @@
       this.input._add_connection(this, input_vertex);
       this.output._add_connection(this, output_vertex);
     }
+    Connection.prototype.toJSON = function() {
+      return {
+        input: {
+          index: this.input.index,
+          node: this.input.node.id
+        },
+        output: {
+          index: this.output.index,
+          node: this.output.node.id
+        }
+      };
+    };
     return Connection;
   })();
   /* VIEWS */
@@ -299,21 +326,24 @@
     return [arrow, arrow.geometry.vertices[0], arrow.geometry.vertices[1]];
   };
   /* FACTORIES */
-  make_node = function(text, position) {
+  make_node = function(text, position, id) {
     var as_number, information, node, value, _ref;
     if (position == null) {
       position = V(250, 250);
     }
+    if (id == null) {
+      id = void 0;
+    }
     if ((text[0] === last(text)) && ((_ref = text[0]) === "'" || _ref === '"')) {
       value = text.slice(1, text.length - 1);
-      return new Literal(position, text, value);
+      return new Literal(position, text, value, id);
     } else {
       as_number = parseFloat(text);
       if (!isNaN(as_number)) {
-        return new Literal(position, text, as_number);
+        return new Literal(position, text, as_number, id);
       } else if (text in functions) {
         information = functions[text];
-        node = new FunctionApplication(position, text, information);
+        node = new FunctionApplication(position, text, information, id);
         if (text === 'out') {
           program_outputs.push(node);
         }
@@ -423,12 +453,13 @@
     }
   };
   mouse_up = function(event) {
-    var target;
+    var connection, target;
     dragging_object = null;
     if (connecting_object) {
       target = ray_cast_mouse();
       if ((target != null ? target.model : void 0) instanceof Nib) {
-        make_connection(connecting_object, target);
+        connection = make_connection(connecting_object, target);
+        current_scope.connections.push(connection);
       }
       connecting_object = null;
       return scene.remove(system_arrow);
@@ -466,11 +497,12 @@
     field.mouseup(mouse_up);
     field.mousemove(mouse_move);
     node_form.submit(function(event) {
-      var node_name;
+      var node, node_name;
       event.preventDefault();
       node_name = node_input.val();
       node_input.val('');
-      return make_node(node_name);
+      node = make_node(node_name);
+      return current_scope.nodes.push(node);
     });
     return run_button.click(function(event) {
       event.preventDefault();
@@ -478,11 +510,30 @@
       return execute_program();
     });
   });
-  out = make_node('out', V(200, 100));
-  plus = make_node('+', V(200, 300));
-  five = make_node('5', V(150, 500));
-  three = make_node('3', V(250, 500));
-  five.outputs[0].connect(plus.inputs[0]);
-  three.outputs[0].connect(plus.inputs[1]);
-  plus.outputs[0].connect(out.inputs[0]);
+  /*
+  out = make_node 'out', V 200,100
+  plus = make_node '+', V 200,300
+  five = make_node '5', V 150, 500
+  three = make_node '3', V 250, 500
+  c1 = five.outputs[0].connect plus.inputs[0]
+  c2 = three.outputs[0].connect plus.inputs[1]
+  c3 = plus.outputs[0].connect out.inputs[0]
+  
+  console.log JSON.stringify
+      nodes:[out,plus,five,three]
+      connections:[c1,c2,c3]
+  */
+  program = JSON.parse("{\"nodes\":[{\"position\":{\"x\":200,\"y\":100},\"text\":\"out\",\"id\":\"8fec44185d39d0e8f1ed09ea4a847718\"},{\"position\":{\"x\":200,\"y\":300},\"text\":\"+\",\"id\":\"31cec90bf94eba7aa324ce32964c5537\"},{\"position\":{\"x\":150,\"y\":500},\"text\":\"5\",\"id\":\"86986624bf0a12d23b9df135ebccab43\"},{\"position\":{\"x\":250,\"y\":500},\"text\":\"3\",\"id\":\"ac5f46e9a911723b4d1dff267b0f4212\"}],\"connections\":[{\"input\":{\"index\":0,\"node\":\"31cec90bf94eba7aa324ce32964c5537\"},\"output\":{\"index\":0,\"node\":\"86986624bf0a12d23b9df135ebccab43\"}},{\"input\":{\"index\":1,\"node\":\"31cec90bf94eba7aa324ce32964c5537\"},\"output\":{\"index\":0,\"node\":\"ac5f46e9a911723b4d1dff267b0f4212\"}},{\"input\":{\"index\":0,\"node\":\"8fec44185d39d0e8f1ed09ea4a847718\"},\"output\":{\"index\":0,\"node\":\"31cec90bf94eba7aa324ce32964c5537\"}}]}");
+  _ref = program.nodes;
+  for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+    node = _ref[_i];
+    make_node(node.text, Vector.from(node.position), node.id);
+  }
+  _ref2 = program.connections;
+  for (_j = 0, _len2 = _ref2.length; _j < _len2; _j++) {
+    connection = _ref2[_j];
+    source_node = node_registry[connection.output.node];
+    sink_node = node_registry[connection.input.node];
+    source_node.outputs[connection.output.index].connect(sink_node.inputs[connection.input.index]);
+  }
 }).call(this);

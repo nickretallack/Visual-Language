@@ -13,6 +13,7 @@ projector = new THREE.Projector()
 last = (list) -> list[list.length-1]
 
 boxes = {}
+node_registry = {}
 
 update = ->
     renderer.render scene, camera
@@ -21,6 +22,9 @@ animate = ->
     requestAnimationFrame animate
     update()
 
+current_scope =
+    nodes:[]
+    connections:[]
 
 functions =
     '+':
@@ -98,6 +102,7 @@ execute_program = ->
 class Node
     constructor: ->
         @view = make_node_view @
+        node_registry[@id] = @
 
     set_position:(@position) ->
         @view.position.copy @position
@@ -105,15 +110,20 @@ class Node
     get_nibs: ->
         @inputs.concat @outputs
 
+    toJSON: ->
+        position:@position
+        text:@text
+        id:@id
+
 class FunctionApplication extends Node
-    constructor:(@position, @text, information) ->
+    constructor:(@position, @text, information, @id=UUID()) ->
         @value = information.definition
         super()
         @inputs = (new Input @, text, index, information.inputs.length-1 for text, index in information.inputs)
         @outputs = (new Output @, text, index, information.outputs.length-1 for text, index in information.outputs)
 
 class Literal extends Node
-    constructor:(@position, @text, @value) ->
+    constructor:(@position, @text, @value, @id=UUID()) ->
         super()
         @inputs = []
         @outputs = [new Output(@, 'O')]
@@ -155,6 +165,14 @@ class Connection
         @input._add_connection @, input_vertex
         @output._add_connection @, output_vertex
 
+    toJSON: ->
+        input:
+            index:@input.index
+            node:@input.node.id
+        output:
+            index:@output.index
+            node:@output.node.id
+
 ### VIEWS ###
             
 make_node_view = (node) ->
@@ -190,20 +208,20 @@ connection_view = (connection) ->
 
 ### FACTORIES ###
 
-make_node = (text, position=V(250,250)) ->
+make_node = (text, position=V(250,250), id=undefined) ->
     if (text[0] is last text) and (text[0] in ["'",'"'])
         # it's a string
         value = text[1...text.length-1]
-        return new Literal position, text, value
+        return new Literal position, text, value, id
     else
         as_number = parseFloat text
         if not isNaN as_number
             # it's a number
-            return new Literal position, text, as_number
+            return new Literal position, text, as_number, id
         else if text of functions
             # it's a function
             information = functions[text]
-            node = new FunctionApplication position, text, information
+            node = new FunctionApplication position, text, information, id
             program_outputs.push node if text is 'out'
             return node
 
@@ -214,7 +232,7 @@ make_connection = (source, target) ->
     else
         input = target.model
         output = source.model
-    new Connection input, output
+    return new Connection input, output
 
 ### CORE RENDERING ###
 
@@ -300,7 +318,8 @@ mouse_up = (event) ->
     if connecting_object
         target = ray_cast_mouse()
         if target?.model instanceof Nib
-            make_connection connecting_object, target
+            connection = make_connection connecting_object, target
+            current_scope.connections.push connection
         connecting_object = null
         scene.remove system_arrow
 
@@ -331,18 +350,34 @@ $ ->
         event.preventDefault()
         node_name = node_input.val()
         node_input.val ''
-        make_node node_name
+        node = make_node node_name
+        current_scope.nodes.push node
 
     run_button.click (event) ->
         event.preventDefault()
         event.stopPropagation()
         execute_program()
 
-
+###
 out = make_node 'out', V 200,100
 plus = make_node '+', V 200,300
 five = make_node '5', V 150, 500
 three = make_node '3', V 250, 500
-five.outputs[0].connect plus.inputs[0]
-three.outputs[0].connect plus.inputs[1]
-plus.outputs[0].connect out.inputs[0]
+c1 = five.outputs[0].connect plus.inputs[0]
+c2 = three.outputs[0].connect plus.inputs[1]
+c3 = plus.outputs[0].connect out.inputs[0]
+
+console.log JSON.stringify
+    nodes:[out,plus,five,three]
+    connections:[c1,c2,c3]
+###
+
+program = JSON.parse """{"nodes":[{"position":{"x":200,"y":100},"text":"out","id":"8fec44185d39d0e8f1ed09ea4a847718"},{"position":{"x":200,"y":300},"text":"+","id":"31cec90bf94eba7aa324ce32964c5537"},{"position":{"x":150,"y":500},"text":"5","id":"86986624bf0a12d23b9df135ebccab43"},{"position":{"x":250,"y":500},"text":"3","id":"ac5f46e9a911723b4d1dff267b0f4212"}],"connections":[{"input":{"index":0,"node":"31cec90bf94eba7aa324ce32964c5537"},"output":{"index":0,"node":"86986624bf0a12d23b9df135ebccab43"}},{"input":{"index":1,"node":"31cec90bf94eba7aa324ce32964c5537"},"output":{"index":0,"node":"ac5f46e9a911723b4d1dff267b0f4212"}},{"input":{"index":0,"node":"8fec44185d39d0e8f1ed09ea4a847718"},"output":{"index":0,"node":"31cec90bf94eba7aa324ce32964c5537"}}]}"""
+
+for node in program.nodes
+    make_node node.text, Vector.from(node.position), node.id
+
+for connection in program.connections
+    source_node = node_registry[connection.output.node]
+    sink_node = node_registry[connection.input.node] # todo: node_id
+    source_node.outputs[connection.output.index].connect sink_node.inputs[connection.input.index]
