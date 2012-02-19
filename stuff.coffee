@@ -30,19 +30,19 @@ functions =
 
 last = (list) -> list[list.length-1]
 
-make_function = (name) ->
+make_function = (name, location=V(250,250)) ->
     if (name[0] is last name) and (name[0] in ["'",'"'])
         # it's a string
-        make_top_box name, [], 'R'
+        make_top_box name, location, [], 'R'
     else
         as_number = parseFloat name
         if not isNaN as_number
             # it's a number
-            make_top_box name, [], 'R'
+            make_top_box name, location, [], 'R'
         else if name of functions
             # it's a function
             information = functions[name]
-            make_top_box name, information['inputs'], information['outputs']
+            make_top_box name, location, information['inputs'], information['outputs']
             
 
 make_nibs = (parent, list, type, y_position) ->
@@ -58,10 +58,9 @@ make_nibs = (parent, list, type, y_position) ->
             sub_box.data =
                 type:type
 
-make_top_box = (name, inputs, outputs) ->
+make_top_box = (name, position, inputs, outputs) ->
     main_box_size = V 50,50
     color = 0x888888
-    position = V 250,250
     main_box = make_box name, main_box_size, 10, color, position
 
     make_nibs main_box, inputs, 'input', +20
@@ -111,7 +110,9 @@ make_arrow = (source, target) ->
     #scene.add(line); 
 
 
-make_function '+'
+make_function '5', V 150,500
+make_function '3', V 250,500
+make_function '+', V 200,300
 
 mouse_coords = (event) ->
     V event.clientX, height-event.clientY

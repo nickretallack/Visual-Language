@@ -30,17 +30,20 @@
   last = function(list) {
     return list[list.length - 1];
   };
-  make_function = function(name) {
+  make_function = function(name, location) {
     var as_number, information, _ref;
+    if (location == null) {
+      location = V(250, 250);
+    }
     if ((name[0] === last(name)) && ((_ref = name[0]) === "'" || _ref === '"')) {
-      return make_top_box(name, [], 'R');
+      return make_top_box(name, location, [], 'R');
     } else {
       as_number = parseFloat(name);
       if (!isNaN(as_number)) {
-        return make_top_box(name, [], 'R');
+        return make_top_box(name, location, [], 'R');
       } else if (name in functions) {
         information = functions[name];
-        return make_top_box(name, information['inputs'], information['outputs']);
+        return make_top_box(name, location, information['inputs'], information['outputs']);
       }
     }
   };
@@ -62,11 +65,10 @@
       return _results;
     }
   };
-  make_top_box = function(name, inputs, outputs) {
-    var color, main_box, main_box_size, position;
+  make_top_box = function(name, position, inputs, outputs) {
+    var color, main_box, main_box_size;
     main_box_size = V(50, 50);
     color = 0x888888;
-    position = V(250, 250);
     main_box = make_box(name, main_box_size, 10, color, position);
     make_nibs(main_box, inputs, 'input', +20);
     make_nibs(main_box, outputs, 'output', -20);
@@ -117,7 +119,9 @@
     arrow.add(line);
     return arrow;
   };
-  make_function('+');
+  make_function('5', V(150, 500));
+  make_function('3', V(250, 500));
+  make_function('+', V(200, 300));
   mouse_coords = function(event) {
     return V(event.clientX, height - event.clientY);
   };
