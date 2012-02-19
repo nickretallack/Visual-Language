@@ -1,5 +1,5 @@
 (function() {
-  var Connection, FunctionApplication, Input, Literal, Nib, Node, Output, animate, boxes, camera, connecting_object, dragging_object, dragging_offset, evaluate_program, execute_program, functions, get_nib_position, height, input_nodes, last, make_arrow, make_box, make_connection, make_nib_view, make_node, make_node_view, mouse_coords, mouse_down, mouse_move, mouse_up, output_nodes, program_outputs, projector, ray_cast_mouse, renderer, scene, system_arrow, update, width;
+  var Connection, FunctionApplication, Input, Literal, Nib, Node, Output, animate, boxes, camera, connecting_object, connection_view, dragging_object, dragging_offset, evaluate_program, execute_program, functions, get_nib_position, height, input_nodes, last, make_arrow, make_box, make_connection, make_nib_view, make_node, make_node_view, mouse_coords, mouse_down, mouse_move, mouse_up, output_nodes, program_outputs, projector, ray_cast_mouse, renderer, scene, system_arrow, update, width;
   var __hasProp = Object.prototype.hasOwnProperty, __extends = function(child, parent) {
     for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; }
     function ctor() { this.constructor = child; }
@@ -210,6 +210,7 @@
   Nib = (function() {
     function Nib() {
       this.view = make_nib_view(this);
+      this.connections = [];
     }
     return Nib;
   })();
@@ -223,6 +224,14 @@
       Input.__super__.constructor.call(this);
     }
     __extends(Input, Nib);
+    Input.prototype.add_connection = function(connection, vertex) {
+      return this.connections = [
+        {
+          connection: connection,
+          vertex: vertex
+        }
+      ];
+    };
     return Input;
   })();
   Output = (function() {
@@ -235,12 +244,22 @@
       Output.__super__.constructor.call(this);
     }
     __extends(Output, Nib);
+    Output.prototype.add_connection = function(connection, vertex) {
+      return this.connections.push({
+        connection: connection,
+        vertex: vertex
+      });
+    };
     return Output;
   })();
   Connection = (function() {
     function Connection(input, output) {
+      var input_vertex, output_vertex, _ref;
       this.input = input;
       this.output = output;
+      _ref = connection_view(this), this.view = _ref[0], input_vertex = _ref[1], output_vertex = _ref[2];
+      this.input.add_connection(this, input_vertex);
+      this.output.add_connection(this, output_vertex);
     }
     return Connection;
   })();
@@ -251,7 +270,8 @@
     main_box = make_box(node.text, main_box_size, 10, color, node.position);
     main_box.model = node;
     scene.add(main_box);
-    return boxes[main_box.id] = main_box;
+    boxes[main_box.id] = main_box;
+    return main_box;
   };
   make_nib_view = function(nib) {
     var parent, sub_box, sub_box_color, sub_box_size, x_position, y_offset, y_position;
@@ -263,7 +283,8 @@
     sub_box = make_box(nib.text, sub_box_size, 5, sub_box_color, V(x_position, y_position));
     sub_box.model = nib;
     parent = nib.node.view;
-    return parent.add(sub_box);
+    parent.add(sub_box);
+    return sub_box;
   };
   /* CORE RENDERING */
   make_box = function(name, size, text_size, color, position) {
@@ -347,7 +368,7 @@
     dragging_object = null;
     if (connecting_object) {
       target = ray_cast_mouse();
-      if ((target != null ? target.data.type : void 0) === 'input' || (target != null ? target.data.type : void 0) === 'output') {
+      if ((target != null ? target.model : void 0) instanceof Nib) {
         make_connection(connecting_object, target);
       }
       connecting_object = null;
@@ -355,26 +376,22 @@
     }
   };
   make_connection = function(source, target) {
-    var arrow;
-    arrow = make_arrow(get_nib_position(source), get_nib_position(target));
-    /*
-        # don't allow double-connections at an input
-        input = if source.data.type is 'input' then source else target
-        if input.data.connections.length
-            connection = input.data.connections[0]
-            scene.remove connection.arrow
-            input.data.connections = []
-            # NOTE: leaves the hanging source connection =[
-            # NOTE: oh shit we don't really have a handle on the object.  Just a vertex.
-        */
-    source.data.connections.push({
-      nib: target,
-      arrow: arrow.geometry.vertices[0]
-    });
-    return target.data.connections.push({
-      nib: source,
-      arrow: arrow.geometry.vertices[1]
-    });
+    var input, output;
+    if (source.model instanceof Input) {
+      input = source.model;
+      output = target.model;
+    } else {
+      input = target.model;
+      output = source.model;
+    }
+    return new Connection(input, output);
+  };
+  connection_view = function(connection) {
+    var arrow, point1, point2;
+    point1 = get_nib_position(connection.input.view);
+    point2 = get_nib_position(connection.output.view);
+    arrow = make_arrow(point1, point2);
+    return [arrow, arrow.geometry.vertices[0], arrow.geometry.vertices[1]];
   };
   mouse_down = function(event) {
     var target;

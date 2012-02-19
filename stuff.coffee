@@ -126,19 +126,35 @@ class Literal extends Node
 class Nib  # Abstract. Do not instantiate
     constructor: ->
         @view = make_nib_view @
+        @connections = []
 
 class Input extends Nib
     constructor:(@node, @text, @index=0, @siblings=0) ->
         @type = 'input'
         super()
+
+    add_connection: (connection, vertex) ->
+        # TODO: delete other connections
+        @connections = [
+            connection:connection
+            vertex:vertex
+        ]
         
 class Output extends Nib
     constructor:(@node, @text, @index=0, @siblings=0) ->
         @type = 'output'
         super()
 
+    add_connection: (connection, vertex) ->
+        @connections.push
+            connection:connection
+            vertex:vertex
+
 class Connection
     constructor:(@input, @output) ->
+        [@view, input_vertex, output_vertex] = connection_view @
+        @input.add_connection @, input_vertex
+        @output.add_connection @, output_vertex
             
 make_node_view = (node) -> #(position, data_type, name, value, inputs, outputs) ->
     main_box_size = V 50,50
@@ -147,6 +163,7 @@ make_node_view = (node) -> #(position, data_type, name, value, inputs, outputs) 
     main_box.model = node
     scene.add main_box
     boxes[main_box.id] = main_box
+    return main_box
 
 
 make_nib_view = (nib) ->
@@ -162,6 +179,7 @@ make_nib_view = (nib) ->
 
     parent = nib.node.view
     parent.add sub_box
+    return sub_box
 
 ### CORE RENDERING ###
 
@@ -237,31 +255,25 @@ mouse_up = (event) ->
 
     if connecting_object
         target = ray_cast_mouse()
-        if target?.data.type is 'input' or target?.data.type is 'output'
+        if target?.model instanceof Nib
             make_connection connecting_object, target
         connecting_object = null
         scene.remove system_arrow
 
 make_connection = (source, target) ->
-    arrow = make_arrow get_nib_position(source), get_nib_position(target)
+    if source.model instanceof Input
+        input = source.model
+        output = target.model
+    else
+        input = target.model
+        output = source.model
+    new Connection input, output
 
-    ###
-    # don't allow double-connections at an input
-    input = if source.data.type is 'input' then source else target
-    if input.data.connections.length
-        connection = input.data.connections[0]
-        scene.remove connection.arrow
-        input.data.connections = []
-        # NOTE: leaves the hanging source connection =[
-        # NOTE: oh shit we don't really have a handle on the object.  Just a vertex.
-    ###
-
-    source.data.connections.push
-        nib:target
-        arrow:arrow.geometry.vertices[0]
-    target.data.connections.push
-        nib:source
-        arrow:arrow.geometry.vertices[1]
+connection_view = (connection) ->
+    point1 = get_nib_position connection.input.view
+    point2 = get_nib_position connection.output.view
+    arrow = make_arrow point1, point2
+    [arrow, arrow.geometry.vertices[0], arrow.geometry.vertices[1]]
 
 mouse_down = (event) ->
     target = ray_cast_mouse()
