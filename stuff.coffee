@@ -57,31 +57,31 @@ last = (list) -> list[list.length-1]
 
 
 
-
-evaluate_program = (nib) ->
-    data = nib.parent.data
-    if data.data_type is 'literal'
-        return data.value
-    if data.data_type is 'function'
+# TODO: support multiple outputs
+evaluate_program = (output) ->
+    node = output.node
+    if node instanceof Literal
+        return node.value
+    if node instanceof FunctionApplication
         # collect input values
         input_values = []
-        for input in data.inputs# input.data.connections[0].nib
+        for input in node.inputs
             do (input) ->
                 input_values.push ->
-                    nib = input.data.connections[0]?.nib
-                    throw "NotConnected" unless nib
-                    evaluate_program nib
-        return data.value.apply null, input_values
+                    output = input.connections[0]?.connection.output
+                    throw "NotConnected" unless output
+                    evaluate_program output
+        return node.value.apply null, input_values
             
 
 
 program_outputs = []
 execute_program = ->
-    for output_function in program_outputs
+    for node in program_outputs
         try
-            nib = output_function.data.inputs[0].data.connections[0]?.nib
-            throw "NotConnected" unless nib
-            result = evaluate_program nib
+            output = node.inputs[0].connections[0]?.connection.output
+            throw "NotConnected" unless output
+            result = evaluate_program output
             console.log result
             alert result
             
@@ -103,8 +103,8 @@ make_node = (text, position=V(250,250)) ->
         else if text of functions
             # it's a function
             information = functions[text]
-            box = new FunctionApplication position, text, information
-            program_outputs.push box if text is 'out'
+            node = new FunctionApplication position, text, information
+            program_outputs.push node if text is 'out'
     
 class Node
     constructor: ->

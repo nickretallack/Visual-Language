@@ -84,46 +84,46 @@
   last = function(list) {
     return list[list.length - 1];
   };
-  evaluate_program = function(nib) {
-    var data, input, input_values, _fn, _i, _len, _ref;
-    data = nib.parent.data;
-    if (data.data_type === 'literal') {
-      return data.value;
+  evaluate_program = function(output) {
+    var input, input_values, node, _fn, _i, _len, _ref;
+    node = output.node;
+    if (node instanceof Literal) {
+      return node.value;
     }
-    if (data.data_type === 'function') {
+    if (node instanceof FunctionApplication) {
       input_values = [];
-      _ref = data.inputs;
+      _ref = node.inputs;
       _fn = function(input) {
         return input_values.push(function() {
           var _ref2;
-          nib = (_ref2 = input.data.connections[0]) != null ? _ref2.nib : void 0;
-          if (!nib) {
+          output = (_ref2 = input.connections[0]) != null ? _ref2.connection.output : void 0;
+          if (!output) {
             throw "NotConnected";
           }
-          return evaluate_program(nib);
+          return evaluate_program(output);
         });
       };
       for (_i = 0, _len = _ref.length; _i < _len; _i++) {
         input = _ref[_i];
         _fn(input);
       }
-      return data.value.apply(null, input_values);
+      return node.value.apply(null, input_values);
     }
   };
   program_outputs = [];
   execute_program = function() {
-    var nib, output_function, result, _i, _len, _results;
+    var node, output, result, _i, _len, _results;
     _results = [];
     for (_i = 0, _len = program_outputs.length; _i < _len; _i++) {
-      output_function = program_outputs[_i];
+      node = program_outputs[_i];
       _results.push((function() {
         var _ref;
         try {
-          nib = (_ref = output_function.data.inputs[0].data.connections[0]) != null ? _ref.nib : void 0;
-          if (!nib) {
+          output = (_ref = node.inputs[0].connections[0]) != null ? _ref.connection.output : void 0;
+          if (!output) {
             throw "NotConnected";
           }
-          result = evaluate_program(nib);
+          result = evaluate_program(output);
           console.log(result);
           return alert(result);
         } catch (exception) {
@@ -138,7 +138,7 @@
     return _results;
   };
   make_node = function(text, position) {
-    var as_number, box, information, value, _ref;
+    var as_number, information, node, value, _ref;
     if (position == null) {
       position = V(250, 250);
     }
@@ -151,9 +151,9 @@
         return new Literal(position, text, as_number);
       } else if (text in functions) {
         information = functions[text];
-        box = new FunctionApplication(position, text, information);
+        node = new FunctionApplication(position, text, information);
         if (text === 'out') {
-          return program_outputs.push(box);
+          return program_outputs.push(node);
         }
       }
     }
