@@ -23,32 +23,39 @@
       inputs: ['L', 'R'],
       outputs: ['R'],
       definition: function(left, right) {
-        return left + right;
+        return left() + right();
       }
     },
     '-': {
       inputs: ['L', 'R'],
       outputs: ['R'],
       definition: function(left, right) {
-        return left - right;
+        return left() - right();
       }
     },
     'out': {
       inputs: ['I'],
       outputs: [],
       definition: function(input) {
-        return console.log(input);
+        return console.log(input());
       }
     },
     'if': {
       inputs: ['T', 'C', 'F'],
       outputs: ['R'],
       definition: function(true_result, condition, false_result) {
-        if (condition) {
-          return true_result;
+        if (condition()) {
+          return true_result();
         } else {
-          return false_result;
+          return false_result();
         }
+      }
+    },
+    'die': {
+      inputs: [],
+      outputs: ['R'],
+      definition: function() {
+        return console.log("OH NO!");
       }
     }
   };
@@ -56,7 +63,7 @@
     return list[list.length - 1];
   };
   evaluate_program = function(nib) {
-    var data, input, input_values, _i, _len, _ref;
+    var data, input, input_values, _fn, _i, _len, _ref;
     data = nib.parent.data;
     if (data.data_type === 'literal') {
       return data.value;
@@ -64,9 +71,15 @@
     if (data.data_type === 'function') {
       input_values = [];
       _ref = data.inputs;
+      _fn = function(nib) {
+        return input_values.push(function() {
+          return evaluate_program(nib);
+        });
+      };
       for (_i = 0, _len = _ref.length; _i < _len; _i++) {
         input = _ref[_i];
-        input_values.push(evaluate_program(input.data.connections[0].nib));
+        nib = input.data.connections[0].nib;
+        _fn(nib);
       }
       return data.value.apply(null, input_values);
     }

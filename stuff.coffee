@@ -26,20 +26,24 @@ functions =
     '+':
         inputs:['L','R']
         outputs:['R']
-        definition: (left, right) -> left + right
+        definition: (left, right) -> left() + right()
     '-':
         inputs:['L','R']
         outputs:['R']
-        definition: (left, right) -> left - right
+        definition: (left, right) -> left() - right()
     'out':
         inputs:['I']
         outputs:[]
-        definition: (input) -> console.log input
+        definition: (input) -> console.log input()
     'if':
         inputs:['T','C','F']
         outputs:['R']
-        definition: (true_result, condition, false_result) ->
-            if condition then true_result else false_result
+        definition: (true_result, condition, false_result) -> if condition() then true_result() else false_result()
+    'die':
+        inputs:[]
+        outputs:['R']
+        definition: -> console.log "OH NO!"
+        
 
 last = (list) -> list[list.length-1]
 
@@ -52,7 +56,9 @@ evaluate_program = (nib) ->
         # collect input values
         input_values = []
         for input in data.inputs# input.data.connections[0].nib
-            input_values.push evaluate_program input.data.connections[0].nib
+            nib = input.data.connections[0].nib
+            do (nib) ->
+                input_values.push -> evaluate_program nib
         return data.value.apply null, input_values
             
 
