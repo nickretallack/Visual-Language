@@ -1,5 +1,13 @@
 (function() {
-  var animate, boxes, camera, connecting_object, dragging_object, dragging_offset, evaluate_program, execute_program, functions, get_nib_position, height, input_nodes, last, make_arrow, make_box, make_connection, make_nibs, make_node, make_top_box, mouse_coords, mouse_down, mouse_move, mouse_up, output_nodes, program_outputs, projector, ray_cast_mouse, renderer, scene, system_arrow, update, width;
+  var Connection, FunctionApplication, Input, Literal, Nib, Node, Output, animate, boxes, camera, connecting_object, dragging_object, dragging_offset, evaluate_program, execute_program, functions, get_nib_position, height, input_nodes, last, make_arrow, make_box, make_connection, make_nib_view, make_node, make_node_view, mouse_coords, mouse_down, mouse_move, mouse_up, output_nodes, program_outputs, projector, ray_cast_mouse, renderer, scene, system_arrow, update, width;
+  var __hasProp = Object.prototype.hasOwnProperty, __extends = function(child, parent) {
+    for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; }
+    function ctor() { this.constructor = child; }
+    ctor.prototype = parent.prototype;
+    child.prototype = new ctor;
+    child.__super__ = parent.prototype;
+    return child;
+  };
   height = window.innerHeight;
   width = window.innerWidth;
   camera = new THREE.OrthographicCamera(0, width, height, 0, -2000, 1000);
@@ -129,64 +137,135 @@
     }
     return _results;
   };
-  make_node = function(name, location) {
-    var as_number, box, information, _ref;
-    if (location == null) {
-      location = V(250, 250);
+  make_node = function(text, position) {
+    var as_number, box, information, value, _ref;
+    if (position == null) {
+      position = V(250, 250);
     }
-    if ((name[0] === last(name)) && ((_ref = name[0]) === "'" || _ref === '"')) {
-      return make_top_box(location, 'literal', name, name.slice(1, name.length - 1), [], 'R');
+    if ((text[0] === last(text)) && ((_ref = text[0]) === "'" || _ref === '"')) {
+      value = text.slice(1, text.length - 1);
+      return new Literal(position, text, value);
     } else {
-      as_number = parseFloat(name);
+      as_number = parseFloat(text);
       if (!isNaN(as_number)) {
-        return make_top_box(location, 'literal', name, as_number, [], 'R');
-      } else if (name in functions) {
-        information = functions[name];
-        box = make_top_box(location, 'function', name, information.definition, information['inputs'], information['outputs']);
-        if (name === 'out') {
+        return new Literal(position, text, as_number);
+      } else if (text in functions) {
+        information = functions[text];
+        box = new FunctionApplication(position, text, information);
+        if (text === 'out') {
           return program_outputs.push(box);
         }
       }
     }
   };
-  make_nibs = function(parent, list, type, y_position) {
-    var index, item, sub_box, sub_box_color, sub_box_size, x_position, _len, _results;
-    sub_box_size = V(20, 20);
-    sub_box_color = 0x888888;
-    if (list) {
-      _results = [];
-      for (index = 0, _len = list.length; index < _len; index++) {
-        item = list[index];
-        x_position = -20 + 40 * (index / (list.length - 1));
-        sub_box = make_box(item, sub_box_size, 5, sub_box_color, V(x_position, y_position));
-        parent.add(sub_box);
-        parent.data["" + type + "s"].push(sub_box);
-        parent.data.nibs.push(sub_box);
-        _results.push(sub_box.data = {
-          type: type,
-          connections: []
-        });
-      }
-      return _results;
+  Node = (function() {
+    function Node() {
+      this.view = make_node_view(this);
     }
-  };
-  make_top_box = function(position, data_type, name, value, inputs, outputs) {
+    return Node;
+  })();
+  FunctionApplication = (function() {
+    function FunctionApplication(position, text, information) {
+      var index, text;
+      this.position = position;
+      this.text = text;
+      FunctionApplication.__super__.constructor.call(this);
+      this.value = information.definition;
+      this.inputs = (function() {
+        var _len, _ref, _results;
+        _ref = information.inputs;
+        _results = [];
+        for (index = 0, _len = _ref.length; index < _len; index++) {
+          text = _ref[index];
+          _results.push(new Input(this, text, index, information.inputs.length - 1));
+        }
+        return _results;
+      }).call(this);
+      this.outpus = (function() {
+        var _len, _ref, _results;
+        _ref = information.outputs;
+        _results = [];
+        for (index = 0, _len = _ref.length; index < _len; index++) {
+          text = _ref[index];
+          _results.push(new Output(this, text, index, information.outputs.length - 1));
+        }
+        return _results;
+      }).call(this);
+    }
+    __extends(FunctionApplication, Node);
+    return FunctionApplication;
+  })();
+  Literal = (function() {
+    function Literal(position, text, value) {
+      this.position = position;
+      this.text = text;
+      this.value = value;
+      this.inputs = [];
+      this.outpus = new Output(this, 'O');
+      Literal.__super__.constructor.call(this);
+    }
+    __extends(Literal, Node);
+    return Literal;
+  })();
+  Nib = (function() {
+    function Nib() {
+      this.view = make_nib_view(this);
+    }
+    return Nib;
+  })();
+  Input = (function() {
+    function Input(node, text, index, siblings) {
+      this.node = node;
+      this.text = text;
+      this.index = index != null ? index : 0;
+      this.siblings = siblings != null ? siblings : 1;
+      this.type = 'input';
+      Input.__super__.constructor.call(this);
+    }
+    __extends(Input, Nib);
+    return Input;
+  })();
+  Output = (function() {
+    function Output(node, text, index, siblings) {
+      this.node = node;
+      this.text = text;
+      this.index = index != null ? index : 0;
+      this.siblings = siblings != null ? siblings : 1;
+      this.type = 'output';
+      Output.__super__.constructor.call(this);
+    }
+    __extends(Output, Nib);
+    return Output;
+  })();
+  Connection = (function() {
+    function Connection(input, output) {
+      this.input = input;
+      this.output = output;
+    }
+    return Connection;
+  })();
+  make_node_view = function(node) {
     var color, main_box, main_box_size;
     main_box_size = V(50, 50);
     color = 0x888888;
-    main_box = make_box(name, main_box_size, 10, color, position);
+    main_box = make_box(node.text, main_box_size, 10, color, node.position);
     main_box.data = {
       type: 'box',
-      data_type: data_type,
-      value: value,
-      inputs: [],
-      outputs: [],
-      nibs: []
+      model: node
     };
-    make_nibs(main_box, inputs, 'input', +20);
-    make_nibs(main_box, outputs, 'output', -20);
     scene.add(main_box);
     return boxes[main_box.id] = main_box;
+  };
+  make_nib_view = function(nib) {
+    var parent, sub_box, sub_box_color, sub_box_size, x_position, y_offset, y_position;
+    sub_box_size = V(20, 20);
+    sub_box_color = 0x888888;
+    y_offset = 20;
+    x_position = -20 + 40 * nib.index / nib.siblings;
+    y_position = y_offset * (nib.type === 'input' ? 1 : -1);
+    parent = nib.node.view;
+    sub_box = make_box(nib.text, sub_box_size, 5, sub_box_color, V(x_position, y_position));
+    return parent.add(sub_box);
   };
   make_box = function(name, size, text_size, color, position) {
     var box, centerOffset, geometry, material, mesh, text, text_color, text_geometry;

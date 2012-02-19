@@ -55,6 +55,9 @@ functions =
 
 last = (list) -> list[list.length-1]
 
+
+
+
 evaluate_program = (nib) ->
     data = nib.parent.data
     if data.data_type is 'literal'
@@ -87,57 +90,79 @@ execute_program = ->
                 alert "Your program is not fully connected"
             else throw exception
             
-    
-
-make_node = (name, location=V(250,250)) ->
-    if (name[0] is last name) and (name[0] in ["'",'"'])
+make_node = (text, position=V(250,250)) ->
+    if (text[0] is last text) and (text[0] in ["'",'"'])
         # it's a string
-        make_top_box location, 'literal', name, name[1...name.length-1], [], 'R'
+        value = text[1...text.length-1]
+        new Literal position, text, value
     else
-        as_number = parseFloat name
+        as_number = parseFloat text
         if not isNaN as_number
             # it's a number
-            make_top_box location, 'literal', name, as_number, [], 'R'
-        else if name of functions
+            new Literal position, text, as_number
+        else if text of functions
             # it's a function
-            information = functions[name]
-            box = make_top_box location, 'function', name, information.definition, information['inputs'], information['outputs']
-            program_outputs.push box if name is 'out'
+            information = functions[text]
+            box = new FunctionApplication position, text, information
+            program_outputs.push box if text is 'out'
+    
+class Node
+    constructor: ->
+        @view = make_node_view @
+
+class FunctionApplication extends Node
+    constructor:(@position, @text, information) ->
+        super()
+        @value = information.definition
+        @inputs = (new Input @, text, index, information.inputs.length-1 for text, index in information.inputs)
+        @outpus = (new Output @, text, index, information.outputs.length-1 for text, index in information.outputs)
+
+class Literal extends Node
+    constructor:(@position, @text, @value) ->
+        @inputs = []
+        @outpus = new Output @, 'O'
+        super()
+    
+class Nib  # Abstract. Do not instantiate
+    constructor: ->
+        @view = make_nib_view @
+
+class Input extends Nib
+    constructor:(@node, @text, @index=0, @siblings=1) ->
+        @type = 'input'
+        super()
+        
+class Output extends Nib
+    constructor:(@node, @text, @index=0, @siblings=1) ->
+        @type = 'output'
+        super()
+
+class Connection
+    constructor:(@input, @output) ->
             
-
-make_nibs = (parent, list, type, y_position) ->
-    sub_box_size = V 20,20
-    sub_box_color = 0x888888
-    if list
-        for item, index in list
-            x_position = -20 + 40* (index/(list.length-1))
-            sub_box = make_box item, sub_box_size, 5, sub_box_color, V x_position,y_position
-            parent.add sub_box
-            parent.data["#{type}s"].push sub_box
-            parent.data.nibs.push sub_box
-            #input_nodes[sub_box.id] = sub_box
-
-            sub_box.data =
-                type:type
-                connections:[]
-
-make_top_box = (position, data_type, name, value, inputs, outputs) ->
+make_node_view = (node) -> #(position, data_type, name, value, inputs, outputs) ->
     main_box_size = V 50,50
     color = 0x888888
-    main_box = make_box name, main_box_size, 10, color, position
+    main_box = make_box node.text, main_box_size, 10, color, node.position
     main_box.data =
         type:'box'
-        data_type:data_type
-        value:value
-        inputs:[]
-        outputs:[]
-        nibs:[]
-
-    make_nibs main_box, inputs, 'input', +20
-    make_nibs main_box, outputs, 'output', -20
+        model:node
 
     scene.add main_box
     boxes[main_box.id] = main_box
+
+
+make_nib_view = (nib) ->
+    sub_box_size = V 20,20
+    sub_box_color = 0x888888
+    y_offset = 20
+
+    x_position = -20 + 40* nib.index/nib.siblings
+    y_position = y_offset * if nib.type is 'input' then 1 else -1
+    parent = nib.node.view
+
+    sub_box = make_box nib.text, sub_box_size, 5, sub_box_color, V x_position,y_position
+    parent.add sub_box
 
 make_box = (name, size, text_size, color, position) ->
     box = new THREE.Object3D()
