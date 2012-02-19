@@ -25,7 +25,7 @@ animate = ->
 functions =
     '+':
         inputs:['L','R']
-        outputs:['result']
+        outputs:['R']
         definition: (left, right) -> left + right
 
 last = (list) -> list[list.length-1]
@@ -33,17 +33,30 @@ last = (list) -> list[list.length-1]
 make_function = (name) ->
     if (name[0] is last name) and (name[0] in ["'",'"'])
         # it's a string
-        make_top_box name
+        make_top_box name, [], 'R'
     else
         as_number = parseFloat name
         if not isNaN as_number
             # it's a number
-            make_top_box name
+            make_top_box name, [], 'R'
         else if name of functions
             # it's a function
             information = functions[name]
-            make_top_box name, information['inputs']
+            make_top_box name, information['inputs'], information['outputs']
             
+
+make_nibs = (parent, list, type, y_position) ->
+    sub_box_size = V 20,20
+    sub_box_color = 0x888888
+    if list
+        for item, index in list
+            x_position = -20 + 40* (index/(list.length-1))
+            sub_box = make_box item, sub_box_size, 5, sub_box_color, V x_position,y_position
+            parent.add sub_box
+            #input_nodes[sub_box.id] = sub_box
+
+            sub_box.data =
+                type:type
 
 make_top_box = (name, inputs, outputs) ->
     main_box_size = V 50,50
@@ -51,17 +64,8 @@ make_top_box = (name, inputs, outputs) ->
     position = V 250,250
     main_box = make_box name, main_box_size, 10, color, position
 
-    sub_box_size = V 20,20
-    sub_box_color = 0x888888
-    if inputs
-        for input, index in inputs
-            x_position = -20 + 40* (index/(inputs.length-1))
-            sub_box = make_box input, sub_box_size, 5, sub_box_color, V x_position,+20
-            main_box.add sub_box
-            input_nodes[sub_box.id] = sub_box
-
-            sub_box.data =
-                type:'input'
+    make_nibs main_box, inputs, 'input', +20
+    make_nibs main_box, outputs, 'output', -20
 
     scene.add main_box
     boxes[main_box.id] = main_box

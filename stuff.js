@@ -1,5 +1,5 @@
 (function() {
-  var animate, arrow_object, arrow_source, boxes, camera, dragging_object, dragging_offset, functions, height, input_nodes, last, make_arrow, make_box, make_connection, make_function, make_top_box, mouse_coords, mouse_down, mouse_move, mouse_up, output_nodes, projector, ray_cast_mouse, renderer, scene, update, width;
+  var animate, arrow_object, arrow_source, boxes, camera, dragging_object, dragging_offset, functions, height, input_nodes, last, make_arrow, make_box, make_connection, make_function, make_nibs, make_top_box, mouse_coords, mouse_down, mouse_move, mouse_up, output_nodes, projector, ray_cast_mouse, renderer, scene, update, width;
   height = window.innerHeight;
   width = window.innerWidth;
   camera = new THREE.OrthographicCamera(0, width, height, 0, -2000, 1000);
@@ -21,7 +21,7 @@
   functions = {
     '+': {
       inputs: ['L', 'R'],
-      outputs: ['result'],
+      outputs: ['R'],
       definition: function(left, right) {
         return left + right;
       }
@@ -33,37 +33,43 @@
   make_function = function(name) {
     var as_number, information, _ref;
     if ((name[0] === last(name)) && ((_ref = name[0]) === "'" || _ref === '"')) {
-      return make_top_box(name);
+      return make_top_box(name, [], 'R');
     } else {
       as_number = parseFloat(name);
       if (!isNaN(as_number)) {
-        return make_top_box(name);
+        return make_top_box(name, [], 'R');
       } else if (name in functions) {
         information = functions[name];
-        return make_top_box(name, information['inputs']);
+        return make_top_box(name, information['inputs'], information['outputs']);
       }
     }
   };
+  make_nibs = function(parent, list, type, y_position) {
+    var index, item, sub_box, sub_box_color, sub_box_size, x_position, _len, _results;
+    sub_box_size = V(20, 20);
+    sub_box_color = 0x888888;
+    if (list) {
+      _results = [];
+      for (index = 0, _len = list.length; index < _len; index++) {
+        item = list[index];
+        x_position = -20 + 40 * (index / (list.length - 1));
+        sub_box = make_box(item, sub_box_size, 5, sub_box_color, V(x_position, y_position));
+        parent.add(sub_box);
+        _results.push(sub_box.data = {
+          type: type
+        });
+      }
+      return _results;
+    }
+  };
   make_top_box = function(name, inputs, outputs) {
-    var color, index, input, main_box, main_box_size, position, sub_box, sub_box_color, sub_box_size, x_position, _len;
+    var color, main_box, main_box_size, position;
     main_box_size = V(50, 50);
     color = 0x888888;
     position = V(250, 250);
     main_box = make_box(name, main_box_size, 10, color, position);
-    sub_box_size = V(20, 20);
-    sub_box_color = 0x888888;
-    if (inputs) {
-      for (index = 0, _len = inputs.length; index < _len; index++) {
-        input = inputs[index];
-        x_position = -20 + 40 * (index / (inputs.length - 1));
-        sub_box = make_box(input, sub_box_size, 5, sub_box_color, V(x_position, +20));
-        main_box.add(sub_box);
-        input_nodes[sub_box.id] = sub_box;
-        sub_box.data = {
-          type: 'input'
-        };
-      }
-    }
+    make_nibs(main_box, inputs, 'input', +20);
+    make_nibs(main_box, outputs, 'output', -20);
     scene.add(main_box);
     boxes[main_box.id] = main_box;
     return main_box.data = {
