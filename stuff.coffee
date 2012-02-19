@@ -98,6 +98,15 @@ execute_program = ->
             else throw exception
 
 ### MODELS ###
+
+class SubRoutine
+    constructor:(@name, information) ->
+        @view = make_subroutine_view @
+        # These are intentionally reversed.  The inputs to a subroutine show up as outputs inside it
+        @inputs = (new Output @, text, index, information.inputs.length-1 for text, index in information.inputs)
+        @outputs = (new Input @, text, index, information.outputs.length-1 for text, index in information.outputs)
+        @nodes = []
+        @connections = []
     
 class Node
     constructor: ->
@@ -130,9 +139,10 @@ class Literal extends Node
     
 class Nib  # Abstract. Do not instantiate
     constructor: ->
-        @view = make_nib_view @
+        @view = make_nib_view @, @node instanceof Node
         @connections = []
 
+# TODO: change nib 'node' to parent since it might not be a node
 class Input extends Nib
     constructor:(@node, @text, @index=0, @siblings=0) ->
         super()
@@ -174,7 +184,14 @@ class Connection
             node_id:@output.node.id
 
 ### VIEWS ###
-            
+
+make_subroutine_view = (subroutine) ->
+    box_size = V 500,500
+    box = make_box subroutine.name, box_size, 10, 0xFFFFFF, V(0,0), true
+    box.model = subroutine
+    scene.add box
+    return box
+
 make_node_view = (node) ->
     main_box_size = V 50,50
     color = 0x888888
@@ -184,12 +201,15 @@ make_node_view = (node) ->
     boxes[main_box.id] = main_box
     return main_box
 
-make_nib_view = (nib) ->
+make_nib_view = (nib, is_node) ->
     sub_box_size = V 20,20
     sub_box_color = 0x888888
-    y_offset = 20
 
-    x_position = -20 + 40* nib.index/nib.siblings
+    parent_size = if is_node then V(60,60) else V(490,490)
+
+    y_offset = parent_size.y / 2.0
+
+    x_position = -parent_size.x / 2.0 + parent_size.x * nib.index/nib.siblings
     y_position = y_offset * if nib instanceof Input then 1 else -1
 
     sub_box = make_box nib.text, sub_box_size, 5, sub_box_color, V x_position,y_position
@@ -236,11 +256,11 @@ make_connection = (source, target) ->
 
 ### CORE RENDERING ###
 
-make_box = (name, size, text_size, color, position) ->
+make_box = (name, size, text_size, color, position, outline=false) ->
     box = new THREE.Object3D()
 
     geometry = new THREE.PlaneGeometry size.components()...
-    material = new THREE.MeshBasicMaterial color:color
+    material = new THREE.MeshBasicMaterial color:color, wireframe:outline
     mesh = new THREE.Mesh geometry, material
     mesh.position = V(0,0).three()
     box.add mesh
@@ -381,3 +401,5 @@ load_basic_program = ->
         source_node = node_registry[connection.output.node_id]
         sink_node = node_registry[connection.input.node_id] # todo: node_id
         source_node.outputs[connection.output.index].connect sink_node.inputs[connection.input.index]
+
+load_basic_program()

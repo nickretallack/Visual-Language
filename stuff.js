@@ -1,5 +1,5 @@
 (function() {
-  var Connection, FunctionApplication, Input, Literal, Nib, Node, Output, animate, boxes, camera, connecting_object, connection_view, current_scope, dragging_object, dragging_offset, evaluate_program, execute_program, functions, get_nib_position, height, last, load_basic_program, make_arrow, make_basic_program, make_box, make_connection, make_nib_view, make_node, make_node_view, mouse_coords, mouse_down, mouse_move, mouse_up, node_registry, program_outputs, projector, ray_cast_mouse, renderer, scene, system_arrow, update, width;
+  var Connection, FunctionApplication, Input, Literal, Nib, Node, Output, SubRoutine, animate, boxes, camera, connecting_object, connection_view, current_scope, dragging_object, dragging_offset, evaluate_program, execute_program, functions, get_nib_position, height, last, load_basic_program, make_arrow, make_basic_program, make_box, make_connection, make_nib_view, make_node, make_node_view, make_subroutine_view, mouse_coords, mouse_down, mouse_move, mouse_up, node_registry, program_outputs, projector, ray_cast_mouse, renderer, scene, system_arrow, update, width;
   var __hasProp = Object.prototype.hasOwnProperty, __extends = function(child, parent) {
     for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; }
     function ctor() { this.constructor = child; }
@@ -156,6 +156,36 @@
     return _results;
   };
   /* MODELS */
+  SubRoutine = (function() {
+    function SubRoutine(name, information) {
+      var index, text;
+      this.name = name;
+      this.view = make_subroutine_view(this);
+      this.inputs = (function() {
+        var _len, _ref, _results;
+        _ref = information.inputs;
+        _results = [];
+        for (index = 0, _len = _ref.length; index < _len; index++) {
+          text = _ref[index];
+          _results.push(new Output(this, text, index, information.inputs.length - 1));
+        }
+        return _results;
+      }).call(this);
+      this.outputs = (function() {
+        var _len, _ref, _results;
+        _ref = information.outputs;
+        _results = [];
+        for (index = 0, _len = _ref.length; index < _len; index++) {
+          text = _ref[index];
+          _results.push(new Input(this, text, index, information.outputs.length - 1));
+        }
+        return _results;
+      }).call(this);
+      this.nodes = [];
+      this.connections = [];
+    }
+    return SubRoutine;
+  })();
   Node = (function() {
     function Node() {
       this.view = make_node_view(this);
@@ -224,7 +254,7 @@
   })();
   Nib = (function() {
     function Nib() {
-      this.view = make_nib_view(this);
+      this.view = make_nib_view(this, this.node instanceof Node);
       this.connections = [];
     }
     return Nib;
@@ -295,6 +325,14 @@
     return Connection;
   })();
   /* VIEWS */
+  make_subroutine_view = function(subroutine) {
+    var box, box_size;
+    box_size = V(500, 500);
+    box = make_box(subroutine.name, box_size, 10, 0xFFFFFF, V(0, 0), true);
+    box.model = subroutine;
+    scene.add(box);
+    return box;
+  };
   make_node_view = function(node) {
     var color, main_box, main_box_size;
     main_box_size = V(50, 50);
@@ -305,12 +343,13 @@
     boxes[main_box.id] = main_box;
     return main_box;
   };
-  make_nib_view = function(nib) {
-    var parent, sub_box, sub_box_color, sub_box_size, x_position, y_offset, y_position;
+  make_nib_view = function(nib, is_node) {
+    var parent, parent_size, sub_box, sub_box_color, sub_box_size, x_position, y_offset, y_position;
     sub_box_size = V(20, 20);
     sub_box_color = 0x888888;
-    y_offset = 20;
-    x_position = -20 + 40 * nib.index / nib.siblings;
+    parent_size = is_node ? V(60, 60) : V(490, 490);
+    y_offset = parent_size.y / 2.0;
+    x_position = -parent_size.x / 2.0 + parent_size.x * nib.index / nib.siblings;
     y_position = y_offset * (nib instanceof Input ? 1 : -1);
     sub_box = make_box(nib.text, sub_box_size, 5, sub_box_color, V(x_position, y_position));
     sub_box.model = nib;
@@ -363,8 +402,11 @@
     return new Connection(input, output);
   };
   /* CORE RENDERING */
-  make_box = function(name, size, text_size, color, position) {
+  make_box = function(name, size, text_size, color, position, outline) {
     var box, centerOffset, geometry, material, mesh, text, text_color, text_geometry;
+    if (outline == null) {
+      outline = false;
+    }
     box = new THREE.Object3D();
     geometry = (function(func, args, ctor) {
       ctor.prototype = func.prototype;
@@ -372,7 +414,8 @@
       return typeof result === "object" ? result : child;
     })(THREE.PlaneGeometry, size.components(), function() {});
     material = new THREE.MeshBasicMaterial({
-      color: color
+      color: color,
+      wireframe: outline
     });
     mesh = new THREE.Mesh(geometry, material);
     mesh.position = V(0, 0).three();
@@ -542,4 +585,5 @@
     }
     return _results;
   };
+  load_basic_program();
 }).call(this);
