@@ -31,10 +31,6 @@ functions =
         inputs:['L','R']
         outputs:['R']
         definition: (left, right) -> left() - right()
-    'out':
-        inputs:['I']
-        outputs:[]
-        definition: (input) -> console.log input()
     'if':
         inputs:['T','C','F']
         outputs:['R']
@@ -355,11 +351,9 @@ mouse_move = (event) ->
     if connecting_object
         system_arrow.geometry.vertices[1].position = vector
 
-$ ->
+window.Controller = ->
+    console.log "running"
     field = $("#field")
-    node_form = $('#add_node')
-    node_input = $('#node_name')
-    run_button = $('#run_button')
 
     field.append renderer.domElement
     animate()
@@ -367,17 +361,18 @@ $ ->
     field.mouseup mouse_up
     field.mousemove mouse_move
 
-    node_form.submit (event) ->
-        event.preventDefault()
-        node_name = node_input.val()
-        node_input.val ''
-        node = make_node node_name
+    @new_node_text = ''
+    @add_new_node = =>
+        @add_node @new_node_text
+        @new_node_text = ''
+
+    @add_node = (text) =>
+        node = make_node text
         current_scope.nodes.push node
 
-    run_button.click (event) ->
-        event.preventDefault()
-        event.stopPropagation()
-        execute_program()
+    @run_program = execute_program
+
+    @library = functions
 
 current_scope = main = new SubRoutine 'main', [], ['OUT']
 
@@ -388,8 +383,6 @@ make_basic_program = ->
     c1 = five.outputs[0].connect plus.inputs[0]
     c2 = three.outputs[0].connect plus.inputs[1]
     c3 = plus.outputs[0].connect current_scope.outputs[0]
-
-    console.log JSON.stringify current_scope
 
 load_program = (source) ->
     program = JSON.parse source

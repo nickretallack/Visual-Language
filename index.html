@@ -1,3 +1,8 @@
+<!doctype html>
+<html xmlns:ng="http://angularjs.org" ng:app>
+<head>
+<title>Visual Language</title>
+<script src="common/angular-0.10.6.js"></script>
 <script src="common/minified/Three.js"></script>
 <script src="common/vector_compatibility.js"></script>
 <script src="common/animation_frame.js"></script>
@@ -8,19 +13,23 @@
 <script src="stuff.js"></script>
 <link rel="stylesheet" href="common/reset.css">
 <link rel="stylesheet" href="style.css">
+</head>
 
-<body>
+<body ng:controller="Controller">
 <div id="field"></div>
 
 <div id="tools">
 
-<form id="add_node">
-<input type="text" id="node_name"><button>Add</button>
-<button id="run_button">Run</button>
-</form>
+<form ng:submit="add_new_node()"> <input ng:model="new_node_text"> <button>Add</button> </form>
+
+<button ng:click="run_program()">Run</button>
 
 <h2>Library</h2>
-<div id="library">
-</div>
+<ul id="library">
+<li ng:repeat="(text, item) in library">
+    <a ng:click="add_node(text)">{{text}}</a>
+</li>
+</ul>
 
 </body>
+</html>

@@ -7,7 +7,7 @@
     child.prototype = new ctor;
     child.__super__ = parent.prototype;
     return child;
-  };
+  }, __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
   height = 500;
   width = 500;
   camera = new THREE.OrthographicCamera(0, width, height, 0, -2000, 1000);
@@ -41,13 +41,6 @@
       outputs: ['R'],
       definition: function(left, right) {
         return left() - right();
-      }
-    },
-    'out': {
-      inputs: ['I'],
-      outputs: [],
-      definition: function(input) {
-        return console.log(input());
       }
     },
     'if': {
@@ -522,31 +515,28 @@
       return system_arrow.geometry.vertices[1].position = vector;
     }
   };
-  $(function() {
-    var field, node_form, node_input, run_button;
+  window.Controller = function() {
+    var field;
+    console.log("running");
     field = $("#field");
-    node_form = $('#add_node');
-    node_input = $('#node_name');
-    run_button = $('#run_button');
     field.append(renderer.domElement);
     animate();
     field.mousedown(mouse_down);
     field.mouseup(mouse_up);
     field.mousemove(mouse_move);
-    node_form.submit(function(event) {
-      var node, node_name;
-      event.preventDefault();
-      node_name = node_input.val();
-      node_input.val('');
-      node = make_node(node_name);
+    this.new_node_text = '';
+    this.add_new_node = __bind(function() {
+      this.add_node(this.new_node_text);
+      return this.new_node_text = '';
+    }, this);
+    this.add_node = __bind(function(text) {
+      var node;
+      node = make_node(text);
       return current_scope.nodes.push(node);
-    });
-    return run_button.click(function(event) {
-      event.preventDefault();
-      event.stopPropagation();
-      return execute_program();
-    });
-  });
+    }, this);
+    this.run_program = execute_program;
+    return this.library = functions;
+  };
   current_scope = main = new SubRoutine('main', [], ['OUT']);
   make_basic_program = function() {
     var c1, c2, c3, five, plus, three;
@@ -555,8 +545,7 @@
     three = make_node('3', V(300, 300));
     c1 = five.outputs[0].connect(plus.inputs[0]);
     c2 = three.outputs[0].connect(plus.inputs[1]);
-    c3 = plus.outputs[0].connect(current_scope.outputs[0]);
-    return console.log(JSON.stringify(current_scope));
+    return c3 = plus.outputs[0].connect(current_scope.outputs[0]);
   };
   load_program = function(source) {
     var connection, node, program, sink, _i, _j, _len, _len2, _ref, _ref2, _results;
