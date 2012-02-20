@@ -69,7 +69,7 @@ evaluate_program = (output) ->
         for input in parent.inputs
             do (input) ->
                 input_values.push ->
-                    output = input.connections[0]?.connection.output
+                    output = input.get_connection()?.connection.output
                     throw "NotConnected" unless output
                     evaluate_program output
         return parent.value.apply null, input_values
@@ -77,7 +77,7 @@ evaluate_program = (output) ->
 program_outputs = []
 execute_program = ->
     try
-        output = main.outputs[0].connections[0]?.connection.output
+        output = main.outputs[0].get_connection()?.connection.output
         throw "NotConnected" unless output
         result = evaluate_program output
         console.log result
@@ -98,7 +98,7 @@ class SubRoutine
         @inputs = (new Output @, text, index, inputs.length-1 for text, index in inputs)
         @outputs = (new Input @, text, index, outputs.length-1 for text, index in outputs)
         @nodes = {}
-        @connections = []
+        @connections = {}
 
     toJSON: ->
         nodes:_.values @nodes
@@ -142,7 +142,11 @@ class Literal extends Node
 class Nib  # Abstract. Do not instantiate
     constructor: ->
         @view = make_nib_view @, @parent instanceof Node
-        @connections = []
+        @connections = {}
+
+    delete_connections: ->
+        for id, connection of @connections
+            connection.connection.delete()
 
 # TODO: change nib 'node' to parent since it might not be a node
 class Input extends Nib
@@ -150,11 +154,15 @@ class Input extends Nib
         super()
 
     _add_connection: (connection, vertex) ->
-        # TODO: delete other connections
-        @connections = [
+        # delete previous connection
+        @get_connection()?.delete()
+        @connections[connection.id] =
             connection:connection
             vertex:vertex
-        ]
+
+    get_connection: ->
+        for id, connection of @connections
+            return connection
 
     connect:(output) ->
         new Connection @ output
@@ -164,7 +172,7 @@ class Output extends Nib
         super()
 
     _add_connection: (connection, vertex) ->
-        @connections.push
+        @connections[connection.id] =
             connection:connection
             vertex:vertex
 
@@ -172,12 +180,12 @@ class Output extends Nib
         new Connection input, @
 
 class Connection
-    constructor:(@input, @output) ->
+    constructor:(@input, @output, @id=UUID()) ->
         [@view, input_vertex, output_vertex] = connection_view @
         @input._add_connection @, input_vertex
         @output._add_connection @, output_vertex
         @scope = current_scope
-        @scope.connections.push @
+        @scope.connections[@id] = @
 
     toJSON: ->
         input:
@@ -186,6 +194,12 @@ class Connection
         output:
             index:@output.index
             parent_id:@output.parent.id
+
+    delete: ->
+        scene.remove @view
+        delete @scope.connections[@id]
+        delete @output.connections[@id]
+        @input.connections = {}
 
 ### VIEWS ###
 
@@ -330,18 +344,21 @@ system_arrow = make_arrow V(0,0), V(1,0)
 scene.remove system_arrow
 
 mouse_down = (event) ->
+    event.preventDefault()
     target = ray_cast_mouse()
     if target
         if target.model instanceof Node
             if event.which is 3
-                event.preventDefault()
                 target.model.delete()
             else
                 dragging_object = target
         else if target.model instanceof Nib
-            system_arrow.geometry.vertices[0].position = system_arrow.geometry.vertices[1].position = get_nib_position target
-            scene.add system_arrow
-            connecting_object = target
+            if event.which is 3
+                target.model.delete_connections()
+            else
+                system_arrow.geometry.vertices[0].position = system_arrow.geometry.vertices[1].position = get_nib_position target
+                scene.add system_arrow
+                connecting_object = target
 
 mouse_up = (event) ->
     dragging_object = null

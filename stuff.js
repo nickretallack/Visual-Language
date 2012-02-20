@@ -103,7 +103,7 @@
       _fn = function(input) {
         return input_values.push(function() {
           var _ref2;
-          output = (_ref2 = input.connections[0]) != null ? _ref2.connection.output : void 0;
+          output = (_ref2 = input.get_connection()) != null ? _ref2.connection.output : void 0;
           if (!output) {
             throw "NotConnected";
           }
@@ -121,7 +121,7 @@
   execute_program = function() {
     var output, result, _ref;
     try {
-      output = (_ref = main.outputs[0].connections[0]) != null ? _ref.connection.output : void 0;
+      output = (_ref = main.outputs[0].get_connection()) != null ? _ref.connection.output : void 0;
       if (!output) {
         throw "NotConnected";
       }
@@ -163,7 +163,7 @@
         return _results;
       }).call(this);
       this.nodes = {};
-      this.connections = [];
+      this.connections = {};
     }
     SubRoutine.prototype.toJSON = function() {
       return {
@@ -248,8 +248,18 @@
   Nib = (function() {
     function Nib() {
       this.view = make_nib_view(this, this.parent instanceof Node);
-      this.connections = [];
+      this.connections = {};
     }
+    Nib.prototype.delete_connections = function() {
+      var connection, id, _ref, _results;
+      _ref = this.connections;
+      _results = [];
+      for (id in _ref) {
+        connection = _ref[id];
+        _results.push(connection.connection["delete"]());
+      }
+      return _results;
+    };
     return Nib;
   })();
   Input = (function() {
@@ -262,12 +272,22 @@
     }
     __extends(Input, Nib);
     Input.prototype._add_connection = function(connection, vertex) {
-      return this.connections = [
-        {
-          connection: connection,
-          vertex: vertex
-        }
-      ];
+      var _ref;
+      if ((_ref = this.get_connection()) != null) {
+        _ref["delete"]();
+      }
+      return this.connections[connection.id] = {
+        connection: connection,
+        vertex: vertex
+      };
+    };
+    Input.prototype.get_connection = function() {
+      var connection, id, _ref;
+      _ref = this.connections;
+      for (id in _ref) {
+        connection = _ref[id];
+        return connection;
+      }
     };
     Input.prototype.connect = function(output) {
       return new Connection(this(output));
@@ -284,10 +304,10 @@
     }
     __extends(Output, Nib);
     Output.prototype._add_connection = function(connection, vertex) {
-      return this.connections.push({
+      return this.connections[connection.id] = {
         connection: connection,
         vertex: vertex
-      });
+      };
     };
     Output.prototype.connect = function(input) {
       return new Connection(input, this);
@@ -295,15 +315,16 @@
     return Output;
   })();
   Connection = (function() {
-    function Connection(input, output) {
+    function Connection(input, output, id) {
       var input_vertex, output_vertex, _ref;
       this.input = input;
       this.output = output;
+      this.id = id != null ? id : UUID();
       _ref = connection_view(this), this.view = _ref[0], input_vertex = _ref[1], output_vertex = _ref[2];
       this.input._add_connection(this, input_vertex);
       this.output._add_connection(this, output_vertex);
       this.scope = current_scope;
-      this.scope.connections.push(this);
+      this.scope.connections[this.id] = this;
     }
     Connection.prototype.toJSON = function() {
       return {
@@ -316,6 +337,12 @@
           parent_id: this.output.parent.id
         }
       };
+    };
+    Connection.prototype["delete"] = function() {
+      scene.remove(this.view);
+      delete this.scope.connections[this.id];
+      delete this.output.connections[this.id];
+      return this.input.connections = {};
     };
     return Connection;
   })();
@@ -482,19 +509,23 @@
   scene.remove(system_arrow);
   mouse_down = function(event) {
     var target;
+    event.preventDefault();
     target = ray_cast_mouse();
     if (target) {
       if (target.model instanceof Node) {
         if (event.which === 3) {
-          event.preventDefault();
           return target.model["delete"]();
         } else {
           return dragging_object = target;
         }
       } else if (target.model instanceof Nib) {
-        system_arrow.geometry.vertices[0].position = system_arrow.geometry.vertices[1].position = get_nib_position(target);
-        scene.add(system_arrow);
-        return connecting_object = target;
+        if (event.which === 3) {
+          return target.model.delete_connections();
+        } else {
+          system_arrow.geometry.vertices[0].position = system_arrow.geometry.vertices[1].position = get_nib_position(target);
+          scene.add(system_arrow);
+          return connecting_object = target;
+        }
       }
     }
   };
