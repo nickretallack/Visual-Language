@@ -138,9 +138,11 @@
   };
   /* MODELS */
   SubRoutine = (function() {
-    function SubRoutine(name, inputs, outputs) {
+    function SubRoutine(name, inputs, outputs, id) {
       var index, text;
       this.name = name;
+      this.id = id != null ? id : UUID();
+      node_registry[this.id] = this;
       this.view = make_subroutine_view(this);
       this.inputs = (function() {
         var _len, _results;
@@ -160,13 +162,13 @@
         }
         return _results;
       }).call(this);
-      this.nodes = [];
+      this.nodes = {};
       this.connections = [];
     }
     SubRoutine.prototype.toJSON = function() {
       return {
-        nodes: this.nodes,
-        connections: this.connections
+        nodes: _.values(this.nodes),
+        connections: _.values(this.connections)
       };
     };
     return SubRoutine;
@@ -175,6 +177,8 @@
     function Node() {
       this.view = make_node_view(this);
       node_registry[this.id] = this;
+      this.scope = current_scope;
+      this.scope.nodes[this.id] = this;
     }
     Node.prototype.set_position = function(position) {
       this.position = position;
@@ -182,6 +186,10 @@
     };
     Node.prototype.get_nibs = function() {
       return this.inputs.concat(this.outputs);
+    };
+    Node.prototype["delete"] = function() {
+      scene.remove(this.view);
+      return delete this.scope.nodes[this.id];
     };
     Node.prototype.toJSON = function() {
       return {
@@ -294,6 +302,8 @@
       _ref = connection_view(this), this.view = _ref[0], input_vertex = _ref[1], output_vertex = _ref[2];
       this.input._add_connection(this, input_vertex);
       this.output._add_connection(this, output_vertex);
+      this.scope = current_scope;
+      this.scope.connections.push(this);
     }
     Connection.prototype.toJSON = function() {
       return {
@@ -437,7 +447,7 @@
     line_geometry = new THREE.Geometry();
     line_material = new THREE.LineBasicMaterial({
       color: color,
-      lineWidth: 1
+      linewidth: 3
     });
     line_geometry.vertices.push(new THREE.Vertex(source));
     line_geometry.vertices.push(new THREE.Vertex(target));
@@ -452,7 +462,8 @@
     mouse.z = 1;
     forward = new THREE.Vector3(0, 0, -1);
     ray = new THREE.Ray(mouse, forward);
-    intersections = ray.intersectObjects(_.values(boxes));
+    intersections = ray.intersectScene(scene);
+    console.log(intersections);
     if (intersections.length > 0) {
       return (last(intersections)).object.parent;
     }
@@ -474,7 +485,12 @@
     target = ray_cast_mouse();
     if (target) {
       if (target.model instanceof Node) {
-        return dragging_object = target;
+        if (event.which === 3) {
+          event.preventDefault();
+          return target.model["delete"]();
+        } else {
+          return dragging_object = target;
+        }
       } else if (target.model instanceof Nib) {
         system_arrow.geometry.vertices[0].position = system_arrow.geometry.vertices[1].position = get_nib_position(target);
         scene.add(system_arrow);
@@ -489,7 +505,6 @@
       target = ray_cast_mouse();
       if ((target != null ? target.model : void 0) instanceof Nib) {
         connection = make_connection(connecting_object, target);
-        current_scope.connections.push(connection);
       }
       connecting_object = null;
       return scene.remove(system_arrow);
@@ -531,8 +546,7 @@
     }, this);
     this.add_node = __bind(function(text) {
       var node;
-      node = make_node(text);
-      return current_scope.nodes.push(node);
+      return node = make_node(text);
     }, this);
     this.run_program = execute_program;
     return this.library = functions;

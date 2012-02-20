@@ -91,28 +91,35 @@ execute_program = ->
 ### MODELS ###
 
 class SubRoutine
-    constructor:(@name, inputs, outputs) ->
+    constructor:(@name, inputs, outputs, @id=UUID()) ->
+        node_registry[@id] = @
         @view = make_subroutine_view @
         # These are intentionally reversed.  The inputs to a subroutine show up as outputs inside it
         @inputs = (new Output @, text, index, inputs.length-1 for text, index in inputs)
         @outputs = (new Input @, text, index, outputs.length-1 for text, index in outputs)
-        @nodes = []
+        @nodes = {}
         @connections = []
 
     toJSON: ->
-        nodes:@nodes
-        connections:@connections
+        nodes:_.values @nodes
+        connections:_.values @connections
     
 class Node
     constructor: ->
         @view = make_node_view @
         node_registry[@id] = @
+        @scope = current_scope
+        @scope.nodes[@id] = @
 
     set_position:(@position) ->
         @view.position.copy @position
 
     get_nibs: ->
         @inputs.concat @outputs
+
+    delete: ->
+        scene.remove @view
+        delete @scope.nodes[@id]
 
     toJSON: ->
         position:@position
@@ -169,6 +176,8 @@ class Connection
         [@view, input_vertex, output_vertex] = connection_view @
         @input._add_connection @, input_vertex
         @output._add_connection @, output_vertex
+        @scope = current_scope
+        @scope.connections.push @
 
     toJSON: ->
         input:
@@ -285,7 +294,7 @@ make_arrow = (source, target) ->
     target = target.three() if 'three' of target
 
     line_geometry = new THREE.Geometry()
-    line_material = new THREE.LineBasicMaterial color: color, lineWidth: 1
+    line_material = new THREE.LineBasicMaterial color: color, linewidth: 3
     line_geometry.vertices.push new THREE.Vertex source
     line_geometry.vertices.push new THREE.Vertex target
     line = new THREE.Line line_geometry, line_material
@@ -299,7 +308,8 @@ ray_cast_mouse = ->
     mouse.z = 1
     forward = new THREE.Vector3 0,0,-1
     ray = new THREE.Ray mouse, forward
-    intersections = ray.intersectObjects _.values boxes
+    intersections = ray.intersectScene scene
+    console.log intersections
     if intersections.length > 0
         (last intersections).object.parent
 
@@ -323,7 +333,11 @@ mouse_down = (event) ->
     target = ray_cast_mouse()
     if target
         if target.model instanceof Node
-            dragging_object = target
+            if event.which is 3
+                event.preventDefault()
+                target.model.delete()
+            else
+                dragging_object = target
         else if target.model instanceof Nib
             system_arrow.geometry.vertices[0].position = system_arrow.geometry.vertices[1].position = get_nib_position target
             scene.add system_arrow
@@ -336,7 +350,6 @@ mouse_up = (event) ->
         target = ray_cast_mouse()
         if target?.model instanceof Nib
             connection = make_connection connecting_object, target
-            current_scope.connections.push connection
         connecting_object = null
         scene.remove system_arrow
 
@@ -368,7 +381,6 @@ window.Controller = ->
 
     @add_node = (text) =>
         node = make_node text
-        current_scope.nodes.push node
 
     @run_program = execute_program
 
