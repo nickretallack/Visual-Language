@@ -1,5 +1,5 @@
 (function() {
-  var Connection, FunctionApplication, Input, Literal, Nib, Node, Output, SubRoutine, addition_program_source, animate, boxes, camera, connecting_object, connection_view, current_scope, dragging_object, dragging_offset, evaluate_program, execute_program, functions, get_nib_position, height, how_are_you_source, last, load_program, make_arrow, make_basic_program, make_box, make_connection, make_nib_view, make_node, make_node_view, make_subroutine_view, mouse_coords, mouse_down, mouse_move, mouse_up, node_registry, program_outputs, projector, ray_cast_mouse, renderer, scene, system_arrow, update, width;
+  var Connection, FunctionApplication, Input, Literal, Nib, Node, Output, SubRoutine, addition_program_source, animate, boxes, camera, connecting_object, connection_view, current_scope, dragging_object, dragging_offset, evaluate_program, execute_program, functions, get_nib_position, height, how_are_you_source, last, load_program, main, make_arrow, make_basic_program, make_box, make_connection, make_nib_view, make_node, make_node_view, make_subroutine_view, mouse_coords, mouse_down, mouse_move, mouse_up, node_registry, program_outputs, projector, ray_cast_mouse, renderer, scene, system_arrow, update, width;
   var __hasProp = Object.prototype.hasOwnProperty, __extends = function(child, parent) {
     for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; }
     function ctor() { this.constructor = child; }
@@ -126,30 +126,22 @@
   };
   program_outputs = [];
   execute_program = function() {
-    var node, output, result, _i, _len, _results;
-    _results = [];
-    for (_i = 0, _len = program_outputs.length; _i < _len; _i++) {
-      node = program_outputs[_i];
-      _results.push((function() {
-        var _ref;
-        try {
-          output = (_ref = node.inputs[0].connections[0]) != null ? _ref.connection.output : void 0;
-          if (!output) {
-            throw "NotConnected";
-          }
-          result = evaluate_program(output);
-          console.log(result);
-          return alert(result);
-        } catch (exception) {
-          if (exception === "NotConnected") {
-            return alert("Your program is not fully connected");
-          } else {
-            throw exception;
-          }
-        }
-      })());
+    var output, result, _ref;
+    try {
+      output = (_ref = main.outputs[0].connections[0]) != null ? _ref.connection.output : void 0;
+      if (!output) {
+        throw "NotConnected";
+      }
+      result = evaluate_program(output);
+      console.log(result);
+      return alert(result);
+    } catch (exception) {
+      if (exception === "NotConnected") {
+        return alert("Your program is not fully connected");
+      } else {
+        throw exception;
+      }
     }
-    return _results;
   };
   /* MODELS */
   SubRoutine = (function() {
@@ -178,6 +170,12 @@
       this.nodes = [];
       this.connections = [];
     }
+    SubRoutine.prototype.toJSON = function() {
+      return {
+        nodes: this.nodes,
+        connections: this.connections
+      };
+    };
     return SubRoutine;
   })();
   Node = (function() {
@@ -325,6 +323,7 @@
     position = box_size.scale(1 / 2.0).plus(V(20, 20));
     box = make_box(subroutine.name, box_size, 10, 0xEEEEEE, position, false);
     box.model = subroutine;
+    boxes[box.id] = box;
     scene.add(box);
     return box;
   };
@@ -548,19 +547,16 @@
       return execute_program();
     });
   });
+  current_scope = main = new SubRoutine('main', [], ['OUT']);
   make_basic_program = function() {
-    var c1, c2, c3, five, out, plus, three;
-    out = make_node('out', V(200, 100));
+    var c1, c2, c3, five, plus, three;
     plus = make_node('+', V(200, 300));
     five = make_node('5', V(150, 500));
     three = make_node('3', V(250, 500));
     c1 = five.outputs[0].connect(plus.inputs[0]);
     c2 = three.outputs[0].connect(plus.inputs[1]);
-    c3 = plus.outputs[0].connect(out.inputs[0]);
-    return console.log(JSON.stringify({
-      nodes: [out, plus, five, three],
-      connections: [c1, c2, c3]
-    }));
+    c3 = plus.outputs[0].connect(current_scope.outputs[0]);
+    return console.log(JSON.stringify(current_scope));
   };
   load_program = function(source) {
     var connection, node, program, sink, _i, _j, _len, _len2, _ref, _ref2, _results;
@@ -580,8 +576,7 @@
     }
     return _results;
   };
-  current_scope = new SubRoutine('main', [], ['OUT']);
   how_are_you_source = "{\"nodes\":[{\"position\":{\"x\":242,\"y\":110,\"z\":0},\"text\":\"out\",\"id\":\"56b9d684188339dafd5d3f0fe9421371\"},{\"position\":{\"x\":243,\"y\":210,\"z\":0},\"text\":\"if\",\"id\":\"3190bcfcc5ece720f07ccde57b12f8a3\"},{\"position\":{\"x\":152,\"y\":315,\"z\":0},\"text\":\"\\\"That's Awesome!\\\"\",\"id\":\"d33ff759bef23100f01c59d525d404d7\"},{\"position\":{\"x\":339,\"y\":316,\"z\":0},\"text\":\"\\\"Oh Well\\\"\",\"id\":\"5d54ff1fa3f1633b31a1ba8c0536f1f0\"},{\"position\":{\"x\":239,\"y\":363,\"z\":0},\"text\":\"=\",\"id\":\"6b8e3e498b936e992c0ceddbbe354635\"},{\"position\":{\"x\":146,\"y\":469,\"z\":0},\"text\":\"\\\"good\\\"\",\"id\":\"3673f98c69da086d30994c91c01fe3f7\"},{\"position\":{\"x\":336,\"y\":472,\"z\":0},\"text\":\"prompt\",\"id\":\"92de68eec528651f75a74492604f5211\"},{\"position\":{\"x\":334,\"y\":598,\"z\":0},\"text\":\"\\\"How are you?\\\"\",\"id\":\"aa4cb4c766117fb44f5a917f1a1f9ba5\"}],\"connections\":[{\"input\":{\"index\":0,\"parent_id\":\"56b9d684188339dafd5d3f0fe9421371\"},\"output\":{\"index\":0,\"parent_id\":\"3190bcfcc5ece720f07ccde57b12f8a3\"}},{\"input\":{\"index\":0,\"parent_id\":\"3190bcfcc5ece720f07ccde57b12f8a3\"},\"output\":{\"index\":0,\"parent_id\":\"d33ff759bef23100f01c59d525d404d7\"}},{\"input\":{\"index\":2,\"parent_id\":\"3190bcfcc5ece720f07ccde57b12f8a3\"},\"output\":{\"index\":0,\"parent_id\":\"5d54ff1fa3f1633b31a1ba8c0536f1f0\"}},{\"input\":{\"index\":1,\"parent_id\":\"3190bcfcc5ece720f07ccde57b12f8a3\"},\"output\":{\"index\":0,\"parent_id\":\"6b8e3e498b936e992c0ceddbbe354635\"}},{\"input\":{\"index\":0,\"parent_id\":\"6b8e3e498b936e992c0ceddbbe354635\"},\"output\":{\"index\":0,\"parent_id\":\"3673f98c69da086d30994c91c01fe3f7\"}},{\"input\":{\"index\":1,\"parent_id\":\"6b8e3e498b936e992c0ceddbbe354635\"},\"output\":{\"index\":0,\"parent_id\":\"92de68eec528651f75a74492604f5211\"}},{\"input\":{\"index\":0,\"parent_id\":\"92de68eec528651f75a74492604f5211\"},\"output\":{\"index\":0,\"parent_id\":\"aa4cb4c766117fb44f5a917f1a1f9ba5\"}}]}";
   addition_program_source = "{\"nodes\":[{\"position\":{\"x\":200,\"y\":100},\"text\":\"out\",\"id\":\"a3a19afbbc5b944012036668230eb819\"},{\"position\":{\"x\":200,\"y\":300},\"text\":\"+\",\"id\":\"4c19f385dd04884ab84eb27f71011054\"},{\"position\":{\"x\":150,\"y\":500},\"text\":\"5\",\"id\":\"c532ec59ef6b57af6bd7323be2d27d93\"},{\"position\":{\"x\":250,\"y\":500},\"text\":\"3\",\"id\":\"1191a8be50c4c7cd7b1f259b82c04365\"}],\"connections\":[{\"input\":{\"index\":0,\"parent_id\":\"4c19f385dd04884ab84eb27f71011054\"},\"output\":{\"index\":0,\"parent_id\":\"c532ec59ef6b57af6bd7323be2d27d93\"}},{\"input\":{\"index\":1,\"parent_id\":\"4c19f385dd04884ab84eb27f71011054\"},\"output\":{\"index\":0,\"parent_id\":\"1191a8be50c4c7cd7b1f259b82c04365\"}},{\"input\":{\"index\":0,\"parent_id\":\"a3a19afbbc5b944012036668230eb819\"},\"output\":{\"index\":0,\"parent_id\":\"4c19f385dd04884ab84eb27f71011054\"}}]}";
-  load_program(how_are_you_source);
+  make_basic_program();
 }).call(this);
