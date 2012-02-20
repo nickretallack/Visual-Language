@@ -8,8 +8,8 @@
     child.__super__ = parent.prototype;
     return child;
   };
-  height = window.innerHeight;
-  width = window.innerWidth;
+  height = 500;
+  width = 500;
   camera = new THREE.OrthographicCamera(0, width, height, 0, -2000, 1000);
   scene = new THREE.Scene();
   scene.add(camera);
@@ -320,7 +320,7 @@
   make_subroutine_view = function(subroutine) {
     var box, box_size, position;
     box_size = V(500, 500);
-    position = box_size.scale(1 / 2.0).plus(V(20, 20));
+    position = box_size.scale(1 / 2.0);
     box = make_box(subroutine.name, box_size, 10, 0xEEEEEE, position, false);
     box.model = subroutine;
     boxes[box.id] = box;
@@ -550,9 +550,9 @@
   current_scope = main = new SubRoutine('main', [], ['OUT']);
   make_basic_program = function() {
     var c1, c2, c3, five, plus, three;
-    plus = make_node('+', V(200, 300));
-    five = make_node('5', V(150, 500));
-    three = make_node('3', V(250, 500));
+    plus = make_node('+', V(250, 150));
+    five = make_node('5', V(200, 300));
+    three = make_node('3', V(300, 300));
     c1 = five.outputs[0].connect(plus.inputs[0]);
     c2 = three.outputs[0].connect(plus.inputs[1]);
     c3 = plus.outputs[0].connect(current_scope.outputs[0]);

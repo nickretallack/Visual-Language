@@ -1,0 +1,4 @@
+- Save and reload state
+- Delete nodes and arrows
+- Delete old arrows that go to the same output nodes
+- Subroutine boxes
