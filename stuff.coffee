@@ -93,7 +93,7 @@ execute_program = ->
 ### MODELS ###
 
 class SubRoutine
-    constructor:(@name, inputs, outputs, @id=UUID()) ->
+    constructor:(@name='', inputs=[], outputs=[], @id=UUID()) ->
         node_registry[@id] = @
         @view = make_subroutine_view @
         # These are intentionally reversed.  The inputs to a subroutine show up as outputs inside it
@@ -101,6 +101,9 @@ class SubRoutine
         @outputs = (new Input @, text, index, outputs.length-1 for text, index in outputs)
         @nodes = {}
         @connections = {}
+
+    set_name: (@name) ->
+        @view.
 
     toJSON: ->
         nodes:_.values @nodes
@@ -280,6 +283,19 @@ make_connection = (source, target) ->
 
 ### CORE RENDERING ###
 
+make_text = (text, size) ->
+    geometry = new THREE.TextGeometry text,
+        size:size
+        font:'helvetiker'
+        curveSegments:2
+    geometry.computeBoundingBox()
+    centerOffset = -0.5 * (geometry.boundingBox.x[1] - geometry.boundingBox.x[0])
+
+    material = new THREE.MeshBasicMaterial color:0x000000, overdraw:true
+    mesh = new THREE.Mesh geometry, material
+    mesh.position.x = centerOffset
+    return mesh
+
 make_box = (name, size, text_size, color, position, outline=false) ->
     box = new THREE.Object3D()
 
@@ -289,19 +305,8 @@ make_box = (name, size, text_size, color, position, outline=false) ->
     mesh.position = V(0,0).three()
     box.add mesh
 
-    text_geometry = new THREE.TextGeometry name,
-        size:text_size
-        font:'helvetiker'
-        curveSegments:2
-    text_geometry.computeBoundingBox()
-    centerOffset = -0.5 * (text_geometry.boundingBox.x[1] - text_geometry.boundingBox.x[0])
-
-    text_color = new THREE.MeshBasicMaterial color:0x000000, overdraw:true
-    text = new THREE.Mesh text_geometry, text_color
-    #text.position = position.three()
-    text.position.x = centerOffset
+    box.add make_text name, text_size
     box.position = position.three()
-    box.add text
     return box
 
 make_arrow = (source, target) ->
@@ -404,11 +409,26 @@ window.Controller = ->
     @add_node = (text) =>
         node = make_node text
 
-    @run_program = execute_program
+    #@initial_subroutine =
+    #    name:''
+    #    inputs:''
+    #    outputs:''
 
+    #@new_subroutine = angular.copy @initial_subroutine
+
+    @main = main
+    @edit_subroutine = (subroutine) =>
+    @add_subroutine = =>
+        @subroutines.push new SubRoutine
+        
+        
+
+    @run_program = execute_program
     @library = functions
+    @subroutines = subroutines
 
 current_scope = main = new SubRoutine 'main', [], ['OUT']
+subroutines = [main]
 
 make_basic_program = ->
     plus = make_node '+', V 250,150

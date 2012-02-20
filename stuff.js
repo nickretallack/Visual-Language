@@ -1,5 +1,5 @@
 (function() {
-  var Connection, FunctionApplication, Input, Literal, Nib, Node, Output, SubRoutine, addition_program_source, animate, boxes, camera, connecting_object, connection_view, current_scope, dragging_object, dragging_offset, evaluate_program, execute_program, functions, get_nib_position, height, how_are_you_source, last, load_program, main, make_arrow, make_basic_program, make_box, make_connection, make_nib_view, make_node, make_node_view, make_subroutine_view, mouse_coords, mouse_down, mouse_move, mouse_up, node_registry, program_outputs, projector, ray_cast_mouse, renderer, scene, system_arrow, update, width;
+  var Connection, FunctionApplication, Input, Literal, Nib, Node, Output, SubRoutine, addition_program_source, animate, boxes, camera, connecting_object, connection_view, current_scope, dragging_object, dragging_offset, evaluate_program, execute_program, functions, get_nib_position, height, how_are_you_source, last, load_program, main, make_arrow, make_basic_program, make_box, make_connection, make_nib_view, make_node, make_node_view, make_subroutine_view, mouse_coords, mouse_down, mouse_move, mouse_up, node_registry, program_outputs, projector, ray_cast_mouse, renderer, scene, subroutines, system_arrow, update, width;
   var __hasProp = Object.prototype.hasOwnProperty, __extends = function(child, parent) {
     for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; }
     function ctor() { this.constructor = child; }
@@ -142,7 +142,13 @@
   SubRoutine = (function() {
     function SubRoutine(name, inputs, outputs, id) {
       var index, text;
-      this.name = name;
+      this.name = name != null ? name : '';
+      if (inputs == null) {
+        inputs = [];
+      }
+      if (outputs == null) {
+        outputs = [];
+      }
       this.id = id != null ? id : UUID();
       node_registry[this.id] = this;
       this.view = make_subroutine_view(this);
@@ -592,10 +598,17 @@
       var node;
       return node = make_node(text);
     }, this);
+    this.main = main;
+    this.edit_subroutine = __bind(function(subroutine) {}, this);
+    this.add_subroutine = __bind(function() {
+      return this.subroutines.push(new SubRoutine);
+    }, this);
     this.run_program = execute_program;
-    return this.library = functions;
+    this.library = functions;
+    return this.subroutines = subroutines;
   };
   current_scope = main = new SubRoutine('main', [], ['OUT']);
+  subroutines = [main];
   make_basic_program = function() {
     var c1, c2, c3, five, plus, three;
     plus = make_node('+', V(250, 150));
