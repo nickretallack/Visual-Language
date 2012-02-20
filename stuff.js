@@ -58,7 +58,7 @@
       inputs: [],
       outputs: ['R'],
       definition: function() {
-        return console.log("OH NO!");
+        throw "Exit";
       }
     },
     'prompt': {
@@ -131,6 +131,8 @@
     } catch (exception) {
       if (exception === "NotConnected") {
         return alert("Your program is not fully connected");
+      } else if (exception === "Exit") {
+        return alert("Died");
       } else {
         throw exception;
       }
@@ -188,8 +190,16 @@
       return this.inputs.concat(this.outputs);
     };
     Node.prototype["delete"] = function() {
+      var nib, _i, _len, _ref, _results;
       scene.remove(this.view);
-      return delete this.scope.nodes[this.id];
+      delete this.scope.nodes[this.id];
+      _ref = this.get_nibs();
+      _results = [];
+      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+        nib = _ref[_i];
+        _results.push(nib.delete_connections());
+      }
+      return _results;
     };
     Node.prototype.toJSON = function() {
       return {
@@ -542,7 +552,7 @@
     }
   };
   mouse_move = function(event) {
-    var connection, nib, node, vector, _i, _j, _len, _len2, _ref, _ref2;
+    var connection, id, nib, node, vector, _i, _len, _ref, _ref2;
     vector = mouse_coords(event).three();
     if (dragging_object) {
       node = dragging_object.model;
@@ -551,8 +561,8 @@
       for (_i = 0, _len = _ref.length; _i < _len; _i++) {
         nib = _ref[_i];
         _ref2 = nib.connections;
-        for (_j = 0, _len2 = _ref2.length; _j < _len2; _j++) {
-          connection = _ref2[_j];
+        for (id in _ref2) {
+          connection = _ref2[id];
           connection.vertex.position.copy(get_nib_position(nib.view));
         }
       }
@@ -570,6 +580,9 @@
     field.mousedown(mouse_down);
     field.mouseup(mouse_up);
     field.mousemove(mouse_move);
+    field.bind('contextmenu', function() {
+      return false;
+    });
     this.new_node_text = '';
     this.add_new_node = __bind(function() {
       this.add_node(this.new_node_text);

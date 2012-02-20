@@ -38,7 +38,7 @@ functions =
     'die':
         inputs:[]
         outputs:['R']
-        definition: -> console.log "OH NO!"
+        definition: -> throw "Exit"
     'prompt':
         inputs:['M']
         outputs:['R']
@@ -86,6 +86,8 @@ execute_program = ->
     catch exception
         if exception is "NotConnected"
             alert "Your program is not fully connected"
+        else if exception is "Exit"
+            alert "Died"
         else throw exception
 
 ### MODELS ###
@@ -120,6 +122,8 @@ class Node
     delete: ->
         scene.remove @view
         delete @scope.nodes[@id]
+        for nib in @get_nibs()
+            nib.delete_connections()
 
     toJSON: ->
         position:@position
@@ -376,7 +380,7 @@ mouse_move = (event) ->
         node = dragging_object.model
         node.set_position vector
         for nib in node.get_nibs()
-            for connection in nib.connections
+            for id, connection of nib.connections
                 connection.vertex.position.copy get_nib_position nib.view
     if connecting_object
         system_arrow.geometry.vertices[1].position = vector
@@ -390,6 +394,7 @@ window.Controller = ->
     field.mousedown mouse_down
     field.mouseup mouse_up
     field.mousemove mouse_move
+    field.bind 'contextmenu', -> false
 
     @new_node_text = ''
     @add_new_node = =>
