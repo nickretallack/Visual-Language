@@ -1,5 +1,5 @@
 (function() {
-  var Connection, FunctionApplication, Input, Literal, Nib, Node, Output, SubRoutine, animate, boxes, camera, connecting_object, connection_view, current_scope, dragging_object, dragging_offset, evaluate_program, execute_program, functions, get_nib_position, height, last, load_basic_program, make_arrow, make_basic_program, make_box, make_connection, make_nib_view, make_node, make_node_view, make_subroutine_view, mouse_coords, mouse_down, mouse_move, mouse_up, node_registry, program_outputs, projector, ray_cast_mouse, renderer, scene, system_arrow, update, width;
+  var Connection, FunctionApplication, Input, Literal, Nib, Node, Output, SubRoutine, addition_program_source, animate, boxes, camera, connecting_object, connection_view, current_scope, dragging_object, dragging_offset, evaluate_program, execute_program, functions, get_nib_position, height, how_are_you_source, last, load_program, make_arrow, make_basic_program, make_box, make_connection, make_nib_view, make_node, make_node_view, make_subroutine_view, mouse_coords, mouse_down, mouse_move, mouse_up, node_registry, program_outputs, projector, ray_cast_mouse, renderer, scene, system_arrow, update, width;
   var __hasProp = Object.prototype.hasOwnProperty, __extends = function(child, parent) {
     for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; }
     function ctor() { this.constructor = child; }
@@ -27,10 +27,6 @@
   animate = function() {
     requestAnimationFrame(animate);
     return update();
-  };
-  current_scope = {
-    nodes: [],
-    connections: []
   };
   functions = {
     '+': {
@@ -566,9 +562,9 @@
       connections: [c1, c2, c3]
     }));
   };
-  load_basic_program = function() {
-    var connection, node, program, sink, source, _i, _j, _len, _len2, _ref, _ref2, _results;
-    program = JSON.parse("{\"nodes\":[{\"position\":{\"x\":200,\"y\":100},\"text\":\"out\",\"id\":\"76ce2c7f246768722538e935dd8eca2b\"},{\"position\":{\"x\":200,\"y\":300},\"text\":\"+\",\"id\":\"e78ff69100d10e0941e4212e4949975f\"},{\"position\":{\"x\":150,\"y\":500},\"text\":\"5\",\"id\":\"5a49650be7f844da2236ce1f1ff94222\"},{\"position\":{\"x\":250,\"y\":500},\"text\":\"3\",\"id\":\"1045e2acb8067109826f33f89d58e264\"}],\"connections\":[{\"input\":{\"index\":0,\"parent_id\":\"e78ff69100d10e0941e4212e4949975f\"},\"output\":{\"index\":0,\"parent_id\":\"5a49650be7f844da2236ce1f1ff94222\"}},{\"input\":{\"index\":1,\"parent_id\":\"e78ff69100d10e0941e4212e4949975f\"},\"output\":{\"index\":0,\"parent_id\":\"1045e2acb8067109826f33f89d58e264\"}},{\"input\":{\"index\":0,\"parent_id\":\"76ce2c7f246768722538e935dd8eca2b\"},\"output\":{\"index\":0,\"parent_id\":\"e78ff69100d10e0941e4212e4949975f\"}}]}");
+  load_program = function(source) {
+    var connection, node, program, sink, _i, _j, _len, _len2, _ref, _ref2, _results;
+    program = JSON.parse(source);
     _ref = program.nodes;
     for (_i = 0, _len = _ref.length; _i < _len; _i++) {
       node = _ref[_i];
@@ -585,4 +581,7 @@
     return _results;
   };
   current_scope = new SubRoutine('main', [], ['OUT']);
+  how_are_you_source = "{\"nodes\":[{\"position\":{\"x\":242,\"y\":110,\"z\":0},\"text\":\"out\",\"id\":\"56b9d684188339dafd5d3f0fe9421371\"},{\"position\":{\"x\":243,\"y\":210,\"z\":0},\"text\":\"if\",\"id\":\"3190bcfcc5ece720f07ccde57b12f8a3\"},{\"position\":{\"x\":152,\"y\":315,\"z\":0},\"text\":\"\\\"That's Awesome!\\\"\",\"id\":\"d33ff759bef23100f01c59d525d404d7\"},{\"position\":{\"x\":339,\"y\":316,\"z\":0},\"text\":\"\\\"Oh Well\\\"\",\"id\":\"5d54ff1fa3f1633b31a1ba8c0536f1f0\"},{\"position\":{\"x\":239,\"y\":363,\"z\":0},\"text\":\"=\",\"id\":\"6b8e3e498b936e992c0ceddbbe354635\"},{\"position\":{\"x\":146,\"y\":469,\"z\":0},\"text\":\"\\\"good\\\"\",\"id\":\"3673f98c69da086d30994c91c01fe3f7\"},{\"position\":{\"x\":336,\"y\":472,\"z\":0},\"text\":\"prompt\",\"id\":\"92de68eec528651f75a74492604f5211\"},{\"position\":{\"x\":334,\"y\":598,\"z\":0},\"text\":\"\\\"How are you?\\\"\",\"id\":\"aa4cb4c766117fb44f5a917f1a1f9ba5\"}],\"connections\":[{\"input\":{\"index\":0,\"parent_id\":\"56b9d684188339dafd5d3f0fe9421371\"},\"output\":{\"index\":0,\"parent_id\":\"3190bcfcc5ece720f07ccde57b12f8a3\"}},{\"input\":{\"index\":0,\"parent_id\":\"3190bcfcc5ece720f07ccde57b12f8a3\"},\"output\":{\"index\":0,\"parent_id\":\"d33ff759bef23100f01c59d525d404d7\"}},{\"input\":{\"index\":2,\"parent_id\":\"3190bcfcc5ece720f07ccde57b12f8a3\"},\"output\":{\"index\":0,\"parent_id\":\"5d54ff1fa3f1633b31a1ba8c0536f1f0\"}},{\"input\":{\"index\":1,\"parent_id\":\"3190bcfcc5ece720f07ccde57b12f8a3\"},\"output\":{\"index\":0,\"parent_id\":\"6b8e3e498b936e992c0ceddbbe354635\"}},{\"input\":{\"index\":0,\"parent_id\":\"6b8e3e498b936e992c0ceddbbe354635\"},\"output\":{\"index\":0,\"parent_id\":\"3673f98c69da086d30994c91c01fe3f7\"}},{\"input\":{\"index\":1,\"parent_id\":\"6b8e3e498b936e992c0ceddbbe354635\"},\"output\":{\"index\":0,\"parent_id\":\"92de68eec528651f75a74492604f5211\"}},{\"input\":{\"index\":0,\"parent_id\":\"92de68eec528651f75a74492604f5211\"},\"output\":{\"index\":0,\"parent_id\":\"aa4cb4c766117fb44f5a917f1a1f9ba5\"}}]}";
+  addition_program_source = "{\"nodes\":[{\"position\":{\"x\":200,\"y\":100},\"text\":\"out\",\"id\":\"a3a19afbbc5b944012036668230eb819\"},{\"position\":{\"x\":200,\"y\":300},\"text\":\"+\",\"id\":\"4c19f385dd04884ab84eb27f71011054\"},{\"position\":{\"x\":150,\"y\":500},\"text\":\"5\",\"id\":\"c532ec59ef6b57af6bd7323be2d27d93\"},{\"position\":{\"x\":250,\"y\":500},\"text\":\"3\",\"id\":\"1191a8be50c4c7cd7b1f259b82c04365\"}],\"connections\":[{\"input\":{\"index\":0,\"parent_id\":\"4c19f385dd04884ab84eb27f71011054\"},\"output\":{\"index\":0,\"parent_id\":\"c532ec59ef6b57af6bd7323be2d27d93\"}},{\"input\":{\"index\":1,\"parent_id\":\"4c19f385dd04884ab84eb27f71011054\"},\"output\":{\"index\":0,\"parent_id\":\"1191a8be50c4c7cd7b1f259b82c04365\"}},{\"input\":{\"index\":0,\"parent_id\":\"a3a19afbbc5b944012036668230eb819\"},\"output\":{\"index\":0,\"parent_id\":\"4c19f385dd04884ab84eb27f71011054\"}}]}";
+  load_program(how_are_you_source);
 }).call(this);
