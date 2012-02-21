@@ -99,6 +99,9 @@
     if (parent instanceof Literal) {
       return parent.value;
     }
+    if (parent instanceof SubRoutine) {
+      return parent.evaluate_input();
+    }
     if (parent instanceof FunctionApplication) {
       input_values = [];
       _ref = parent.inputs;
@@ -200,6 +203,7 @@
       }
       return evaluate_program(output);
     };
+    SubRoutine.prototype.evaluate_input = function() {};
     SubRoutine.prototype.get_inputs = function() {
       var output, _i, _len, _ref, _results;
       _ref = this.outputs;

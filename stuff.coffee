@@ -65,6 +65,8 @@ evaluate_program = (output) ->
     parent = output.parent
     if parent instanceof Literal
         return parent.value
+    if parent instanceof SubRoutine
+        return parent.evaluate_input()
     if parent instanceof FunctionApplication
         # collect input values
         input_values = []
@@ -115,10 +117,12 @@ class SubRoutine
         connections:_.values @connections
 
     evaluate: ->
-        #inputs = arguments
         output = @outputs[0].get_connection()?.connection.output
         throw "NotConnected" unless output
         evaluate_program output
+
+    evaluate_input: ->
+        # TODO
 
     get_inputs: -> (output.text for output in @outputs)
     get_outputs: -> (input.text for input in @inputs)
