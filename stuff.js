@@ -167,7 +167,7 @@
       output = (_ref = this.outputs[0].get_connection()) != null ? _ref.connection.output.parent : void 0;
       if (!output) throw "NotConnected";
       if (output instanceof Node) {
-        return output.evaluation(inputs);
+        return output.evaluation.apply(output, inputs);
       } else if (output instanceof SubRoutine) {
         return inputs[0]();
       }

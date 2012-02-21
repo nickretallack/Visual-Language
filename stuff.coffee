@@ -86,7 +86,7 @@ class SubRoutine
         throw "NotConnected" unless output
 
         if output instanceof Node
-            return output.evaluation inputs
+            return output.evaluation inputs...
         else if output instanceof SubRoutine
             return inputs[0]()
 
