@@ -438,7 +438,7 @@ window.Controller = ->
         new FunctionApplication V(0,0), subroutine.name,
             inputs:subroutine.get_inputs()
             outputs:subroutine.get_outputs()
-            definition:subroutine.evaluate
+            definition: -> subroutine.evaluate()
 
     @initial_subroutine =
         name:''
