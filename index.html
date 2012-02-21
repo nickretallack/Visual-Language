@@ -19,8 +19,6 @@
 <div id="field"></div>
 
 <div id="tools">
-<button ng:click="run_program()">Run</button>
-
 <h2>Programs</h2>
 <ul><li ng:repeat="program in programs">
     <a ng:click="run_program(program)">run</a> <a ng:click="edit_subroutine(program.subroutine)">edit</a> {{program.name}}

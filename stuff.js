@@ -146,6 +146,9 @@
       this.name = name != null ? name : '';
       this.subroutine = subroutine;
     }
+    Program.prototype.run = function() {
+      return alert(this.subroutine.evaluate());
+    };
     return Program;
   })();
   SubRoutine = (function() {
@@ -190,8 +193,7 @@
       };
     };
     SubRoutine.prototype.evaluate = function() {
-      var inputs, output, _ref;
-      inputs = arguments;
+      var output, _ref;
       output = (_ref = this.outputs[0].get_connection()) != null ? _ref.connection.output : void 0;
       if (!output) {
         throw "NotConnected";
@@ -671,12 +673,14 @@
       this.subroutines.push(new SubRoutine(this.new_subroutine.name, this.new_subroutine.inputs.split(' '), this.new_subroutine.outputs.split(' ')));
       return this.new_subroutine = angular.copy(this.initial_subroutine);
     }, this);
+    this.run_program = __bind(function(program) {
+      return program.run();
+    }, this);
     this.programs = [initial_program];
     this.new_program_name = '';
     this.add_program = __bind(function() {
       return this.programs.push(new Program(this.new_program_name, make_main()));
     }, this);
-    this.run_program = execute_program;
     this.library = functions;
     this.subroutines = [];
     this.subroutines.push(new SubRoutine('foo', ['a'], ['b']));

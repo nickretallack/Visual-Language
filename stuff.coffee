@@ -96,6 +96,8 @@ execute_program = ->
 
 class Program
     constructor:(@name='', @subroutine) ->
+    run: ->
+        alert @subroutine.evaluate()
 
 class SubRoutine
     constructor:(@name='', inputs=[], outputs=[], @id=UUID()) ->
@@ -113,7 +115,7 @@ class SubRoutine
         connections:_.values @connections
 
     evaluate: ->
-        inputs = arguments
+        #inputs = arguments
         output = @outputs[0].get_connection()?.connection.output
         throw "NotConnected" unless output
         evaluate_program output
@@ -453,6 +455,8 @@ window.Controller = ->
         @subroutines.push new SubRoutine @new_subroutine.name, @new_subroutine.inputs.split(' '), @new_subroutine.outputs.split(' ')
         @new_subroutine = angular.copy @initial_subroutine
 
+    @run_program = (program) => program.run()
+
         
     @programs = [initial_program]
     @new_program_name = ''
@@ -461,7 +465,6 @@ window.Controller = ->
         
         
 
-    @run_program = execute_program
     @library = functions
     @subroutines = []
     #@subroutines.push new SubRoutine 'foo', ['a','b'], ['c','d','e']
