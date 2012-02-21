@@ -1,5 +1,5 @@
 (function() {
-  var Connection, FunctionApplication, Input, Literal, Nib, Node, Output, SubRoutine, addition_program_source, animate, boxes, camera, connecting_object, connection_view, current_scope, dragging_object, dragging_offset, evaluate_program, execute_program, functions, get_nib_position, height, how_are_you_source, last, load_program, main, make_arrow, make_basic_program, make_box, make_connection, make_nib_view, make_node, make_node_view, make_subroutine_view, mouse_coords, mouse_down, mouse_move, mouse_up, node_registry, program_outputs, projector, ray_cast_mouse, renderer, scene, subroutines, system_arrow, update, width;
+  var Connection, FunctionApplication, Input, Literal, Nib, Node, Output, Program, SubRoutine, addition_program_source, animate, boxes, camera, connecting_object, connection_view, current_scope, dragging_object, dragging_offset, evaluate_program, execute_program, functions, get_absolute_nib_position, get_nib_position, height, how_are_you_source, initial_program, last, load_program, main, make_arrow, make_basic_program, make_box, make_connection, make_main, make_nib_view, make_node, make_node_view, make_subroutine_view, make_text, mouse_coords, mouse_down, mouse_move, mouse_up, node_registry, program_outputs, projector, ray_cast_mouse, renderer, scene, system_arrow, update, width;
   var __hasProp = Object.prototype.hasOwnProperty, __extends = function(child, parent) {
     for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; }
     function ctor() { this.constructor = child; }
@@ -139,6 +139,13 @@
     }
   };
   /* MODELS */
+  Program = (function() {
+    function Program(name, subroutine) {
+      this.name = name != null ? name : '';
+      this.subroutine = subroutine;
+    }
+    return Program;
+  })();
   SubRoutine = (function() {
     function SubRoutine(name, inputs, outputs, id) {
       var index, text;
@@ -183,10 +190,10 @@
   })();
   Node = (function() {
     function Node() {
-      this.view = make_node_view(this);
       node_registry[this.id] = this;
       this.scope = current_scope;
       this.scope.nodes[this.id] = this;
+      this.view = make_node_view(this);
     }
     Node.prototype.set_position = function(position) {
       this.position = position;
@@ -370,7 +377,6 @@
     box = make_box(subroutine.name, box_size, 10, 0xEEEEEE, position, false);
     box.model = subroutine;
     boxes[box.id] = box;
-    scene.add(box);
     return box;
   };
   make_node_view = function(node) {
@@ -379,7 +385,7 @@
     color = 0x888888;
     main_box = make_box(node.text, main_box_size, 10, color, node.position);
     main_box.model = node;
-    scene.add(main_box);
+    node.scope.view.add(main_box);
     boxes[main_box.id] = main_box;
     return main_box;
   };
@@ -399,8 +405,8 @@
   };
   connection_view = function(connection) {
     var arrow, point1, point2;
-    point1 = get_nib_position(connection.input.view);
-    point2 = get_nib_position(connection.output.view);
+    point1 = get_nib_position(connection.input);
+    point2 = get_nib_position(connection.output);
     arrow = make_arrow(point1, point2);
     return [arrow, arrow.geometry.vertices[0], arrow.geometry.vertices[1]];
   };
@@ -408,7 +414,7 @@
   make_node = function(text, position, id) {
     var as_number, information, node, value, _ref;
     if (position == null) {
-      position = V(250, 250);
+      position = V(0, 0);
     }
     if (id == null) {
       id = void 0;
@@ -442,8 +448,25 @@
     return new Connection(input, output);
   };
   /* CORE RENDERING */
+  make_text = function(text, size) {
+    var centerOffset, geometry, material, mesh;
+    geometry = new THREE.TextGeometry(text, {
+      size: size,
+      font: 'helvetiker',
+      curveSegments: 2
+    });
+    geometry.computeBoundingBox();
+    centerOffset = -0.5 * (geometry.boundingBox.x[1] - geometry.boundingBox.x[0]);
+    material = new THREE.MeshBasicMaterial({
+      color: 0x000000,
+      overdraw: true
+    });
+    mesh = new THREE.Mesh(geometry, material);
+    mesh.position.x = centerOffset;
+    return mesh;
+  };
   make_box = function(name, size, text_size, color, position, outline) {
-    var box, centerOffset, geometry, material, mesh, text, text_color, text_geometry;
+    var box, geometry, material, mesh;
     if (outline == null) {
       outline = false;
     }
@@ -460,21 +483,8 @@
     mesh = new THREE.Mesh(geometry, material);
     mesh.position = V(0, 0).three();
     box.add(mesh);
-    text_geometry = new THREE.TextGeometry(name, {
-      size: text_size,
-      font: 'helvetiker',
-      curveSegments: 2
-    });
-    text_geometry.computeBoundingBox();
-    centerOffset = -0.5 * (text_geometry.boundingBox.x[1] - text_geometry.boundingBox.x[0]);
-    text_color = new THREE.MeshBasicMaterial({
-      color: 0x000000,
-      overdraw: true
-    });
-    text = new THREE.Mesh(text_geometry, text_color);
-    text.position.x = centerOffset;
+    box.add(make_text(name, text_size));
     box.position = position.three();
-    box.add(text);
     return box;
   };
   make_arrow = function(source, target) {
@@ -495,7 +505,7 @@
     line_geometry.vertices.push(new THREE.Vertex(source));
     line_geometry.vertices.push(new THREE.Vertex(target));
     line = new THREE.Line(line_geometry, line_material);
-    scene.add(line);
+    current_scope.view.add(line);
     return line;
   };
   /* CORE HELPERS */
@@ -515,14 +525,19 @@
     return V(event.clientX, height - event.clientY);
   };
   get_nib_position = function(nib) {
-    return Vector.from(nib.position).plus(nib.parent.position).three();
+    if (nib.parent instanceof Node) {
+      return Vector.from(nib.view.position).plus(nib.view.parent.position).three();
+    } else {
+      return Vector.from(nib.view.position).three();
+    }
+  };
+  get_absolute_nib_position = function(nib) {
+    return Vector.from(get_nib_position(nib)).plus(V(250, 250)).three();
   };
   /* INTERACTION */
   dragging_object = null;
   connecting_object = null;
   dragging_offset = V(0, 0);
-  system_arrow = make_arrow(V(0, 0), V(1, 0));
-  scene.remove(system_arrow);
   mouse_down = function(event) {
     var target;
     event.preventDefault();
@@ -538,7 +553,7 @@
         if (event.which === 3) {
           return target.model.delete_connections();
         } else {
-          system_arrow.geometry.vertices[0].position = system_arrow.geometry.vertices[1].position = get_nib_position(target);
+          system_arrow.geometry.vertices[0].position = system_arrow.geometry.vertices[1].position = get_absolute_nib_position(target.model);
           scene.add(system_arrow);
           return connecting_object = target;
         }
@@ -558,18 +573,20 @@
     }
   };
   mouse_move = function(event) {
-    var connection, id, nib, node, vector, _i, _len, _ref, _ref2;
-    vector = mouse_coords(event).three();
+    var adjusted_vector, connection, id, mouse_vector, nib, node, vector, _i, _len, _ref, _ref2;
+    mouse_vector = mouse_coords(event);
+    adjusted_vector = mouse_vector.minus(V(250, 250)).three();
+    vector = mouse_vector.three();
     if (dragging_object) {
       node = dragging_object.model;
-      node.set_position(vector);
+      node.set_position(adjusted_vector);
       _ref = node.get_nibs();
       for (_i = 0, _len = _ref.length; _i < _len; _i++) {
         nib = _ref[_i];
         _ref2 = nib.connections;
         for (id in _ref2) {
           connection = _ref2[id];
-          connection.vertex.position.copy(get_nib_position(nib.view));
+          connection.vertex.position.copy(get_nib_position(nib));
         }
       }
     }
@@ -598,17 +615,41 @@
       var node;
       return node = make_node(text);
     }, this);
-    this.main = main;
-    this.edit_subroutine = __bind(function(subroutine) {}, this);
+    this.initial_subroutine = {
+      name: '',
+      inputs: '',
+      outputs: ''
+    };
+    this.new_subroutine = angular.copy(this.initial_subroutine);
+    this.edit_subroutine = __bind(function(subroutine) {
+      var other_subroutine, _i, _len, _ref;
+      _ref = this.subroutines;
+      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+        other_subroutine = _ref[_i];
+        scene.remove(other_subroutine.view);
+      }
+      return scene.add(subroutine.view);
+    }, this);
     this.add_subroutine = __bind(function() {
-      return this.subroutines.push(new SubRoutine);
+      this.subroutines.push(new SubRoutine(this.new_subroutine.name, this.new_subroutine.inputs.split(' '), this.new_subroutine.outputs.split(' ')));
+      return this.new_subroutine = angular.copy(this.initial_subroutine);
+    }, this);
+    this.programs = [initial_program];
+    this.new_program_name = '';
+    this.add_program = __bind(function() {
+      return this.programs.push(new Program(this.new_program_name, make_main()));
     }, this);
     this.run_program = execute_program;
     this.library = functions;
-    return this.subroutines = subroutines;
+    this.subroutines = [];
+    this.subroutines.push(new SubRoutine('foo', ['a', 'b'], ['c', 'd', 'e']));
+    return scene.add(this.programs[0].subroutine.view);
   };
-  current_scope = main = new SubRoutine('main', [], ['OUT']);
-  subroutines = [main];
+  make_main = function() {
+    return new SubRoutine('main', [], ['OUT']);
+  };
+  current_scope = main = make_main();
+  initial_program = new Program('initial', main);
   make_basic_program = function() {
     var c1, c2, c3, five, plus, three;
     plus = make_node('+', V(250, 150));
@@ -638,5 +679,5 @@
   };
   how_are_you_source = "{\"nodes\":[{\"position\":{\"x\":242,\"y\":110,\"z\":0},\"text\":\"out\",\"id\":\"56b9d684188339dafd5d3f0fe9421371\"},{\"position\":{\"x\":243,\"y\":210,\"z\":0},\"text\":\"if\",\"id\":\"3190bcfcc5ece720f07ccde57b12f8a3\"},{\"position\":{\"x\":152,\"y\":315,\"z\":0},\"text\":\"\\\"That's Awesome!\\\"\",\"id\":\"d33ff759bef23100f01c59d525d404d7\"},{\"position\":{\"x\":339,\"y\":316,\"z\":0},\"text\":\"\\\"Oh Well\\\"\",\"id\":\"5d54ff1fa3f1633b31a1ba8c0536f1f0\"},{\"position\":{\"x\":239,\"y\":363,\"z\":0},\"text\":\"=\",\"id\":\"6b8e3e498b936e992c0ceddbbe354635\"},{\"position\":{\"x\":146,\"y\":469,\"z\":0},\"text\":\"\\\"good\\\"\",\"id\":\"3673f98c69da086d30994c91c01fe3f7\"},{\"position\":{\"x\":336,\"y\":472,\"z\":0},\"text\":\"prompt\",\"id\":\"92de68eec528651f75a74492604f5211\"},{\"position\":{\"x\":334,\"y\":598,\"z\":0},\"text\":\"\\\"How are you?\\\"\",\"id\":\"aa4cb4c766117fb44f5a917f1a1f9ba5\"}],\"connections\":[{\"input\":{\"index\":0,\"parent_id\":\"56b9d684188339dafd5d3f0fe9421371\"},\"output\":{\"index\":0,\"parent_id\":\"3190bcfcc5ece720f07ccde57b12f8a3\"}},{\"input\":{\"index\":0,\"parent_id\":\"3190bcfcc5ece720f07ccde57b12f8a3\"},\"output\":{\"index\":0,\"parent_id\":\"d33ff759bef23100f01c59d525d404d7\"}},{\"input\":{\"index\":2,\"parent_id\":\"3190bcfcc5ece720f07ccde57b12f8a3\"},\"output\":{\"index\":0,\"parent_id\":\"5d54ff1fa3f1633b31a1ba8c0536f1f0\"}},{\"input\":{\"index\":1,\"parent_id\":\"3190bcfcc5ece720f07ccde57b12f8a3\"},\"output\":{\"index\":0,\"parent_id\":\"6b8e3e498b936e992c0ceddbbe354635\"}},{\"input\":{\"index\":0,\"parent_id\":\"6b8e3e498b936e992c0ceddbbe354635\"},\"output\":{\"index\":0,\"parent_id\":\"3673f98c69da086d30994c91c01fe3f7\"}},{\"input\":{\"index\":1,\"parent_id\":\"6b8e3e498b936e992c0ceddbbe354635\"},\"output\":{\"index\":0,\"parent_id\":\"92de68eec528651f75a74492604f5211\"}},{\"input\":{\"index\":0,\"parent_id\":\"92de68eec528651f75a74492604f5211\"},\"output\":{\"index\":0,\"parent_id\":\"aa4cb4c766117fb44f5a917f1a1f9ba5\"}}]}";
   addition_program_source = "{\"nodes\":[{\"position\":{\"x\":200,\"y\":100},\"text\":\"out\",\"id\":\"a3a19afbbc5b944012036668230eb819\"},{\"position\":{\"x\":200,\"y\":300},\"text\":\"+\",\"id\":\"4c19f385dd04884ab84eb27f71011054\"},{\"position\":{\"x\":150,\"y\":500},\"text\":\"5\",\"id\":\"c532ec59ef6b57af6bd7323be2d27d93\"},{\"position\":{\"x\":250,\"y\":500},\"text\":\"3\",\"id\":\"1191a8be50c4c7cd7b1f259b82c04365\"}],\"connections\":[{\"input\":{\"index\":0,\"parent_id\":\"4c19f385dd04884ab84eb27f71011054\"},\"output\":{\"index\":0,\"parent_id\":\"c532ec59ef6b57af6bd7323be2d27d93\"}},{\"input\":{\"index\":1,\"parent_id\":\"4c19f385dd04884ab84eb27f71011054\"},\"output\":{\"index\":0,\"parent_id\":\"1191a8be50c4c7cd7b1f259b82c04365\"}},{\"input\":{\"index\":0,\"parent_id\":\"a3a19afbbc5b944012036668230eb819\"},\"output\":{\"index\":0,\"parent_id\":\"4c19f385dd04884ab84eb27f71011054\"}}]}";
-  make_basic_program();
+  system_arrow = make_arrow(V(0, 0), V(1, 0));
 }).call(this);

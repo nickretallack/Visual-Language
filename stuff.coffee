@@ -92,6 +92,9 @@ execute_program = ->
 
 ### MODELS ###
 
+class Program
+    constructor:(@name='', @subroutine) ->
+
 class SubRoutine
     constructor:(@name='', inputs=[], outputs=[], @id=UUID()) ->
         node_registry[@id] = @
@@ -102,19 +105,16 @@ class SubRoutine
         @nodes = {}
         @connections = {}
 
-    set_name: (@name) ->
-        @view.
-
     toJSON: ->
         nodes:_.values @nodes
         connections:_.values @connections
     
 class Node
     constructor: ->
-        @view = make_node_view @
         node_registry[@id] = @
         @scope = current_scope
         @scope.nodes[@id] = @
+        @view = make_node_view @
 
     set_position:(@position) ->
         @view.position.copy @position
@@ -216,7 +216,7 @@ make_subroutine_view = (subroutine) ->
     box = make_box subroutine.name, box_size, 10, 0xEEEEEE, position, false
     box.model = subroutine
     boxes[box.id] = box
-    scene.add box
+    #scene.add box
     return box
 
 make_node_view = (node) ->
@@ -224,7 +224,8 @@ make_node_view = (node) ->
     color = 0x888888
     main_box = make_box node.text, main_box_size, 10, color, node.position
     main_box.model = node
-    scene.add main_box
+    node.scope.view.add main_box
+    #scene.add main_box
     boxes[main_box.id] = main_box
     return main_box
 
@@ -247,15 +248,15 @@ make_nib_view = (nib, is_node) ->
     return sub_box
 
 connection_view = (connection) ->
-    point1 = get_nib_position connection.input.view
-    point2 = get_nib_position connection.output.view
+    point1 = get_nib_position connection.input
+    point2 = get_nib_position connection.output
     arrow = make_arrow point1, point2
     [arrow, arrow.geometry.vertices[0], arrow.geometry.vertices[1]]
             
 
 ### FACTORIES ###
 
-make_node = (text, position=V(250,250), id=undefined) ->
+make_node = (text, position=V(0,0), id=undefined) ->
     if (text[0] is last text) and (text[0] in ["'",'"'])
         # it's a string
         value = text[1...text.length-1]
@@ -321,7 +322,7 @@ make_arrow = (source, target) ->
     line_geometry.vertices.push new THREE.Vertex source
     line_geometry.vertices.push new THREE.Vertex target
     line = new THREE.Line line_geometry, line_material
-    scene.add line
+    current_scope.view.add line
     return line
 
 ### CORE HELPERS ###
@@ -341,7 +342,13 @@ mouse_coords = (event) ->
     #V ((event.clientX / window.innerWidth) * 2 - 1), (-(event.clientY / window.innerHeight) * 2 + 1)
 
 get_nib_position = (nib) ->
-    Vector.from(nib.position).plus(nib.parent.position).three()
+    if nib.parent instanceof Node
+        Vector.from(nib.view.position).plus(nib.view.parent.position).three()
+    else Vector.from(nib.view.position).three()
+
+get_absolute_nib_position = (nib) ->
+    Vector.from(get_nib_position(nib)).plus(V(250,250)).three()
+    
 
 ### INTERACTION ###
 
@@ -349,8 +356,6 @@ dragging_object = null
 connecting_object = null
 dragging_offset = V 0,0
 
-system_arrow = make_arrow V(0,0), V(1,0)
-scene.remove system_arrow
 
 mouse_down = (event) ->
     event.preventDefault()
@@ -365,7 +370,7 @@ mouse_down = (event) ->
             if event.which is 3
                 target.model.delete_connections()
             else
-                system_arrow.geometry.vertices[0].position = system_arrow.geometry.vertices[1].position = get_nib_position target
+                system_arrow.geometry.vertices[0].position = system_arrow.geometry.vertices[1].position = get_absolute_nib_position target.model
                 scene.add system_arrow
                 connecting_object = target
 
@@ -380,13 +385,15 @@ mouse_up = (event) ->
         scene.remove system_arrow
 
 mouse_move = (event) ->
-    vector = mouse_coords(event).three()
+    mouse_vector = mouse_coords(event)
+    adjusted_vector = mouse_vector.minus(V(250,250)).three()
+    vector = mouse_vector.three()
     if dragging_object
         node = dragging_object.model
-        node.set_position vector
+        node.set_position adjusted_vector
         for nib in node.get_nibs()
             for id, connection of nib.connections
-                connection.vertex.position.copy get_nib_position nib.view
+                connection.vertex.position.copy get_nib_position nib
     if connecting_object
         system_arrow.geometry.vertices[1].position = vector
 
@@ -409,26 +416,41 @@ window.Controller = ->
     @add_node = (text) =>
         node = make_node text
 
-    #@initial_subroutine =
-    #    name:''
-    #    inputs:''
-    #    outputs:''
+    @initial_subroutine =
+        name:''
+        inputs:''
+        outputs:''
+    @new_subroutine = angular.copy @initial_subroutine
 
-    #@new_subroutine = angular.copy @initial_subroutine
-
-    @main = main
     @edit_subroutine = (subroutine) =>
+        for other_subroutine in @subroutines
+            scene.remove other_subroutine.view
+        scene.add subroutine.view
+
     @add_subroutine = =>
-        @subroutines.push new SubRoutine
+        @subroutines.push new SubRoutine @new_subroutine.name, @new_subroutine.inputs.split(' '), @new_subroutine.outputs.split(' ')
+        @new_subroutine = angular.copy @initial_subroutine
+        
+    @programs = [initial_program]
+    @new_program_name = ''
+    @add_program = =>
+        @programs.push new Program @new_program_name, make_main()
         
         
 
     @run_program = execute_program
     @library = functions
-    @subroutines = subroutines
+    @subroutines = []
+    @subroutines.push new SubRoutine 'foo', ['a','b'], ['c','d','e']
 
-current_scope = main = new SubRoutine 'main', [], ['OUT']
-subroutines = [main]
+    scene.add @programs[0].subroutine.view
+
+    
+make_main = ->
+    new SubRoutine 'main', [], ['OUT']
+
+current_scope = main = make_main()
+initial_program = new Program 'initial', main
 
 make_basic_program = ->
     plus = make_node '+', V 250,150
@@ -454,4 +476,5 @@ how_are_you_source = """{"nodes":[{"position":{"x":242,"y":110,"z":0},"text":"ou
 addition_program_source = """{"nodes":[{"position":{"x":200,"y":100},"text":"out","id":"a3a19afbbc5b944012036668230eb819"},{"position":{"x":200,"y":300},"text":"+","id":"4c19f385dd04884ab84eb27f71011054"},{"position":{"x":150,"y":500},"text":"5","id":"c532ec59ef6b57af6bd7323be2d27d93"},{"position":{"x":250,"y":500},"text":"3","id":"1191a8be50c4c7cd7b1f259b82c04365"}],"connections":[{"input":{"index":0,"parent_id":"4c19f385dd04884ab84eb27f71011054"},"output":{"index":0,"parent_id":"c532ec59ef6b57af6bd7323be2d27d93"}},{"input":{"index":1,"parent_id":"4c19f385dd04884ab84eb27f71011054"},"output":{"index":0,"parent_id":"1191a8be50c4c7cd7b1f259b82c04365"}},{"input":{"index":0,"parent_id":"a3a19afbbc5b944012036668230eb819"},"output":{"index":0,"parent_id":"4c19f385dd04884ab84eb27f71011054"}}]}"""
 
 #load_program how_are_you_source
-make_basic_program()
+#make_basic_program()
+system_arrow = make_arrow V(0,0), V(1,0)
