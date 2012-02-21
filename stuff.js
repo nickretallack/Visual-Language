@@ -1,5 +1,5 @@
 (function() {
-  var Connection, FunctionApplication, Input, Literal, Nib, Node, Output, Program, SubRoutine, addition_program_source, animate, boxes, camera, connecting_object, connection_view, current_scope, dragging_object, dragging_offset, evaluate_program, execute_program, functions, get_absolute_nib_position, get_nib_position, height, how_are_you_source, initial_program, last, load_program, main, make_arrow, make_basic_program, make_box, make_connection, make_main, make_nib_view, make_node, make_node_view, make_subroutine_view, make_text, mouse_coords, mouse_down, mouse_move, mouse_up, node_registry, program_outputs, projector, ray_cast_mouse, renderer, scene, system_arrow, update, width;
+  var Connection, FunctionApplication, Input, Literal, Nib, Node, Output, Program, SubRoutine, addition_program_source, all_subroutines, animate, boxes, camera, connecting_object, connection_view, current_scope, dragging_object, dragging_offset, evaluate_program, execute_program, functions, get_absolute_nib_position, get_nib_position, height, hide_subroutines, how_are_you_source, initial_program, last, load_program, main, make_arrow, make_basic_program, make_box, make_connection, make_main, make_nib_view, make_node, make_node_view, make_subroutine_view, make_text, mouse_coords, mouse_down, mouse_move, mouse_up, node_registry, program_outputs, projector, ray_cast_mouse, renderer, scene, system_arrow, update, width;
   var __hasProp = Object.prototype.hasOwnProperty, __extends = function(child, parent) {
     for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; }
     function ctor() { this.constructor = child; }
@@ -21,6 +21,7 @@
   };
   boxes = {};
   node_registry = {};
+  all_subroutines = [];
   update = function() {
     return renderer.render(scene, camera);
   };
@@ -179,6 +180,7 @@
       }).call(this);
       this.nodes = {};
       this.connections = {};
+      all_subroutines.push(this);
     }
     SubRoutine.prototype.toJSON = function() {
       return {
@@ -594,6 +596,15 @@
       return system_arrow.geometry.vertices[1].position = vector;
     }
   };
+  hide_subroutines = function() {
+    var subroutine, _i, _len, _results;
+    _results = [];
+    for (_i = 0, _len = all_subroutines.length; _i < _len; _i++) {
+      subroutine = all_subroutines[_i];
+      _results.push(scene.remove(subroutine.view));
+    }
+    return _results;
+  };
   window.Controller = function() {
     var field;
     console.log("running");
@@ -622,12 +633,7 @@
     };
     this.new_subroutine = angular.copy(this.initial_subroutine);
     this.edit_subroutine = __bind(function(subroutine) {
-      var other_subroutine, _i, _len, _ref;
-      _ref = this.subroutines;
-      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-        other_subroutine = _ref[_i];
-        scene.remove(other_subroutine.view);
-      }
+      hide_subroutines();
       return scene.add(subroutine.view);
     }, this);
     this.add_subroutine = __bind(function() {

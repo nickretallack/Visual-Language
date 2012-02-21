@@ -14,6 +14,7 @@ last = (list) -> list[list.length-1]
 
 boxes = {}
 node_registry = {}
+all_subroutines = []
 
 update = ->
     renderer.render scene, camera
@@ -104,6 +105,7 @@ class SubRoutine
         @outputs = (new Input @, text, index, outputs.length-1 for text, index in outputs)
         @nodes = {}
         @connections = {}
+        all_subroutines.push @
 
     toJSON: ->
         nodes:_.values @nodes
@@ -397,6 +399,10 @@ mouse_move = (event) ->
     if connecting_object
         system_arrow.geometry.vertices[1].position = vector
 
+hide_subroutines = ->
+    for subroutine in all_subroutines
+        scene.remove subroutine.view
+
 window.Controller = ->
     console.log "running"
     field = $("#field")
@@ -423,8 +429,7 @@ window.Controller = ->
     @new_subroutine = angular.copy @initial_subroutine
 
     @edit_subroutine = (subroutine) =>
-        for other_subroutine in @subroutines
-            scene.remove other_subroutine.view
+        hide_subroutines()
         scene.add subroutine.view
 
     @add_subroutine = =>
