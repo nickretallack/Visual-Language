@@ -22,6 +22,7 @@
   boxes = {};
   node_registry = {};
   all_subroutines = [];
+  current_scope = null;
   update = function() {
     return renderer.render(scene, camera);
   };
@@ -188,6 +189,35 @@
         connections: _.values(this.connections)
       };
     };
+    SubRoutine.prototype.evaluate = function() {
+      var inputs, output, _ref;
+      inputs = arguments;
+      output = (_ref = this.outputs[0].get_connection()) != null ? _ref.connection.output : void 0;
+      if (!output) {
+        throw "NotConnected";
+      }
+      return evaluate_program(output);
+    };
+    SubRoutine.prototype.get_inputs = function() {
+      var output, _i, _len, _ref, _results;
+      _ref = this.outputs;
+      _results = [];
+      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+        output = _ref[_i];
+        _results.push(output.text);
+      }
+      return _results;
+    };
+    SubRoutine.prototype.get_outputs = function() {
+      var input, _i, _len, _ref, _results;
+      _ref = this.inputs;
+      _results = [];
+      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+        input = _ref[_i];
+        _results.push(input.text);
+      }
+      return _results;
+    };
     return SubRoutine;
   })();
   Node = (function() {
@@ -297,10 +327,6 @@
     }
     __extends(Input, Nib);
     Input.prototype._add_connection = function(connection, vertex) {
-      var _ref;
-      if ((_ref = this.get_connection()) != null) {
-        _ref["delete"]();
-      }
       return this.connections[connection.id] = {
         connection: connection,
         vertex: vertex
@@ -431,9 +457,6 @@
       } else if (text in functions) {
         information = functions[text];
         node = new FunctionApplication(position, text, information, id);
-        if (text === 'out') {
-          program_outputs.push(node);
-        }
         return node;
       }
     }
@@ -626,6 +649,13 @@
       var node;
       return node = make_node(text);
     }, this);
+    this.use_subroutine = __bind(function(subroutine) {
+      return new FunctionApplication(V(0, 0), subroutine.name, {
+        inputs: subroutine.get_inputs(),
+        outputs: subroutine.get_outputs(),
+        definition: subroutine.evaluate
+      });
+    }, this);
     this.initial_subroutine = {
       name: '',
       inputs: '',
@@ -633,6 +663,7 @@
     };
     this.new_subroutine = angular.copy(this.initial_subroutine);
     this.edit_subroutine = __bind(function(subroutine) {
+      current_scope = subroutine;
       hide_subroutines();
       return scene.add(subroutine.view);
     }, this);
@@ -648,7 +679,7 @@
     this.run_program = execute_program;
     this.library = functions;
     this.subroutines = [];
-    this.subroutines.push(new SubRoutine('foo', ['a', 'b'], ['c', 'd', 'e']));
+    this.subroutines.push(new SubRoutine('foo', ['a'], ['b']));
     return scene.add(this.programs[0].subroutine.view);
   };
   make_main = function() {

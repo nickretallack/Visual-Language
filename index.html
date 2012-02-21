@@ -23,7 +23,7 @@
 
 <h2>Programs</h2>
 <ul><li ng:repeat="program in programs">
-    <a ng:click="edit_subroutine(program.subroutine)">{{program.name}}</a>
+    <a ng:click="run_program(program)">run</a> <a ng:click="edit_subroutine(program.subroutine)">edit</a> {{program.name}}
     <span ng:repat="input in program.subroutine.inputs">{{input.text}}</span> =&gt;
     <span ng:repat="output in program.subroutine.outputs">{{output.text}}</span>
 </li></ul>
@@ -31,7 +31,7 @@
 
 <h2>Subroutines</h2>
 <ul><li ng:repeat="subroutine in subroutines">
-    <a ng:click="edit_subroutine(subroutine)">{{subroutine.name}}</a>
+    <a ng:click="use_subroutine(subroutine)">use</a> <a ng:click="edit_subroutine(subroutine)">edit</a> {{subroutine.name}}
     <span ng:repeat="input in subroutine.inputs">{{input.text}} </span> =&gt;
     <span ng:repeat="output in subroutine.outputs">{{output.text}} </span>
 </li></ul>

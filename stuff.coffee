@@ -15,6 +15,7 @@ last = (list) -> list[list.length-1]
 boxes = {}
 node_registry = {}
 all_subroutines = []
+current_scope = null
 
 update = ->
     renderer.render scene, camera
@@ -110,6 +111,15 @@ class SubRoutine
     toJSON: ->
         nodes:_.values @nodes
         connections:_.values @connections
+
+    evaluate: ->
+        inputs = arguments
+        output = @outputs[0].get_connection()?.connection.output
+        throw "NotConnected" unless output
+        evaluate_program output
+
+    get_inputs: -> (output.text for output in @outputs)
+    get_outputs: -> (input.text for input in @inputs)
     
 class Node
     constructor: ->
@@ -164,7 +174,8 @@ class Input extends Nib
 
     _add_connection: (connection, vertex) ->
         # delete previous connection
-        @get_connection()?.delete()
+        #@get_connection()?.connection.delete()
+        #@connections = {}
         @connections[connection.id] =
             connection:connection
             vertex:vertex
@@ -272,7 +283,6 @@ make_node = (text, position=V(0,0), id=undefined) ->
             # it's a function
             information = functions[text]
             node = new FunctionApplication position, text, information, id
-            program_outputs.push node if text is 'out'
             return node
 
 make_connection = (source, target) ->
@@ -422,6 +432,12 @@ window.Controller = ->
     @add_node = (text) =>
         node = make_node text
 
+    @use_subroutine = (subroutine) =>
+        new FunctionApplication V(0,0), subroutine.name,
+            inputs:subroutine.get_inputs()
+            outputs:subroutine.get_outputs()
+            definition:subroutine.evaluate
+
     @initial_subroutine =
         name:''
         inputs:''
@@ -429,12 +445,14 @@ window.Controller = ->
     @new_subroutine = angular.copy @initial_subroutine
 
     @edit_subroutine = (subroutine) =>
+        current_scope = subroutine
         hide_subroutines()
         scene.add subroutine.view
 
     @add_subroutine = =>
         @subroutines.push new SubRoutine @new_subroutine.name, @new_subroutine.inputs.split(' '), @new_subroutine.outputs.split(' ')
         @new_subroutine = angular.copy @initial_subroutine
+
         
     @programs = [initial_program]
     @new_program_name = ''
@@ -446,7 +464,8 @@ window.Controller = ->
     @run_program = execute_program
     @library = functions
     @subroutines = []
-    @subroutines.push new SubRoutine 'foo', ['a','b'], ['c','d','e']
+    #@subroutines.push new SubRoutine 'foo', ['a','b'], ['c','d','e']
+    @subroutines.push new SubRoutine 'foo', ['a'], ['b']
 
     scene.add @programs[0].subroutine.view
 
