@@ -238,7 +238,7 @@
     };
     Node.prototype["delete"] = function() {
       var nib, _i, _len, _ref, _results;
-      scene.remove(this.view);
+      this.scope.view.remove(this.view);
       delete this.scope.nodes[this.id];
       _ref = this.get_nibs();
       _results = [];
@@ -392,7 +392,7 @@
       };
     };
     Connection.prototype["delete"] = function() {
-      scene.remove(this.view);
+      this.scope.view.remove(this.view);
       delete this.scope.connections[this.id];
       delete this.output.connections[this.id];
       return this.input.connections = {};

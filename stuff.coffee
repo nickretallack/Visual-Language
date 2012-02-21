@@ -137,7 +137,7 @@ class Node
         @inputs.concat @outputs
 
     delete: ->
-        scene.remove @view
+        @scope.view.remove @view
         delete @scope.nodes[@id]
         for nib in @get_nibs()
             nib.delete_connections()
@@ -218,7 +218,7 @@ class Connection
             parent_id:@output.parent.id
 
     delete: ->
-        scene.remove @view
+        @scope.view.remove @view
         delete @scope.connections[@id]
         delete @output.connections[@id]
         @input.connections = {}
