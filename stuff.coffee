@@ -58,48 +58,12 @@ functions =
         outputs:['R']
         definition: (left, right) -> left() >= right()
 
-### EVALUATION ###
-
-# TODO: support multiple outputs
-evaluate_program = (output) ->
-    parent = output.parent
-    if parent instanceof Literal
-        return parent.value
-    if parent instanceof SubRoutine
-        return parent.evaluate_input()
-    if parent instanceof FunctionApplication
-        # collect input values
-        input_values = []
-        for input in parent.inputs
-            do (input) ->
-                input_values.push ->
-                    output = input.get_connection()?.connection.output
-                    throw "NotConnected" unless output
-                    evaluate_program output
-        return parent.value.apply null, input_values
-
-program_outputs = []
-execute_program = ->
-    try
-        output = main.outputs[0].get_connection()?.connection.output
-        throw "NotConnected" unless output
-        result = evaluate_program output
-        console.log result
-        alert result
-        
-    catch exception
-        if exception is "NotConnected"
-            alert "Your program is not fully connected"
-        else if exception is "Exit"
-            alert "Died"
-        else throw exception
-
 ### MODELS ###
 
 class Program
     constructor:(@name='', @subroutine) ->
     run: ->
-        alert @subroutine.evaluate()
+        alert @subroutine.evaluation()
 
 class SubRoutine
     constructor:(@name='', inputs=[], outputs=[], @id=UUID()) ->
@@ -116,13 +80,15 @@ class SubRoutine
         nodes:_.values @nodes
         connections:_.values @connections
 
-    evaluate: ->
-        output = @outputs[0].get_connection()?.connection.output
+    evaluation: ->
+        inputs = arguments
+        output = @outputs[0].get_connection()?.connection.output.parent
         throw "NotConnected" unless output
-        evaluate_program output
 
-    evaluate_input: ->
-        # TODO
+        if output instanceof Node
+            return output.evaluation inputs
+        else if output instanceof SubRoutine
+            return inputs[0]()
 
     get_inputs: -> (output.text for output in @outputs)
     get_outputs: -> (input.text for input in @inputs)
@@ -153,16 +119,36 @@ class Node
 
 class FunctionApplication extends Node
     constructor:(@position, @text, information, @id=UUID()) ->
-        @value = information.definition
+        if information.definition instanceof SubRoutine
+            @subroutine = information.definition
+        else
+            @value = information.definition
+
         super()
         @inputs = (new Input @, text, index, information.inputs.length-1 for text, index in information.inputs)
         @outputs = (new Output @, text, index, information.outputs.length-1 for text, index in information.outputs)
+
+    evaluation: ->
+        input_values = []
+        for input in @inputs
+            do (input) ->
+                input_values.push ->
+                    output = input.get_connection()?.connection.output.parent
+                    throw "NotConnected" unless output
+                    return output.evaluation()
+
+        if @subroutine?
+            return @subroutine.evaluation input_values...
+        else
+            return parent.value input_values...
 
 class Literal extends Node
     constructor:(@position, @text, @value, @id=UUID()) ->
         super()
         @inputs = []
         @outputs = [new Output(@, 'O')]
+
+    evaluation: -> return @value
     
 class Nib  # Abstract. Do not instantiate
     constructor: ->
@@ -442,7 +428,7 @@ window.Controller = ->
         new FunctionApplication V(0,0), subroutine.name,
             inputs:subroutine.get_inputs()
             outputs:subroutine.get_outputs()
-            definition: -> subroutine.evaluate()
+            definition:subroutine
 
     @initial_subroutine =
         name:''
