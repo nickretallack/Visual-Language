@@ -70,6 +70,31 @@ functions =
         inputs:[]
         outputs:['L','R']
         definition: (index) -> if index is 0 then 5 else 10
+    'replace':
+        inputs:['text','rem','ins']
+        outputs:['result']
+        definition: (text, pattern, replacement) -> text().replace pattern(), replacement()
+
+    'int':
+        inputs:['str']
+        outputs:['int']
+        definition: (str) -> parseInt str()
+    'float':
+        inputs:['str']
+        outputs:['float']
+        definition: (str) -> parseFloat str()
+    'str':
+        inputs:['obj']
+        outputs:['float']
+        definition: (obj) -> ''+ obj()
+    'from json':
+        inputs:['str']
+        outputs:['obj']
+        definition: (str) -> JSON.parse str()
+    'to json':
+        inputs:['obj']
+        outputs:['str']
+        definition: (obj) -> JSON.stringify obj()
 
 ### MODELS ###
 

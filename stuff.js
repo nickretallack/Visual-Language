@@ -127,6 +127,48 @@
           return 10;
         }
       }
+    },
+    'replace': {
+      inputs: ['text', 'rem', 'ins'],
+      outputs: ['result'],
+      definition: function(text, pattern, replacement) {
+        return text().replace(pattern(), replacement());
+      }
+    },
+    'int': {
+      inputs: ['str'],
+      outputs: ['int'],
+      definition: function(str) {
+        return parseInt(str());
+      }
+    },
+    'float': {
+      inputs: ['str'],
+      outputs: ['float'],
+      definition: function(str) {
+        return parseFloat(str());
+      }
+    },
+    'str': {
+      inputs: ['obj'],
+      outputs: ['float'],
+      definition: function(obj) {
+        return '' + obj();
+      }
+    },
+    'from json': {
+      inputs: ['str'],
+      outputs: ['obj'],
+      definition: function(str) {
+        return JSON.parse(str());
+      }
+    },
+    'to json': {
+      inputs: ['obj'],
+      outputs: ['str'],
+      definition: function(obj) {
+        return JSON.stringify(obj());
+      }
     }
   };
 
