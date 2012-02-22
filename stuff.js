@@ -46,6 +46,20 @@
         return left() - right();
       }
     },
+    '*': {
+      inputs: ['L', 'R'],
+      outputs: ['R'],
+      definition: function(left, right) {
+        return left() * right();
+      }
+    },
+    '/': {
+      inputs: ['L', 'R'],
+      outputs: ['R'],
+      definition: function(left, right) {
+        return left() / right();
+      }
+    },
     'if': {
       inputs: ['T', 'C', 'F'],
       outputs: ['R'],
@@ -294,7 +308,7 @@
             throw "NotConnected";
           }
           if (output.parent instanceof SubRoutine) {
-            return the_scope.inputs[output.index];
+            return the_scope.inputs[output.index]();
           } else if (output.parent instanceof Node) {
             return output.parent.evaluation(the_scope);
           }

@@ -34,6 +34,14 @@ functions =
         inputs:['L','R']
         outputs:['R']
         definition: (left, right) -> left() - right()
+    '*':
+        inputs:['L','R']
+        outputs:['R']
+        definition: (left, right) -> left() * right()
+    '/':
+        inputs:['L','R']
+        outputs:['R']
+        definition: (left, right) -> left() / right()
     'if':
         inputs:['T','C','F']
         outputs:['R']
@@ -162,7 +170,7 @@ class FunctionApplication extends Node
                     output = input.get_connection()?.connection.output
                     throw "NotConnected" unless output
                     if output.parent instanceof SubRoutine
-                        return the_scope.inputs[output.index]
+                        return the_scope.inputs[output.index]()
                     else if output.parent instanceof Node
                         return output.parent.evaluation the_scope
 
