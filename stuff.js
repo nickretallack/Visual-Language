@@ -1,5 +1,5 @@
 (function() {
-  var Connection, FunctionApplication, Input, Literal, Nib, Node, NodeInvocation, Output, Program, SubRoutine, SubroutineInvocation, addition_program_source, all_subroutines, animate, boxes, camera, connecting_object, connection_view, current_scope, dragging_object, dragging_offset, functions, get_absolute_nib_position, get_nib_position, height, hide_subroutines, how_are_you_source, last, load_program, load_subroutine, make_arrow, make_basic_program, make_box, make_connection, make_main, make_nib_view, make_node, make_node_view, make_subroutine_view, make_text, mouse_coords, mouse_down, mouse_move, mouse_up, node_registry, projector, ray_cast_mouse, renderer, scene, system_arrow, update, width,
+  var Connection, FunctionApplication, Input, Literal, Nib, Node, Output, Program, SubRoutine, addition_program_source, all_subroutines, animate, boxes, camera, connecting_object, connection_view, current_scope, dragging_object, dragging_offset, functions, get_absolute_nib_position, get_nib_position, height, hide_subroutines, how_are_you_source, last, load_program, load_subroutine, make_arrow, make_basic_program, make_box, make_connection, make_main, make_nib_view, make_node, make_node_view, make_subroutine_view, make_text, mouse_coords, mouse_down, mouse_move, mouse_up, node_registry, projector, ray_cast_mouse, renderer, scene, system_arrow, update, width,
     __hasProp = Object.prototype.hasOwnProperty,
     __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor; child.__super__ = parent.prototype; return child; };
 
@@ -206,29 +206,6 @@
     };
 
     return Program;
-
-  })();
-
-  NodeInvocation = (function() {
-
-    function NodeInvocation(node, subroutine) {
-      this.node = node;
-      this.subroutine = subroutine;
-    }
-
-    return NodeInvocation;
-
-  })();
-
-  SubroutineInvocation = (function() {
-
-    function SubroutineInvocation(subroutine, inputs, outputs) {
-      this.subroutine = subroutine;
-      this.inputs = inputs;
-      this.outputs = outputs;
-    }
-
-    return SubroutineInvocation;
 
   })();
 

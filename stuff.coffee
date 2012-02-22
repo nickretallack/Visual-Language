@@ -115,16 +115,6 @@ class Program
         name:@name
         subroutine:@subroutine
 
-class NodeInvocation
-    constructor:(@node, @subroutine) ->
-        
-        
-
-class SubroutineInvocation
-    constructor:(@subroutine, @inputs, @outputs) ->
-        
-        #@invocations = (new NodeInvocation node, @subroutine for node in @subroutine.nodes)
-
 class SubRoutine
     constructor:(@name='', inputs=[], outputs=[], @id=UUID()) ->
         node_registry[@id] = @
@@ -563,6 +553,8 @@ make_basic_program = ->
 
 
 load_program = (data) ->
+    # TODO: it's possible for one subroutine to make use of another one before that one is loaded.
+    # Loading should happen in two passes: first create all the subroutines, then run through them and load nodes into them.
     subroutine = load_subroutine data.subroutine
     return new Program data.name, subroutine, data.id
 
