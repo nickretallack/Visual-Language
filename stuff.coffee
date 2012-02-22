@@ -365,7 +365,6 @@ ray_cast_mouse = ->
     forward = new THREE.Vector3 0,0,-1
     ray = new THREE.Ray mouse, forward
     intersections = ray.intersectScene scene
-    console.log intersections
     if intersections.length > 0
         (last intersections).object.parent
 
@@ -434,7 +433,6 @@ hide_subroutines = ->
         scene.remove subroutine.view
 
 window.Controller = ->
-    console.log "running"
     field = $("#field")
 
     field.append renderer.domElement
@@ -488,9 +486,9 @@ window.Controller = ->
         if localStorage.state?
             data = JSON.parse localStorage.state
             for program_data in data.programs
-                @programs.push recreate_program program_data
+                @programs.push load_program program_data
             for subroutine_data in data.subroutines
-                @subroutines.push recreate_subroutine subroutine_data
+                @subroutines.push load_subroutine subroutine_data
 
     @library = functions
     @subroutines = []
@@ -521,11 +519,11 @@ make_basic_program = ->
     c3 = plus.outputs[0].connect current_scope.outputs[0]
 
 
-recreate_program = (data) ->
-    subroutine = recreate_subroutine data.subroutine
+load_program = (data) ->
+    subroutine = load_subroutine data.subroutine
     return new Program data.name, subroutine, data.id
 
-recreate_subroutine = (data) ->
+load_subroutine = (data) ->
     current_scope = subroutine = new SubRoutine data.name, data.inputs, data.outputs, data.id
 
     for node in data.nodes

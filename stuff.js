@@ -1,5 +1,5 @@
 (function() {
-  var Connection, FunctionApplication, Input, Literal, Nib, Node, NodeInvocation, Output, Program, SubRoutine, SubroutineInvocation, addition_program_source, all_subroutines, animate, boxes, camera, connecting_object, connection_view, current_scope, dragging_object, dragging_offset, functions, get_absolute_nib_position, get_nib_position, height, hide_subroutines, how_are_you_source, last, make_arrow, make_basic_program, make_box, make_connection, make_main, make_nib_view, make_node, make_node_view, make_subroutine_view, make_text, mouse_coords, mouse_down, mouse_move, mouse_up, node_registry, projector, ray_cast_mouse, recreate_program, recreate_subroutine, renderer, scene, system_arrow, update, width;
+  var Connection, FunctionApplication, Input, Literal, Nib, Node, NodeInvocation, Output, Program, SubRoutine, SubroutineInvocation, addition_program_source, all_subroutines, animate, boxes, camera, connecting_object, connection_view, current_scope, dragging_object, dragging_offset, functions, get_absolute_nib_position, get_nib_position, height, hide_subroutines, how_are_you_source, last, load_program, load_subroutine, make_arrow, make_basic_program, make_box, make_connection, make_main, make_nib_view, make_node, make_node_view, make_subroutine_view, make_text, mouse_coords, mouse_down, mouse_move, mouse_up, node_registry, projector, ray_cast_mouse, renderer, scene, system_arrow, update, width;
   var __hasProp = Object.prototype.hasOwnProperty, __extends = function(child, parent) {
     for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; }
     function ctor() { this.constructor = child; }
@@ -567,7 +567,6 @@
     forward = new THREE.Vector3(0, 0, -1);
     ray = new THREE.Ray(mouse, forward);
     intersections = ray.intersectScene(scene);
-    console.log(intersections);
     if (intersections.length > 0) {
       return (last(intersections)).object.parent;
     }
@@ -656,7 +655,6 @@
   };
   window.Controller = function() {
     var field, load_state, save_state, state;
-    console.log("running");
     field = $("#field");
     field.append(renderer.domElement);
     animate();
@@ -715,13 +713,13 @@
         _ref = data.programs;
         for (_i = 0, _len = _ref.length; _i < _len; _i++) {
           program_data = _ref[_i];
-          this.programs.push(recreate_program(program_data));
+          this.programs.push(load_program(program_data));
         }
         _ref2 = data.subroutines;
         _results = [];
         for (_j = 0, _len2 = _ref2.length; _j < _len2; _j++) {
           subroutine_data = _ref2[_j];
-          _results.push(this.subroutines.push(recreate_subroutine(subroutine_data)));
+          _results.push(this.subroutines.push(load_subroutine(subroutine_data)));
         }
         return _results;
       }
@@ -753,12 +751,12 @@
     c2 = three.outputs[0].connect(plus.inputs[1]);
     return c3 = plus.outputs[0].connect(current_scope.outputs[0]);
   };
-  recreate_program = function(data) {
+  load_program = function(data) {
     var subroutine;
-    subroutine = recreate_subroutine(data.subroutine);
+    subroutine = load_subroutine(data.subroutine);
     return new Program(data.name, subroutine, data.id);
   };
-  recreate_subroutine = function(data) {
+  load_subroutine = function(data) {
     var connection, node, sink, source, subroutine, _i, _j, _len, _len2, _ref, _ref2;
     current_scope = subroutine = new SubRoutine(data.name, data.inputs, data.outputs, data.id);
     _ref = data.nodes;
