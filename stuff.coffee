@@ -77,6 +77,13 @@ functions =
         inputs:['text','rem','ins']
         outputs:['result']
         definition: (text, pattern, replacement) -> text().replace pattern(), replacement()
+    'log':
+        inputs:['in']
+        outputs:['out']
+        definition: (input) ->
+            value = input()
+            console.log value
+            return value
 
     'int':
         inputs:['str']

@@ -1,4 +1,4 @@
-- Save and reload state
-- Delete nodes and arrows
+- allow arbitrary literals
+    - load literals as raw json values
+    - differentiate their nodes in persistence from builtins and subroutines
 - Delete old arrows that go to the same output nodes
-- Subroutine boxes
