@@ -21,7 +21,7 @@
   };
   boxes = {};
   node_registry = {};
-  all_subroutines = [];
+  all_subroutines = {};
   current_scope = null;
   system_arrow = null;
   update = function() {
@@ -160,7 +160,7 @@
       }).call(this);
       this.nodes = {};
       this.connections = {};
-      all_subroutines.push(this);
+      all_subroutines[this.id] = this;
     }
     SubRoutine.prototype.toJSON = function() {
       return {
@@ -238,10 +238,12 @@
       return _results;
     };
     Node.prototype.toJSON = function() {
+      var _ref;
       return {
         position: this.position,
         text: this.text,
-        id: this.id
+        id: this.id,
+        subroutine_id: (_ref = this.subroutine) != null ? _ref.id : void 0
       };
     };
     return Node;
@@ -281,7 +283,7 @@
     }
     __extends(FunctionApplication, Node);
     FunctionApplication.prototype.evaluation = function(the_scope) {
-      var input, input_values, _fn, _i, _len, _ref, _ref2, _ref3;
+      var input, input_values, _fn, _i, _len, _ref, _ref2;
       input_values = [];
       _ref = this.inputs;
       _fn = function(input) {
@@ -305,7 +307,7 @@
       if (this.subroutine != null) {
         return (_ref2 = this.subroutine).invoke.apply(_ref2, input_values);
       } else {
-        return (_ref3 = output.parent).value.apply(_ref3, input_values);
+        return this.value.apply(this, input_values);
       }
     };
     return FunctionApplication;
@@ -367,7 +369,7 @@
       }
     };
     Input.prototype.connect = function(output) {
-      return new Connection(this(output));
+      return new Connection(this, output);
     };
     return Input;
   })();
@@ -645,16 +647,16 @@
     }
   };
   hide_subroutines = function() {
-    var subroutine, _i, _len, _results;
+    var index, subroutine, _results;
     _results = [];
-    for (_i = 0, _len = all_subroutines.length; _i < _len; _i++) {
-      subroutine = all_subroutines[_i];
+    for (index in all_subroutines) {
+      subroutine = all_subroutines[index];
       _results.push(scene.remove(subroutine.view));
     }
     return _results;
   };
   window.Controller = function() {
-    var field, load_state, save_state, state;
+    var field, load_state, save_state, save_timer, state;
     field = $("#field");
     field.append(renderer.domElement);
     animate();
@@ -710,16 +712,16 @@
       var data, program_data, subroutine_data, _i, _j, _len, _len2, _ref, _ref2, _results;
       if (localStorage.state != null) {
         data = JSON.parse(localStorage.state);
-        _ref = data.programs;
+        _ref = data.subroutines;
         for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-          program_data = _ref[_i];
-          this.programs.push(load_program(program_data));
+          subroutine_data = _ref[_i];
+          this.subroutines.push(load_subroutine(subroutine_data));
         }
-        _ref2 = data.subroutines;
+        _ref2 = data.programs;
         _results = [];
         for (_j = 0, _len2 = _ref2.length; _j < _len2; _j++) {
-          subroutine_data = _ref2[_j];
-          _results.push(this.subroutines.push(load_subroutine(subroutine_data)));
+          program_data = _ref2[_j];
+          _results.push(this.programs.push(load_program(program_data)));
         }
         return _results;
       }
@@ -737,7 +739,7 @@
     current_scope = this.programs[0].subroutine;
     system_arrow = make_arrow(V(0, 0), V(1, 0));
     scene.add(current_scope.view);
-    return this.$watch(state, save_state);
+    return save_timer = setInterval(save_state, 500);
   };
   make_main = function() {
     return new SubRoutine('main', [], ['OUT']);
@@ -757,19 +759,34 @@
     return new Program(data.name, subroutine, data.id);
   };
   load_subroutine = function(data) {
-    var connection, node, sink, source, subroutine, _i, _j, _len, _len2, _ref, _ref2;
+    var connection, node, position, sink, sink_connector, source, source_connector, sub_subroutine, subroutine, _i, _j, _len, _len2, _ref, _ref2;
     current_scope = subroutine = new SubRoutine(data.name, data.inputs, data.outputs, data.id);
     _ref = data.nodes;
     for (_i = 0, _len = _ref.length; _i < _len; _i++) {
       node = _ref[_i];
-      make_node(node.text, Vector.from(node.position), node.id);
+      position = Vector.from(node.position);
+      if (node.subroutine_id) {
+        sub_subroutine = all_subroutines[node.subroutine_id];
+        if (!sub_subroutine) {
+          console.log("Oh no, subroutine wasn't loaded yet");
+        }
+        new FunctionApplication(position, sub_subroutine.name, {
+          inputs: sub_subroutine.get_inputs(),
+          outputs: sub_subroutine.get_outputs(),
+          definition: sub_subroutine
+        }, node.id);
+      } else {
+        make_node(node.text, position, node.id);
+      }
     }
     _ref2 = data.connections;
     for (_j = 0, _len2 = _ref2.length; _j < _len2; _j++) {
       connection = _ref2[_j];
       source = node_registry[connection.output.parent_id];
       sink = node_registry[connection.input.parent_id];
-      source.outputs[connection.output.index].connect(sink.inputs[connection.input.index]);
+      source_connector = source instanceof Node ? source.outputs : source.inputs;
+      sink_connector = sink instanceof Node ? sink.inputs : sink.outputs;
+      source_connector[connection.output.index].connect(sink_connector[connection.input.index]);
     }
     return subroutine;
   };

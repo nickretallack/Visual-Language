@@ -14,7 +14,7 @@ last = (list) -> list[list.length-1]
 
 boxes = {}
 node_registry = {}
-all_subroutines = []
+all_subroutines = {}
 current_scope = null
 system_arrow = null
 
@@ -90,7 +90,7 @@ class SubRoutine
         @outputs = (new Input @, text, index, outputs.length-1 for text, index in outputs)
         @nodes = {}
         @connections = {}
-        all_subroutines.push @
+        all_subroutines[@id] = @
 
     toJSON: ->
         id:@id
@@ -141,6 +141,7 @@ class Node
         position:@position
         text:@text
         id:@id
+        subroutine_id:@subroutine?.id
 
 class FunctionApplication extends Node
     constructor:(@position, @text, information, @id=UUID()) ->
@@ -168,7 +169,7 @@ class FunctionApplication extends Node
         if @subroutine?
             return @subroutine.invoke input_values...
         else
-            return output.parent.value input_values...
+            return @value input_values...
 
 class Literal extends Node
     constructor:(@position, @text, @value, @id=UUID()) ->
@@ -205,7 +206,7 @@ class Input extends Nib
             return connection
 
     connect:(output) ->
-        new Connection @ output
+        new Connection @, output
         
 class Output extends Nib
     constructor:(@parent, @text, @index=0, @siblings=0) ->
@@ -429,7 +430,7 @@ mouse_move = (event) ->
         system_arrow.geometry.vertices[1].position = vector
 
 hide_subroutines = ->
-    for subroutine in all_subroutines
+    for index, subroutine of all_subroutines
         scene.remove subroutine.view
 
 window.Controller = ->
@@ -485,10 +486,10 @@ window.Controller = ->
     load_state = =>
         if localStorage.state?
             data = JSON.parse localStorage.state
-            for program_data in data.programs
-                @programs.push load_program program_data
             for subroutine_data in data.subroutines
                 @subroutines.push load_subroutine subroutine_data
+            for program_data in data.programs
+                @programs.push load_program program_data
 
     @library = functions
     @subroutines = []
@@ -504,7 +505,7 @@ window.Controller = ->
     current_scope = @programs[0].subroutine
     system_arrow = make_arrow V(0,0), V(1,0)
     scene.add current_scope.view
-    @$watch state, save_state
+    save_timer = setInterval save_state, 500
 
     
 make_main = ->
@@ -527,12 +528,27 @@ load_subroutine = (data) ->
     current_scope = subroutine = new SubRoutine data.name, data.inputs, data.outputs, data.id
 
     for node in data.nodes
-        make_node node.text, Vector.from(node.position), node.id
+        position = Vector.from(node.position)
+        if node.subroutine_id
+            sub_subroutine = all_subroutines[node.subroutine_id]
+            console.log "Oh no, subroutine wasn't loaded yet" unless sub_subroutine
+            new FunctionApplication position, sub_subroutine.name,
+                inputs:sub_subroutine.get_inputs()
+                outputs:sub_subroutine.get_outputs()
+                definition:sub_subroutine
+            , node.id
+        else
+            make_node node.text, position, node.id
 
     for connection in data.connections
         source = node_registry[connection.output.parent_id]
         sink = node_registry[connection.input.parent_id]
-        source.outputs[connection.output.index].connect sink.inputs[connection.input.index]
+
+        # input/output reversal.  TODO: clean up subroutine implementation to avoid this
+        source_connector = if source instanceof Node then source.outputs else source.inputs
+        sink_connector = if sink instanceof Node then sink.inputs else sink.outputs
+
+        source_connector[connection.output.index].connect sink_connector[connection.input.index]
 
     return subroutine
 
