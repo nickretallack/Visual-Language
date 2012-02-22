@@ -116,6 +116,17 @@
       definition: function(left, right) {
         return left() >= right();
       }
+    },
+    'split_test': {
+      inputs: [],
+      outputs: ['L', 'R'],
+      definition: function(index) {
+        if (index === 0) {
+          return 5;
+        } else {
+          return 10;
+        }
+      }
     }
   };
 
@@ -225,7 +236,7 @@
       if (output.parent instanceof SubRoutine) {
         return inputs[0]();
       } else if (output.parent instanceof Node) {
-        return output.parent.evaluation(the_scope);
+        return output.parent.evaluation(the_scope, output.index);
       }
     };
 
@@ -337,7 +348,7 @@
       }).call(this);
     }
 
-    FunctionApplication.prototype.evaluation = function(the_scope) {
+    FunctionApplication.prototype.evaluation = function(the_scope, output_index) {
       var input, input_values, _fn, _i, _len, _ref, _ref2;
       input_values = [];
       _ref = this.inputs;
@@ -349,7 +360,7 @@
           if (output.parent instanceof SubRoutine) {
             return the_scope.inputs[output.index]();
           } else if (output.parent instanceof Node) {
-            return output.parent.evaluation(the_scope);
+            return output.parent.evaluation(the_scope, output.index);
           }
         }));
       };
@@ -360,7 +371,7 @@
       if (this.subroutine != null) {
         return (_ref2 = this.subroutine).invoke.apply(_ref2, input_values);
       } else {
-        return this.value.apply(this, input_values);
+        return this.value.apply(this, input_values.concat([output_index]));
       }
     };
 

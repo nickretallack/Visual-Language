@@ -66,6 +66,10 @@ functions =
         inputs:['L','R']
         outputs:['R']
         definition: (left, right) -> left() >= right()
+    'split_test':
+        inputs:[]
+        outputs:['L','R']
+        definition: (index) -> if index is 0 then 5 else 10
 
 ### MODELS ###
 
@@ -121,7 +125,7 @@ class SubRoutine
         if output.parent instanceof SubRoutine
             return inputs[0]()
         else if output.parent instanceof Node
-            return output.parent.evaluation the_scope
+            return output.parent.evaluation the_scope, output.index
 
     get_inputs: -> (input.text for input in @inputs)
     get_outputs: -> (output.text for output in @outputs)
@@ -162,7 +166,7 @@ class FunctionApplication extends Node
         @inputs = (new Input @, text, index, information.inputs.length-1 for text, index in information.inputs)
         @outputs = (new Output @, text, index, information.outputs.length-1 for text, index in information.outputs)
 
-    evaluation: (the_scope) ->
+    evaluation: (the_scope, output_index) ->
         input_values = []
         for input in @inputs
             do (input) ->
@@ -172,12 +176,12 @@ class FunctionApplication extends Node
                     if output.parent instanceof SubRoutine
                         return the_scope.inputs[output.index]()
                     else if output.parent instanceof Node
-                        return output.parent.evaluation the_scope
+                        return output.parent.evaluation the_scope, output.index
 
         if @subroutine?
             return @subroutine.invoke input_values...
         else
-            return @value input_values...
+            return @value (input_values.concat [output_index])...
 
 class Literal extends Node
     constructor:(@position, @text, @value, @id=UUID()) ->
