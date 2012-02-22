@@ -76,7 +76,7 @@ functions =
 class Program
     constructor:(@name='', @subroutine, @id=UUID()) ->
     run: ->
-        alert @subroutine.invoke()
+        alert @subroutine.invoke(0, [])
 
     toJSON: ->
         id:@id
@@ -112,18 +112,16 @@ class SubRoutine
         inputs:@get_inputs()
         outputs:@get_outputs()
 
-    invoke: ->
-        inputs = arguments
-
+    invoke: (index, inputs) ->
         the_scope =
             subroutine:@
             inputs:inputs
 
-        output = @outputs[0].get_connection()?.connection.output
+        output = @outputs[index].get_connection()?.connection.output
         throw "NotConnected" unless output
 
         if output.parent instanceof SubRoutine
-            return inputs[0]()
+            return inputs[output.index]()
         else if output.parent instanceof Node
             return output.parent.evaluation the_scope, output.index
 
@@ -179,7 +177,7 @@ class FunctionApplication extends Node
                         return output.parent.evaluation the_scope, output.index
 
         if @subroutine?
-            return @subroutine.invoke input_values...
+            return @subroutine.invoke output_index, input_values
         else
             return @value (input_values.concat [output_index])...
 

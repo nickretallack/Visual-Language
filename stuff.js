@@ -142,7 +142,7 @@
     }
 
     Program.prototype.run = function() {
-      return alert(this.subroutine.invoke());
+      return alert(this.subroutine.invoke(0, []));
     };
 
     Program.prototype.toJSON = function() {
@@ -224,17 +224,16 @@
       };
     };
 
-    SubRoutine.prototype.invoke = function() {
-      var inputs, output, the_scope, _ref;
-      inputs = arguments;
+    SubRoutine.prototype.invoke = function(index, inputs) {
+      var output, the_scope, _ref;
       the_scope = {
         subroutine: this,
         inputs: inputs
       };
-      output = (_ref = this.outputs[0].get_connection()) != null ? _ref.connection.output : void 0;
+      output = (_ref = this.outputs[index].get_connection()) != null ? _ref.connection.output : void 0;
       if (!output) throw "NotConnected";
       if (output.parent instanceof SubRoutine) {
-        return inputs[0]();
+        return inputs[output.index]();
       } else if (output.parent instanceof Node) {
         return output.parent.evaluation(the_scope, output.index);
       }
@@ -349,7 +348,7 @@
     }
 
     FunctionApplication.prototype.evaluation = function(the_scope, output_index) {
-      var input, input_values, _fn, _i, _len, _ref, _ref2;
+      var input, input_values, _fn, _i, _len, _ref;
       input_values = [];
       _ref = this.inputs;
       _fn = function(input) {
@@ -369,7 +368,7 @@
         _fn(input);
       }
       if (this.subroutine != null) {
-        return (_ref2 = this.subroutine).invoke.apply(_ref2, input_values);
+        return this.subroutine.invoke(output_index, input_values);
       } else {
         return this.value.apply(this, input_values.concat([output_index]));
       }
