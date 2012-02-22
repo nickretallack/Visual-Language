@@ -76,7 +76,14 @@ functions =
 class Program
     constructor:(@name='', @subroutine, @id=UUID()) ->
     run: ->
-        alert @subroutine.invoke(0, [])
+        try
+            alert @subroutine.invoke(0, [])
+        catch exception
+            if exception is 'NotConnected'
+                alert "Something in the program is disconnected"
+            else if exception is 'Exit'
+                alert "Program Exited"
+            else throw exception
 
     toJSON: ->
         id:@id

@@ -142,7 +142,17 @@
     }
 
     Program.prototype.run = function() {
-      return alert(this.subroutine.invoke(0, []));
+      try {
+        return alert(this.subroutine.invoke(0, []));
+      } catch (exception) {
+        if (exception === 'NotConnected') {
+          return alert("Something in the program is disconnected");
+        } else if (exception === 'Exit') {
+          return alert("Program Exited");
+        } else {
+          throw exception;
+        }
+      }
     };
 
     Program.prototype.toJSON = function() {
