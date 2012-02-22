@@ -16,6 +16,7 @@ boxes = {}
 node_registry = {}
 all_subroutines = []
 current_scope = null
+system_arrow = null
 
 update = ->
     renderer.render scene, camera
@@ -61,9 +62,24 @@ functions =
 ### MODELS ###
 
 class Program
-    constructor:(@name='', @subroutine) ->
+    constructor:(@name='', @subroutine, @id=UUID()) ->
     run: ->
-        alert @subroutine.evaluation()
+        alert @subroutine.invoke()
+
+    toJSON: ->
+        id:@id
+        name:@name
+        subroutine:@subroutine
+
+class NodeInvocation
+    constructor:(@node, @subroutine) ->
+        
+        
+
+class SubroutineInvocation
+    constructor:(@subroutine, @inputs, @outputs) ->
+        
+        #@invocations = (new NodeInvocation node, @subroutine for node in @subroutine.nodes)
 
 class SubRoutine
     constructor:(@name='', inputs=[], outputs=[], @id=UUID()) ->
@@ -77,18 +93,27 @@ class SubRoutine
         all_subroutines.push @
 
     toJSON: ->
+        id:@id
+        name:@name
         nodes:_.values @nodes
         connections:_.values @connections
+        inputs:@get_outputs()
+        outputs:@get_inputs()
 
-    evaluation: ->
+    invoke: ->
         inputs = arguments
-        output = @outputs[0].get_connection()?.connection.output.parent
+
+        the_scope =
+            subroutine:@
+            inputs:inputs
+
+        output = @outputs[0].get_connection()?.connection.output
         throw "NotConnected" unless output
 
-        if output instanceof Node
-            return output.evaluation inputs...
-        else if output instanceof SubRoutine
+        if output.parent instanceof SubRoutine
             return inputs[0]()
+        else if output.parent instanceof Node
+            return output.parent.evaluation the_scope
 
     get_inputs: -> (output.text for output in @outputs)
     get_outputs: -> (input.text for input in @inputs)
@@ -128,19 +153,22 @@ class FunctionApplication extends Node
         @inputs = (new Input @, text, index, information.inputs.length-1 for text, index in information.inputs)
         @outputs = (new Output @, text, index, information.outputs.length-1 for text, index in information.outputs)
 
-    evaluation: ->
+    evaluation: (the_scope) ->
         input_values = []
         for input in @inputs
             do (input) ->
                 input_values.push ->
-                    output = input.get_connection()?.connection.output.parent
+                    output = input.get_connection()?.connection.output
                     throw "NotConnected" unless output
-                    return output.evaluation()
+                    if output.parent instanceof SubRoutine
+                        return the_scope.inputs[output.index]
+                    else if output.parent instanceof Node
+                        return output.parent.evaluation the_scope
 
         if @subroutine?
-            return @subroutine.evaluation input_values...
+            return @subroutine.invoke input_values...
         else
-            return parent.value input_values...
+            return output.parent.value input_values...
 
 class Literal extends Node
     constructor:(@position, @text, @value, @id=UUID()) ->
@@ -448,26 +476,41 @@ window.Controller = ->
     @run_program = (program) => program.run()
 
         
-    @programs = [initial_program]
+    @programs = []
     @new_program_name = ''
     @add_program = =>
         @programs.push new Program @new_program_name, make_main()
         
-        
+    save_state = =>
+        localStorage.state = JSON.stringify state
+
+    load_state = =>
+        if localStorage.state?
+            data = JSON.parse localStorage.state
+            for program_data in data.programs
+                @programs.push recreate_program program_data
+            for subroutine_data in data.subroutines
+                @subroutines.push recreate_subroutine subroutine_data
 
     @library = functions
     @subroutines = []
-    #@subroutines.push new SubRoutine 'foo', ['a','b'], ['c','d','e']
-    @subroutines.push new SubRoutine 'foo', ['a'], ['b']
 
-    scene.add @programs[0].subroutine.view
+    state =
+        programs:@programs
+        subroutines:@subroutines
+
+    load_state()
+    if not @programs.length
+        @programs.push new Program 'initial', make_main()
+        
+    current_scope = @programs[0].subroutine
+    system_arrow = make_arrow V(0,0), V(1,0)
+    scene.add current_scope.view
+    @$watch state, save_state
 
     
 make_main = ->
     new SubRoutine 'main', [], ['OUT']
-
-current_scope = main = make_main()
-initial_program = new Program 'initial', main
 
 make_basic_program = ->
     plus = make_node '+', V 250,150
@@ -477,16 +520,24 @@ make_basic_program = ->
     c2 = three.outputs[0].connect plus.inputs[1]
     c3 = plus.outputs[0].connect current_scope.outputs[0]
 
-load_program = (source) ->
-    program = JSON.parse source
 
-    for node in program.nodes
+recreate_program = (data) ->
+    subroutine = recreate_subroutine data.subroutine
+    return new Program data.name, subroutine, data.id
+
+recreate_subroutine = (data) ->
+    current_scope = subroutine = new SubRoutine data.name, data.inputs, data.outputs, data.id
+
+    for node in data.nodes
         make_node node.text, Vector.from(node.position), node.id
 
-    for connection in program.connections
+    for connection in data.connections
         source = node_registry[connection.output.parent_id]
         sink = node_registry[connection.input.parent_id]
         source.outputs[connection.output.index].connect sink.inputs[connection.input.index]
+
+    return subroutine
+
 
 
 how_are_you_source = """{"nodes":[{"position":{"x":242,"y":110,"z":0},"text":"out","id":"56b9d684188339dafd5d3f0fe9421371"},{"position":{"x":243,"y":210,"z":0},"text":"if","id":"3190bcfcc5ece720f07ccde57b12f8a3"},{"position":{"x":152,"y":315,"z":0},"text":"\\"That's Awesome!\\"","id":"d33ff759bef23100f01c59d525d404d7"},{"position":{"x":339,"y":316,"z":0},"text":"\\"Oh Well\\"","id":"5d54ff1fa3f1633b31a1ba8c0536f1f0"},{"position":{"x":239,"y":363,"z":0},"text":"=","id":"6b8e3e498b936e992c0ceddbbe354635"},{"position":{"x":146,"y":469,"z":0},"text":"\\"good\\"","id":"3673f98c69da086d30994c91c01fe3f7"},{"position":{"x":336,"y":472,"z":0},"text":"prompt","id":"92de68eec528651f75a74492604f5211"},{"position":{"x":334,"y":598,"z":0},"text":"\\"How are you?\\"","id":"aa4cb4c766117fb44f5a917f1a1f9ba5"}],"connections":[{"input":{"index":0,"parent_id":"56b9d684188339dafd5d3f0fe9421371"},"output":{"index":0,"parent_id":"3190bcfcc5ece720f07ccde57b12f8a3"}},{"input":{"index":0,"parent_id":"3190bcfcc5ece720f07ccde57b12f8a3"},"output":{"index":0,"parent_id":"d33ff759bef23100f01c59d525d404d7"}},{"input":{"index":2,"parent_id":"3190bcfcc5ece720f07ccde57b12f8a3"},"output":{"index":0,"parent_id":"5d54ff1fa3f1633b31a1ba8c0536f1f0"}},{"input":{"index":1,"parent_id":"3190bcfcc5ece720f07ccde57b12f8a3"},"output":{"index":0,"parent_id":"6b8e3e498b936e992c0ceddbbe354635"}},{"input":{"index":0,"parent_id":"6b8e3e498b936e992c0ceddbbe354635"},"output":{"index":0,"parent_id":"3673f98c69da086d30994c91c01fe3f7"}},{"input":{"index":1,"parent_id":"6b8e3e498b936e992c0ceddbbe354635"},"output":{"index":0,"parent_id":"92de68eec528651f75a74492604f5211"}},{"input":{"index":0,"parent_id":"92de68eec528651f75a74492604f5211"},"output":{"index":0,"parent_id":"aa4cb4c766117fb44f5a917f1a1f9ba5"}}]}"""
@@ -494,4 +545,3 @@ addition_program_source = """{"nodes":[{"position":{"x":200,"y":100},"text":"out
 
 #load_program how_are_you_source
 #make_basic_program()
-system_arrow = make_arrow V(0,0), V(1,0)
