@@ -11,6 +11,9 @@ renderer.setSize width, height #window.innerWidth, window.innerHeight
 projector = new THREE.Projector()
 
 last = (list) -> list[list.length-1]
+obj_first = (obj) ->
+    for key, item of obj
+        return item
 
 boxes = {}
 node_registry = {}
@@ -501,44 +504,61 @@ window.Controller = ->
         scene.add subroutine.view
 
     @add_subroutine = =>
-        @subroutines.push new SubRoutine @new_subroutine.name, @new_subroutine.inputs.split(' '), @new_subroutine.outputs.split(' ')
+        subroutine = new SubRoutine @new_subroutine.name, @new_subroutine.inputs.split(' '), @new_subroutine.outputs.split(' ')
+        @subroutines[subroutine.id] = subroutine
         @new_subroutine = angular.copy @initial_subroutine
 
     @run_program = (program) => program.run()
 
         
-    @programs = []
     @new_program_name = ''
     @add_program = =>
-        @programs.push new Program @new_program_name, make_main()
+        new_program = new Program @new_program_name, make_main()
+        @programs[new_program.id] = new_program
+        @new_program_name = ''
         
     save_state = =>
         localStorage.state = JSON.stringify state
 
-    load_state = =>
-        if localStorage.state?
-            data = JSON.parse localStorage.state
-            for subroutine_data in data.subroutines
-                @subroutines.push load_subroutine subroutine_data
-            for program_data in data.programs
-                @programs.push load_program program_data
-
     @library = functions
-    @subroutines = []
+
+    [@programs, @subroutines] = load_state()
 
     state =
         programs:@programs
         subroutines:@subroutines
 
-    load_state()
-    if not @programs.length
-        @programs.push new Program 'initial', make_main()
-        
-    current_scope = @programs[0].subroutine
+    current_scope = obj_first(@programs).subroutine
     system_arrow = make_arrow V(0,0), V(1,0)
     scene.add current_scope.view
     save_timer = setInterval save_state, 500
 
+load_state = ->
+    programs = {}
+    subroutines = {}
+    if localStorage.state?
+        data = JSON.parse localStorage.state
+
+        # load structures first
+        for id, subroutine_data of data.subroutines
+            subroutines[id] = load_subroutine subroutine_data
+        for id, program_data of data.programs
+            programs[id] = load_program program_data
+
+        # load implementations next
+        for id, subroutine of subroutines
+            current_scope = subroutine
+            load_implementation data.subroutines[id]
+
+        for id, program of programs
+            current_scope = program.subroutine
+            load_implementation data.programs[id].subroutine
+    else
+        initial_program = new Program 'initial', make_main()
+        programs[initial_program.id] = initial_program
+
+    [programs, subroutines]
+        
     
 make_main = ->
     new SubRoutine 'main', [], ['OUT']
@@ -561,6 +581,7 @@ load_program = (data) ->
 load_subroutine = (data) ->
     current_scope = subroutine = new SubRoutine data.name, data.inputs, data.outputs, data.id
 
+load_implementation = (data) ->
     for node in data.nodes
         position = Vector.from(node.position)
         if node.subroutine_id
@@ -586,8 +607,6 @@ load_subroutine = (data) ->
             console.log "Oh no, trying to make an invalid connection"
 
         source_connector[connection.output.index].connect sink_connector[connection.input.index]
-
-    return subroutine
 
 
 

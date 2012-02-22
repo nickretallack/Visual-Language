@@ -20,7 +20,7 @@
 
 <div id="tools">
 <h2>Programs</h2>
-<ul><li ng:repeat="program in programs">
+<ul><li ng:repeat="(id, program) in programs">
     <a ng:click="run_program(program)">run</a> <a ng:click="edit_subroutine(program.subroutine)">edit</a> {{program.name}}
     <span ng:repat="input in program.subroutine.inputs">{{input.text}}</span> =&gt;
     <span ng:repat="output in program.subroutine.outputs">{{output.text}}</span>
@@ -28,7 +28,7 @@
 <form ng:submit="add_program()"> <input ng:model="new_program_name"> <button>Add Program</button> </form>
 
 <h2>Subroutines</h2>
-<ul><li ng:repeat="subroutine in subroutines">
+<ul><li ng:repeat="(id, subroutine) in subroutines">
     <a ng:click="use_subroutine(subroutine)">use</a> <a ng:click="edit_subroutine(subroutine)">edit</a> {{subroutine.name}}
     <span ng:repeat="input in subroutine.inputs">{{input.text}} </span> =&gt;
     <span ng:repeat="output in subroutine.outputs">{{output.text}} </span>

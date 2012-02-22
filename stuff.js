@@ -1,5 +1,5 @@
 (function() {
-  var Connection, FunctionApplication, Input, Literal, Nib, Node, Output, Program, SubRoutine, addition_program_source, all_subroutines, animate, boxes, camera, connecting_object, connection_view, current_scope, dragging_object, dragging_offset, functions, get_absolute_nib_position, get_nib_position, height, hide_subroutines, how_are_you_source, last, load_program, load_subroutine, make_arrow, make_basic_program, make_box, make_connection, make_main, make_nib_view, make_node, make_node_view, make_subroutine_view, make_text, mouse_coords, mouse_down, mouse_move, mouse_up, node_registry, projector, ray_cast_mouse, renderer, scene, system_arrow, update, width,
+  var Connection, FunctionApplication, Input, Literal, Nib, Node, Output, Program, SubRoutine, addition_program_source, all_subroutines, animate, boxes, camera, connecting_object, connection_view, current_scope, dragging_object, dragging_offset, functions, get_absolute_nib_position, get_nib_position, height, hide_subroutines, how_are_you_source, last, load_implementation, load_program, load_state, load_subroutine, make_arrow, make_basic_program, make_box, make_connection, make_main, make_nib_view, make_node, make_node_view, make_subroutine_view, make_text, mouse_coords, mouse_down, mouse_move, mouse_up, node_registry, obj_first, projector, ray_cast_mouse, renderer, scene, system_arrow, update, width,
     __hasProp = Object.prototype.hasOwnProperty,
     __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor; child.__super__ = parent.prototype; return child; };
 
@@ -21,6 +21,14 @@
 
   last = function(list) {
     return list[list.length - 1];
+  };
+
+  obj_first = function(obj) {
+    var item, key;
+    for (key in obj) {
+      item = obj[key];
+      return item;
+    }
   };
 
   boxes = {};
@@ -801,7 +809,7 @@
   };
 
   window.Controller = function() {
-    var field, load_state, save_state, save_timer, state,
+    var field, save_state, save_timer, state, _ref,
       _this = this;
     field = $("#field");
     field.append(renderer.domElement);
@@ -840,52 +848,67 @@
       return scene.add(subroutine.view);
     };
     this.add_subroutine = function() {
-      _this.subroutines.push(new SubRoutine(_this.new_subroutine.name, _this.new_subroutine.inputs.split(' '), _this.new_subroutine.outputs.split(' ')));
+      var subroutine;
+      subroutine = new SubRoutine(_this.new_subroutine.name, _this.new_subroutine.inputs.split(' '), _this.new_subroutine.outputs.split(' '));
+      _this.subroutines[subroutine.id] = subroutine;
       return _this.new_subroutine = angular.copy(_this.initial_subroutine);
     };
     this.run_program = function(program) {
       return program.run();
     };
-    this.programs = [];
     this.new_program_name = '';
     this.add_program = function() {
-      return _this.programs.push(new Program(_this.new_program_name, make_main()));
+      var new_program;
+      new_program = new Program(_this.new_program_name, make_main());
+      _this.programs[new_program.id] = new_program;
+      return _this.new_program_name = '';
     };
     save_state = function() {
       return localStorage.state = JSON.stringify(state);
     };
-    load_state = function() {
-      var data, program_data, subroutine_data, _i, _j, _len, _len2, _ref, _ref2, _results;
-      if (localStorage.state != null) {
-        data = JSON.parse(localStorage.state);
-        _ref = data.subroutines;
-        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-          subroutine_data = _ref[_i];
-          _this.subroutines.push(load_subroutine(subroutine_data));
-        }
-        _ref2 = data.programs;
-        _results = [];
-        for (_j = 0, _len2 = _ref2.length; _j < _len2; _j++) {
-          program_data = _ref2[_j];
-          _results.push(_this.programs.push(load_program(program_data)));
-        }
-        return _results;
-      }
-    };
     this.library = functions;
-    this.subroutines = [];
+    _ref = load_state(), this.programs = _ref[0], this.subroutines = _ref[1];
     state = {
       programs: this.programs,
       subroutines: this.subroutines
     };
-    load_state();
-    if (!this.programs.length) {
-      this.programs.push(new Program('initial', make_main()));
-    }
-    current_scope = this.programs[0].subroutine;
+    current_scope = obj_first(this.programs).subroutine;
     system_arrow = make_arrow(V(0, 0), V(1, 0));
     scene.add(current_scope.view);
     return save_timer = setInterval(save_state, 500);
+  };
+
+  load_state = function() {
+    var data, id, initial_program, program, program_data, programs, subroutine, subroutine_data, subroutines, _ref, _ref2;
+    programs = {};
+    subroutines = {};
+    if (localStorage.state != null) {
+      data = JSON.parse(localStorage.state);
+      _ref = data.subroutines;
+      for (id in _ref) {
+        subroutine_data = _ref[id];
+        subroutines[id] = load_subroutine(subroutine_data);
+      }
+      _ref2 = data.programs;
+      for (id in _ref2) {
+        program_data = _ref2[id];
+        programs[id] = load_program(program_data);
+      }
+      for (id in subroutines) {
+        subroutine = subroutines[id];
+        current_scope = subroutine;
+        load_implementation(data.subroutines[id]);
+      }
+      for (id in programs) {
+        program = programs[id];
+        current_scope = program.subroutine;
+        load_implementation(data.programs[id].subroutine);
+      }
+    } else {
+      initial_program = new Program('initial', make_main());
+      programs[initial_program.id] = initial_program;
+    }
+    return [programs, subroutines];
   };
 
   make_main = function() {
@@ -909,8 +932,12 @@
   };
 
   load_subroutine = function(data) {
-    var connection, node, position, sink, sink_connector, source, source_connector, sub_subroutine, subroutine, _i, _j, _len, _len2, _ref, _ref2;
-    current_scope = subroutine = new SubRoutine(data.name, data.inputs, data.outputs, data.id);
+    var subroutine;
+    return current_scope = subroutine = new SubRoutine(data.name, data.inputs, data.outputs, data.id);
+  };
+
+  load_implementation = function(data) {
+    var connection, node, position, sink, sink_connector, source, source_connector, sub_subroutine, _i, _j, _len, _len2, _ref, _ref2, _results;
     _ref = data.nodes;
     for (_i = 0, _len = _ref.length; _i < _len; _i++) {
       node = _ref[_i];
@@ -928,6 +955,7 @@
       }
     }
     _ref2 = data.connections;
+    _results = [];
     for (_j = 0, _len2 = _ref2.length; _j < _len2; _j++) {
       connection = _ref2[_j];
       source = node_registry[connection.output.parent_id];
@@ -937,9 +965,9 @@
       if (connection.output.index >= source_connector.length || connection.input.index >= sink_connector.length) {
         console.log("Oh no, trying to make an invalid connection");
       }
-      source_connector[connection.output.index].connect(sink_connector[connection.input.index]);
+      _results.push(source_connector[connection.output.index].connect(sink_connector[connection.input.index]));
     }
-    return subroutine;
+    return _results;
   };
 
   how_are_you_source = "{\"nodes\":[{\"position\":{\"x\":242,\"y\":110,\"z\":0},\"text\":\"out\",\"id\":\"56b9d684188339dafd5d3f0fe9421371\"},{\"position\":{\"x\":243,\"y\":210,\"z\":0},\"text\":\"if\",\"id\":\"3190bcfcc5ece720f07ccde57b12f8a3\"},{\"position\":{\"x\":152,\"y\":315,\"z\":0},\"text\":\"\\\"That's Awesome!\\\"\",\"id\":\"d33ff759bef23100f01c59d525d404d7\"},{\"position\":{\"x\":339,\"y\":316,\"z\":0},\"text\":\"\\\"Oh Well\\\"\",\"id\":\"5d54ff1fa3f1633b31a1ba8c0536f1f0\"},{\"position\":{\"x\":239,\"y\":363,\"z\":0},\"text\":\"=\",\"id\":\"6b8e3e498b936e992c0ceddbbe354635\"},{\"position\":{\"x\":146,\"y\":469,\"z\":0},\"text\":\"\\\"good\\\"\",\"id\":\"3673f98c69da086d30994c91c01fe3f7\"},{\"position\":{\"x\":336,\"y\":472,\"z\":0},\"text\":\"prompt\",\"id\":\"92de68eec528651f75a74492604f5211\"},{\"position\":{\"x\":334,\"y\":598,\"z\":0},\"text\":\"\\\"How are you?\\\"\",\"id\":\"aa4cb4c766117fb44f5a917f1a1f9ba5\"}],\"connections\":[{\"input\":{\"index\":0,\"parent_id\":\"56b9d684188339dafd5d3f0fe9421371\"},\"output\":{\"index\":0,\"parent_id\":\"3190bcfcc5ece720f07ccde57b12f8a3\"}},{\"input\":{\"index\":0,\"parent_id\":\"3190bcfcc5ece720f07ccde57b12f8a3\"},\"output\":{\"index\":0,\"parent_id\":\"d33ff759bef23100f01c59d525d404d7\"}},{\"input\":{\"index\":2,\"parent_id\":\"3190bcfcc5ece720f07ccde57b12f8a3\"},\"output\":{\"index\":0,\"parent_id\":\"5d54ff1fa3f1633b31a1ba8c0536f1f0\"}},{\"input\":{\"index\":1,\"parent_id\":\"3190bcfcc5ece720f07ccde57b12f8a3\"},\"output\":{\"index\":0,\"parent_id\":\"6b8e3e498b936e992c0ceddbbe354635\"}},{\"input\":{\"index\":0,\"parent_id\":\"6b8e3e498b936e992c0ceddbbe354635\"},\"output\":{\"index\":0,\"parent_id\":\"3673f98c69da086d30994c91c01fe3f7\"}},{\"input\":{\"index\":1,\"parent_id\":\"6b8e3e498b936e992c0ceddbbe354635\"},\"output\":{\"index\":0,\"parent_id\":\"92de68eec528651f75a74492604f5211\"}},{\"input\":{\"index\":0,\"parent_id\":\"92de68eec528651f75a74492604f5211\"},\"output\":{\"index\":0,\"parent_id\":\"aa4cb4c766117fb44f5a917f1a1f9ba5\"}}]}";
