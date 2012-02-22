@@ -166,7 +166,7 @@ class FunctionApplication extends Node
         input_values = []
         for input in @inputs
             do (input) ->
-                input_values.push ->
+                input_values.push _.memoize ->
                     output = input.get_connection()?.connection.output
                     throw "NotConnected" unless output
                     if output.parent instanceof SubRoutine
