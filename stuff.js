@@ -182,8 +182,8 @@
         name: this.name,
         nodes: _.values(this.nodes),
         connections: _.values(this.connections),
-        inputs: this.get_outputs(),
-        outputs: this.get_inputs()
+        inputs: this.get_inputs(),
+        outputs: this.get_outputs()
       };
     };
     SubRoutine.prototype.invoke = function() {
@@ -204,22 +204,22 @@
       }
     };
     SubRoutine.prototype.get_inputs = function() {
-      var output, _i, _len, _ref, _results;
-      _ref = this.outputs;
-      _results = [];
-      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-        output = _ref[_i];
-        _results.push(output.text);
-      }
-      return _results;
-    };
-    SubRoutine.prototype.get_outputs = function() {
       var input, _i, _len, _ref, _results;
       _ref = this.inputs;
       _results = [];
       for (_i = 0, _len = _ref.length; _i < _len; _i++) {
         input = _ref[_i];
         _results.push(input.text);
+      }
+      return _results;
+    };
+    SubRoutine.prototype.get_outputs = function() {
+      var output, _i, _len, _ref, _results;
+      _ref = this.outputs;
+      _results = [];
+      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+        output = _ref[_i];
+        _results.push(output.text);
       }
       return _results;
     };
@@ -800,6 +800,9 @@
       sink = node_registry[connection.input.parent_id];
       source_connector = source instanceof Node ? source.outputs : source.inputs;
       sink_connector = sink instanceof Node ? sink.inputs : sink.outputs;
+      if (connection.output.index >= source_connector.length || connection.input.index >= sink_connector.length) {
+        console.log("Oh no, trying to make an invalid connection");
+      }
       source_connector[connection.output.index].connect(sink_connector[connection.input.index]);
     }
     return subroutine;

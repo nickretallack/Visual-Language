@@ -105,8 +105,8 @@ class SubRoutine
         name:@name
         nodes:_.values @nodes
         connections:_.values @connections
-        inputs:@get_outputs()
-        outputs:@get_inputs()
+        inputs:@get_inputs()
+        outputs:@get_outputs()
 
     invoke: ->
         inputs = arguments
@@ -123,8 +123,8 @@ class SubRoutine
         else if output.parent instanceof Node
             return output.parent.evaluation the_scope
 
-    get_inputs: -> (output.text for output in @outputs)
-    get_outputs: -> (input.text for input in @inputs)
+    get_inputs: -> (input.text for input in @inputs)
+    get_outputs: -> (output.text for output in @outputs)
     
 class Node
     constructor: ->
@@ -555,6 +555,9 @@ load_subroutine = (data) ->
         # input/output reversal.  TODO: clean up subroutine implementation to avoid this
         source_connector = if source instanceof Node then source.outputs else source.inputs
         sink_connector = if sink instanceof Node then sink.inputs else sink.outputs
+
+        if connection.output.index >= source_connector.length or connection.input.index >= sink_connector.length
+            console.log "Oh no, trying to make an invalid connection"
 
         source_connector[connection.output.index].connect sink_connector[connection.input.index]
 
