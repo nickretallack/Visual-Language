@@ -1,5 +1,5 @@
 (function() {
-  var Connection, FunctionApplication, Input, InputError, Literal, Nib, Node, Output, SubRoutine, addition_program_source, all_subroutines, animate, boxes, camera, connecting_object, connection_view, current_scope, default_state, dragging_object, dragging_offset, functions, get_absolute_nib_position, get_nib_position, height, how_are_you_source, last, load_implementation, load_localStorage, load_program, load_state, load_subroutine, make_arrow, make_basic_program, make_box, make_connection, make_main, make_nib_view, make_node_view, make_subroutine_view, make_text, mouse_coords, mouse_down, mouse_move, mouse_up, node_registry, obj_first, projector, ray_cast_mouse, renderer, scene, system_arrow, update, valid_json, whitespace_split, width;
+  var Connection, FunctionApplication, Input, InputError, Literal, Nib, Node, Output, SubRoutine, addition_program_source, all_subroutines, animate, boxes, camera, connecting_object, connection_view, current_scope, default_state, dragging_object, dragging_offset, example_programs, functions, get_absolute_nib_position, get_nib_position, height, how_are_you_source, last, load_implementation, load_program, load_state, load_subroutine, make_arrow, make_basic_program, make_box, make_connection, make_main, make_nib_view, make_node_view, make_subroutine_view, make_text, mouse_coords, mouse_down, mouse_move, mouse_up, node_registry, obj_first, projector, ray_cast_mouse, renderer, scene, system_arrow, update, valid_json, whitespace_split, width;
   var __hasProp = Object.prototype.hasOwnProperty, __extends = function(child, parent) {
     for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; }
     function ctor() { this.constructor = child; }
@@ -67,6 +67,41 @@
         return left() / right();
       }
     },
+    '<': {
+      inputs: ['L', 'R'],
+      outputs: ['R'],
+      definition: function(left, right) {
+        return left() < right();
+      }
+    },
+    '<=': {
+      inputs: ['L', 'R'],
+      outputs: ['R'],
+      definition: function(left, right) {
+        return left() <= right();
+      }
+    },
+    '=': {
+      inputs: ['L', 'R'],
+      outputs: ['R'],
+      definition: function(left, right) {
+        return left() === right();
+      }
+    },
+    '>=': {
+      inputs: ['L', 'R'],
+      outputs: ['R'],
+      definition: function(left, right) {
+        return left() >= right();
+      }
+    },
+    '>': {
+      inputs: ['L', 'R'],
+      outputs: ['R'],
+      definition: function(left, right) {
+        return left() > right();
+      }
+    },
     'if': {
       inputs: ['T', 'C', 'F'],
       outputs: ['R'],
@@ -78,57 +113,11 @@
         }
       }
     },
-    'die': {
-      inputs: [],
-      outputs: ['R'],
-      definition: function() {
-        throw "Exit";
-      }
-    },
     'prompt': {
       inputs: ['M'],
       outputs: ['R'],
       definition: function(message) {
         return prompt(message());
-      }
-    },
-    '=': {
-      inputs: ['L', 'R'],
-      outputs: ['R'],
-      definition: function(left, right) {
-        return left() === right();
-      }
-    },
-    '>': {
-      inputs: ['L', 'R'],
-      outputs: ['R'],
-      definition: function(left, right) {
-        return left() > right();
-      }
-    },
-    '>=': {
-      inputs: ['L', 'R'],
-      outputs: ['R'],
-      definition: function(left, right) {
-        return left() >= right();
-      }
-    },
-    'split_test': {
-      inputs: [],
-      outputs: ['L', 'R'],
-      definition: function(index) {
-        if (index === 0) {
-          return 5;
-        } else {
-          return 10;
-        }
-      }
-    },
-    'replace': {
-      inputs: ['text', 'rem', 'ins'],
-      outputs: ['result'],
-      definition: function(text, pattern, replacement) {
-        return text().replace(pattern(), replacement());
       }
     },
     'log': {
@@ -139,6 +128,31 @@
         value = input();
         console.log(value);
         return value;
+      }
+    },
+    'exit': {
+      inputs: [],
+      outputs: ['R'],
+      definition: function() {
+        throw "Exit";
+      }
+    },
+    'replace': {
+      inputs: ['text', 'rem', 'ins'],
+      outputs: ['result'],
+      definition: function(text, pattern, replacement) {
+        return text().replace(pattern(), replacement());
+      }
+    },
+    'two_outputs': {
+      inputs: [],
+      outputs: ['L', 'R'],
+      definition: function(index) {
+        if (index === 0) {
+          return "left";
+        } else {
+          return "right";
+        }
       }
     },
     'int': {
@@ -174,6 +188,13 @@
       outputs: ['str'],
       definition: function(obj) {
         return JSON.stringify(obj());
+      }
+    },
+    'random float': {
+      inputs: [],
+      outputs: ['OUT'],
+      definition: function() {
+        return Math.random();
       }
     }
   };
@@ -799,7 +820,7 @@
     }
   };
   window.Controller = function() {
-    var field, hide_subroutines, save_state, save_timer;
+    var data, field, hide_subroutines, import_source, load_example_programs, save_state, save_timer;
     field = $("#field");
     field.append(renderer.domElement);
     animate();
@@ -809,7 +830,7 @@
     field.bind('contextmenu', function() {
       return false;
     });
-    hide_subroutines = function() {
+    hide_subroutines = __bind(function() {
       var index, subroutine, _ref, _results;
       _ref = this.subroutines;
       _results = [];
@@ -818,19 +839,31 @@
         _results.push(scene.remove(subroutine.view));
       }
       return _results;
-    };
+    }, this);
     this.import_export_text = '';
     this["import"] = function() {
-      var id, new_state, subroutine, _results;
-      new_state = load_state(valid_json(this.import_export_text));
       hide_subroutines();
+      return import_source(this.import_export_text);
+    };
+    import_source = __bind(function(source) {
+      var id, subroutine, subroutines, _results;
+      subroutines = load_state(valid_json(source));
       _results = [];
-      for (id in new_state) {
-        subroutine = new_state[id];
-        _results.push(this.subroutines[id] = subroutine);
+      for (id in subroutines) {
+        subroutine = subroutines[id];
+        _results.push(this.subroutines[subroutine.id] = subroutine);
       }
       return _results;
-    };
+    }, this);
+    load_example_programs = __bind(function() {
+      var name, source, _results;
+      _results = [];
+      for (name in example_programs) {
+        source = example_programs[name];
+        _results.push(import_source(source));
+      }
+      return _results;
+    }, this);
     this.export_all = function() {
       return this.import_export_text = JSON.stringify({
         subroutines: this.subroutines
@@ -841,7 +874,8 @@
     }, this);
     this.revert = function() {
       hide_subroutines();
-      return this.subroutines = JSON.parse(default_state);
+      this.subroutines = {};
+      return load_example_programs();
     };
     this.literal_text = '';
     this.use_literal = __bind(function() {
@@ -885,7 +919,7 @@
       _ref = subroutine.inputs;
       _fn = function(input_index, input) {
         var value;
-        value = function() {
+        value = _.memoize(function() {
           var result;
           result = prompt("Provide a JSON value for \"" + input.text + "\":");
           if (result === null) {
@@ -900,7 +934,7 @@
               throw exception;
             }
           }
-        };
+        });
         return input_values.push(value);
       };
       for (input_index = 0, _len = _ref.length; input_index < _len; input_index++) {
@@ -925,21 +959,16 @@
       return localStorage.state = JSON.stringify(state);
     }, this);
     this.library = functions;
-    this.subroutines = load_localStorage();
+    if (localStorage.state != null) {
+      data = JSON.parse(localStorage.state);
+      this.subroutines = load_state(data);
+    } else {
+      load_example_programs();
+    }
     system_arrow = make_arrow(V(0, 0), V(1, 0), false);
     return save_timer = setInterval(save_state, 500);
   };
   default_state = '{}';
-  load_localStorage = function() {
-    var data, subroutines;
-    if (localStorage.state != null) {
-      data = JSON.parse(localStorage.state);
-      subroutines = load_state(data);
-    } else {
-      subroutines = JSON.parse(default_state);
-    }
-    return subroutines;
-  };
   load_state = function(data) {
     var id, subroutine, subroutine_data, subroutines, _ref;
     subroutines = {};
@@ -1018,4 +1047,8 @@
   };
   how_are_you_source = "{\"nodes\":[{\"position\":{\"x\":242,\"y\":110,\"z\":0},\"text\":\"out\",\"id\":\"56b9d684188339dafd5d3f0fe9421371\"},{\"position\":{\"x\":243,\"y\":210,\"z\":0},\"text\":\"if\",\"id\":\"3190bcfcc5ece720f07ccde57b12f8a3\"},{\"position\":{\"x\":152,\"y\":315,\"z\":0},\"text\":\"\\\"That's Awesome!\\\"\",\"id\":\"d33ff759bef23100f01c59d525d404d7\"},{\"position\":{\"x\":339,\"y\":316,\"z\":0},\"text\":\"\\\"Oh Well\\\"\",\"id\":\"5d54ff1fa3f1633b31a1ba8c0536f1f0\"},{\"position\":{\"x\":239,\"y\":363,\"z\":0},\"text\":\"=\",\"id\":\"6b8e3e498b936e992c0ceddbbe354635\"},{\"position\":{\"x\":146,\"y\":469,\"z\":0},\"text\":\"\\\"good\\\"\",\"id\":\"3673f98c69da086d30994c91c01fe3f7\"},{\"position\":{\"x\":336,\"y\":472,\"z\":0},\"text\":\"prompt\",\"id\":\"92de68eec528651f75a74492604f5211\"},{\"position\":{\"x\":334,\"y\":598,\"z\":0},\"text\":\"\\\"How are you?\\\"\",\"id\":\"aa4cb4c766117fb44f5a917f1a1f9ba5\"}],\"connections\":[{\"input\":{\"index\":0,\"parent_id\":\"56b9d684188339dafd5d3f0fe9421371\"},\"output\":{\"index\":0,\"parent_id\":\"3190bcfcc5ece720f07ccde57b12f8a3\"}},{\"input\":{\"index\":0,\"parent_id\":\"3190bcfcc5ece720f07ccde57b12f8a3\"},\"output\":{\"index\":0,\"parent_id\":\"d33ff759bef23100f01c59d525d404d7\"}},{\"input\":{\"index\":2,\"parent_id\":\"3190bcfcc5ece720f07ccde57b12f8a3\"},\"output\":{\"index\":0,\"parent_id\":\"5d54ff1fa3f1633b31a1ba8c0536f1f0\"}},{\"input\":{\"index\":1,\"parent_id\":\"3190bcfcc5ece720f07ccde57b12f8a3\"},\"output\":{\"index\":0,\"parent_id\":\"6b8e3e498b936e992c0ceddbbe354635\"}},{\"input\":{\"index\":0,\"parent_id\":\"6b8e3e498b936e992c0ceddbbe354635\"},\"output\":{\"index\":0,\"parent_id\":\"3673f98c69da086d30994c91c01fe3f7\"}},{\"input\":{\"index\":1,\"parent_id\":\"6b8e3e498b936e992c0ceddbbe354635\"},\"output\":{\"index\":0,\"parent_id\":\"92de68eec528651f75a74492604f5211\"}},{\"input\":{\"index\":0,\"parent_id\":\"92de68eec528651f75a74492604f5211\"},\"output\":{\"index\":0,\"parent_id\":\"aa4cb4c766117fb44f5a917f1a1f9ba5\"}}]}";
   addition_program_source = "{\"nodes\":[{\"position\":{\"x\":200,\"y\":100},\"text\":\"out\",\"id\":\"a3a19afbbc5b944012036668230eb819\"},{\"position\":{\"x\":200,\"y\":300},\"text\":\"+\",\"id\":\"4c19f385dd04884ab84eb27f71011054\"},{\"position\":{\"x\":150,\"y\":500},\"text\":\"5\",\"id\":\"c532ec59ef6b57af6bd7323be2d27d93\"},{\"position\":{\"x\":250,\"y\":500},\"text\":\"3\",\"id\":\"1191a8be50c4c7cd7b1f259b82c04365\"}],\"connections\":[{\"input\":{\"index\":0,\"parent_id\":\"4c19f385dd04884ab84eb27f71011054\"},\"output\":{\"index\":0,\"parent_id\":\"c532ec59ef6b57af6bd7323be2d27d93\"}},{\"input\":{\"index\":1,\"parent_id\":\"4c19f385dd04884ab84eb27f71011054\"},\"output\":{\"index\":0,\"parent_id\":\"1191a8be50c4c7cd7b1f259b82c04365\"}},{\"input\":{\"index\":0,\"parent_id\":\"a3a19afbbc5b944012036668230eb819\"},\"output\":{\"index\":0,\"parent_id\":\"4c19f385dd04884ab84eb27f71011054\"}}]}";
+  example_programs = {
+    fibonacci: "{\"subroutines\":[{\"id\":\"2575174b1c1ce259732f1e2cdad0527a\",\"name\":\"fibonacci\",\"nodes\":[{\"position\":{\"x\":-9,\"y\":-182},\"text\":\"if\",\"id\":\"e05a7951f055bda9bac1b7a2cb64b158\",\"type\":\"builtin\",\"implementation_id\":\"if\"},{\"position\":{\"x\":13,\"y\":137},\"text\":\"<=\",\"id\":\"593ca0e4720b30081fc5197263123d13\",\"type\":\"builtin\",\"implementation_id\":\"<=\"},{\"position\":{\"x\":-194,\"y\":216},\"text\":\"1\",\"id\":\"e438523e5b202c39d3e2374b7e96d180\",\"type\":\"literal\",\"value\":\"1\"},{\"position\":{\"x\":-74,\"y\":110},\"text\":\"-\",\"id\":\"6c89f0d25eec0382b8700859a11416eb\",\"type\":\"builtin\",\"implementation_id\":\"-\"},{\"position\":{\"x\":118,\"y\":125},\"text\":\"-\",\"id\":\"eb73af84739ab002f7044f76e0c41822\",\"type\":\"builtin\",\"implementation_id\":\"-\"},{\"position\":{\"x\":200,\"y\":207},\"text\":\"2\",\"id\":\"bab1a81bbf9a28165c13649fcb8c8bcf\",\"type\":\"literal\",\"value\":\"2\"},{\"position\":{\"x\":-64,\"y\":14},\"text\":\"fibonacci\",\"id\":\"c26176010b9b89cfca7360674c317a51\",\"type\":\"function\",\"implementation_id\":\"2575174b1c1ce259732f1e2cdad0527a\"},{\"position\":{\"x\":48,\"y\":-80},\"text\":\"+\",\"id\":\"c4c313ea6125c5bbcab9077a432999cd\",\"type\":\"builtin\",\"implementation_id\":\"+\"},{\"position\":{\"x\":117,\"y\":26},\"text\":\"fibonacci\",\"id\":\"8fa76accf987138f4c17b3cb736113f9\",\"type\":\"function\",\"implementation_id\":\"2575174b1c1ce259732f1e2cdad0527a\"}],\"connections\":[{\"input\":{\"index\":0,\"parent_id\":\"2575174b1c1ce259732f1e2cdad0527a\"},\"output\":{\"index\":0,\"parent_id\":\"e05a7951f055bda9bac1b7a2cb64b158\"}},{\"input\":{\"index\":0,\"parent_id\":\"593ca0e4720b30081fc5197263123d13\"},\"output\":{\"index\":0,\"parent_id\":\"2575174b1c1ce259732f1e2cdad0527a\"}},{\"input\":{\"index\":1,\"parent_id\":\"e05a7951f055bda9bac1b7a2cb64b158\"},\"output\":{\"index\":0,\"parent_id\":\"593ca0e4720b30081fc5197263123d13\"}},{\"input\":{\"index\":0,\"parent_id\":\"e05a7951f055bda9bac1b7a2cb64b158\"},\"output\":{\"index\":0,\"parent_id\":\"e438523e5b202c39d3e2374b7e96d180\"}},{\"input\":{\"index\":1,\"parent_id\":\"6c89f0d25eec0382b8700859a11416eb\"},\"output\":{\"index\":0,\"parent_id\":\"e438523e5b202c39d3e2374b7e96d180\"}},{\"input\":{\"index\":0,\"parent_id\":\"6c89f0d25eec0382b8700859a11416eb\"},\"output\":{\"index\":0,\"parent_id\":\"2575174b1c1ce259732f1e2cdad0527a\"}},{\"input\":{\"index\":1,\"parent_id\":\"eb73af84739ab002f7044f76e0c41822\"},\"output\":{\"index\":0,\"parent_id\":\"bab1a81bbf9a28165c13649fcb8c8bcf\"}},{\"input\":{\"index\":0,\"parent_id\":\"eb73af84739ab002f7044f76e0c41822\"},\"output\":{\"index\":0,\"parent_id\":\"2575174b1c1ce259732f1e2cdad0527a\"}},{\"input\":{\"index\":0,\"parent_id\":\"c26176010b9b89cfca7360674c317a51\"},\"output\":{\"index\":0,\"parent_id\":\"6c89f0d25eec0382b8700859a11416eb\"}},{\"input\":{\"index\":0,\"parent_id\":\"c4c313ea6125c5bbcab9077a432999cd\"},\"output\":{\"index\":0,\"parent_id\":\"c26176010b9b89cfca7360674c317a51\"}},{\"input\":{\"index\":2,\"parent_id\":\"e05a7951f055bda9bac1b7a2cb64b158\"},\"output\":{\"index\":0,\"parent_id\":\"c4c313ea6125c5bbcab9077a432999cd\"}},{\"input\":{\"index\":0,\"parent_id\":\"8fa76accf987138f4c17b3cb736113f9\"},\"output\":{\"index\":0,\"parent_id\":\"eb73af84739ab002f7044f76e0c41822\"}},{\"input\":{\"index\":1,\"parent_id\":\"c4c313ea6125c5bbcab9077a432999cd\"},\"output\":{\"index\":0,\"parent_id\":\"8fa76accf987138f4c17b3cb736113f9\"}},{\"input\":{\"index\":1,\"parent_id\":\"593ca0e4720b30081fc5197263123d13\"},\"output\":{\"index\":0,\"parent_id\":\"bab1a81bbf9a28165c13649fcb8c8bcf\"}}],\"inputs\":[\"n\"],\"outputs\":[\"OUT\"]}]}",
+    factorial: "{\"subroutines\":[{\"id\":\"8fc9bd3c71115f83652aa005eea7190f\",\"name\":\"factorial\",\"nodes\":[{\"position\":{\"x\":88,\"y\":109},\"text\":\"-\",\"id\":\"de90fccb0536281a45a0da5f70959f21\",\"type\":\"builtin\",\"implementation_id\":\"-\"},{\"position\":{\"x\":-155,\"y\":181},\"text\":\"1\",\"id\":\"1812eff87ec431a6271f6dec686a9f46\",\"type\":\"literal\",\"value\":\"1\"},{\"position\":{\"x\":89,\"y\":19},\"text\":\"factorial\",\"id\":\"5824bd344a36b3fe046903267540a6c0\",\"type\":\"function\",\"implementation_id\":\"8fc9bd3c71115f83652aa005eea7190f\"},{\"position\":{\"x\":55,\"y\":-76},\"text\":\"*\",\"id\":\"1203ca7b32a7d2c14530cf8284a2c58d\",\"type\":\"builtin\",\"implementation_id\":\"*\"},{\"position\":{\"x\":-1,\"y\":-169},\"text\":\"if\",\"id\":\"85d5915f07a530740d2d09a8800a96f5\",\"type\":\"builtin\",\"implementation_id\":\"if\"},{\"position\":{\"x\":-58,\"y\":69},\"text\":\"<=\",\"id\":\"6429e2efdd33c227628d4b0e45cfdb39\",\"type\":\"builtin\",\"implementation_id\":\"<=\"},{\"position\":{\"x\":190,\"y\":202},\"text\":\"1\",\"id\":\"e210a51778362d1e20d360f02c1c3c6b\",\"type\":\"literal\",\"value\":\"1\"}],\"connections\":[{\"input\":{\"index\":0,\"parent_id\":\"de90fccb0536281a45a0da5f70959f21\"},\"output\":{\"index\":0,\"parent_id\":\"8fc9bd3c71115f83652aa005eea7190f\"}},{\"input\":{\"index\":0,\"parent_id\":\"5824bd344a36b3fe046903267540a6c0\"},\"output\":{\"index\":0,\"parent_id\":\"de90fccb0536281a45a0da5f70959f21\"}},{\"input\":{\"index\":1,\"parent_id\":\"1203ca7b32a7d2c14530cf8284a2c58d\"},\"output\":{\"index\":0,\"parent_id\":\"5824bd344a36b3fe046903267540a6c0\"}},{\"input\":{\"index\":0,\"parent_id\":\"1203ca7b32a7d2c14530cf8284a2c58d\"},\"output\":{\"index\":0,\"parent_id\":\"8fc9bd3c71115f83652aa005eea7190f\"}},{\"input\":{\"index\":2,\"parent_id\":\"85d5915f07a530740d2d09a8800a96f5\"},\"output\":{\"index\":0,\"parent_id\":\"1203ca7b32a7d2c14530cf8284a2c58d\"}},{\"input\":{\"index\":0,\"parent_id\":\"8fc9bd3c71115f83652aa005eea7190f\"},\"output\":{\"index\":0,\"parent_id\":\"85d5915f07a530740d2d09a8800a96f5\"}},{\"input\":{\"index\":0,\"parent_id\":\"85d5915f07a530740d2d09a8800a96f5\"},\"output\":{\"index\":0,\"parent_id\":\"1812eff87ec431a6271f6dec686a9f46\"}},{\"input\":{\"index\":0,\"parent_id\":\"6429e2efdd33c227628d4b0e45cfdb39\"},\"output\":{\"index\":0,\"parent_id\":\"8fc9bd3c71115f83652aa005eea7190f\"}},{\"input\":{\"index\":1,\"parent_id\":\"6429e2efdd33c227628d4b0e45cfdb39\"},\"output\":{\"index\":0,\"parent_id\":\"1812eff87ec431a6271f6dec686a9f46\"}},{\"input\":{\"index\":1,\"parent_id\":\"85d5915f07a530740d2d09a8800a96f5\"},\"output\":{\"index\":0,\"parent_id\":\"6429e2efdd33c227628d4b0e45cfdb39\"}},{\"input\":{\"index\":1,\"parent_id\":\"de90fccb0536281a45a0da5f70959f21\"},\"output\":{\"index\":0,\"parent_id\":\"e210a51778362d1e20d360f02c1c3c6b\"}}],\"inputs\":[\"n\"],\"outputs\":[\"OUT\"]}]}"
+  };
 }).call(this);
