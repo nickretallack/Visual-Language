@@ -237,8 +237,8 @@ class Input extends Nib
 
     _add_connection: (connection, vertex) ->
         # delete previous connection
-        #@get_connection()?.connection.delete()
-        #@connections = {}
+        @get_connection()?.connection.delete()
+        @connections = {}
         @connections[connection.id] =
             connection:connection
             vertex:vertex

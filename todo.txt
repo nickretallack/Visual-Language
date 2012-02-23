@@ -1,4 +1,4 @@
 - allow arbitrary literals
     - load literals as raw json values
     - differentiate their nodes in persistence from builtins and subroutines
-- Delete old arrows that go to the same output nodes
+- Make a way to distribute packages (as json blobs)

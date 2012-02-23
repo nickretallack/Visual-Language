@@ -1,28 +1,24 @@
 (function() {
-  var Connection, FunctionApplication, Input, Literal, Nib, Node, Output, Program, SubRoutine, addition_program_source, all_subroutines, animate, boxes, camera, connecting_object, connection_view, current_scope, dragging_object, dragging_offset, functions, get_absolute_nib_position, get_nib_position, height, hide_subroutines, how_are_you_source, last, load_implementation, load_program, load_state, load_subroutine, make_arrow, make_basic_program, make_box, make_connection, make_main, make_nib_view, make_node, make_node_view, make_subroutine_view, make_text, mouse_coords, mouse_down, mouse_move, mouse_up, node_registry, obj_first, projector, ray_cast_mouse, renderer, scene, system_arrow, update, width,
-    __hasProp = Object.prototype.hasOwnProperty,
-    __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor; child.__super__ = parent.prototype; return child; };
-
+  var Connection, FunctionApplication, Input, Literal, Nib, Node, Output, Program, SubRoutine, addition_program_source, all_subroutines, animate, boxes, camera, connecting_object, connection_view, current_scope, dragging_object, dragging_offset, functions, get_absolute_nib_position, get_nib_position, height, hide_subroutines, how_are_you_source, last, load_implementation, load_program, load_state, load_subroutine, make_arrow, make_basic_program, make_box, make_connection, make_main, make_nib_view, make_node, make_node_view, make_subroutine_view, make_text, mouse_coords, mouse_down, mouse_move, mouse_up, node_registry, obj_first, projector, ray_cast_mouse, renderer, scene, system_arrow, update, width;
+  var __hasProp = Object.prototype.hasOwnProperty, __extends = function(child, parent) {
+    for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; }
+    function ctor() { this.constructor = child; }
+    ctor.prototype = parent.prototype;
+    child.prototype = new ctor;
+    child.__super__ = parent.prototype;
+    return child;
+  }, __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
   height = 500;
-
   width = 500;
-
   camera = new THREE.OrthographicCamera(0, width, height, 0, -2000, 1000);
-
   scene = new THREE.Scene();
-
   scene.add(camera);
-
   renderer = new THREE.CanvasRenderer();
-
   renderer.setSize(width, height);
-
   projector = new THREE.Projector();
-
   last = function(list) {
     return list[list.length - 1];
   };
-
   obj_first = function(obj) {
     var item, key;
     for (key in obj) {
@@ -30,26 +26,18 @@
       return item;
     }
   };
-
   boxes = {};
-
   node_registry = {};
-
   all_subroutines = {};
-
   current_scope = null;
-
   system_arrow = null;
-
   update = function() {
     return renderer.render(scene, camera);
   };
-
   animate = function() {
     requestAnimationFrame(animate);
     return update();
   };
-
   functions = {
     '+': {
       inputs: ['L', 'R'],
@@ -143,6 +131,16 @@
         return text().replace(pattern(), replacement());
       }
     },
+    'log': {
+      inputs: ['in'],
+      outputs: ['out'],
+      definition: function(input) {
+        var value;
+        value = input();
+        console.log(value);
+        return value;
+      }
+    },
     'int': {
       inputs: ['str'],
       outputs: ['int'],
@@ -179,18 +177,13 @@
       }
     }
   };
-
-  /* MODELS
-  */
-
+  /* MODELS */
   Program = (function() {
-
     function Program(name, subroutine, id) {
       this.name = name != null ? name : '';
       this.subroutine = subroutine;
       this.id = id != null ? id : UUID();
     }
-
     Program.prototype.run = function() {
       try {
         return alert(this.subroutine.invoke(0, []));
@@ -204,7 +197,6 @@
         }
       }
     };
-
     Program.prototype.toJSON = function() {
       return {
         id: this.id,
@@ -212,18 +204,18 @@
         subroutine: this.subroutine
       };
     };
-
     return Program;
-
   })();
-
   SubRoutine = (function() {
-
     function SubRoutine(name, inputs, outputs, id) {
       var index, text;
       this.name = name != null ? name : '';
-      if (inputs == null) inputs = [];
-      if (outputs == null) outputs = [];
+      if (inputs == null) {
+        inputs = [];
+      }
+      if (outputs == null) {
+        outputs = [];
+      }
       this.id = id != null ? id : UUID();
       node_registry[this.id] = this;
       this.view = make_subroutine_view(this);
@@ -249,7 +241,6 @@
       this.connections = {};
       all_subroutines[this.id] = this;
     }
-
     SubRoutine.prototype.toJSON = function() {
       return {
         id: this.id,
@@ -260,7 +251,6 @@
         outputs: this.get_outputs()
       };
     };
-
     SubRoutine.prototype.invoke = function(index, inputs) {
       var output, the_scope, _ref;
       the_scope = {
@@ -268,14 +258,15 @@
         inputs: inputs
       };
       output = (_ref = this.outputs[index].get_connection()) != null ? _ref.connection.output : void 0;
-      if (!output) throw "NotConnected";
+      if (!output) {
+        throw "NotConnected";
+      }
       if (output.parent instanceof SubRoutine) {
         return inputs[output.index]();
       } else if (output.parent instanceof Node) {
         return output.parent.evaluation(the_scope, output.index);
       }
     };
-
     SubRoutine.prototype.get_inputs = function() {
       var input, _i, _len, _ref, _results;
       _ref = this.inputs;
@@ -286,7 +277,6 @@
       }
       return _results;
     };
-
     SubRoutine.prototype.get_outputs = function() {
       var output, _i, _len, _ref, _results;
       _ref = this.outputs;
@@ -297,29 +287,22 @@
       }
       return _results;
     };
-
     return SubRoutine;
-
   })();
-
   Node = (function() {
-
     function Node() {
       node_registry[this.id] = this;
       this.scope = current_scope;
       this.scope.nodes[this.id] = this;
       this.view = make_node_view(this);
     }
-
     Node.prototype.set_position = function(position) {
       this.position = position;
       return this.view.position.copy(this.position);
     };
-
     Node.prototype.get_nibs = function() {
       return this.inputs.concat(this.outputs);
     };
-
     Node.prototype["delete"] = function() {
       var nib, _i, _len, _ref, _results;
       this.scope.view.remove(this.view);
@@ -332,7 +315,6 @@
       }
       return _results;
     };
-
     Node.prototype.toJSON = function() {
       var _ref;
       return {
@@ -342,15 +324,9 @@
         subroutine_id: (_ref = this.subroutine) != null ? _ref.id : void 0
       };
     };
-
     return Node;
-
   })();
-
-  FunctionApplication = (function(_super) {
-
-    __extends(FunctionApplication, _super);
-
+  FunctionApplication = (function() {
     function FunctionApplication(position, text, information, id) {
       var index, text;
       this.position = position;
@@ -383,7 +359,7 @@
         return _results;
       }).call(this);
     }
-
+    __extends(FunctionApplication, Node);
     FunctionApplication.prototype.evaluation = function(the_scope, output_index) {
       var input, input_values, _fn, _i, _len, _ref;
       input_values = [];
@@ -392,7 +368,9 @@
         return input_values.push(_.memoize(function() {
           var output, _ref2;
           output = (_ref2 = input.get_connection()) != null ? _ref2.connection.output : void 0;
-          if (!output) throw "NotConnected";
+          if (!output) {
+            throw "NotConnected";
+          }
           if (output.parent instanceof SubRoutine) {
             return the_scope.inputs[output.index]();
           } else if (output.parent instanceof Node) {
@@ -410,15 +388,9 @@
         return this.value.apply(this, input_values.concat([output_index]));
       }
     };
-
     return FunctionApplication;
-
-  })(Node);
-
-  Literal = (function(_super) {
-
-    __extends(Literal, _super);
-
+  })();
+  Literal = (function() {
     function Literal(position, text, value, id) {
       this.position = position;
       this.text = text;
@@ -428,22 +400,17 @@
       this.inputs = [];
       this.outputs = [new Output(this, 'O')];
     }
-
+    __extends(Literal, Node);
     Literal.prototype.evaluation = function() {
       return this.value;
     };
-
     return Literal;
-
-  })(Node);
-
+  })();
   Nib = (function() {
-
     function Nib() {
       this.view = make_nib_view(this, this.parent instanceof Node);
       this.connections = {};
     }
-
     Nib.prototype.delete_connections = function() {
       var connection, id, _ref, _results;
       _ref = this.connections;
@@ -454,15 +421,9 @@
       }
       return _results;
     };
-
     return Nib;
-
   })();
-
-  Input = (function(_super) {
-
-    __extends(Input, _super);
-
+  Input = (function() {
     function Input(parent, text, index, siblings) {
       this.parent = parent;
       this.text = text;
@@ -470,14 +431,18 @@
       this.siblings = siblings != null ? siblings : 0;
       Input.__super__.constructor.call(this);
     }
-
+    __extends(Input, Nib);
     Input.prototype._add_connection = function(connection, vertex) {
+      var _ref;
+      if ((_ref = this.get_connection()) != null) {
+        _ref.connection["delete"]();
+      }
+      this.connections = {};
       return this.connections[connection.id] = {
         connection: connection,
         vertex: vertex
       };
     };
-
     Input.prototype.get_connection = function() {
       var connection, id, _ref;
       _ref = this.connections;
@@ -486,19 +451,12 @@
         return connection;
       }
     };
-
     Input.prototype.connect = function(output) {
       return new Connection(this, output);
     };
-
     return Input;
-
-  })(Nib);
-
-  Output = (function(_super) {
-
-    __extends(Output, _super);
-
+  })();
+  Output = (function() {
     function Output(parent, text, index, siblings) {
       this.parent = parent;
       this.text = text;
@@ -506,24 +464,19 @@
       this.siblings = siblings != null ? siblings : 0;
       Output.__super__.constructor.call(this);
     }
-
+    __extends(Output, Nib);
     Output.prototype._add_connection = function(connection, vertex) {
       return this.connections[connection.id] = {
         connection: connection,
         vertex: vertex
       };
     };
-
     Output.prototype.connect = function(input) {
       return new Connection(input, this);
     };
-
     return Output;
-
-  })(Nib);
-
+  })();
   Connection = (function() {
-
     function Connection(input, output, id) {
       var input_vertex, output_vertex, _ref;
       this.input = input;
@@ -535,7 +488,6 @@
       this.scope = current_scope;
       this.scope.connections[this.id] = this;
     }
-
     Connection.prototype.toJSON = function() {
       return {
         input: {
@@ -548,21 +500,15 @@
         }
       };
     };
-
     Connection.prototype["delete"] = function() {
       this.scope.view.remove(this.view);
       delete this.scope.connections[this.id];
       delete this.output.connections[this.id];
       return this.input.connections = {};
     };
-
     return Connection;
-
   })();
-
-  /* VIEWS
-  */
-
+  /* VIEWS */
   make_subroutine_view = function(subroutine) {
     var box, box_size, position;
     box_size = V(500, 500);
@@ -572,7 +518,6 @@
     boxes[box.id] = box;
     return box;
   };
-
   make_node_view = function(node) {
     var color, main_box, main_box_size;
     main_box_size = V(50, 50);
@@ -583,7 +528,6 @@
     boxes[main_box.id] = main_box;
     return main_box;
   };
-
   make_nib_view = function(nib, is_node) {
     var parent, parent_size, sub_box, sub_box_color, sub_box_size, x_position, y_offset, y_position;
     sub_box_size = V(20, 20);
@@ -598,7 +542,6 @@
     parent.add(sub_box);
     return sub_box;
   };
-
   connection_view = function(connection) {
     var arrow, point1, point2;
     point1 = get_nib_position(connection.input);
@@ -606,16 +549,17 @@
     arrow = make_arrow(point1, point2);
     return [arrow, arrow.geometry.vertices[0], arrow.geometry.vertices[1]];
   };
-
-  /* FACTORIES
-  */
-
+  /* FACTORIES */
   make_node = function(text, position, id) {
     var as_number, information, node, value, _ref;
-    if (position == null) position = V(0, 0);
-    if (id == null) id = void 0;
+    if (position == null) {
+      position = V(0, 0);
+    }
+    if (id == null) {
+      id = void 0;
+    }
     if ((text[0] === last(text)) && ((_ref = text[0]) === "'" || _ref === '"')) {
-      value = text.slice(1, (text.length - 1));
+      value = text.slice(1, text.length - 1);
       return new Literal(position, text, value, id);
     } else {
       as_number = parseFloat(text);
@@ -628,7 +572,6 @@
       }
     }
   };
-
   make_connection = function(source, target) {
     var input, output;
     if (source.model instanceof Input) {
@@ -640,10 +583,7 @@
     }
     return new Connection(input, output);
   };
-
-  /* CORE RENDERING
-  */
-
+  /* CORE RENDERING */
   make_text = function(text, size) {
     var centerOffset, geometry, material, mesh;
     geometry = new THREE.TextGeometry(text, {
@@ -661,10 +601,11 @@
     mesh.position.x = centerOffset;
     return mesh;
   };
-
   make_box = function(name, size, text_size, color, position, outline) {
     var box, geometry, material, mesh;
-    if (outline == null) outline = false;
+    if (outline == null) {
+      outline = false;
+    }
     box = new THREE.Object3D();
     geometry = (function(func, args, ctor) {
       ctor.prototype = func.prototype;
@@ -682,13 +623,16 @@
     box.position = position.three();
     return box;
   };
-
   make_arrow = function(source, target) {
     var arrow, color, line, line_geometry, line_material;
     arrow = new THREE.Object3D();
     color = 0x888888;
-    if ('three' in source) source = source.three();
-    if ('three' in target) target = target.three();
+    if ('three' in source) {
+      source = source.three();
+    }
+    if ('three' in target) {
+      target = target.three();
+    }
     line_geometry = new THREE.Geometry();
     line_material = new THREE.LineBasicMaterial({
       color: color,
@@ -700,10 +644,7 @@
     current_scope.view.add(line);
     return line;
   };
-
-  /* CORE HELPERS
-  */
-
+  /* CORE HELPERS */
   ray_cast_mouse = function() {
     var forward, intersections, mouse, ray;
     mouse = mouse_coords(event).three();
@@ -711,13 +652,13 @@
     forward = new THREE.Vector3(0, 0, -1);
     ray = new THREE.Ray(mouse, forward);
     intersections = ray.intersectScene(scene);
-    if (intersections.length > 0) return (last(intersections)).object.parent;
+    if (intersections.length > 0) {
+      return (last(intersections)).object.parent;
+    }
   };
-
   mouse_coords = function(event) {
     return V(event.clientX, height - event.clientY);
   };
-
   get_nib_position = function(nib) {
     if (nib.parent instanceof Node) {
       return Vector.from(nib.view.position).plus(nib.view.parent.position).three();
@@ -725,20 +666,13 @@
       return Vector.from(nib.view.position).three();
     }
   };
-
   get_absolute_nib_position = function(nib) {
     return Vector.from(get_nib_position(nib)).plus(V(250, 250)).three();
   };
-
-  /* INTERACTION
-  */
-
+  /* INTERACTION */
   dragging_object = null;
-
   connecting_object = null;
-
   dragging_offset = V(0, 0);
-
   mouse_down = function(event) {
     var target;
     event.preventDefault();
@@ -761,7 +695,6 @@
       }
     }
   };
-
   mouse_up = function(event) {
     var connection, target;
     dragging_object = null;
@@ -774,7 +707,6 @@
       return scene.remove(system_arrow);
     }
   };
-
   mouse_move = function(event) {
     var adjusted_vector, connection, id, mouse_vector, nib, node, vector, _i, _len, _ref, _ref2;
     mouse_vector = mouse_coords(event);
@@ -797,7 +729,6 @@
       return system_arrow.geometry.vertices[1].position = vector;
     }
   };
-
   hide_subroutines = function() {
     var index, subroutine, _results;
     _results = [];
@@ -807,10 +738,8 @@
     }
     return _results;
   };
-
   window.Controller = function() {
-    var field, save_state, save_timer, state, _ref,
-      _this = this;
+    var field, save_state, save_timer, state, _ref;
     field = $("#field");
     field.append(renderer.domElement);
     animate();
@@ -821,51 +750,51 @@
       return false;
     });
     this.new_node_text = '';
-    this.add_new_node = function() {
-      _this.add_node(_this.new_node_text);
-      return _this.new_node_text = '';
-    };
-    this.add_node = function(text) {
+    this.add_new_node = __bind(function() {
+      this.add_node(this.new_node_text);
+      return this.new_node_text = '';
+    }, this);
+    this.add_node = __bind(function(text) {
       var node;
       return node = make_node(text);
-    };
-    this.use_subroutine = function(subroutine) {
+    }, this);
+    this.use_subroutine = __bind(function(subroutine) {
       return new FunctionApplication(V(0, 0), subroutine.name, {
         inputs: subroutine.get_inputs(),
         outputs: subroutine.get_outputs(),
         definition: subroutine
       });
-    };
+    }, this);
     this.initial_subroutine = {
       name: '',
       inputs: '',
       outputs: ''
     };
     this.new_subroutine = angular.copy(this.initial_subroutine);
-    this.edit_subroutine = function(subroutine) {
+    this.edit_subroutine = __bind(function(subroutine) {
       current_scope = subroutine;
       hide_subroutines();
       return scene.add(subroutine.view);
-    };
-    this.add_subroutine = function() {
+    }, this);
+    this.add_subroutine = __bind(function() {
       var subroutine;
-      subroutine = new SubRoutine(_this.new_subroutine.name, _this.new_subroutine.inputs.split(' '), _this.new_subroutine.outputs.split(' '));
-      _this.subroutines[subroutine.id] = subroutine;
-      return _this.new_subroutine = angular.copy(_this.initial_subroutine);
-    };
-    this.run_program = function(program) {
+      subroutine = new SubRoutine(this.new_subroutine.name, this.new_subroutine.inputs.split(' '), this.new_subroutine.outputs.split(' '));
+      this.subroutines[subroutine.id] = subroutine;
+      return this.new_subroutine = angular.copy(this.initial_subroutine);
+    }, this);
+    this.run_program = __bind(function(program) {
       return program.run();
-    };
+    }, this);
     this.new_program_name = '';
-    this.add_program = function() {
+    this.add_program = __bind(function() {
       var new_program;
-      new_program = new Program(_this.new_program_name, make_main());
-      _this.programs[new_program.id] = new_program;
-      return _this.new_program_name = '';
-    };
-    save_state = function() {
+      new_program = new Program(this.new_program_name, make_main());
+      this.programs[new_program.id] = new_program;
+      return this.new_program_name = '';
+    }, this);
+    save_state = __bind(function() {
       return localStorage.state = JSON.stringify(state);
-    };
+    }, this);
     this.library = functions;
     _ref = load_state(), this.programs = _ref[0], this.subroutines = _ref[1];
     state = {
@@ -877,7 +806,6 @@
     scene.add(current_scope.view);
     return save_timer = setInterval(save_state, 500);
   };
-
   load_state = function() {
     var data, id, initial_program, program, program_data, programs, subroutine, subroutine_data, subroutines, _ref, _ref2;
     programs = {};
@@ -910,11 +838,9 @@
     }
     return [programs, subroutines];
   };
-
   make_main = function() {
     return new SubRoutine('main', [], ['OUT']);
   };
-
   make_basic_program = function() {
     var c1, c2, c3, five, plus, three;
     plus = make_node('+', V(250, 150));
@@ -924,18 +850,15 @@
     c2 = three.outputs[0].connect(plus.inputs[1]);
     return c3 = plus.outputs[0].connect(current_scope.outputs[0]);
   };
-
   load_program = function(data) {
     var subroutine;
     subroutine = load_subroutine(data.subroutine);
     return new Program(data.name, subroutine, data.id);
   };
-
   load_subroutine = function(data) {
     var subroutine;
     return current_scope = subroutine = new SubRoutine(data.name, data.inputs, data.outputs, data.id);
   };
-
   load_implementation = function(data) {
     var connection, node, position, sink, sink_connector, source, source_connector, sub_subroutine, _i, _j, _len, _len2, _ref, _ref2, _results;
     _ref = data.nodes;
@@ -944,7 +867,9 @@
       position = Vector.from(node.position);
       if (node.subroutine_id) {
         sub_subroutine = all_subroutines[node.subroutine_id];
-        if (!sub_subroutine) console.log("Oh no, subroutine wasn't loaded yet");
+        if (!sub_subroutine) {
+          console.log("Oh no, subroutine wasn't loaded yet");
+        }
         new FunctionApplication(position, sub_subroutine.name, {
           inputs: sub_subroutine.get_inputs(),
           outputs: sub_subroutine.get_outputs(),
@@ -969,9 +894,6 @@
     }
     return _results;
   };
-
   how_are_you_source = "{\"nodes\":[{\"position\":{\"x\":242,\"y\":110,\"z\":0},\"text\":\"out\",\"id\":\"56b9d684188339dafd5d3f0fe9421371\"},{\"position\":{\"x\":243,\"y\":210,\"z\":0},\"text\":\"if\",\"id\":\"3190bcfcc5ece720f07ccde57b12f8a3\"},{\"position\":{\"x\":152,\"y\":315,\"z\":0},\"text\":\"\\\"That's Awesome!\\\"\",\"id\":\"d33ff759bef23100f01c59d525d404d7\"},{\"position\":{\"x\":339,\"y\":316,\"z\":0},\"text\":\"\\\"Oh Well\\\"\",\"id\":\"5d54ff1fa3f1633b31a1ba8c0536f1f0\"},{\"position\":{\"x\":239,\"y\":363,\"z\":0},\"text\":\"=\",\"id\":\"6b8e3e498b936e992c0ceddbbe354635\"},{\"position\":{\"x\":146,\"y\":469,\"z\":0},\"text\":\"\\\"good\\\"\",\"id\":\"3673f98c69da086d30994c91c01fe3f7\"},{\"position\":{\"x\":336,\"y\":472,\"z\":0},\"text\":\"prompt\",\"id\":\"92de68eec528651f75a74492604f5211\"},{\"position\":{\"x\":334,\"y\":598,\"z\":0},\"text\":\"\\\"How are you?\\\"\",\"id\":\"aa4cb4c766117fb44f5a917f1a1f9ba5\"}],\"connections\":[{\"input\":{\"index\":0,\"parent_id\":\"56b9d684188339dafd5d3f0fe9421371\"},\"output\":{\"index\":0,\"parent_id\":\"3190bcfcc5ece720f07ccde57b12f8a3\"}},{\"input\":{\"index\":0,\"parent_id\":\"3190bcfcc5ece720f07ccde57b12f8a3\"},\"output\":{\"index\":0,\"parent_id\":\"d33ff759bef23100f01c59d525d404d7\"}},{\"input\":{\"index\":2,\"parent_id\":\"3190bcfcc5ece720f07ccde57b12f8a3\"},\"output\":{\"index\":0,\"parent_id\":\"5d54ff1fa3f1633b31a1ba8c0536f1f0\"}},{\"input\":{\"index\":1,\"parent_id\":\"3190bcfcc5ece720f07ccde57b12f8a3\"},\"output\":{\"index\":0,\"parent_id\":\"6b8e3e498b936e992c0ceddbbe354635\"}},{\"input\":{\"index\":0,\"parent_id\":\"6b8e3e498b936e992c0ceddbbe354635\"},\"output\":{\"index\":0,\"parent_id\":\"3673f98c69da086d30994c91c01fe3f7\"}},{\"input\":{\"index\":1,\"parent_id\":\"6b8e3e498b936e992c0ceddbbe354635\"},\"output\":{\"index\":0,\"parent_id\":\"92de68eec528651f75a74492604f5211\"}},{\"input\":{\"index\":0,\"parent_id\":\"92de68eec528651f75a74492604f5211\"},\"output\":{\"index\":0,\"parent_id\":\"aa4cb4c766117fb44f5a917f1a1f9ba5\"}}]}";
-
   addition_program_source = "{\"nodes\":[{\"position\":{\"x\":200,\"y\":100},\"text\":\"out\",\"id\":\"a3a19afbbc5b944012036668230eb819\"},{\"position\":{\"x\":200,\"y\":300},\"text\":\"+\",\"id\":\"4c19f385dd04884ab84eb27f71011054\"},{\"position\":{\"x\":150,\"y\":500},\"text\":\"5\",\"id\":\"c532ec59ef6b57af6bd7323be2d27d93\"},{\"position\":{\"x\":250,\"y\":500},\"text\":\"3\",\"id\":\"1191a8be50c4c7cd7b1f259b82c04365\"}],\"connections\":[{\"input\":{\"index\":0,\"parent_id\":\"4c19f385dd04884ab84eb27f71011054\"},\"output\":{\"index\":0,\"parent_id\":\"c532ec59ef6b57af6bd7323be2d27d93\"}},{\"input\":{\"index\":1,\"parent_id\":\"4c19f385dd04884ab84eb27f71011054\"},\"output\":{\"index\":0,\"parent_id\":\"1191a8be50c4c7cd7b1f259b82c04365\"}},{\"input\":{\"index\":0,\"parent_id\":\"a3a19afbbc5b944012036668230eb819\"},\"output\":{\"index\":0,\"parent_id\":\"4c19f385dd04884ab84eb27f71011054\"}}]}";
-
 }).call(this);
