@@ -25,7 +25,7 @@
     <span ng:repat="input in program.subroutine.inputs">{{input.text}}</span> =&gt;
     <span ng:repat="output in program.subroutine.outputs">{{output.text}}</span>
 </li></ul>
-<form ng:submit="add_program()"> <input ng:model="new_program_name"> <button>Add Program</button> </form>
+<form ng:submit="add_program()"> <input ng:model="new_program_name"> <button>Create Program</button> </form>
 
 <h2>Subroutines</h2>
 <ul><li ng:repeat="(id, subroutine) in subroutines">
@@ -37,12 +37,13 @@
 <p>Name:<input ng:model="new_subroutine.name"></p>
 <p>Inputs:<input ng:model="new_subroutine.inputs"></p>
 <p>Outputs:<input ng:model="new_subroutine.outputs"></p>
-<button>Add Subroutine</button> </form>
+<button>Create Subroutine</button> </form>
 
-<h2>Library</h2>
-<form ng:submit="add_new_node()"> <input ng:model="new_node_text"> <button>Add to Program</button> </form>
+<h2>Literals</h2>
+<form ng:submit="use_literal()"> <input ng:model="literal_text"> <button>Use Literal</button> </form>
+<h2>Builtins</h2>
 <ul><li ng:repeat="(text, item) in library">
-    <a ng:click="add_node(text)">{{text}}</a>
+    <a ng:click="use_builtin(text)">{{text}}</a>
 </li></ul>
 
 </body>

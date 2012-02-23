@@ -183,14 +183,16 @@ class Node
         position:@position
         text:@text
         id:@id
-        subroutine_id:@subroutine?.id
+        type:@type
 
 class FunctionApplication extends Node
     constructor:(@position, @text, information, @id=UUID()) ->
         if information.definition instanceof SubRoutine
             @subroutine = information.definition
+            @type = 'function'
         else
             @value = information.definition
+            @type = 'builtin'
 
         super()
         @inputs = (new Input @, text, index, information.inputs.length-1 for text, index in information.inputs)
@@ -213,13 +215,24 @@ class FunctionApplication extends Node
         else
             return @value (input_values.concat [output_index])...
 
+    toJSON: ->
+        json = super()
+        json.implementation_id = if @type is 'function' then @subroutine.id else @text
+        json
+
 class Literal extends Node
     constructor:(@position, @text, @value, @id=UUID()) ->
         super()
         @inputs = []
         @outputs = [new Output(@, 'O')]
+        @type = 'literal'
 
     evaluation: -> return @value
+
+    toJSON: ->
+        json = super()
+        json.value = JSON.stringify @value
+        json
     
 class Nib  # Abstract. Do not instantiate
     constructor: ->
@@ -331,22 +344,6 @@ connection_view = (connection) ->
             
 
 ### FACTORIES ###
-
-make_node = (text, position=V(0,0), id=undefined) ->
-    if (text[0] is last text) and (text[0] in ["'",'"'])
-        # it's a string
-        value = text[1...text.length-1]
-        return new Literal position, text, value, id
-    else
-        as_number = parseFloat text
-        if not isNaN as_number
-            # it's a number
-            return new Literal position, text, as_number, id
-        else if text of functions
-            # it's a function
-            information = functions[text]
-            node = new FunctionApplication position, text, information, id
-            return node
 
 make_connection = (source, target) ->
     if source.model instanceof Input
@@ -485,13 +482,14 @@ window.Controller = ->
     field.mousemove mouse_move
     field.bind 'contextmenu', -> false
 
-    @new_node_text = ''
-    @add_new_node = =>
-        @add_node @new_node_text
-        @new_node_text = ''
+    @literal_text = ''
+    @use_literal = =>
+        value = JSON.parse @literal_text
+        new Literal V(0,0), @literal_text, value
+        @literal_text = ''
 
-    @add_node = (text) =>
-        node = make_node text
+    @use_builtin = (name) =>
+        new FunctionApplication V(0,0), name, functions[name]
 
     @use_subroutine = (subroutine) =>
         new FunctionApplication V(0,0), subroutine.name,
@@ -516,7 +514,6 @@ window.Controller = ->
         @new_subroutine = angular.copy @initial_subroutine
 
     @run_program = (program) => program.run()
-
         
     @new_program_name = ''
     @add_program = =>
@@ -591,16 +588,21 @@ load_subroutine = (data) ->
 load_implementation = (data) ->
     for node in data.nodes
         position = Vector.from(node.position)
-        if node.subroutine_id
-            sub_subroutine = all_subroutines[node.subroutine_id]
+        if node.type is 'function'
+            sub_subroutine = all_subroutines[node.implementation_id]
             console.log "Oh no, subroutine wasn't loaded yet" unless sub_subroutine
             new FunctionApplication position, sub_subroutine.name,
                 inputs:sub_subroutine.get_inputs()
                 outputs:sub_subroutine.get_outputs()
                 definition:sub_subroutine
             , node.id
-        else
-            make_node node.text, position, node.id
+        else if node.type is 'builtin'
+            information = functions[node.implementation_id]
+            name = node.implementation_id
+            new FunctionApplication position, name, information, node.id
+        else if node.type is 'literal'
+            value = JSON.parse node.value
+            new Literal position, node.value, value, node.id
 
     for connection in data.connections
         source = node_registry[connection.output.parent_id]
@@ -622,3 +624,4 @@ addition_program_source = """{"nodes":[{"position":{"x":200,"y":100},"text":"out
 
 #load_program how_are_you_source
 #make_basic_program()
+load_state()

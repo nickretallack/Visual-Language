@@ -1,5 +1,5 @@
 (function() {
-  var Connection, FunctionApplication, Input, Literal, Nib, Node, Output, Program, SubRoutine, addition_program_source, all_subroutines, animate, boxes, camera, connecting_object, connection_view, current_scope, dragging_object, dragging_offset, functions, get_absolute_nib_position, get_nib_position, height, hide_subroutines, how_are_you_source, last, load_implementation, load_program, load_state, load_subroutine, make_arrow, make_basic_program, make_box, make_connection, make_main, make_nib_view, make_node, make_node_view, make_subroutine_view, make_text, mouse_coords, mouse_down, mouse_move, mouse_up, node_registry, obj_first, projector, ray_cast_mouse, renderer, scene, system_arrow, update, width;
+  var Connection, FunctionApplication, Input, Literal, Nib, Node, Output, Program, SubRoutine, addition_program_source, all_subroutines, animate, boxes, camera, connecting_object, connection_view, current_scope, dragging_object, dragging_offset, functions, get_absolute_nib_position, get_nib_position, height, hide_subroutines, how_are_you_source, last, load_implementation, load_program, load_state, load_subroutine, make_arrow, make_basic_program, make_box, make_connection, make_main, make_nib_view, make_node_view, make_subroutine_view, make_text, mouse_coords, mouse_down, mouse_move, mouse_up, node_registry, obj_first, projector, ray_cast_mouse, renderer, scene, system_arrow, update, width;
   var __hasProp = Object.prototype.hasOwnProperty, __extends = function(child, parent) {
     for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; }
     function ctor() { this.constructor = child; }
@@ -316,12 +316,11 @@
       return _results;
     };
     Node.prototype.toJSON = function() {
-      var _ref;
       return {
         position: this.position,
         text: this.text,
         id: this.id,
-        subroutine_id: (_ref = this.subroutine) != null ? _ref.id : void 0
+        type: this.type
       };
     };
     return Node;
@@ -334,8 +333,10 @@
       this.id = id != null ? id : UUID();
       if (information.definition instanceof SubRoutine) {
         this.subroutine = information.definition;
+        this.type = 'function';
       } else {
         this.value = information.definition;
+        this.type = 'builtin';
       }
       FunctionApplication.__super__.constructor.call(this);
       this.inputs = (function() {
@@ -388,6 +389,12 @@
         return this.value.apply(this, input_values.concat([output_index]));
       }
     };
+    FunctionApplication.prototype.toJSON = function() {
+      var json;
+      json = FunctionApplication.__super__.toJSON.call(this);
+      json.implementation_id = this.type === 'function' ? this.subroutine.id : this.text;
+      return json;
+    };
     return FunctionApplication;
   })();
   Literal = (function() {
@@ -399,10 +406,17 @@
       Literal.__super__.constructor.call(this);
       this.inputs = [];
       this.outputs = [new Output(this, 'O')];
+      this.type = 'literal';
     }
     __extends(Literal, Node);
     Literal.prototype.evaluation = function() {
       return this.value;
+    };
+    Literal.prototype.toJSON = function() {
+      var json;
+      json = Literal.__super__.toJSON.call(this);
+      json.value = JSON.stringify(this.value);
+      return json;
     };
     return Literal;
   })();
@@ -550,28 +564,6 @@
     return [arrow, arrow.geometry.vertices[0], arrow.geometry.vertices[1]];
   };
   /* FACTORIES */
-  make_node = function(text, position, id) {
-    var as_number, information, node, value, _ref;
-    if (position == null) {
-      position = V(0, 0);
-    }
-    if (id == null) {
-      id = void 0;
-    }
-    if ((text[0] === last(text)) && ((_ref = text[0]) === "'" || _ref === '"')) {
-      value = text.slice(1, text.length - 1);
-      return new Literal(position, text, value, id);
-    } else {
-      as_number = parseFloat(text);
-      if (!isNaN(as_number)) {
-        return new Literal(position, text, as_number, id);
-      } else if (text in functions) {
-        information = functions[text];
-        node = new FunctionApplication(position, text, information, id);
-        return node;
-      }
-    }
-  };
   make_connection = function(source, target) {
     var input, output;
     if (source.model instanceof Input) {
@@ -749,14 +741,15 @@
     field.bind('contextmenu', function() {
       return false;
     });
-    this.new_node_text = '';
-    this.add_new_node = __bind(function() {
-      this.add_node(this.new_node_text);
-      return this.new_node_text = '';
+    this.literal_text = '';
+    this.use_literal = __bind(function() {
+      var value;
+      value = JSON.parse(this.literal_text);
+      new Literal(V(0, 0), this.literal_text, value);
+      return this.literal_text = '';
     }, this);
-    this.add_node = __bind(function(text) {
-      var node;
-      return node = make_node(text);
+    this.use_builtin = __bind(function(name) {
+      return new FunctionApplication(V(0, 0), name, functions[name]);
     }, this);
     this.use_subroutine = __bind(function(subroutine) {
       return new FunctionApplication(V(0, 0), subroutine.name, {
@@ -860,13 +853,13 @@
     return current_scope = subroutine = new SubRoutine(data.name, data.inputs, data.outputs, data.id);
   };
   load_implementation = function(data) {
-    var connection, node, position, sink, sink_connector, source, source_connector, sub_subroutine, _i, _j, _len, _len2, _ref, _ref2, _results;
+    var connection, information, name, node, position, sink, sink_connector, source, source_connector, sub_subroutine, value, _i, _j, _len, _len2, _ref, _ref2, _results;
     _ref = data.nodes;
     for (_i = 0, _len = _ref.length; _i < _len; _i++) {
       node = _ref[_i];
       position = Vector.from(node.position);
-      if (node.subroutine_id) {
-        sub_subroutine = all_subroutines[node.subroutine_id];
+      if (node.type === 'function') {
+        sub_subroutine = all_subroutines[node.implementation_id];
         if (!sub_subroutine) {
           console.log("Oh no, subroutine wasn't loaded yet");
         }
@@ -875,8 +868,13 @@
           outputs: sub_subroutine.get_outputs(),
           definition: sub_subroutine
         }, node.id);
-      } else {
-        make_node(node.text, position, node.id);
+      } else if (node.type === 'builtin') {
+        information = functions[node.implementation_id];
+        name = node.implementation_id;
+        new FunctionApplication(position, name, information, node.id);
+      } else if (node.type === 'literal') {
+        value = JSON.parse(node.value);
+        new Literal(position, node.value, value, node.id);
       }
     }
     _ref2 = data.connections;
@@ -896,4 +894,5 @@
   };
   how_are_you_source = "{\"nodes\":[{\"position\":{\"x\":242,\"y\":110,\"z\":0},\"text\":\"out\",\"id\":\"56b9d684188339dafd5d3f0fe9421371\"},{\"position\":{\"x\":243,\"y\":210,\"z\":0},\"text\":\"if\",\"id\":\"3190bcfcc5ece720f07ccde57b12f8a3\"},{\"position\":{\"x\":152,\"y\":315,\"z\":0},\"text\":\"\\\"That's Awesome!\\\"\",\"id\":\"d33ff759bef23100f01c59d525d404d7\"},{\"position\":{\"x\":339,\"y\":316,\"z\":0},\"text\":\"\\\"Oh Well\\\"\",\"id\":\"5d54ff1fa3f1633b31a1ba8c0536f1f0\"},{\"position\":{\"x\":239,\"y\":363,\"z\":0},\"text\":\"=\",\"id\":\"6b8e3e498b936e992c0ceddbbe354635\"},{\"position\":{\"x\":146,\"y\":469,\"z\":0},\"text\":\"\\\"good\\\"\",\"id\":\"3673f98c69da086d30994c91c01fe3f7\"},{\"position\":{\"x\":336,\"y\":472,\"z\":0},\"text\":\"prompt\",\"id\":\"92de68eec528651f75a74492604f5211\"},{\"position\":{\"x\":334,\"y\":598,\"z\":0},\"text\":\"\\\"How are you?\\\"\",\"id\":\"aa4cb4c766117fb44f5a917f1a1f9ba5\"}],\"connections\":[{\"input\":{\"index\":0,\"parent_id\":\"56b9d684188339dafd5d3f0fe9421371\"},\"output\":{\"index\":0,\"parent_id\":\"3190bcfcc5ece720f07ccde57b12f8a3\"}},{\"input\":{\"index\":0,\"parent_id\":\"3190bcfcc5ece720f07ccde57b12f8a3\"},\"output\":{\"index\":0,\"parent_id\":\"d33ff759bef23100f01c59d525d404d7\"}},{\"input\":{\"index\":2,\"parent_id\":\"3190bcfcc5ece720f07ccde57b12f8a3\"},\"output\":{\"index\":0,\"parent_id\":\"5d54ff1fa3f1633b31a1ba8c0536f1f0\"}},{\"input\":{\"index\":1,\"parent_id\":\"3190bcfcc5ece720f07ccde57b12f8a3\"},\"output\":{\"index\":0,\"parent_id\":\"6b8e3e498b936e992c0ceddbbe354635\"}},{\"input\":{\"index\":0,\"parent_id\":\"6b8e3e498b936e992c0ceddbbe354635\"},\"output\":{\"index\":0,\"parent_id\":\"3673f98c69da086d30994c91c01fe3f7\"}},{\"input\":{\"index\":1,\"parent_id\":\"6b8e3e498b936e992c0ceddbbe354635\"},\"output\":{\"index\":0,\"parent_id\":\"92de68eec528651f75a74492604f5211\"}},{\"input\":{\"index\":0,\"parent_id\":\"92de68eec528651f75a74492604f5211\"},\"output\":{\"index\":0,\"parent_id\":\"aa4cb4c766117fb44f5a917f1a1f9ba5\"}}]}";
   addition_program_source = "{\"nodes\":[{\"position\":{\"x\":200,\"y\":100},\"text\":\"out\",\"id\":\"a3a19afbbc5b944012036668230eb819\"},{\"position\":{\"x\":200,\"y\":300},\"text\":\"+\",\"id\":\"4c19f385dd04884ab84eb27f71011054\"},{\"position\":{\"x\":150,\"y\":500},\"text\":\"5\",\"id\":\"c532ec59ef6b57af6bd7323be2d27d93\"},{\"position\":{\"x\":250,\"y\":500},\"text\":\"3\",\"id\":\"1191a8be50c4c7cd7b1f259b82c04365\"}],\"connections\":[{\"input\":{\"index\":0,\"parent_id\":\"4c19f385dd04884ab84eb27f71011054\"},\"output\":{\"index\":0,\"parent_id\":\"c532ec59ef6b57af6bd7323be2d27d93\"}},{\"input\":{\"index\":1,\"parent_id\":\"4c19f385dd04884ab84eb27f71011054\"},\"output\":{\"index\":0,\"parent_id\":\"1191a8be50c4c7cd7b1f259b82c04365\"}},{\"input\":{\"index\":0,\"parent_id\":\"a3a19afbbc5b944012036668230eb819\"},\"output\":{\"index\":0,\"parent_id\":\"4c19f385dd04884ab84eb27f71011054\"}}]}";
+  load_state();
 }).call(this);
