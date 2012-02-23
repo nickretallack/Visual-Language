@@ -781,7 +781,15 @@
     this.literal_text = '';
     this.use_literal = __bind(function() {
       var value;
-      value = JSON.parse(this.literal_text);
+      try {
+        value = JSON.parse(this.literal_text);
+      } catch (exception) {
+        if (exception instanceof SyntaxError) {
+          return alert("Invalid JSON: " + this.literal_text);
+        } else {
+          throw exception;
+        }
+      }
       new Literal(V(0, 0), this.literal_text, value);
       return this.literal_text = '';
     }, this);

@@ -510,7 +510,13 @@ window.Controller = ->
 
     @literal_text = ''
     @use_literal = =>
-        value = JSON.parse @literal_text
+        try
+            value = JSON.parse @literal_text
+        catch exception
+            if exception instanceof SyntaxError
+                return alert "Invalid JSON: #{@literal_text}"
+            else
+                throw exception
         new Literal V(0,0), @literal_text, value
         @literal_text = ''
 
