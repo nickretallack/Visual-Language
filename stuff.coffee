@@ -553,6 +553,7 @@ window.Controller = ->
     @import = ->
         hide_subroutines()
         import_source @import_export_text
+        scene.add current_scope.view
 
     import_source = (source) =>
         #new_state = load_state valid_json source
@@ -563,6 +564,7 @@ window.Controller = ->
     load_example_programs = =>
         for name, source of example_programs
             import_source source
+        current_scope = @subroutines["2092fbbc04daf231793ce4d1d6761172"]
 
     @export_all = ->
         @import_export_text = JSON.stringify subroutines:@subroutines
@@ -574,6 +576,7 @@ window.Controller = ->
         hide_subroutines()
         @subroutines = {}
         load_example_programs()
+        scene.add current_scope.view
 
     @literal_text = ''
     @use_literal = =>
@@ -645,7 +648,6 @@ window.Controller = ->
     else
         load_example_programs()
 
-    current_scope = @subroutines["2092fbbc04daf231793ce4d1d6761172"]
     scene.add current_scope.view
     system_arrow = make_arrow V(0,0), V(1,0), false
     save_timer = setInterval save_state, 500

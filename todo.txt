@@ -1,2 +1,1 @@
-- Make a way to distribute packages (as json blobs)
-- Button to reset your state to the default
+- remove useless state info, like literal text+value

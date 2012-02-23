@@ -843,7 +843,8 @@
     this.import_export_text = '';
     this["import"] = function() {
       hide_subroutines();
-      return import_source(this.import_export_text);
+      import_source(this.import_export_text);
+      return scene.add(current_scope.view);
     };
     import_source = __bind(function(source) {
       var id, subroutine, subroutines, _results;
@@ -856,13 +857,12 @@
       return _results;
     }, this);
     load_example_programs = __bind(function() {
-      var name, source, _results;
-      _results = [];
+      var name, source;
       for (name in example_programs) {
         source = example_programs[name];
-        _results.push(import_source(source));
+        import_source(source);
       }
-      return _results;
+      return current_scope = this.subroutines["2092fbbc04daf231793ce4d1d6761172"];
     }, this);
     this.export_all = function() {
       return this.import_export_text = JSON.stringify({
@@ -875,7 +875,8 @@
     this.revert = function() {
       hide_subroutines();
       this.subroutines = {};
-      return load_example_programs();
+      load_example_programs();
+      return scene.add(current_scope.view);
     };
     this.literal_text = '';
     this.use_literal = __bind(function() {
@@ -965,7 +966,6 @@
     } else {
       load_example_programs();
     }
-    current_scope = this.subroutines["2092fbbc04daf231793ce4d1d6761172"];
     scene.add(current_scope.view);
     system_arrow = make_arrow(V(0, 0), V(1, 0), false);
     return save_timer = setInterval(save_state, 500);
