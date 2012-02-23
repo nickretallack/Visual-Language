@@ -1,5 +1,5 @@
 (function() {
-  var Connection, FunctionApplication, Input, Literal, Nib, Node, Output, Program, SubRoutine, addition_program_source, all_subroutines, animate, boxes, camera, connecting_object, connection_view, current_scope, dragging_object, dragging_offset, functions, get_absolute_nib_position, get_nib_position, height, hide_subroutines, how_are_you_source, last, load_implementation, load_program, load_state, load_subroutine, make_arrow, make_basic_program, make_box, make_connection, make_main, make_nib_view, make_node_view, make_subroutine_view, make_text, mouse_coords, mouse_down, mouse_move, mouse_up, node_registry, obj_first, projector, ray_cast_mouse, renderer, scene, system_arrow, update, width;
+  var Connection, FunctionApplication, Input, Literal, Nib, Node, Output, SubRoutine, addition_program_source, all_subroutines, animate, boxes, camera, connecting_object, connection_view, current_scope, dragging_object, dragging_offset, functions, get_absolute_nib_position, get_nib_position, height, hide_subroutines, how_are_you_source, last, load_implementation, load_program, load_state, load_subroutine, make_arrow, make_basic_program, make_box, make_connection, make_main, make_nib_view, make_node_view, make_subroutine_view, make_text, mouse_coords, mouse_down, mouse_move, mouse_up, node_registry, obj_first, projector, ray_cast_mouse, renderer, scene, system_arrow, update, width;
   var __hasProp = Object.prototype.hasOwnProperty, __extends = function(child, parent) {
     for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; }
     function ctor() { this.constructor = child; }
@@ -178,37 +178,6 @@
     }
   };
   /* MODELS */
-  Program = (function() {
-    function Program(name, subroutine, id) {
-      this.name = name != null ? name : '';
-      this.subroutine = subroutine;
-      this.id = id != null ? id : UUID();
-    }
-    Program.prototype.run = function() {
-      try {
-        return alert(this.subroutine.invoke(0, []));
-      } catch (exception) {
-        if (exception === 'NotConnected') {
-          return alert("Something in the program is disconnected");
-        } else if (exception === 'Exit') {
-          return alert("Program Exited");
-        } else {
-          throw exception;
-        }
-      }
-    };
-    Program.prototype.toJSON = function() {
-      return {
-        id: this.id,
-        name: this.name,
-        subroutine: this.subroutine
-      };
-    };
-    Program.prototype.subroutines_referenced = function() {
-      return this.subroutine.subroutines_referenced();
-    };
-    return Program;
-  })();
   SubRoutine = (function() {
     function SubRoutine(name, inputs, outputs, id) {
       var index, text;
@@ -289,6 +258,19 @@
         _results.push(output.text);
       }
       return _results;
+    };
+    SubRoutine.prototype.run = function(output_index) {
+      try {
+        return alert(this.invoke(output_index, []));
+      } catch (exception) {
+        if (exception === 'NotConnected') {
+          return alert("Something in the program is disconnected");
+        } else if (exception === 'Exit') {
+          return alert("Program Exited");
+        } else {
+          throw exception;
+        }
+      }
     };
     SubRoutine.prototype.subroutines_referenced = function() {
       var output, parent, results, resuts, _i, _len, _ref, _ref2;
@@ -769,7 +751,7 @@
     return _results;
   };
   window.Controller = function() {
-    var field, save_state, save_timer, state, _ref;
+    var field, save_state, save_timer, state;
     field = $("#field");
     field.append(renderer.domElement);
     animate();
@@ -816,33 +798,24 @@
     this.export_subroutine = __bind(function(subroutine) {
       return alert(JSON.stringify(subroutine.subroutines_referenced()));
     }, this);
-    this.run_program = __bind(function(program) {
-      return program.run();
-    }, this);
-    this.new_program_name = '';
-    this.add_program = __bind(function() {
-      var new_program;
-      new_program = new Program(this.new_program_name, make_main());
-      this.programs[new_program.id] = new_program;
-      return this.new_program_name = '';
+    this.run_subroutine = __bind(function(subroutine, output_index) {
+      return subroutine.run(output_index);
     }, this);
     save_state = __bind(function() {
       return localStorage.state = JSON.stringify(state);
     }, this);
     this.library = functions;
-    _ref = load_state(), this.programs = _ref[0], this.subroutines = _ref[1];
+    this.subroutines = load_state();
     state = {
-      programs: this.programs,
       subroutines: this.subroutines
     };
-    current_scope = obj_first(this.programs).subroutine;
+    current_scope = obj_first(this.subroutines);
     system_arrow = make_arrow(V(0, 0), V(1, 0));
     scene.add(current_scope.view);
     return save_timer = setInterval(save_state, 500);
   };
   load_state = function() {
-    var data, id, initial_program, program, program_data, programs, subroutine, subroutine_data, subroutines, _ref, _ref2;
-    programs = {};
+    var data, id, initial_subroutine, subroutine, subroutine_data, subroutines, _ref;
     subroutines = {};
     if (localStorage.state != null) {
       data = JSON.parse(localStorage.state);
@@ -851,29 +824,19 @@
         subroutine_data = _ref[id];
         subroutines[id] = load_subroutine(subroutine_data);
       }
-      _ref2 = data.programs;
-      for (id in _ref2) {
-        program_data = _ref2[id];
-        programs[id] = load_program(program_data);
-      }
       for (id in subroutines) {
         subroutine = subroutines[id];
         current_scope = subroutine;
         load_implementation(data.subroutines[id]);
       }
-      for (id in programs) {
-        program = programs[id];
-        current_scope = program.subroutine;
-        load_implementation(data.programs[id].subroutine);
-      }
     } else {
-      initial_program = new Program('initial', make_main());
-      programs[initial_program.id] = initial_program;
+      initial_subroutine = make_main();
+      subroutines[initial_subroutine.id] = initial_subroutine;
     }
-    return [programs, subroutines];
+    return subroutines;
   };
   make_main = function() {
-    return new SubRoutine('main', [], ['OUT']);
+    return new SubRoutine('default', [], ['OUT']);
   };
   make_basic_program = function() {
     var c1, c2, c3, five, plus, three;

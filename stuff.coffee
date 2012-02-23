@@ -108,26 +108,6 @@ functions =
 
 ### MODELS ###
 
-class Program
-    constructor:(@name='', @subroutine, @id=UUID()) ->
-    run: ->
-        try
-            alert @subroutine.invoke(0, [])
-        catch exception
-            if exception is 'NotConnected'
-                alert "Something in the program is disconnected"
-            else if exception is 'Exit'
-                alert "Program Exited"
-            else throw exception
-
-    toJSON: ->
-        id:@id
-        name:@name
-        subroutine:@subroutine
-
-    subroutines_referenced: -> @subroutine.subroutines_referenced()
-        
-
 class SubRoutine
     constructor:(@name='', inputs=[], outputs=[], @id=UUID()) ->
         node_registry[@id] = @
@@ -162,6 +142,16 @@ class SubRoutine
 
     get_inputs: -> (input.text for input in @inputs)
     get_outputs: -> (output.text for output in @outputs)
+
+    run: (output_index) ->
+        try
+            alert @invoke(output_index, [])
+        catch exception
+            if exception is 'NotConnected'
+                alert "Something in the program is disconnected"
+            else if exception is 'Exit'
+                alert "Program Exited"
+            else throw exception
 
     subroutines_referenced: ->
         results = []
@@ -540,32 +530,25 @@ window.Controller = ->
     @export_subroutine = (subroutine) =>
         alert JSON.stringify subroutine.subroutines_referenced()
 
-    @run_program = (program) => program.run()
-        
-    @new_program_name = ''
-    @add_program = =>
-        new_program = new Program @new_program_name, make_main()
-        @programs[new_program.id] = new_program
-        @new_program_name = ''
+    @run_subroutine = (subroutine, output_index) =>
+        subroutine.run output_index
         
     save_state = =>
         localStorage.state = JSON.stringify state
 
     @library = functions
 
-    [@programs, @subroutines] = load_state()
+    @subroutines = load_state()
 
     state =
-        programs:@programs
         subroutines:@subroutines
 
-    current_scope = obj_first(@programs).subroutine
+    current_scope = obj_first @subroutines
     system_arrow = make_arrow V(0,0), V(1,0)
     scene.add current_scope.view
     save_timer = setInterval save_state, 500
 
 load_state = ->
-    programs = {}
     subroutines = {}
     if localStorage.state?
         data = JSON.parse localStorage.state
@@ -573,26 +556,21 @@ load_state = ->
         # load structures first
         for id, subroutine_data of data.subroutines
             subroutines[id] = load_subroutine subroutine_data
-        for id, program_data of data.programs
-            programs[id] = load_program program_data
 
         # load implementations next
         for id, subroutine of subroutines
             current_scope = subroutine
             load_implementation data.subroutines[id]
 
-        for id, program of programs
-            current_scope = program.subroutine
-            load_implementation data.programs[id].subroutine
     else
-        initial_program = new Program 'initial', make_main()
-        programs[initial_program.id] = initial_program
+        initial_subroutine = make_main()
+        subroutines[initial_subroutine.id] = initial_subroutine
 
-    [programs, subroutines]
+    return subroutines
         
     
 make_main = ->
-    new SubRoutine 'main', [], ['OUT']
+    new SubRoutine 'default', [], ['OUT']
 
 make_basic_program = ->
     plus = make_node '+', V 250,150

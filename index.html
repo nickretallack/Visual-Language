@@ -19,28 +19,22 @@
 <div id="field"></div>
 
 <div id="tools">
-<h2>Programs</h2>
-<ul><li ng:repeat="(id, program) in programs">
-    <a ng:click="run_program(program)">run</a> <a ng:click="edit_subroutine(program.subroutine)">edit</a> {{program.name}}
-    <span ng:repat="input in program.subroutine.inputs">{{input.text}}</span> =&gt;
-    <span ng:repat="output in program.subroutine.outputs">{{output.text}}</span>
-</li></ul>
-<form ng:submit="add_program()"> <input ng:model="new_program_name"> <button>Create Program</button> </form>
-
-<h2>Subroutines</h2>
+<h2>Functions</h2>
 <ul><li ng:repeat="(id, subroutine) in subroutines">
     <a ng:click="use_subroutine(subroutine)">use</a>
     <a ng:click="edit_subroutine(subroutine)">edit</a>
     <a ng:click="export_subroutine(subroutine)">export</a>
     {{subroutine.name}}
     <span ng:repeat="input in subroutine.inputs">{{input.text}} </span> =&gt;
-    <span ng:repeat="output in subroutine.outputs">{{output.text}} </span>
+    <span ng:repeat="output in subroutine.outputs">
+        <a ng:click="run_subroutine(subroutine, output.index)">{{output.text}}</a>
+    </span>
 </li></ul>
 <form ng:submit="add_subroutine()">
 <p>Name:<input ng:model="new_subroutine.name"></p>
 <p>Inputs:<input ng:model="new_subroutine.inputs"></p>
 <p>Outputs:<input ng:model="new_subroutine.outputs"></p>
-<button>Create Subroutine</button> </form>
+<button>Create Function</button> </form>
 
 <h2>Literals</h2>
 <form ng:submit="use_literal()"> <input ng:model="literal_text"> <button>Use Literal</button> </form>
