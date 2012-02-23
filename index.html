@@ -29,7 +29,10 @@
 
 <h2>Subroutines</h2>
 <ul><li ng:repeat="(id, subroutine) in subroutines">
-    <a ng:click="use_subroutine(subroutine)">use</a> <a ng:click="edit_subroutine(subroutine)">edit</a> {{subroutine.name}}
+    <a ng:click="use_subroutine(subroutine)">use</a>
+    <a ng:click="edit_subroutine(subroutine)">edit</a>
+    <a ng:click="export_subroutine(subroutine)">export</a>
+    {{subroutine.name}}
     <span ng:repeat="input in subroutine.inputs">{{input.text}} </span> =&gt;
     <span ng:repeat="output in subroutine.outputs">{{output.text}} </span>
 </li></ul>

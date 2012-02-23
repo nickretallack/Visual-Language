@@ -125,6 +125,9 @@ class Program
         name:@name
         subroutine:@subroutine
 
+    subroutines_referenced: -> @subroutine.subroutines_referenced()
+        
+
 class SubRoutine
     constructor:(@name='', inputs=[], outputs=[], @id=UUID()) ->
         node_registry[@id] = @
@@ -159,6 +162,15 @@ class SubRoutine
 
     get_inputs: -> (input.text for input in @inputs)
     get_outputs: -> (output.text for output in @outputs)
+
+    subroutines_referenced: ->
+        results = []
+        for output in @outputs
+            parent = output.get_connection()?.connection.output.parent
+            if parent
+                results.push parent.id if parent.type is 'function'
+                resuts = results.concat parent.subroutines_referenced()
+        return results
     
 class Node
     constructor: ->
@@ -220,6 +232,16 @@ class FunctionApplication extends Node
         json.implementation_id = if @type is 'function' then @subroutine.id else @text
         json
 
+    subroutines_referenced: ->
+        results = []
+        for input in @inputs
+            parent = input.get_connection()?.connection.output.parent
+            if parent
+                results.push parent.id if parent.type is 'function'
+                resuts = results.concat parent.subroutines_referenced()
+        return results
+        
+
 class Literal extends Node
     constructor:(@position, @text, @value, @id=UUID()) ->
         super()
@@ -233,6 +255,8 @@ class Literal extends Node
         json = super()
         json.value = JSON.stringify @value
         json
+
+    subroutines_referenced: -> []
     
 class Nib  # Abstract. Do not instantiate
     constructor: ->
@@ -512,6 +536,9 @@ window.Controller = ->
         subroutine = new SubRoutine @new_subroutine.name, @new_subroutine.inputs.split(' '), @new_subroutine.outputs.split(' ')
         @subroutines[subroutine.id] = subroutine
         @new_subroutine = angular.copy @initial_subroutine
+
+    @export_subroutine = (subroutine) =>
+        alert JSON.stringify subroutine.subroutines_referenced()
 
     @run_program = (program) => program.run()
         

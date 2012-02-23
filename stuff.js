@@ -204,6 +204,9 @@
         subroutine: this.subroutine
       };
     };
+    Program.prototype.subroutines_referenced = function() {
+      return this.subroutine.subroutines_referenced();
+    };
     return Program;
   })();
   SubRoutine = (function() {
@@ -286,6 +289,22 @@
         _results.push(output.text);
       }
       return _results;
+    };
+    SubRoutine.prototype.subroutines_referenced = function() {
+      var output, parent, results, resuts, _i, _len, _ref, _ref2;
+      results = [];
+      _ref = this.outputs;
+      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+        output = _ref[_i];
+        parent = (_ref2 = output.get_connection()) != null ? _ref2.connection.output.parent : void 0;
+        if (parent) {
+          if (parent.type === 'function') {
+            results.push(parent.id);
+          }
+          resuts = results.concat(parent.subroutines_referenced());
+        }
+      }
+      return results;
     };
     return SubRoutine;
   })();
@@ -395,6 +414,22 @@
       json.implementation_id = this.type === 'function' ? this.subroutine.id : this.text;
       return json;
     };
+    FunctionApplication.prototype.subroutines_referenced = function() {
+      var input, parent, results, resuts, _i, _len, _ref, _ref2;
+      results = [];
+      _ref = this.inputs;
+      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+        input = _ref[_i];
+        parent = (_ref2 = input.get_connection()) != null ? _ref2.connection.output.parent : void 0;
+        if (parent) {
+          if (parent.type === 'function') {
+            results.push(parent.id);
+          }
+          resuts = results.concat(parent.subroutines_referenced());
+        }
+      }
+      return results;
+    };
     return FunctionApplication;
   })();
   Literal = (function() {
@@ -417,6 +452,9 @@
       json = Literal.__super__.toJSON.call(this);
       json.value = JSON.stringify(this.value);
       return json;
+    };
+    Literal.prototype.subroutines_referenced = function() {
+      return [];
     };
     return Literal;
   })();
@@ -774,6 +812,9 @@
       subroutine = new SubRoutine(this.new_subroutine.name, this.new_subroutine.inputs.split(' '), this.new_subroutine.outputs.split(' '));
       this.subroutines[subroutine.id] = subroutine;
       return this.new_subroutine = angular.copy(this.initial_subroutine);
+    }, this);
+    this.export_subroutine = __bind(function(subroutine) {
+      return alert(JSON.stringify(subroutine.subroutines_referenced()));
     }, this);
     this.run_program = __bind(function(program) {
       return program.run();
