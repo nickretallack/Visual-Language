@@ -1,5 +1,5 @@
 (function() {
-  var Connection, FunctionApplication, Input, Literal, Nib, Node, Output, SubRoutine, addition_program_source, all_subroutines, animate, boxes, camera, connecting_object, connection_view, current_scope, dragging_object, dragging_offset, functions, get_absolute_nib_position, get_nib_position, height, hide_subroutines, how_are_you_source, last, load_implementation, load_program, load_state, load_subroutine, make_arrow, make_basic_program, make_box, make_connection, make_main, make_nib_view, make_node_view, make_subroutine_view, make_text, mouse_coords, mouse_down, mouse_move, mouse_up, node_registry, obj_first, projector, ray_cast_mouse, renderer, scene, system_arrow, update, whitespace_split, width;
+  var Connection, FunctionApplication, Input, InputError, Literal, Nib, Node, Output, SubRoutine, addition_program_source, all_subroutines, animate, boxes, camera, connecting_object, connection_view, current_scope, dragging_object, dragging_offset, functions, get_absolute_nib_position, get_nib_position, height, hide_subroutines, how_are_you_source, last, load_implementation, load_program, load_state, load_subroutine, make_arrow, make_basic_program, make_box, make_connection, make_main, make_nib_view, make_node_view, make_subroutine_view, make_text, mouse_coords, mouse_down, mouse_move, mouse_up, node_registry, obj_first, projector, ray_cast_mouse, renderer, scene, system_arrow, update, whitespace_split, width;
   var __hasProp = Object.prototype.hasOwnProperty, __extends = function(child, parent) {
     for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; }
     function ctor() { this.constructor = child; }
@@ -761,6 +761,12 @@
     }
     return results;
   };
+  InputError = (function() {
+    function InputError(message) {
+      this.message = message;
+    }
+    return InputError;
+  })();
   window.Controller = function() {
     var field, save_state, save_timer, state;
     field = $("#field");
@@ -819,11 +825,19 @@
         var value;
         value = function() {
           var result;
-          result = prompt("Provide a value for \"" + input.text + "\":");
+          result = prompt("Provide a JSON value for \"" + input.text + "\":");
           if (result === null) {
             throw "Exit";
           }
-          return JSON.parse(result);
+          try {
+            return JSON.parse(result);
+          } catch (exception) {
+            if (exception instanceof SyntaxError) {
+              throw new InputError(result);
+            } else {
+              throw exception;
+            }
+          }
         };
         return input_values.push(value);
       };
@@ -831,7 +845,15 @@
         input = _ref[input_index];
         _fn(input_index, input);
       }
-      return subroutine.run(output_index, input_values);
+      try {
+        return subroutine.run(output_index, input_values);
+      } catch (exception) {
+        if (exception instanceof InputError) {
+          return alert("Invalid JSON: " + exception.message);
+        } else {
+          throw exception;
+        }
+      }
     }, this);
     save_state = __bind(function() {
       return localStorage.state = JSON.stringify(state);

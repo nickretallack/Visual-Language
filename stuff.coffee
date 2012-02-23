@@ -495,6 +495,9 @@ whitespace_split = (input) ->
     results = results[1..] if results[0] is ''
     results
 
+class InputError
+    constructor: (@message) ->
+
 window.Controller = ->
     field = $("#field")
 
@@ -546,11 +549,23 @@ window.Controller = ->
         for input, input_index in subroutine.inputs
             do (input_index, input) ->
                 value = ->
-                    result = prompt "Provide a value for \"#{input.text}\":"
+                    result = prompt "Provide a JSON value for \"#{input.text}\":"
                     throw "Exit" if result is null
-                    return JSON.parse result
+                    try
+                        return JSON.parse result
+                    catch exception
+                        if exception instanceof SyntaxError
+                            throw new InputError result
+                        else
+                            throw exception
                 input_values.push value
-        subroutine.run output_index, input_values
+        try
+            subroutine.run output_index, input_values
+        catch exception
+            if exception instanceof InputError
+                alert "Invalid JSON: #{exception.message}"
+            else
+                throw exception
         
     save_state = =>
         localStorage.state = JSON.stringify state
