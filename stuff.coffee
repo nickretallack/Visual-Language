@@ -157,7 +157,19 @@ class SubRoutine
                 alert "Program Exited"
             else throw exception
 
+    export: ->
+        dependencies = @get_dependencies()
+        subroutines:_.values dependencies
+
+    get_dependencies: (dependencies={}) ->
+        dependencies[@id] = @ if @id not of dependencies
+        for node in @nodes
+            if node.type is 'function'
+                dependencies = dependencies.concat node.subroutine.get_dependencies dependencies
+        dependencies
+
     subroutines_referenced: ->
+        # TODO: turn this into a cleanup function
         results = []
         for output in @outputs
             parent = output.get_connection()?.connection.output.parent
@@ -498,6 +510,16 @@ whitespace_split = (input) ->
 class InputError
     constructor: (@message) ->
 
+valid_json = (json) ->
+    try
+        return JSON.parse json
+    catch exception
+        if exception instanceof SyntaxError
+            return alert "Invalid JSON: #{json}"
+        else
+            throw exception
+    
+
 window.Controller = ->
     field = $("#field")
 
@@ -508,15 +530,23 @@ window.Controller = ->
     field.mousemove mouse_move
     field.bind 'contextmenu', -> false
 
+    @import_export_text = ''
+    @import = ->
+        new_state = load_state valid_json @import_export_text
+        hide_subroutines()
+        for id, subroutine of new_state
+            @subroutines[id] = subroutine
+
+    @export_all = ->
+        @import_export_text = JSON.stringify subroutines:@subroutines
+
+    @export_subroutine = (subroutine) =>
+        @import_export_text = JSON.stringify subroutine.export()
+
+
     @literal_text = ''
     @use_literal = =>
-        try
-            value = JSON.parse @literal_text
-        catch exception
-            if exception instanceof SyntaxError
-                return alert "Invalid JSON: #{@literal_text}"
-            else
-                throw exception
+        value = valid_json @literal_text
         new Literal V(0,0), @literal_text, value
         @literal_text = ''
 
@@ -547,9 +577,6 @@ window.Controller = ->
         @subroutines[subroutine.id] = subroutine
         @new_subroutine = angular.copy @initial_subroutine
 
-    @export_subroutine = (subroutine) =>
-        alert JSON.stringify subroutine.subroutines_referenced()
-
     @run_subroutine = (subroutine, output_index) =>
         input_values = []
         for input, input_index in subroutine.inputs
@@ -578,7 +605,7 @@ window.Controller = ->
 
     @library = functions
 
-    @subroutines = load_state()
+    @subroutines = load_localStorage()
 
     state =
         subroutines:@subroutines
@@ -588,26 +615,30 @@ window.Controller = ->
     scene.add current_scope.view
     save_timer = setInterval save_state, 500
 
-load_state = ->
-    subroutines = {}
+load_localStorage = ->
     if localStorage.state?
         data = JSON.parse localStorage.state
-
-        # load structures first
-        for id, subroutine_data of data.subroutines
-            subroutines[id] = load_subroutine subroutine_data
-
-        # load implementations next
-        for id, subroutine of subroutines
-            current_scope = subroutine
-            load_implementation data.subroutines[id]
-
+        subroutines = load_state data
     else
+        subroutines = {}
         initial_subroutine = make_main()
         subroutines[initial_subroutine.id] = initial_subroutine
 
     return subroutines
         
+load_state = (data) ->
+    subroutines = {}
+
+    # load structures first
+    for id, subroutine_data of data.subroutines
+        subroutines[id] = load_subroutine subroutine_data
+
+    # load implementations next
+    for id, subroutine of subroutines
+        current_scope = subroutine
+        load_implementation data.subroutines[id]
+
+    return subroutines
     
 make_main = ->
     new SubRoutine 'default', [], ['OUT']
@@ -628,7 +659,7 @@ load_program = (data) ->
     return new Program data.name, subroutine, data.id
 
 load_subroutine = (data) ->
-    current_scope = subroutine = new SubRoutine data.name, data.inputs, data.outputs, data.id
+    subroutine = new SubRoutine data.name, data.inputs, data.outputs, data.id
 
 load_implementation = (data) ->
     for node in data.nodes
@@ -669,4 +700,3 @@ addition_program_source = """{"nodes":[{"position":{"x":200,"y":100},"text":"out
 
 #load_program how_are_you_source
 #make_basic_program()
-load_state()

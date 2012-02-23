@@ -19,10 +19,16 @@
 <div id="field"></div>
 
 <div id="tools">
+<h2>Import/Export</h2>
+<textarea ng:model="import_export_text"></textarea>
+<p><button ng:click="import()">Import</button>
+<button ng:click="export_all()">Export All</button></p>
+
 <h2>Functions</h2>
 <ul><li ng:repeat="(id, subroutine) in subroutines">
     <a ng:click="use_subroutine(subroutine)">use</a>
     <a ng:click="edit_subroutine(subroutine)">edit</a>
+    <a ng:click="export_subroutine(subroutine)">export</a>
     {{subroutine.name}}
     (<span ng:repeat="input in subroutine.inputs">{{input.text}} </span> -&gt;
     <span ng:repeat="output in subroutine.outputs">

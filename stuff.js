@@ -1,5 +1,5 @@
 (function() {
-  var Connection, FunctionApplication, Input, InputError, Literal, Nib, Node, Output, SubRoutine, addition_program_source, all_subroutines, animate, boxes, camera, connecting_object, connection_view, current_scope, dragging_object, dragging_offset, functions, get_absolute_nib_position, get_nib_position, height, hide_subroutines, how_are_you_source, last, load_implementation, load_program, load_state, load_subroutine, make_arrow, make_basic_program, make_box, make_connection, make_main, make_nib_view, make_node_view, make_subroutine_view, make_text, mouse_coords, mouse_down, mouse_move, mouse_up, node_registry, obj_first, projector, ray_cast_mouse, renderer, scene, system_arrow, update, whitespace_split, width;
+  var Connection, FunctionApplication, Input, InputError, Literal, Nib, Node, Output, SubRoutine, addition_program_source, all_subroutines, animate, boxes, camera, connecting_object, connection_view, current_scope, dragging_object, dragging_offset, functions, get_absolute_nib_position, get_nib_position, height, hide_subroutines, how_are_you_source, last, load_implementation, load_localStorage, load_program, load_state, load_subroutine, make_arrow, make_basic_program, make_box, make_connection, make_main, make_nib_view, make_node_view, make_subroutine_view, make_text, mouse_coords, mouse_down, mouse_move, mouse_up, node_registry, obj_first, projector, ray_cast_mouse, renderer, scene, system_arrow, update, valid_json, whitespace_split, width;
   var __hasProp = Object.prototype.hasOwnProperty, __extends = function(child, parent) {
     for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; }
     function ctor() { this.constructor = child; }
@@ -274,6 +274,30 @@
           throw exception;
         }
       }
+    };
+    SubRoutine.prototype["export"] = function() {
+      var dependencies;
+      dependencies = this.get_dependencies();
+      return {
+        subroutines: _.values(dependencies)
+      };
+    };
+    SubRoutine.prototype.get_dependencies = function(dependencies) {
+      var node, _i, _len, _ref;
+      if (dependencies == null) {
+        dependencies = {};
+      }
+      if (!(this.id in dependencies)) {
+        dependencies[this.id] = this;
+      }
+      _ref = this.nodes;
+      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+        node = _ref[_i];
+        if (node.type === 'function') {
+          dependencies = dependencies.concat(node.subroutine.get_dependencies(dependencies));
+        }
+      }
+      return dependencies;
     };
     SubRoutine.prototype.subroutines_referenced = function() {
       var output, parent, results, resuts, _i, _len, _ref, _ref2;
@@ -767,6 +791,17 @@
     }
     return InputError;
   })();
+  valid_json = function(json) {
+    try {
+      return JSON.parse(json);
+    } catch (exception) {
+      if (exception instanceof SyntaxError) {
+        return alert("Invalid JSON: " + json);
+      } else {
+        throw exception;
+      }
+    }
+  };
   window.Controller = function() {
     var field, save_state, save_timer, state;
     field = $("#field");
@@ -778,18 +813,30 @@
     field.bind('contextmenu', function() {
       return false;
     });
+    this.import_export_text = '';
+    this["import"] = function() {
+      var id, new_state, subroutine, _results;
+      new_state = load_state(valid_json(this.import_export_text));
+      hide_subroutines();
+      _results = [];
+      for (id in new_state) {
+        subroutine = new_state[id];
+        _results.push(this.subroutines[id] = subroutine);
+      }
+      return _results;
+    };
+    this.export_all = function() {
+      return this.import_export_text = JSON.stringify({
+        subroutines: this.subroutines
+      });
+    };
+    this.export_subroutine = __bind(function(subroutine) {
+      return this.import_export_text = JSON.stringify(subroutine["export"]());
+    }, this);
     this.literal_text = '';
     this.use_literal = __bind(function() {
       var value;
-      try {
-        value = JSON.parse(this.literal_text);
-      } catch (exception) {
-        if (exception instanceof SyntaxError) {
-          return alert("Invalid JSON: " + this.literal_text);
-        } else {
-          throw exception;
-        }
-      }
+      value = valid_json(this.literal_text);
       new Literal(V(0, 0), this.literal_text, value);
       return this.literal_text = '';
     }, this);
@@ -821,9 +868,6 @@
       subroutine = new SubRoutine(this.new_subroutine.name, inputs, outputs);
       this.subroutines[subroutine.id] = subroutine;
       return this.new_subroutine = angular.copy(this.initial_subroutine);
-    }, this);
-    this.export_subroutine = __bind(function(subroutine) {
-      return alert(JSON.stringify(subroutine.subroutines_referenced()));
     }, this);
     this.run_subroutine = __bind(function(subroutine, output_index) {
       var input, input_index, input_values, _fn, _len, _ref;
@@ -867,7 +911,7 @@
       return localStorage.state = JSON.stringify(state);
     }, this);
     this.library = functions;
-    this.subroutines = load_state();
+    this.subroutines = load_localStorage();
     state = {
       subroutines: this.subroutines
     };
@@ -876,24 +920,30 @@
     scene.add(current_scope.view);
     return save_timer = setInterval(save_state, 500);
   };
-  load_state = function() {
-    var data, id, initial_subroutine, subroutine, subroutine_data, subroutines, _ref;
-    subroutines = {};
+  load_localStorage = function() {
+    var data, initial_subroutine, subroutines;
     if (localStorage.state != null) {
       data = JSON.parse(localStorage.state);
-      _ref = data.subroutines;
-      for (id in _ref) {
-        subroutine_data = _ref[id];
-        subroutines[id] = load_subroutine(subroutine_data);
-      }
-      for (id in subroutines) {
-        subroutine = subroutines[id];
-        current_scope = subroutine;
-        load_implementation(data.subroutines[id]);
-      }
+      subroutines = load_state(data);
     } else {
+      subroutines = {};
       initial_subroutine = make_main();
       subroutines[initial_subroutine.id] = initial_subroutine;
+    }
+    return subroutines;
+  };
+  load_state = function(data) {
+    var id, subroutine, subroutine_data, subroutines, _ref;
+    subroutines = {};
+    _ref = data.subroutines;
+    for (id in _ref) {
+      subroutine_data = _ref[id];
+      subroutines[id] = load_subroutine(subroutine_data);
+    }
+    for (id in subroutines) {
+      subroutine = subroutines[id];
+      current_scope = subroutine;
+      load_implementation(data.subroutines[id]);
     }
     return subroutines;
   };
@@ -916,7 +966,7 @@
   };
   load_subroutine = function(data) {
     var subroutine;
-    return current_scope = subroutine = new SubRoutine(data.name, data.inputs, data.outputs, data.id);
+    return subroutine = new SubRoutine(data.name, data.inputs, data.outputs, data.id);
   };
   load_implementation = function(data) {
     var connection, information, name, node, position, sink, sink_connector, source, source_connector, sub_subroutine, value, _i, _j, _len, _len2, _ref, _ref2, _results;
@@ -960,5 +1010,4 @@
   };
   how_are_you_source = "{\"nodes\":[{\"position\":{\"x\":242,\"y\":110,\"z\":0},\"text\":\"out\",\"id\":\"56b9d684188339dafd5d3f0fe9421371\"},{\"position\":{\"x\":243,\"y\":210,\"z\":0},\"text\":\"if\",\"id\":\"3190bcfcc5ece720f07ccde57b12f8a3\"},{\"position\":{\"x\":152,\"y\":315,\"z\":0},\"text\":\"\\\"That's Awesome!\\\"\",\"id\":\"d33ff759bef23100f01c59d525d404d7\"},{\"position\":{\"x\":339,\"y\":316,\"z\":0},\"text\":\"\\\"Oh Well\\\"\",\"id\":\"5d54ff1fa3f1633b31a1ba8c0536f1f0\"},{\"position\":{\"x\":239,\"y\":363,\"z\":0},\"text\":\"=\",\"id\":\"6b8e3e498b936e992c0ceddbbe354635\"},{\"position\":{\"x\":146,\"y\":469,\"z\":0},\"text\":\"\\\"good\\\"\",\"id\":\"3673f98c69da086d30994c91c01fe3f7\"},{\"position\":{\"x\":336,\"y\":472,\"z\":0},\"text\":\"prompt\",\"id\":\"92de68eec528651f75a74492604f5211\"},{\"position\":{\"x\":334,\"y\":598,\"z\":0},\"text\":\"\\\"How are you?\\\"\",\"id\":\"aa4cb4c766117fb44f5a917f1a1f9ba5\"}],\"connections\":[{\"input\":{\"index\":0,\"parent_id\":\"56b9d684188339dafd5d3f0fe9421371\"},\"output\":{\"index\":0,\"parent_id\":\"3190bcfcc5ece720f07ccde57b12f8a3\"}},{\"input\":{\"index\":0,\"parent_id\":\"3190bcfcc5ece720f07ccde57b12f8a3\"},\"output\":{\"index\":0,\"parent_id\":\"d33ff759bef23100f01c59d525d404d7\"}},{\"input\":{\"index\":2,\"parent_id\":\"3190bcfcc5ece720f07ccde57b12f8a3\"},\"output\":{\"index\":0,\"parent_id\":\"5d54ff1fa3f1633b31a1ba8c0536f1f0\"}},{\"input\":{\"index\":1,\"parent_id\":\"3190bcfcc5ece720f07ccde57b12f8a3\"},\"output\":{\"index\":0,\"parent_id\":\"6b8e3e498b936e992c0ceddbbe354635\"}},{\"input\":{\"index\":0,\"parent_id\":\"6b8e3e498b936e992c0ceddbbe354635\"},\"output\":{\"index\":0,\"parent_id\":\"3673f98c69da086d30994c91c01fe3f7\"}},{\"input\":{\"index\":1,\"parent_id\":\"6b8e3e498b936e992c0ceddbbe354635\"},\"output\":{\"index\":0,\"parent_id\":\"92de68eec528651f75a74492604f5211\"}},{\"input\":{\"index\":0,\"parent_id\":\"92de68eec528651f75a74492604f5211\"},\"output\":{\"index\":0,\"parent_id\":\"aa4cb4c766117fb44f5a917f1a1f9ba5\"}}]}";
   addition_program_source = "{\"nodes\":[{\"position\":{\"x\":200,\"y\":100},\"text\":\"out\",\"id\":\"a3a19afbbc5b944012036668230eb819\"},{\"position\":{\"x\":200,\"y\":300},\"text\":\"+\",\"id\":\"4c19f385dd04884ab84eb27f71011054\"},{\"position\":{\"x\":150,\"y\":500},\"text\":\"5\",\"id\":\"c532ec59ef6b57af6bd7323be2d27d93\"},{\"position\":{\"x\":250,\"y\":500},\"text\":\"3\",\"id\":\"1191a8be50c4c7cd7b1f259b82c04365\"}],\"connections\":[{\"input\":{\"index\":0,\"parent_id\":\"4c19f385dd04884ab84eb27f71011054\"},\"output\":{\"index\":0,\"parent_id\":\"c532ec59ef6b57af6bd7323be2d27d93\"}},{\"input\":{\"index\":1,\"parent_id\":\"4c19f385dd04884ab84eb27f71011054\"},\"output\":{\"index\":0,\"parent_id\":\"1191a8be50c4c7cd7b1f259b82c04365\"}},{\"input\":{\"index\":0,\"parent_id\":\"a3a19afbbc5b944012036668230eb819\"},\"output\":{\"index\":0,\"parent_id\":\"4c19f385dd04884ab84eb27f71011054\"}}]}";
-  load_state();
 }).call(this);
