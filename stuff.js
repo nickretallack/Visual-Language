@@ -262,9 +262,9 @@
       }
       return _results;
     };
-    SubRoutine.prototype.run = function(output_index) {
+    SubRoutine.prototype.run = function(output_index, input_values) {
       try {
-        return alert(this.invoke(output_index, []));
+        return alert(this.invoke(output_index, input_values));
       } catch (exception) {
         if (exception === 'NotConnected') {
           return alert("Something in the program is disconnected");
@@ -812,7 +812,26 @@
       return alert(JSON.stringify(subroutine.subroutines_referenced()));
     }, this);
     this.run_subroutine = __bind(function(subroutine, output_index) {
-      return subroutine.run(output_index);
+      var input, input_index, input_values, _fn, _len, _ref;
+      input_values = [];
+      _ref = subroutine.inputs;
+      _fn = function(input_index, input) {
+        var value;
+        value = function() {
+          var result;
+          result = prompt("Provide a value for \"" + input.text + "\":");
+          if (result === null) {
+            throw "Exit";
+          }
+          return JSON.parse(result);
+        };
+        return input_values.push(value);
+      };
+      for (input_index = 0, _len = _ref.length; input_index < _len; input_index++) {
+        input = _ref[input_index];
+        _fn(input_index, input);
+      }
+      return subroutine.run(output_index, input_values);
     }, this);
     save_state = __bind(function() {
       return localStorage.state = JSON.stringify(state);

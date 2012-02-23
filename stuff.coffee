@@ -147,9 +147,9 @@ class SubRoutine
     get_inputs: -> (input.text for input in @inputs)
     get_outputs: -> (output.text for output in @outputs)
 
-    run: (output_index) ->
+    run: (output_index, input_values) ->
         try
-            alert @invoke(output_index, [])
+            alert @invoke(output_index, input_values)
         catch exception
             if exception is 'NotConnected'
                 alert "Something in the program is disconnected"
@@ -542,7 +542,15 @@ window.Controller = ->
         alert JSON.stringify subroutine.subroutines_referenced()
 
     @run_subroutine = (subroutine, output_index) =>
-        subroutine.run output_index
+        input_values = []
+        for input, input_index in subroutine.inputs
+            do (input_index, input) ->
+                value = ->
+                    result = prompt "Provide a value for \"#{input.text}\":"
+                    throw "Exit" if result is null
+                    return JSON.parse result
+                input_values.push value
+        subroutine.run output_index, input_values
         
     save_state = =>
         localStorage.state = JSON.stringify state
