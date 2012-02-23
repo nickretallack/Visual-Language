@@ -25,10 +25,10 @@
     <a ng:click="edit_subroutine(subroutine)">edit</a>
     <a ng:click="export_subroutine(subroutine)">export</a>
     {{subroutine.name}}
-    <span ng:repeat="input in subroutine.inputs">{{input.text}} </span> =&gt;
+    (<span ng:repeat="input in subroutine.inputs">{{input.text}} </span> -&gt;
     <span ng:repeat="output in subroutine.outputs">
         <a ng:click="run_subroutine(subroutine, output.index)">{{output.text}}</a>
-    </span>
+    </span>)
 </li></ul>
 <form ng:submit="add_subroutine()">
 <p>Name:<input ng:model="new_subroutine.name"></p>

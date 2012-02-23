@@ -1,5 +1,5 @@
 (function() {
-  var Connection, FunctionApplication, Input, Literal, Nib, Node, Output, SubRoutine, addition_program_source, all_subroutines, animate, boxes, camera, connecting_object, connection_view, current_scope, dragging_object, dragging_offset, functions, get_absolute_nib_position, get_nib_position, height, hide_subroutines, how_are_you_source, last, load_implementation, load_program, load_state, load_subroutine, make_arrow, make_basic_program, make_box, make_connection, make_main, make_nib_view, make_node_view, make_subroutine_view, make_text, mouse_coords, mouse_down, mouse_move, mouse_up, node_registry, obj_first, projector, ray_cast_mouse, renderer, scene, system_arrow, update, width;
+  var Connection, FunctionApplication, Input, Literal, Nib, Node, Output, SubRoutine, addition_program_source, all_subroutines, animate, boxes, camera, connecting_object, connection_view, current_scope, dragging_object, dragging_offset, functions, get_absolute_nib_position, get_nib_position, height, hide_subroutines, how_are_you_source, last, load_implementation, load_program, load_state, load_subroutine, make_arrow, make_basic_program, make_box, make_connection, make_main, make_nib_view, make_node_view, make_subroutine_view, make_text, mouse_coords, mouse_down, mouse_move, mouse_up, node_registry, obj_first, projector, ray_cast_mouse, renderer, scene, system_arrow, update, whitespace_split, width;
   var __hasProp = Object.prototype.hasOwnProperty, __extends = function(child, parent) {
     for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; }
     function ctor() { this.constructor = child; }
@@ -191,6 +191,9 @@
       this.id = id != null ? id : UUID();
       node_registry[this.id] = this;
       this.view = make_subroutine_view(this);
+      if (!outputs.length) {
+        outputs = ['OUT'];
+      }
       this.inputs = (function() {
         var _len, _results;
         _results = [];
@@ -422,7 +425,7 @@
       this.id = id != null ? id : UUID();
       Literal.__super__.constructor.call(this);
       this.inputs = [];
-      this.outputs = [new Output(this, 'O')];
+      this.outputs = [new Output(this, 'OUT')];
       this.type = 'literal';
     }
     __extends(Literal, Node);
@@ -750,6 +753,14 @@
     }
     return _results;
   };
+  whitespace_split = function(input) {
+    var results;
+    results = input.split(/\s+/);
+    if (results[0] === '') {
+      results = results.slice(1);
+    }
+    return results;
+  };
   window.Controller = function() {
     var field, save_state, save_timer, state;
     field = $("#field");
@@ -790,8 +801,10 @@
       return scene.add(subroutine.view);
     }, this);
     this.add_subroutine = __bind(function() {
-      var subroutine;
-      subroutine = new SubRoutine(this.new_subroutine.name, this.new_subroutine.inputs.split(' '), this.new_subroutine.outputs.split(' '));
+      var inputs, outputs, subroutine;
+      inputs = whitespace_split(this.new_subroutine.inputs);
+      outputs = whitespace_split(this.new_subroutine.outputs);
+      subroutine = new SubRoutine(this.new_subroutine.name, inputs, outputs);
       this.subroutines[subroutine.id] = subroutine;
       return this.new_subroutine = angular.copy(this.initial_subroutine);
     }, this);

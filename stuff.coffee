@@ -112,6 +112,10 @@ class SubRoutine
     constructor:(@name='', inputs=[], outputs=[], @id=UUID()) ->
         node_registry[@id] = @
         @view = make_subroutine_view @
+
+        # can't have a subroutine with no output
+        outputs = ['OUT'] unless outputs.length
+
         # These are intentionally reversed.  The inputs to a subroutine show up as outputs inside it
         @inputs = (new Output @, text, index, inputs.length-1 for text, index in inputs)
         @outputs = (new Input @, text, index, outputs.length-1 for text, index in outputs)
@@ -236,7 +240,7 @@ class Literal extends Node
     constructor:(@position, @text, @value, @id=UUID()) ->
         super()
         @inputs = []
-        @outputs = [new Output(@, 'O')]
+        @outputs = [new Output(@, 'OUT')]
         @type = 'literal'
 
     evaluation: -> return @value
@@ -486,6 +490,11 @@ hide_subroutines = ->
     for index, subroutine of all_subroutines
         scene.remove subroutine.view
 
+whitespace_split = (input) ->
+    results = input.split(/\s+/)
+    results = results[1..] if results[0] is ''
+    results
+
 window.Controller = ->
     field = $("#field")
 
@@ -523,7 +532,9 @@ window.Controller = ->
         scene.add subroutine.view
 
     @add_subroutine = =>
-        subroutine = new SubRoutine @new_subroutine.name, @new_subroutine.inputs.split(' '), @new_subroutine.outputs.split(' ')
+        inputs = whitespace_split @new_subroutine.inputs
+        outputs = whitespace_split @new_subroutine.outputs
+        subroutine = new SubRoutine @new_subroutine.name, inputs, outputs
         @subroutines[subroutine.id] = subroutine
         @new_subroutine = angular.copy @initial_subroutine
 
