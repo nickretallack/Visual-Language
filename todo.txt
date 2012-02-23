@@ -1,1 +1,4 @@
 - remove useless state info, like literal text+value
+- instructions on page
+    - right-click nodes to delete them, right-click nibs to delete connections
+    - warn about clobbering with imports (based on id)
