@@ -412,7 +412,7 @@ make_box = (name, size, text_size, color, position, outline=false) ->
     box.position = position.three()
     return box
 
-make_arrow = (source, target) ->
+make_arrow = (source, target, scoped=true) ->
     arrow = new THREE.Object3D()
     color = 0x888888
 
@@ -424,7 +424,7 @@ make_arrow = (source, target) ->
     line_geometry.vertices.push new THREE.Vertex source
     line_geometry.vertices.push new THREE.Vertex target
     line = new THREE.Line line_geometry, line_material
-    current_scope.view.add line
+    current_scope.view.add line if scoped
     return line
 
 ### CORE HELPERS ###
@@ -498,10 +498,6 @@ mouse_move = (event) ->
     if connecting_object
         system_arrow.geometry.vertices[1].position = vector
 
-hide_subroutines = ->
-    for index, subroutine of all_subroutines
-        scene.remove subroutine.view
-
 whitespace_split = (input) ->
     results = input.split(/\s+/)
     results = results[1..] if results[0] is ''
@@ -530,6 +526,10 @@ window.Controller = ->
     field.mousemove mouse_move
     field.bind 'contextmenu', -> false
 
+    hide_subroutines = ->
+        for index, subroutine of @subroutines
+            scene.remove subroutine.view
+
     @import_export_text = ''
     @import = ->
         new_state = load_state valid_json @import_export_text
@@ -543,6 +543,9 @@ window.Controller = ->
     @export_subroutine = (subroutine) =>
         @import_export_text = JSON.stringify subroutine.export()
 
+    @revert = ->
+        hide_subroutines()
+        @subroutines = JSON.parse default_state
 
     @literal_text = ''
     @use_literal = =>
@@ -601,28 +604,28 @@ window.Controller = ->
                 throw exception
         
     save_state = =>
+        state =
+            subroutines:@subroutines
+
         localStorage.state = JSON.stringify state
 
     @library = functions
 
     @subroutines = load_localStorage()
 
-    state =
-        subroutines:@subroutines
-
-    current_scope = obj_first @subroutines
-    system_arrow = make_arrow V(0,0), V(1,0)
-    scene.add current_scope.view
+    #current_scope = obj_first @subroutines
+    system_arrow = make_arrow V(0,0), V(1,0), false
+    #scene.add current_scope.view
     save_timer = setInterval save_state, 500
+
+default_state = '{}'
 
 load_localStorage = ->
     if localStorage.state?
         data = JSON.parse localStorage.state
         subroutines = load_state data
     else
-        subroutines = {}
-        initial_subroutine = make_main()
-        subroutines[initial_subroutine.id] = initial_subroutine
+        subroutines = JSON.parse default_state
 
     return subroutines
         

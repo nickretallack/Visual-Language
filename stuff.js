@@ -1,5 +1,5 @@
 (function() {
-  var Connection, FunctionApplication, Input, InputError, Literal, Nib, Node, Output, SubRoutine, addition_program_source, all_subroutines, animate, boxes, camera, connecting_object, connection_view, current_scope, dragging_object, dragging_offset, functions, get_absolute_nib_position, get_nib_position, height, hide_subroutines, how_are_you_source, last, load_implementation, load_localStorage, load_program, load_state, load_subroutine, make_arrow, make_basic_program, make_box, make_connection, make_main, make_nib_view, make_node_view, make_subroutine_view, make_text, mouse_coords, mouse_down, mouse_move, mouse_up, node_registry, obj_first, projector, ray_cast_mouse, renderer, scene, system_arrow, update, valid_json, whitespace_split, width;
+  var Connection, FunctionApplication, Input, InputError, Literal, Nib, Node, Output, SubRoutine, addition_program_source, all_subroutines, animate, boxes, camera, connecting_object, connection_view, current_scope, default_state, dragging_object, dragging_offset, functions, get_absolute_nib_position, get_nib_position, height, how_are_you_source, last, load_implementation, load_localStorage, load_program, load_state, load_subroutine, make_arrow, make_basic_program, make_box, make_connection, make_main, make_nib_view, make_node_view, make_subroutine_view, make_text, mouse_coords, mouse_down, mouse_move, mouse_up, node_registry, obj_first, projector, ray_cast_mouse, renderer, scene, system_arrow, update, valid_json, whitespace_split, width;
   var __hasProp = Object.prototype.hasOwnProperty, __extends = function(child, parent) {
     for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; }
     function ctor() { this.constructor = child; }
@@ -662,8 +662,11 @@
     box.position = position.three();
     return box;
   };
-  make_arrow = function(source, target) {
+  make_arrow = function(source, target, scoped) {
     var arrow, color, line, line_geometry, line_material;
+    if (scoped == null) {
+      scoped = true;
+    }
     arrow = new THREE.Object3D();
     color = 0x888888;
     if ('three' in source) {
@@ -680,7 +683,9 @@
     line_geometry.vertices.push(new THREE.Vertex(source));
     line_geometry.vertices.push(new THREE.Vertex(target));
     line = new THREE.Line(line_geometry, line_material);
-    current_scope.view.add(line);
+    if (scoped) {
+      current_scope.view.add(line);
+    }
     return line;
   };
   /* CORE HELPERS */
@@ -768,15 +773,6 @@
       return system_arrow.geometry.vertices[1].position = vector;
     }
   };
-  hide_subroutines = function() {
-    var index, subroutine, _results;
-    _results = [];
-    for (index in all_subroutines) {
-      subroutine = all_subroutines[index];
-      _results.push(scene.remove(subroutine.view));
-    }
-    return _results;
-  };
   whitespace_split = function(input) {
     var results;
     results = input.split(/\s+/);
@@ -803,7 +799,7 @@
     }
   };
   window.Controller = function() {
-    var field, save_state, save_timer, state;
+    var field, hide_subroutines, save_state, save_timer;
     field = $("#field");
     field.append(renderer.domElement);
     animate();
@@ -813,6 +809,16 @@
     field.bind('contextmenu', function() {
       return false;
     });
+    hide_subroutines = function() {
+      var index, subroutine, _ref, _results;
+      _ref = this.subroutines;
+      _results = [];
+      for (index in _ref) {
+        subroutine = _ref[index];
+        _results.push(scene.remove(subroutine.view));
+      }
+      return _results;
+    };
     this.import_export_text = '';
     this["import"] = function() {
       var id, new_state, subroutine, _results;
@@ -833,6 +839,10 @@
     this.export_subroutine = __bind(function(subroutine) {
       return this.import_export_text = JSON.stringify(subroutine["export"]());
     }, this);
+    this.revert = function() {
+      hide_subroutines();
+      return this.subroutines = JSON.parse(default_state);
+    };
     this.literal_text = '';
     this.use_literal = __bind(function() {
       var value;
@@ -908,27 +918,25 @@
       }
     }, this);
     save_state = __bind(function() {
+      var state;
+      state = {
+        subroutines: this.subroutines
+      };
       return localStorage.state = JSON.stringify(state);
     }, this);
     this.library = functions;
     this.subroutines = load_localStorage();
-    state = {
-      subroutines: this.subroutines
-    };
-    current_scope = obj_first(this.subroutines);
-    system_arrow = make_arrow(V(0, 0), V(1, 0));
-    scene.add(current_scope.view);
+    system_arrow = make_arrow(V(0, 0), V(1, 0), false);
     return save_timer = setInterval(save_state, 500);
   };
+  default_state = '{}';
   load_localStorage = function() {
-    var data, initial_subroutine, subroutines;
+    var data, subroutines;
     if (localStorage.state != null) {
       data = JSON.parse(localStorage.state);
       subroutines = load_state(data);
     } else {
-      subroutines = {};
-      initial_subroutine = make_main();
-      subroutines[initial_subroutine.id] = initial_subroutine;
+      subroutines = JSON.parse(default_state);
     }
     return subroutines;
   };
