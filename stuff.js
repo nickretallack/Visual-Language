@@ -224,6 +224,13 @@
       definition: function() {
         return Math.random();
       }
+    },
+    'call': {
+      inputs: ['SUB'],
+      outputs: ['OUT'],
+      definition: function(subroutine) {
+        return subroutine().invoke(0, []);
+      }
     }
   };
   /* MODELS */
@@ -514,7 +521,11 @@
     Literal.prototype.toJSON = function() {
       var json;
       json = Literal.__super__.toJSON.call(this);
-      json.value = JSON.stringify(this.value);
+      if (this.value instanceof SubRoutine) {
+        json.implementation_id = this.value.id;
+      } else {
+        json.value = JSON.stringify(this.value);
+      }
       return json;
     };
     Literal.prototype.subroutines_referenced = function() {
@@ -929,6 +940,9 @@
         definition: subroutine
       });
     }, this);
+    this.use_subroutine_value = __bind(function(subroutine) {
+      return new Literal(V(0, 0), subroutine.name, subroutine);
+    }, this);
     this.initial_subroutine = {
       name: '',
       inputs: '',
@@ -1062,8 +1076,13 @@
         name = node.implementation_id;
         new FunctionApplication(position, name, information, node.id);
       } else if (node.type === 'literal') {
-        value = JSON.parse(node.value);
-        new Literal(position, node.value, value, node.id);
+        if ('implementation_id' in node) {
+          sub_subroutine = all_subroutines[node.implementation_id];
+          value = sub_subroutine;
+        } else {
+          value = JSON.parse(node.value);
+        }
+        new Literal(position, node.text, value, node.id);
       }
     }
     _ref2 = data.connections;

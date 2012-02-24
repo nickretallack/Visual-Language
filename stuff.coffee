@@ -149,6 +149,12 @@ functions =
         inputs:[]
         outputs:['OUT']
         definition: -> Math.random()
+
+    'call':
+        inputs:['SUB']
+        outputs:['OUT']
+        definition: (subroutine) ->
+            subroutine().invoke 0, []
         
 
 ### MODELS ###
@@ -309,7 +315,10 @@ class Literal extends Node
 
     toJSON: ->
         json = super()
-        json.value = JSON.stringify @value
+        if @value instanceof SubRoutine
+            json.implementation_id = @value.id
+        else
+            json.value = JSON.stringify @value
         json
 
     subroutines_referenced: -> []
@@ -624,6 +633,9 @@ window.Controller = ->
             outputs:subroutine.get_outputs()
             definition:subroutine
 
+    @use_subroutine_value = (subroutine) =>
+        new Literal V(0,0), subroutine.name, subroutine
+
     @initial_subroutine =
         name:''
         inputs:''
@@ -736,8 +748,12 @@ load_implementation = (data) ->
             name = node.implementation_id
             new FunctionApplication position, name, information, node.id
         else if node.type is 'literal'
-            value = JSON.parse node.value
-            new Literal position, node.value, value, node.id
+            if 'implementation_id' of node
+                sub_subroutine = all_subroutines[node.implementation_id]
+                value = sub_subroutine
+            else
+                value = JSON.parse node.value
+            new Literal position, node.text, value, node.id
 
     for connection in data.connections
         source = node_registry[connection.output.parent_id]

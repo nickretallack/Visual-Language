@@ -3,8 +3,6 @@
     - right-click nodes to delete them, right-click nibs to delete connections
     - warn about clobbering with imports (based on id)
 - add memoize builtin to fibonacci example.  use underscore
-- sequence some prompts using a thread-through parameter
-    - have prompt catch NotConnected so this parameter is optional
 - implement builtins for dealing with lists and maps
 - add example programs
     - guess the number
@@ -23,3 +21,5 @@
     - convert selection to subroutine, counting inputs and outputs
 - did I handle the case where you use a subroutine and its inputs are connected on the inside but not on the outside?
 - fix the font somehow
+- add support for functions as values
+    - add some higher order functions

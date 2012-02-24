@@ -31,6 +31,7 @@
 <h2>Functions</h2>
 <ul><li ng:repeat="(id, subroutine) in subroutines">
     <a ng:click="use_subroutine(subroutine)">use</a>
+    <a ng:click="use_subroutine_value(subroutine)">value</a>
     <a ng:click="edit_subroutine(subroutine)">edit</a>
     <a ng:click="export_subroutine(subroutine)">export</a>
     {{subroutine.name}}
