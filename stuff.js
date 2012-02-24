@@ -226,10 +226,10 @@
       }
     },
     'call': {
-      inputs: ['SUB'],
+      inputs: ['SUB', 'IN'],
       outputs: ['OUT'],
-      definition: function(subroutine) {
-        return subroutine().invoke(0, []);
+      definition: function(subroutine, input) {
+        return subroutine().invoke(0, [input]);
       }
     }
   };

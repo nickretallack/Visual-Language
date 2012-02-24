@@ -151,10 +151,10 @@ functions =
         definition: -> Math.random()
 
     'call':
-        inputs:['SUB']
+        inputs:['SUB','IN']
         outputs:['OUT']
-        definition: (subroutine) ->
-            subroutine().invoke 0, []
+        definition: (subroutine, input) ->
+            subroutine().invoke 0, [input]
         
 
 ### MODELS ###
