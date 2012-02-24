@@ -48,9 +48,10 @@
 
 <h2>Literals (JSON)</h2>
 <form ng:submit="use_literal()"> <input ng:model="literal_text"> <button>Use Literal</button> </form>
+
 <h2>Builtins</h2>
-<ul id="builtins"><li ng:repeat="(text, item) in library">
-    <a ng:click="use_builtin(text)">{{text}}</a>
+<ul id="builtins"><li ng:repeat="(id, item) in builtins | orderBy:+name">
+    <a ng:click="use_builtin(item.id)">{{item.name}}</a>
 </li></ul>
 
 </body>
