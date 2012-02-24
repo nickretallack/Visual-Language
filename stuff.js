@@ -114,10 +114,38 @@
       }
     },
     'prompt': {
-      inputs: ['M'],
-      outputs: ['R'],
-      definition: function(message) {
+      inputs: ['M', 'S'],
+      outputs: ['R', 'S'],
+      memo: function(message, sequencer) {
+        try {
+          sequencer();
+        } catch (exception) {
+          if (exception !== "NotConnected") {
+            throw exception;
+          }
+        }
         return prompt(message());
+      },
+      definition: function(message, sequencer, index, memo) {
+        if (index === 0) {
+          return memo;
+        } else {
+          return null;
+        }
+      }
+    },
+    'funnel': {
+      inputs: ['V', 'S'],
+      outputs: ['V'],
+      definition: function(value, sequencer) {
+        try {
+          sequencer();
+        } catch (exception) {
+          if (exception !== "NotConnected") {
+            throw exception;
+          }
+        }
+        return value();
       }
     },
     'log': {
@@ -251,7 +279,8 @@
       var output, the_scope, _ref;
       the_scope = {
         subroutine: this,
-        inputs: inputs
+        inputs: inputs,
+        memos: {}
       };
       output = (_ref = this.outputs[index].get_connection()) != null ? _ref.connection.output : void 0;
       if (!output) {
@@ -385,6 +414,7 @@
         this.type = 'function';
       } else {
         this.value = information.definition;
+        this.memo = information.memo;
         this.type = 'builtin';
       }
       FunctionApplication.__super__.constructor.call(this);
@@ -411,7 +441,7 @@
     }
     __extends(FunctionApplication, Node);
     FunctionApplication.prototype.evaluation = function(the_scope, output_index) {
-      var input, input_values, _fn, _i, _len, _ref;
+      var args, input, input_values, _fn, _i, _len, _ref;
       input_values = [];
       _ref = this.inputs;
       _fn = function(input) {
@@ -435,7 +465,11 @@
       if (this.subroutine != null) {
         return this.subroutine.invoke(output_index, input_values);
       } else {
-        return this.value.apply(this, input_values.concat([output_index]));
+        args = input_values.concat([output_index]);
+        if (this.memo && !(this.id in the_scope.memos)) {
+          the_scope.memos[this.id] = this.memo.apply(this, args);
+        }
+        return this.value.apply(this, args.concat([the_scope.memos[this.id]]));
       }
     };
     FunctionApplication.prototype.toJSON = function() {

@@ -73,9 +73,35 @@ functions =
         definition: (true_result, condition, false_result) -> if condition() then true_result() else false_result()
 
     'prompt':
-        inputs:['M']
-        outputs:['R']
-        definition: (message) -> prompt message()
+        inputs:['M','S']
+        outputs:['R','S']
+        memo: (message, sequencer) ->
+            try
+                sequencer()
+            catch exception
+                if exception isnt "NotConnected"
+                    throw exception
+ 
+            return prompt message()
+            
+        definition: (message, sequencer, index, memo) ->
+            if index is 0
+                return memo
+            else
+                return null
+ 
+     'funnel':
+         inputs:['V','S']
+         outputs:['V']
+         definition: (value, sequencer) ->
+             try
+                 sequencer()
+             catch exception
+                 if exception isnt "NotConnected"
+                     throw exception
+ 
+             return value()
+
     'log':
         inputs:['in']
         outputs:['out']
@@ -154,6 +180,7 @@ class SubRoutine
         the_scope =
             subroutine:@
             inputs:inputs
+            memos:{}
 
         output = @outputs[index].get_connection()?.connection.output
         throw "NotConnected" unless output
@@ -229,6 +256,7 @@ class FunctionApplication extends Node
             @type = 'function'
         else
             @value = information.definition
+            @memo = information.memo
             @type = 'builtin'
 
         super()
@@ -250,7 +278,10 @@ class FunctionApplication extends Node
         if @subroutine?
             return @subroutine.invoke output_index, input_values
         else
-            return @value (input_values.concat [output_index])...
+            args = (input_values.concat [output_index])
+            if @memo and @id not of the_scope.memos
+                the_scope.memos[@id] = @memo args...
+            return @value (args.concat [the_scope.memos[@id]])...
 
     toJSON: ->
         json = super()
