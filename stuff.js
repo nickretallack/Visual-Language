@@ -820,7 +820,7 @@
     }
   };
   window.Controller = function() {
-    var data, field, hide_subroutines, import_source, load_example_programs, save_state, save_timer;
+    var data, field, hide_subroutines, import_source, save_state, save_timer;
     field = $("#field");
     field.append(renderer.domElement);
     animate();
@@ -856,27 +856,27 @@
       }
       return _results;
     }, this);
-    load_example_programs = __bind(function() {
+    this.load_example_programs = __bind(function() {
       var name, source;
+      hide_subroutines();
       for (name in example_programs) {
         source = example_programs[name];
         import_source(source);
       }
-      return current_scope = this.subroutines["2092fbbc04daf231793ce4d1d6761172"];
+      current_scope = this.subroutines["2092fbbc04daf231793ce4d1d6761172"];
+      return scene.add(current_scope.view);
     }, this);
     this.export_all = function() {
       return this.import_export_text = JSON.stringify({
-        subroutines: this.subroutines
+        subroutines: _.values(this.subroutines)
       });
     };
     this.export_subroutine = __bind(function(subroutine) {
       return this.import_export_text = JSON.stringify(subroutine["export"]());
     }, this);
     this.revert = function() {
-      hide_subroutines();
       this.subroutines = {};
-      load_example_programs();
-      return scene.add(current_scope.view);
+      return this.load_example_programs();
     };
     this.literal_text = '';
     this.use_literal = __bind(function() {
@@ -963,10 +963,10 @@
     if (localStorage.state != null) {
       data = JSON.parse(localStorage.state);
       this.subroutines = load_state(data);
+      scene.add(current_scope.view);
     } else {
-      load_example_programs();
+      this.load_example_programs();
     }
-    scene.add(current_scope.view);
     system_arrow = make_arrow(V(0, 0), V(1, 0), false);
     return save_timer = setInterval(save_state, 500);
   };

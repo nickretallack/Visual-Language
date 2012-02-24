@@ -561,22 +561,22 @@ window.Controller = ->
         for id, subroutine of subroutines
             @subroutines[subroutine.id] = subroutine
 
-    load_example_programs = =>
+    @load_example_programs = =>
+        hide_subroutines()
         for name, source of example_programs
             import_source source
         current_scope = @subroutines["2092fbbc04daf231793ce4d1d6761172"]
+        scene.add current_scope.view
 
     @export_all = ->
-        @import_export_text = JSON.stringify subroutines:@subroutines
+        @import_export_text = JSON.stringify subroutines:_.values @subroutines
 
     @export_subroutine = (subroutine) =>
         @import_export_text = JSON.stringify subroutine.export()
 
     @revert = ->
-        hide_subroutines()
         @subroutines = {}
-        load_example_programs()
-        scene.add current_scope.view
+        @load_example_programs()
 
     @literal_text = ''
     @use_literal = =>
@@ -645,10 +645,10 @@ window.Controller = ->
     if localStorage.state?
         data = JSON.parse localStorage.state
         @subroutines = load_state data
+        scene.add current_scope.view
     else
-        load_example_programs()
+        @load_example_programs()
 
-    scene.add current_scope.view
     system_arrow = make_arrow V(0,0), V(1,0), false
     save_timer = setInterval save_state, 500
 
