@@ -1,26 +1,30 @@
-- refer to builtins with uuids, not names, so they can be renamed
-- did I handle the case where you use a subroutine and its inputs are connected on the inside but not on the outside?
-- add some higher order functions
 - allow users to add their own builtins by writing javascript
+    - Make them source objects that show up in exports.
+
+- add some higher order functions
 - make the blank project source have a random id so people can share it without clobbering
 - remember what program you were looking at in localstorage
 - add a 'fork' button for subroutines that makes a copy with a different id
 - add memoize builtin to fibonacci example.  use underscore
 - implement builtins for dealing with lists and maps
 
+- add a smart delete feature for subroutines
+    - list the number of subroutines that use this one.  Click this to see their names
+    - if this subroutine is used by another, ask if we should delete that one as well
+    - if there are other subroutines that are only used by this subroutine, ask if we should delete those as well
+
+
 - instructions on page
     - right-click nodes to delete them, right-click nibs to delete connections
     - warn about clobbering with imports (based on id)
 
 - add more example programs
+    - fibonacci
+    - factorial
     - guess the number
     - how are you?
     - but thou must!
-
-- add a smart delete feature for subroutines
-    - list the number of subroutines that use this one.  Click this to see their names
-    - if this subroutine is used by another, ask if we should delete that one as well
-    - if there are other subroutines that are only used by this subroutine, ask if we should delete those as well
+    - how should I respond?
 
 - fix the font somehow
 - replace alerts with a console?
