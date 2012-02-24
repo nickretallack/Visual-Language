@@ -231,6 +231,27 @@
       definition: function(subroutine, input) {
         return subroutine().invoke(0, [input]);
       }
+    },
+    'call-n': {
+      inputs: ['SUB', 'IN'],
+      outputs: ['OUT'],
+      definition: function(subroutine, inputs) {
+        return subroutine().invoke(0, inputs());
+      }
+    },
+    'cons': {
+      inputs: ['LIST', 'ELE'],
+      outputs: ['LIST'],
+      definition: function(list, element) {
+        return list().concat(element());
+      }
+    },
+    'lazy input': {
+      inputs: ['IN'],
+      outputs: ['OUT'],
+      definition: function(input) {
+        return input;
+      }
     }
   };
   /* MODELS */

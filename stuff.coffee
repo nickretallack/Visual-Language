@@ -155,6 +155,23 @@ functions =
         outputs:['OUT']
         definition: (subroutine, input) ->
             subroutine().invoke 0, [input]
+
+    'call-n':
+        inputs:['SUB','IN']
+        outputs:['OUT']
+        definition: (subroutine, inputs) ->
+            subroutine().invoke 0, inputs()
+
+    'cons':
+        inputs:['LIST','ELE']
+        outputs:['LIST']
+        definition: (list, element) -> list().concat element()
+            
+    'lazy input':
+        inputs:['IN']
+        outputs:['OUT']
+        definition: (input) -> input
+
         
 
 ### MODELS ###
