@@ -2,3 +2,15 @@
 - instructions on page
     - right-click nodes to delete them, right-click nibs to delete connections
     - warn about clobbering with imports (based on id)
+- add memoize builtin to fibonacci example.  use underscore
+- sequence some prompts using a thread-through parameter
+    - have prompt catch NotConnected so this parameter is optional
+- implement builtins for dealing with lists and maps
+- add example programs
+    - guess the number
+    - how are you?
+    - but thou must!
+- add a smart delete feature for subroutines
+    - if this subroutine is used by another, ask if we should delete that one as well
+    - if there are other subroutines that are only used by this subroutine, ask if we should delete those as well
+- allow users to add their own builtins by writing javascript
