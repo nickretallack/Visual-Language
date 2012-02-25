@@ -1,4 +1,5 @@
 - when you scroll down, the picker isn't correct.  Adjust it for that.
+- use Ace editor for the javascript editors
 
 - add some higher order functions
 - make the blank project source have a random id so people can share it without clobbering

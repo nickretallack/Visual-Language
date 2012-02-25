@@ -1,5 +1,5 @@
 (function() {
-  var Builtin, BuiltinApplication, BuiltinSyntaxError, Connection, Exit, FunctionApplication, Input, InputError, Literal, Nib, Node, NotConnected, NotImplemented, Output, RuntimeException, SubRoutine, SubroutineApplication, all_builtins, all_subroutines, animate, boxes, camera, connecting_object, connection_view, current_scope, dragging_object, dragging_offset, eval_expression, example_programs, execute, get_absolute_nib_position, get_nib_position, height, last, load_implementation, load_state, make_arrow, make_basic_program, make_box, make_connection, make_main, make_nib_view, make_node_view, make_subroutine_view, make_text, mouse_coords, mouse_down, mouse_move, mouse_up, node_registry, obj_first, playground_id, projector, ray_cast_mouse, renderer, scene, schema_version, should_animate, system_arrow, update, valid_json, whitespace_split, width;
+  var Builtin, BuiltinApplication, BuiltinSyntaxError, Connection, Exit, FunctionApplication, Input, InputError, Literal, Nib, Node, NotConnected, NotImplemented, Output, RuntimeException, SubRoutine, SubroutineApplication, all_builtins, all_subroutines, animate, boxes, camera, connecting_object, connection_view, current_scope, dragging_object, dragging_offset, eval_expression, example_programs, execute, get_absolute_nib_position, get_nib_position, height, ignore_if_disconnected, last, load_implementation, load_state, make_arrow, make_basic_program, make_box, make_connection, make_main, make_nib_view, make_node_view, make_subroutine_view, make_text, mouse_coords, mouse_down, mouse_move, mouse_up, node_registry, obj_first, playground_id, projector, ray_cast_mouse, renderer, scene, schema_version, should_animate, system_arrow, update, valid_json, whitespace_split, width;
   var __hasProp = Object.prototype.hasOwnProperty, __extends = function(child, parent) {
     for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; }
     function ctor() { this.constructor = child; }
@@ -1194,7 +1194,7 @@
       this.load_example_programs();
     }
     system_arrow = make_arrow(V(0, 0), V(1, 0), false);
-    return save_timer = setInterval(save_state, 500);
+    return save_timer = setInterval(save_state, 1000);
   };
   execute = function(routine) {
     try {
@@ -1203,6 +1203,15 @@
       if (exception instanceof RuntimeException) {
         return alert("Error: " + exception.message);
       } else {
+        throw exception;
+      }
+    }
+  };
+  ignore_if_disconnected = function(procedure) {
+    try {
+      return procedure();
+    } catch (exception) {
+      if (!(exception instanceof NotConnected)) {
         throw exception;
       }
     }

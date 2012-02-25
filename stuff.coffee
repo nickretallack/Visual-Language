@@ -853,7 +853,7 @@ window.Controller = ->
         @load_example_programs()
 
     system_arrow = make_arrow V(0,0), V(1,0), false
-    save_timer = setInterval save_state, 500
+    save_timer = setInterval save_state, 1000
 
 execute = (routine) ->
     try
@@ -863,6 +863,11 @@ execute = (routine) ->
             alert "Error: #{exception.message}"
         else throw exception
 
+ignore_if_disconnected = (procedure) ->
+   try
+      return procedure()
+   catch exception
+      throw exception unless exception instanceof NotConnected
 
 load_state = (data) ->
     subroutines = {}
