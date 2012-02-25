@@ -1,4 +1,4 @@
-- allow users to add their own builtins by writing javascript
+- allow users to add their own builtins by writing javascript or coffeescript
     - Make them source objects that show up in exports.
 
 - add some higher order functions

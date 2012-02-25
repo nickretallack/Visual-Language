@@ -22,13 +22,14 @@ all_subroutines = {}
 all_builtins = {}
 current_scope = null
 system_arrow = null
+should_animate = true
 
 update = ->
     renderer.render scene, camera
 
 animate = ->
     requestAnimationFrame animate
-    update()
+    update() if should_animate
 
 builtins =
     "894652d702c3bb123ce8ed9e2bdcc71b":
@@ -215,7 +216,12 @@ execute = (routine) ->
 ### MODELS ###
 
 class Builtin
-    constructor:({@name, @output_implementation, @memo_implementation, @inputs, @outputs, @id}={memo_implementation:null, inputs:[], outputs:['OUT'], id:UUID()}) ->
+    constructor:({@name, @output_implementation, @memo_implementation, @inputs, @outputs, @id}) ->
+        @memo_implementation ?= null
+        @inputs ?= []
+        @outputs ?= ['OUT']
+        @id ?= UUID()
+
         @output_function = eval "(#{@output_implementation})"
         @memo_function = eval "(#{@memo_implementation})"
         all_builtins[@id] = @
@@ -224,7 +230,7 @@ class Builtin
 for id, info of builtins
     info.id = id
     info.output_implementation = ''+info.output_implementation
-    info.memo_implementation   = ''+info.memo_implementation
+    info.memo_implementation   = ''+info.memo_implementation if info.memo_implementation
     new Builtin info
 
 class SubRoutine
@@ -640,19 +646,26 @@ valid_json = (json) ->
     
 
 window.Controller = ->
-    field = $("#field")
 
-    field.append renderer.domElement
-    animate()
-    field.mousedown mouse_down
-    field.mouseup mouse_up
-    field.mousemove mouse_move
-    field.bind 'contextmenu', -> false
+    init_field = ->
+        should_animate = true
+        field = $("#field")
+        field.append renderer.domElement
+        animate()
+        field.mousedown mouse_down
+        field.mouseup mouse_up
+        field.mousemove mouse_move
+        field.bind 'contextmenu', -> false
+
+    teardown_field = ->
+        should_animate = false
 
     hide_subroutines = =>
         for index, subroutine of @subroutines
             scene.remove subroutine.view
 
+    @edit_mode = null
+    @editing_builtin = null
     @import_export_text = ''
     @import = ->
         hide_subroutines()
@@ -705,21 +718,23 @@ window.Controller = ->
 
     @initial_subroutine =
         name:''
-        inputs:''
-        outputs:''
+        inputs:[]
+        outputs:[]
     @new_subroutine = angular.copy @initial_subroutine
 
     @edit_subroutine = (subroutine) =>
+        @edit_mode = 'subroutine'
         current_scope = subroutine
         hide_subroutines()
         scene.add subroutine.view
+        setTimeout init_field
 
     @add_subroutine = =>
-        inputs = whitespace_split @new_subroutine.inputs
-        outputs = whitespace_split @new_subroutine.outputs
-        subroutine = new SubRoutine @new_subroutine.name, inputs, outputs
+        subroutine = new SubRoutine @new_subroutine.name, @new_subroutine.inputs, @new_subroutine.outputs
         @subroutines[subroutine.id] = subroutine
         @new_subroutine = angular.copy @initial_subroutine
+        @new_subroutine.inputs = []
+        @new_subroutine.outputs = []
 
     @run_subroutine = (subroutine, output_index) =>
         input_values = []
@@ -756,7 +771,12 @@ window.Controller = ->
             memo = builtin.memo_function? args...
             result = builtin.output_function (args.concat [memo])...
             return result
-        
+
+    @edit_builtin = (builtin) =>
+        teardown_field()
+        @edit_mode = 'builtin'
+        @editing_builtin = builtin
+    
     save_state = =>
         state =
             subroutines:@subroutines
@@ -770,7 +790,7 @@ window.Controller = ->
         data = JSON.parse localStorage.state
         try
             @subroutines = load_state data
-            scene.add current_scope.view
+            @edit_subroutine current_scope
         catch exception
             setTimeout -> throw exception # don't break this execution thread because of a loading exception
     else

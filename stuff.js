@@ -1,5 +1,5 @@
 (function() {
-  var Builtin, Connection, FunctionApplication, Input, InputError, Literal, Nib, Node, Output, SubRoutine, all_builtins, all_subroutines, animate, boxes, builtins, camera, connecting_object, connection_view, current_scope, dragging_object, dragging_offset, example_programs, execute, get_absolute_nib_position, get_nib_position, height, id, info, last, load_implementation, load_program, load_state, load_subroutine, make_arrow, make_basic_program, make_box, make_connection, make_main, make_nib_view, make_node_view, make_subroutine_view, make_text, mouse_coords, mouse_down, mouse_move, mouse_up, node_registry, obj_first, projector, ray_cast_mouse, renderer, scene, schema_version, system_arrow, update, valid_json, whitespace_split, width;
+  var Builtin, Connection, FunctionApplication, Input, InputError, Literal, Nib, Node, Output, SubRoutine, all_builtins, all_subroutines, animate, boxes, builtins, camera, connecting_object, connection_view, current_scope, dragging_object, dragging_offset, example_programs, execute, get_absolute_nib_position, get_nib_position, height, id, info, last, load_implementation, load_program, load_state, load_subroutine, make_arrow, make_basic_program, make_box, make_connection, make_main, make_nib_view, make_node_view, make_subroutine_view, make_text, mouse_coords, mouse_down, mouse_move, mouse_up, node_registry, obj_first, projector, ray_cast_mouse, renderer, scene, schema_version, should_animate, system_arrow, update, valid_json, whitespace_split, width;
   var __hasProp = Object.prototype.hasOwnProperty, __extends = function(child, parent) {
     for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; }
     function ctor() { this.constructor = child; }
@@ -33,12 +33,15 @@
   all_builtins = {};
   current_scope = null;
   system_arrow = null;
+  should_animate = true;
   update = function() {
     return renderer.render(scene, camera);
   };
   animate = function() {
     requestAnimationFrame(animate);
-    return update();
+    if (should_animate) {
+      return update();
+    }
   };
   builtins = {
     "894652d702c3bb123ce8ed9e2bdcc71b": {
@@ -298,13 +301,28 @@
   /* MODELS */
   Builtin = (function() {
     function Builtin(_arg) {
-      var _ref;
-      _ref = _arg != null ? _arg : {
-        memo_implementation: null,
-        inputs: [],
-        outputs: ['OUT'],
-        id: UUID()
-      }, this.name = _ref.name, this.output_implementation = _ref.output_implementation, this.memo_implementation = _ref.memo_implementation, this.inputs = _ref.inputs, this.outputs = _ref.outputs, this.id = _ref.id;
+      var _ref, _ref2, _ref3, _ref4;
+      this.name = _arg.name, this.output_implementation = _arg.output_implementation, this.memo_implementation = _arg.memo_implementation, this.inputs = _arg.inputs, this.outputs = _arg.outputs, this.id = _arg.id;
+            if ((_ref = this.memo_implementation) != null) {
+        _ref;
+      } else {
+        this.memo_implementation = null;
+      };
+            if ((_ref2 = this.inputs) != null) {
+        _ref2;
+      } else {
+        this.inputs = [];
+      };
+            if ((_ref3 = this.outputs) != null) {
+        _ref3;
+      } else {
+        this.outputs = ['OUT'];
+      };
+            if ((_ref4 = this.id) != null) {
+        _ref4;
+      } else {
+        this.id = UUID();
+      };
       this.output_function = eval("(" + this.output_implementation + ")");
       this.memo_function = eval("(" + this.memo_implementation + ")");
       all_builtins[this.id] = this;
@@ -315,7 +333,9 @@
     info = builtins[id];
     info.id = id;
     info.output_implementation = '' + info.output_implementation;
-    info.memo_implementation = '' + info.memo_implementation;
+    if (info.memo_implementation) {
+      info.memo_implementation = '' + info.memo_implementation;
+    }
     new Builtin(info);
   }
   SubRoutine = (function() {
@@ -944,16 +964,23 @@
     }
   };
   window.Controller = function() {
-    var data, field, hide_subroutines, import_source, save_state, save_timer;
-    field = $("#field");
-    field.append(renderer.domElement);
-    animate();
-    field.mousedown(mouse_down);
-    field.mouseup(mouse_up);
-    field.mousemove(mouse_move);
-    field.bind('contextmenu', function() {
-      return false;
-    });
+    var data, hide_subroutines, import_source, init_field, save_state, save_timer, teardown_field;
+    init_field = function() {
+      var field;
+      should_animate = true;
+      field = $("#field");
+      field.append(renderer.domElement);
+      animate();
+      field.mousedown(mouse_down);
+      field.mouseup(mouse_up);
+      field.mousemove(mouse_move);
+      return field.bind('contextmenu', function() {
+        return false;
+      });
+    };
+    teardown_field = function() {
+      return should_animate = false;
+    };
     hide_subroutines = __bind(function() {
       var index, subroutine, _ref, _results;
       _ref = this.subroutines;
@@ -964,6 +991,8 @@
       }
       return _results;
     }, this);
+    this.edit_mode = null;
+    this.editing_builtin = null;
     this.import_export_text = '';
     this["import"] = function() {
       hide_subroutines();
@@ -1029,22 +1058,24 @@
     }, this);
     this.initial_subroutine = {
       name: '',
-      inputs: '',
-      outputs: ''
+      inputs: [],
+      outputs: []
     };
     this.new_subroutine = angular.copy(this.initial_subroutine);
     this.edit_subroutine = __bind(function(subroutine) {
+      this.edit_mode = 'subroutine';
       current_scope = subroutine;
       hide_subroutines();
-      return scene.add(subroutine.view);
+      scene.add(subroutine.view);
+      return setTimeout(init_field);
     }, this);
     this.add_subroutine = __bind(function() {
-      var inputs, outputs, subroutine;
-      inputs = whitespace_split(this.new_subroutine.inputs);
-      outputs = whitespace_split(this.new_subroutine.outputs);
-      subroutine = new SubRoutine(this.new_subroutine.name, inputs, outputs);
+      var subroutine;
+      subroutine = new SubRoutine(this.new_subroutine.name, this.new_subroutine.inputs, this.new_subroutine.outputs);
       this.subroutines[subroutine.id] = subroutine;
-      return this.new_subroutine = angular.copy(this.initial_subroutine);
+      this.new_subroutine = angular.copy(this.initial_subroutine);
+      this.new_subroutine.inputs = [];
+      return this.new_subroutine.outputs = [];
     }, this);
     this.run_subroutine = __bind(function(subroutine, output_index) {
       var input, input_index, input_values, _fn, _len, _ref;
@@ -1104,6 +1135,11 @@
         return result;
       });
     }, this);
+    this.edit_builtin = __bind(function(builtin) {
+      teardown_field();
+      this.edit_mode = 'builtin';
+      return this.editing_builtin = builtin;
+    }, this);
     save_state = __bind(function() {
       var state;
       state = {
@@ -1117,7 +1153,7 @@
       data = JSON.parse(localStorage.state);
       try {
         this.subroutines = load_state(data);
-        scene.add(current_scope.view);
+        this.edit_subroutine(current_scope);
       } catch (exception) {
         setTimeout(function() {
           throw exception;

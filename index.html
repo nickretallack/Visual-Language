@@ -16,7 +16,22 @@
 </head>
 
 <body ng:controller="Controller">
-<div id="field"></div>
+<ng:switch on="edit_mode">
+<div ng:switch-when="subroutine" id="field"></div>
+<div ng:switch-when="builtin" id="builtin_editor">
+<h2>Builtin Editor</h2>
+{{editing_builtin.name}}
+<p>Name: <input ng:model="editing_builtin.name"></p>
+<p>Inputs: <input type="list" ng:model="editing_builtin.inputs"></p>
+<p>Outputs: <input type="list" ng:model="editing_builtin.outputs"></p>
+Memo Implementation:
+<textarea ng:model="editing_builtin.memo_implementation"></textarea>
+Output Implementation:
+<textarea ng:model="editing_builtin.output_implementation"></textarea>
+</div>
+</ng:switch>
+
+</div>
 
 <div id="tools">
 <h2>Import/Export</h2>
@@ -42,8 +57,8 @@
 </li></ul>
 <form ng:submit="add_subroutine()">
 <p>Name:<input ng:model="new_subroutine.name"></p>
-<p>Inputs:<input ng:model="new_subroutine.inputs"></p>
-<p>Outputs:<input ng:model="new_subroutine.outputs"></p>
+<p>Inputs:<input type="list" ng:model="new_subroutine.inputs"></p>
+<p>Outputs:<input type="list" ng:model="new_subroutine.outputs"></p>
 <button>Create Function</button> </form>
 
 <h2>Literals (JSON)</h2>
@@ -51,6 +66,8 @@
 
 <h2>Builtins</h2>
 <ul id="builtins"><li ng:repeat="(id, builtin) in builtins">
+    <a ng:click="use_builtin(builtin)">use</a>
+    <a ng:click="edit_builtin(builtin)">edit</a>
     <a ng:click="use_builtin(builtin.id)">{{builtin.name}}</a>
     (<span ng:repeat="input in builtin.inputs">{{input}} </span> -&gt;
     <span ng:repeat="output in builtin.outputs">

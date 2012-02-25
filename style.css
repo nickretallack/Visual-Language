@@ -2,3 +2,4 @@
 #tools {position:absolute; left:500px; top:0}
 h2 {margin-top:10px; font-weight:bold; font-family:helvetica}
 #builtins {-moz-column-width:200px; -webkit-column-width:200px; column-width:200px;}
+textarea {display:block}
