@@ -1,5 +1,5 @@
 (function() {
-  var Connection, FunctionApplication, Input, InputError, Literal, Nib, Node, Output, SubRoutine, all_subroutines, animate, boxes, builtins, camera, connecting_object, connection_view, current_scope, default_state, dragging_object, dragging_offset, example_programs, get_absolute_nib_position, get_nib_position, height, id, info, last, load_implementation, load_program, load_state, load_subroutine, make_arrow, make_basic_program, make_box, make_connection, make_main, make_nib_view, make_node_view, make_subroutine_view, make_text, mouse_coords, mouse_down, mouse_move, mouse_up, node_registry, obj_first, projector, ray_cast_mouse, renderer, scene, system_arrow, update, valid_json, whitespace_split, width;
+  var Connection, FunctionApplication, Input, InputError, Literal, Nib, Node, Output, SubRoutine, all_subroutines, animate, boxes, builtins, camera, connecting_object, connection_view, current_scope, dragging_object, dragging_offset, example_programs, get_absolute_nib_position, get_nib_position, height, id, info, last, load_implementation, load_program, load_state, load_subroutine, make_arrow, make_basic_program, make_box, make_connection, make_main, make_nib_view, make_node_view, make_subroutine_view, make_text, mouse_coords, mouse_down, mouse_move, mouse_up, node_registry, obj_first, projector, ray_cast_mouse, renderer, scene, schema_version, system_arrow, update, valid_json, whitespace_split, width;
   var __hasProp = Object.prototype.hasOwnProperty, __extends = function(child, parent) {
     for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; }
     function ctor() { this.constructor = child; }
@@ -26,6 +26,7 @@
       return item;
     }
   };
+  schema_version = 1;
   boxes = {};
   node_registry = {};
   all_subroutines = {};
@@ -387,7 +388,8 @@
       var dependencies;
       dependencies = this.get_dependencies();
       return {
-        subroutines: _.values(dependencies)
+        subroutines: dependencies,
+        schema_version: schema_version
       };
     };
     SubRoutine.prototype.get_dependencies = function(dependencies) {
@@ -965,9 +967,12 @@
       return scene.add(current_scope.view);
     }, this);
     this.export_all = function() {
-      return this.import_export_text = JSON.stringify({
-        subroutines: _.values(this.subroutines)
-      });
+      var data;
+      data = {
+        subroutines: this.subroutines,
+        schema_version: schema_version
+      };
+      return this.import_export_text = JSON.stringify(data);
     };
     this.export_subroutine = __bind(function(subroutine) {
       return this.import_export_text = JSON.stringify(subroutine["export"]());
@@ -1058,7 +1063,8 @@
     save_state = __bind(function() {
       var state;
       state = {
-        subroutines: this.subroutines
+        subroutines: this.subroutines,
+        schema_version: schema_version
       };
       return localStorage.state = JSON.stringify(state);
     }, this);
@@ -1079,14 +1085,14 @@
     system_arrow = make_arrow(V(0, 0), V(1, 0), false);
     return save_timer = setInterval(save_state, 500);
   };
-  default_state = '{}';
   load_state = function(data) {
     var id, subroutine, subroutine_data, subroutines, _ref;
     subroutines = {};
     _ref = data.subroutines;
     for (id in _ref) {
       subroutine_data = _ref[id];
-      subroutines[id] = load_subroutine(subroutine_data);
+      subroutine = load_subroutine(subroutine_data);
+      subroutines[subroutine.id] = subroutine;
     }
     for (id in subroutines) {
       subroutine = subroutines[id];
@@ -1162,6 +1168,6 @@
     return _results;
   };
   example_programs = {
-    playground: "{\"subroutines\":[{\"id\":\"2092fbbc04daf231793ce4d1d6761172\",\"name\":\"playground\",\"nodes\":[],\"connections\":[],\"inputs\":[],\"outputs\":[\"OUT\"]}]}"
+    playground: "{\"subroutines\":{\"2092fbbc04daf231793ce4d1d6761172\":{\"id\":\"2092fbbc04daf231793ce4d1d6761172\",\"name\":\"playground\",\"nodes\":[],\"connections\":[],\"inputs\":[],\"outputs\":[\"OUT\"]}}}"
   };
 }).call(this);

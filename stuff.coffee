@@ -15,6 +15,7 @@ obj_first = (obj) ->
     for key, item of obj
         return item
 
+schema_version = 1
 boxes = {}
 node_registry = {}
 all_subroutines = {}
@@ -258,7 +259,8 @@ class SubRoutine
 
     export: ->
         dependencies = @get_dependencies()
-        subroutines:_.values dependencies
+        subroutines:dependencies
+        schema_version:schema_version
 
     get_dependencies: (dependencies={}) ->
         dependencies[@id] = @ if @id not of dependencies
@@ -657,7 +659,10 @@ window.Controller = ->
         scene.add current_scope.view
 
     @export_all = ->
-        @import_export_text = JSON.stringify subroutines:_.values @subroutines
+        data =
+            subroutines:@subroutines
+            schema_version:schema_version
+        @import_export_text = JSON.stringify data
 
     @export_subroutine = (subroutine) =>
         @import_export_text = JSON.stringify subroutine.export()
@@ -729,6 +734,7 @@ window.Controller = ->
     save_state = =>
         state =
             subroutines:@subroutines
+            schema_version:schema_version
 
         localStorage.state = JSON.stringify state
 
@@ -747,14 +753,13 @@ window.Controller = ->
     system_arrow = make_arrow V(0,0), V(1,0), false
     save_timer = setInterval save_state, 500
 
-default_state = '{}'
-
 load_state = (data) ->
     subroutines = {}
 
     # load structures first
     for id, subroutine_data of data.subroutines
-        subroutines[id] = load_subroutine subroutine_data
+        subroutine = load_subroutine subroutine_data
+        subroutines[subroutine.id] = subroutine
 
     # load implementations next
     for id, subroutine of subroutines
@@ -821,4 +826,4 @@ load_implementation = (data) ->
         source_connector[connection.output.index].connect sink_connector[connection.input.index]
 
 example_programs =
-    playground:"""{"subroutines":[{"id":"2092fbbc04daf231793ce4d1d6761172","name":"playground","nodes":[],"connections":[],"inputs":[],"outputs":["OUT"]}]}"""
+    playground:"""{"subroutines":{"2092fbbc04daf231793ce4d1d6761172":{"id":"2092fbbc04daf231793ce4d1d6761172","name":"playground","nodes":[],"connections":[],"inputs":[],"outputs":["OUT"]}}}"""
