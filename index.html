@@ -46,9 +46,9 @@ Output Implementation:
 <h2>Functions</h2>
 <ul><li ng:repeat="(id, subroutine) in subroutines">
     <a ng:click="edit_subroutine(subroutine)">edit</a>
+    <a ng:click="export_subroutine(subroutine)">export</a>
     <a ng:show="edit_mode == 'subroutine'" ng:click="use_subroutine(subroutine)">use</a>
     <a ng:show="edit_mode == 'subroutine'" ng:click="use_subroutine_value(subroutine)">value</a>
-    <a ng:click="export_subroutine(subroutine)">export</a>
     {{subroutine.name}}
     (<span ng:repeat="input in subroutine.inputs">{{input.text}} </span> -&gt;
     <span ng:repeat="output in subroutine.outputs">
@@ -67,6 +67,7 @@ Output Implementation:
 <h2>Builtins</h2>
 <ul id="builtins"><li ng:repeat="(id, builtin) in builtins">
     <a ng:click="edit_builtin(builtin)">edit</a>
+    <a ng:click="export_builtin(builtin)">export</a>
     <a ng:show="edit_mode == 'subroutine'" ng:click="use_builtin(builtin)">use</a>
     {{builtin.name}}
     (<span ng:repeat="input in builtin.inputs">{{input}} </span> -&gt;

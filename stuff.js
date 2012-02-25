@@ -327,6 +327,25 @@
       this.memo_function = eval("(" + this.memo_implementation + ")");
       all_builtins[this.id] = this;
     }
+    Builtin.prototype.toJSON = function() {
+      return {
+        id: this.id,
+        name: this.name,
+        inputs: this.inputs,
+        outputs: this.outputs,
+        memo_implementation: this.memo_implementation,
+        output_implementation: this.output_implementation
+      };
+    };
+    Builtin.prototype["export"] = function() {
+      builtins = {};
+      builtins[this.id] = this;
+      return {
+        subroutines: {},
+        builtins: builtins,
+        schema_version: schema_version
+      };
+    };
     return Builtin;
   })();
   for (id in builtins) {
@@ -1030,6 +1049,9 @@
     this.export_subroutine = __bind(function(subroutine) {
       return this.import_export_text = JSON.stringify(subroutine["export"]());
     }, this);
+    this.export_builtin = __bind(function(builtin) {
+      return this.import_export_text = JSON.stringify(builtin["export"]());
+    }, this);
     this.revert = function() {
       this.subroutines = {};
       return this.load_example_programs();
@@ -1144,6 +1166,7 @@
       var state;
       state = {
         subroutines: this.subroutines,
+        builtins: this.builtins,
         schema_version: schema_version
       };
       return localStorage.state = JSON.stringify(state);

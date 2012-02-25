@@ -226,6 +226,22 @@ class Builtin
         @memo_function = eval "(#{@memo_implementation})"
         all_builtins[@id] = @
 
+    toJSON: ->
+        id:@id
+        name:@name
+        inputs:@inputs
+        outputs:@outputs
+        memo_implementation:@memo_implementation
+        output_implementation:@output_implementation
+
+    export: ->
+        builtins = {}
+        builtins[@id] = @
+        subroutines:{}
+        builtins: builtins
+        schema_version:schema_version
+        
+
 # populate id field in builtins.  Should be the other way around but oh well.
 for id, info of builtins
     info.id = id
@@ -693,6 +709,9 @@ window.Controller = ->
     @export_subroutine = (subroutine) =>
         @import_export_text = JSON.stringify subroutine.export()
 
+    @export_builtin = (builtin) =>
+        @import_export_text = JSON.stringify builtin.export()
+
     @revert = ->
         @subroutines = {}
         @load_example_programs()
@@ -780,6 +799,7 @@ window.Controller = ->
     save_state = =>
         state =
             subroutines:@subroutines
+            builtins:@builtins
             schema_version:schema_version
 
         localStorage.state = JSON.stringify state
