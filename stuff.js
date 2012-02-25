@@ -1,5 +1,5 @@
 (function() {
-  var Builtin, Connection, FunctionApplication, Input, InputError, Literal, Nib, Node, Output, SubRoutine, all_builtins, all_subroutines, animate, boxes, builtins, camera, connecting_object, connection_view, current_scope, dragging_object, dragging_offset, example_programs, execute, get_absolute_nib_position, get_nib_position, height, id, info, last, load_implementation, load_program, load_state, load_subroutine, make_arrow, make_basic_program, make_box, make_connection, make_main, make_nib_view, make_node_view, make_subroutine_view, make_text, mouse_coords, mouse_down, mouse_move, mouse_up, node_registry, obj_first, projector, ray_cast_mouse, renderer, scene, schema_version, should_animate, system_arrow, update, valid_json, whitespace_split, width;
+  var Builtin, Connection, FunctionApplication, Input, InputError, Literal, Nib, Node, Output, SubRoutine, all_builtins, all_subroutines, animate, boxes, builtins, camera, connecting_object, connection_view, current_scope, dragging_object, dragging_offset, example_programs, execute, get_absolute_nib_position, get_nib_position, height, last, load_implementation, load_state, make_arrow, make_basic_program, make_box, make_connection, make_main, make_nib_view, make_node_view, make_subroutine_view, make_text, mouse_coords, mouse_down, mouse_move, mouse_up, node_registry, obj_first, playground_id, projector, ray_cast_mouse, renderer, scene, schema_version, should_animate, system_arrow, update, valid_json, whitespace_split, width;
   var __hasProp = Object.prototype.hasOwnProperty, __extends = function(child, parent) {
     for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; }
     function ctor() { this.constructor = child; }
@@ -285,19 +285,6 @@
       }
     }
   };
-  execute = function(routine) {
-    try {
-      return alert(JSON.stringify(routine()));
-    } catch (exception) {
-      if (exception === 'NotConnected') {
-        return alert("Something in the program is disconnected");
-      } else if (exception === 'Exit') {
-        return alert("Program Exited");
-      } else {
-        throw exception;
-      }
-    }
-  };
   /* MODELS */
   Builtin = (function() {
     function Builtin(_arg) {
@@ -348,15 +335,13 @@
     };
     return Builtin;
   })();
-  for (id in builtins) {
-    info = builtins[id];
-    info.id = id;
-    info.output_implementation = '' + info.output_implementation;
-    if (info.memo_implementation) {
-      info.memo_implementation = '' + info.memo_implementation;
-    }
-    new Builtin(info);
-  }
+  /*
+  for id, info of builtins
+      info.id = id
+      info.output_implementation = ''+info.output_implementation
+      info.memo_implementation   = ''+info.memo_implementation if info.memo_implementation
+      new Builtin info
+  */
   SubRoutine = (function() {
     function SubRoutine(name, inputs, outputs, id) {
       var index, text;
@@ -976,14 +961,14 @@
       return JSON.parse(json);
     } catch (exception) {
       if (exception instanceof SyntaxError) {
-        return alert("Invalid JSON: " + json);
+        return alert("" + exception + " Invalid JSON: " + json);
       } else {
         throw exception;
       }
     }
   };
   window.Controller = function() {
-    var data, hide_subroutines, import_source, init_field, save_state, save_timer, teardown_field;
+    var data, hide_subroutines, import_source, init_field, loaded_state, save_state, save_timer, teardown_field;
     init_field = function() {
       var field;
       should_animate = true;
@@ -1016,15 +1001,23 @@
     this["import"] = function() {
       hide_subroutines();
       import_source(this.import_export_text);
-      return scene.add(current_scope.view);
+      if (current_scope) {
+        return this.edit_subroutine(current_scope);
+      }
     };
     import_source = __bind(function(source) {
-      var id, subroutine, subroutines, _results;
-      subroutines = load_state(valid_json(source));
+      var builtin, data, id, subroutine, _ref, _ref2, _results;
+      data = load_state(valid_json(source));
+      _ref = data.subroutines;
+      for (id in _ref) {
+        subroutine = _ref[id];
+        this.subroutines[subroutine.id] = subroutine;
+      }
+      _ref2 = data.builtins;
       _results = [];
-      for (id in subroutines) {
-        subroutine = subroutines[id];
-        _results.push(this.subroutines[subroutine.id] = subroutine);
+      for (id in _ref2) {
+        builtin = _ref2[id];
+        _results.push(this.builtins[builtin.id] = builtin);
       }
       return _results;
     }, this);
@@ -1035,13 +1028,14 @@
         source = example_programs[name];
         import_source(source);
       }
-      current_scope = this.subroutines["2092fbbc04daf231793ce4d1d6761172"];
+      current_scope = this.subroutines[playground_id];
       return scene.add(current_scope.view);
     }, this);
     this.export_all = function() {
       var data;
       data = {
         subroutines: this.subroutines,
+        builtins: this.builtins,
         schema_version: schema_version
       };
       return this.import_export_text = JSON.stringify(data);
@@ -1053,6 +1047,7 @@
       return this.import_export_text = JSON.stringify(builtin["export"]());
     }, this);
     this.revert = function() {
+      hide_subroutines();
       this.subroutines = {};
       return this.load_example_programs();
     };
@@ -1063,10 +1058,8 @@
       new Literal(V(0, 0), this.literal_text, value);
       return this.literal_text = '';
     }, this);
-    this.use_builtin = __bind(function(id) {
-      var information;
-      information = builtins[id];
-      return new FunctionApplication(V(0, 0), information.name, information);
+    this.use_builtin = __bind(function(builtin) {
+      return new FunctionApplication(V(0, 0), builtin.name, builtin);
     }, this);
     this.use_subroutine = __bind(function(subroutine) {
       return new FunctionApplication(V(0, 0), subroutine.name, {
@@ -1175,8 +1168,13 @@
     if (localStorage.state != null) {
       data = JSON.parse(localStorage.state);
       try {
-        this.subroutines = load_state(data);
-        this.edit_subroutine(current_scope);
+        loaded_state = load_state(data);
+        this.builtins = loaded_state.builtins;
+        this.subroutines = loaded_state.subroutines;
+        current_scope = obj_first(this.subroutines);
+        if (current_scope) {
+          this.edit_subroutine(current_scope);
+        }
       } catch (exception) {
         setTimeout(function() {
           throw exception;
@@ -1188,13 +1186,33 @@
     system_arrow = make_arrow(V(0, 0), V(1, 0), false);
     return save_timer = setInterval(save_state, 500);
   };
+  execute = function(routine) {
+    try {
+      return alert(JSON.stringify(routine()));
+    } catch (exception) {
+      if (exception === 'NotConnected') {
+        return alert("Something in the program is disconnected");
+      } else if (exception === 'Exit') {
+        return alert("Program Exited");
+      } else {
+        throw exception;
+      }
+    }
+  };
   load_state = function(data) {
-    var id, subroutine, subroutine_data, subroutines, _ref;
+    var builtin, builtin_data, id, subroutine, subroutine_data, subroutines, _ref, _ref2;
     subroutines = {};
-    _ref = data.subroutines;
+    builtins = {};
+    _ref = data.builtins;
     for (id in _ref) {
-      subroutine_data = _ref[id];
-      subroutine = load_subroutine(subroutine_data);
+      builtin_data = _ref[id];
+      builtin = new Builtin(builtin_data);
+      builtins[builtin.id] = builtin;
+    }
+    _ref2 = data.subroutines;
+    for (id in _ref2) {
+      subroutine_data = _ref2[id];
+      subroutine = new SubRoutine(subroutine_data.name, subroutine_data.inputs, subroutine_data.outputs, subroutine_data.id);
       subroutines[subroutine.id] = subroutine;
     }
     for (id in subroutines) {
@@ -1202,7 +1220,10 @@
       current_scope = subroutine;
       load_implementation(data.subroutines[id]);
     }
-    return subroutines;
+    return {
+      subroutines: subroutines,
+      builtins: builtins
+    };
   };
   make_main = function() {
     return new SubRoutine('default', [], ['OUT']);
@@ -1215,15 +1236,6 @@
     c1 = five.outputs[0].connect(plus.inputs[0]);
     c2 = three.outputs[0].connect(plus.inputs[1]);
     return c3 = plus.outputs[0].connect(current_scope.outputs[0]);
-  };
-  load_program = function(data) {
-    var subroutine;
-    subroutine = load_subroutine(data.subroutine);
-    return new Program(data.name, subroutine, data.id);
-  };
-  load_subroutine = function(data) {
-    var subroutine;
-    return subroutine = new SubRoutine(data.name, data.inputs, data.outputs, data.id);
   };
   load_implementation = function(data) {
     var connection, information, name, node, position, sink, sink_connector, source, source_connector, sub_subroutine, value, _i, _j, _len, _len2, _ref, _ref2, _results;
@@ -1270,7 +1282,8 @@
     }
     return _results;
   };
+  playground_id = UUID();
   example_programs = {
-    playground: "{\"subroutines\":{\"2092fbbc04daf231793ce4d1d6761172\":{\"id\":\"2092fbbc04daf231793ce4d1d6761172\",\"name\":\"playground\",\"nodes\":[],\"connections\":[],\"inputs\":[],\"outputs\":[\"OUT\"]}}}"
+    playground: "{\"subroutines\":{\"" + playground_id + "\":{\"id\":\"" + playground_id + "\",\"name\":\"playground\",\"nodes\":[],\"connections\":[],\"inputs\":[],\"outputs\":[\"OUT\"]}},\"builtins\":{\"894652d702c3bb123ce8ed9e2bdcc71b\":{\"id\":\"894652d702c3bb123ce8ed9e2bdcc71b\",\"name\":\"+\",\"inputs\":[\"L\",\"R\"],\"outputs\":[\"R\"],\"memo_implementation\":null,\"output_implementation\":\"function (left, right) {\\n        return left() + right();\\n      }\"},\"99dc67480b5e5fe8adcab5fc6540c8a0\":{\"id\":\"99dc67480b5e5fe8adcab5fc6540c8a0\",\"name\":\"-\",\"inputs\":[\"L\",\"R\"],\"outputs\":[\"R\"],\"memo_implementation\":null,\"output_implementation\":\"function (left, right) {\\n        return left() - right();\\n      }\"},\"c70ac0c10dcfce8249b937ad164413ec\":{\"id\":\"c70ac0c10dcfce8249b937ad164413ec\",\"name\":\"*\",\"inputs\":[\"L\",\"R\"],\"outputs\":[\"R\"],\"memo_implementation\":null,\"output_implementation\":\"function (left, right) {\\n        return left() * right();\\n      }\"},\"3080574badf11047d6df2ed24f8248df\":{\"id\":\"3080574badf11047d6df2ed24f8248df\",\"name\":\"/\",\"inputs\":[\"L\",\"R\"],\"outputs\":[\"R\"],\"memo_implementation\":null,\"output_implementation\":\"function (left, right) {\\n        return left() / right();\\n      }\"},\"993ad152a2a888f6c0e6a6bd8a1c385a\":{\"id\":\"993ad152a2a888f6c0e6a6bd8a1c385a\",\"name\":\"<\",\"inputs\":[\"L\",\"R\"],\"outputs\":[\"R\"],\"memo_implementation\":null,\"output_implementation\":\"function (left, right) {\\n        return left() < right();\\n      }\"},\"3030973e37ce53b896735a3ad6b369d6\":{\"id\":\"3030973e37ce53b896735a3ad6b369d6\",\"name\":\"<=\",\"inputs\":[\"L\",\"R\"],\"outputs\":[\"R\"],\"memo_implementation\":null,\"output_implementation\":\"function (left, right) {\\n        return left() <= right();\\n      }\"},\"54e3469201277e5325db02aa56ab5218\":{\"id\":\"54e3469201277e5325db02aa56ab5218\",\"name\":\"=\",\"inputs\":[\"L\",\"R\"],\"outputs\":[\"R\"],\"memo_implementation\":null,\"output_implementation\":\"function (left, right) {\\n        return left() === right();\\n      }\"},\"4d0b2cd39670d8a70ded2c5f7a6fd5be\":{\"id\":\"4d0b2cd39670d8a70ded2c5f7a6fd5be\",\"name\":\">=\",\"inputs\":[\"L\",\"R\"],\"outputs\":[\"R\"],\"memo_implementation\":null,\"output_implementation\":\"function (left, right) {\\n        return left() >= right();\\n      }\"},\"68af5453eda7b4c9cbe6a86e12b5fba2\":{\"id\":\"68af5453eda7b4c9cbe6a86e12b5fba2\",\"name\":\">\",\"inputs\":[\"L\",\"R\"],\"outputs\":[\"R\"],\"memo_implementation\":null,\"output_implementation\":\"function (left, right) {\\n        return left() > right();\\n      }\"},\"29c894a04e219f47477672bedc3ad620\":{\"id\":\"29c894a04e219f47477672bedc3ad620\",\"name\":\"if\",\"inputs\":[\"T\",\"C\",\"F\"],\"outputs\":[\"R\"],\"memo_implementation\":null,\"output_implementation\":\"function (true_result, condition, false_result) {\\n        if (condition()) {\\n          return true_result();\\n        } else {\\n          return false_result();\\n        }\\n      }\"},\"be7936fcdcc1fe8c8f1024aa91b475e5\":{\"id\":\"be7936fcdcc1fe8c8f1024aa91b475e5\",\"name\":\"prompt\",\"inputs\":[\"M\",\"S\"],\"outputs\":[\"R\",\"S\"],\"memo_implementation\":\"function (message, sequencer) {\\n        try {\\n          sequencer();\\n        } catch (exception) {\\n          if (exception !== \\\"NotConnected\\\") {\\n            throw exception;\\n          }\\n        }\\n        return prompt(message());\\n      }\",\"output_implementation\":\"function (message, sequencer, index, memo) {\\n        if (index === 0) {\\n          return memo;\\n        } else {\\n          return null;\\n        }\\n      }\"},\"06b207d17227570db276cd4aaef57a2b\":{\"id\":\"06b207d17227570db276cd4aaef57a2b\",\"name\":\"funnel\",\"inputs\":[\"V\",\"S\"],\"outputs\":[\"V\"],\"memo_implementation\":null,\"output_implementation\":\"function (value, sequencer) {\\n        try {\\n          sequencer();\\n        } catch (exception) {\\n          if (exception !== \\\"NotConnected\\\") {\\n            throw exception;\\n          }\\n        }\\n        return value();\\n      }\"},\"51f15a4fe5f0c1bf1e31f63733aa1618\":{\"id\":\"51f15a4fe5f0c1bf1e31f63733aa1618\",\"name\":\"log\",\"inputs\":[\"in\"],\"outputs\":[\"out\"],\"memo_implementation\":null,\"output_implementation\":\"function (input) {\\n        var value;\\n        value = input();\\n        console.log(value);\\n        return value;\\n      }\"},\"1baf12a4702a0ecc724592ad8dd285f3\":{\"id\":\"1baf12a4702a0ecc724592ad8dd285f3\",\"name\":\"exit\",\"inputs\":[],\"outputs\":[\"R\"],\"memo_implementation\":null,\"output_implementation\":\"function () {\\n        throw \\\"Exit\\\";\\n      }\"},\"09f91a7ec8fd64baacda01ee70760569\":{\"id\":\"09f91a7ec8fd64baacda01ee70760569\",\"name\":\"replace\",\"inputs\":[\"text\",\"rem\",\"ins\"],\"outputs\":[\"result\"],\"memo_implementation\":null,\"output_implementation\":\"function (text, pattern, replacement) {\\n        return text().replace(pattern(), replacement());\\n      }\"},\"a612be6f7bae3de3ae2f883bc3f245c4\":{\"id\":\"a612be6f7bae3de3ae2f883bc3f245c4\",\"name\":\"two_outputs\",\"inputs\":[],\"outputs\":[\"L\",\"R\"],\"memo_implementation\":null,\"output_implementation\":\"function (index) {\\n        if (index === 0) {\\n          return \\\"left\\\";\\n        } else {\\n          return \\\"right\\\";\\n        }\\n      }\"},\"a9f07bc7545769b8b8b31a9d7ac77229\":{\"id\":\"a9f07bc7545769b8b8b31a9d7ac77229\",\"name\":\"int\",\"inputs\":[\"IN\"],\"outputs\":[\"int\"],\"memo_implementation\":null,\"output_implementation\":\"function (str) {\\n        return parseInt(str());\\n      }\"},\"7cca8f80ac29c5a1e72c371c574e7414\":{\"id\":\"7cca8f80ac29c5a1e72c371c574e7414\",\"name\":\"float\",\"inputs\":[\"IN\"],\"outputs\":[\"float\"],\"memo_implementation\":null,\"output_implementation\":\"function (str) {\\n        return parseFloat(str());\\n      }\"},\"b5b3023a4a839ed106882e74923dab88\":{\"id\":\"b5b3023a4a839ed106882e74923dab88\",\"name\":\"str\",\"inputs\":[\"IN\"],\"outputs\":[\"str\"],\"memo_implementation\":null,\"output_implementation\":\"function (obj) {\\n        return '' + obj();\\n      }\"},\"3827fa434cfc1b71555e0e958633e1ca\":{\"id\":\"3827fa434cfc1b71555e0e958633e1ca\",\"name\":\"from json\",\"inputs\":[\"str\"],\"outputs\":[\"obj\"],\"memo_implementation\":null,\"output_implementation\":\"function (str) {\\n        return JSON.parse(str());\\n      }\"},\"aa8c65ccce7abc2c524349c843bb4fc5\":{\"id\":\"aa8c65ccce7abc2c524349c843bb4fc5\",\"name\":\"to json\",\"inputs\":[\"obj\"],\"outputs\":[\"str\"],\"memo_implementation\":null,\"output_implementation\":\"function (obj) {\\n        return JSON.stringify(obj());\\n      }\"},\"9a7d34a3c313a193ba47e747b4ff9132\":{\"id\":\"9a7d34a3c313a193ba47e747b4ff9132\",\"name\":\"random float\",\"inputs\":[],\"outputs\":[\"OUT\"],\"memo_implementation\":null,\"output_implementation\":\"function () {\\n        return Math.random();\\n      }\"},\"325fa3507bac12a3673f2789e12a1e41\":{\"id\":\"325fa3507bac12a3673f2789e12a1e41\",\"name\":\"call\",\"inputs\":[\"SUB\",\"IN\"],\"outputs\":[\"OUT\"],\"memo_implementation\":null,\"output_implementation\":\"function (subroutine, input) {\\n        return subroutine().invoke(0, [input]);\\n      }\"},\"9fbdec485d1149e1c24d54f332099247\":{\"id\":\"9fbdec485d1149e1c24d54f332099247\",\"name\":\"call-n\",\"inputs\":[\"SUB\",\"IN\"],\"outputs\":[\"OUT\"],\"memo_implementation\":null,\"output_implementation\":\"function (subroutine, inputs) {\\n        return subroutine().invoke(0, inputs());\\n      }\"},\"0b40d2d29e6df169bc95d854f41ff476\":{\"id\":\"0b40d2d29e6df169bc95d854f41ff476\",\"name\":\"cons\",\"inputs\":[\"LIST\",\"ELE\"],\"outputs\":[\"LIST\"],\"memo_implementation\":null,\"output_implementation\":\"function (list, element) {\\n        return list().concat(element());\\n      }\"},\"73b5d938605bb060c7ddfa031fe29d46\":{\"id\":\"73b5d938605bb060c7ddfa031fe29d46\",\"name\":\"lazy input\",\"inputs\":[\"IN\"],\"outputs\":[\"OUT\"],\"memo_implementation\":null,\"output_implementation\":\"function (input) {\\n        return input;\\n      }\"}},\"schema_version\":1}"
   };
 }).call(this);

@@ -1,5 +1,5 @@
-- allow users to add their own builtins by writing javascript or coffeescript
-    - Make them source objects that show up in exports.
+- loosely bind builtins with function applications, like subroutines, so if you edit them the changes apply everywhere
+- make export subroutine include builtin dependencies
 
 - add some higher order functions
 - make the blank project source have a random id so people can share it without clobbering

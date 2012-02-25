@@ -203,16 +203,6 @@ builtins =
         output_implementation: (input) -> input
 
         
-execute = (routine) ->
-    try
-        alert JSON.stringify routine()
-    catch exception
-        if exception is 'NotConnected'
-            alert "Something in the program is disconnected"
-        else if exception is 'Exit'
-            alert "Program Exited"
-        else throw exception
-
 ### MODELS ###
 
 class Builtin
@@ -243,11 +233,13 @@ class Builtin
         
 
 # populate id field in builtins.  Should be the other way around but oh well.
+###
 for id, info of builtins
     info.id = id
     info.output_implementation = ''+info.output_implementation
     info.memo_implementation   = ''+info.memo_implementation if info.memo_implementation
     new Builtin info
+###
 
 class SubRoutine
     constructor:(@name='', inputs=[], outputs=[], @id=UUID()) ->
@@ -480,7 +472,6 @@ make_subroutine_view = (subroutine) ->
     box = make_box subroutine.name, box_size, 10, 0xEEEEEE, position, false
     box.model = subroutine
     boxes[box.id] = box
-    #scene.add box
     return box
 
 make_node_view = (node) ->
@@ -489,7 +480,6 @@ make_node_view = (node) ->
     main_box = make_box node.text, main_box_size, 10, color, node.position
     main_box.model = node
     node.scope.view.add main_box
-    #scene.add main_box
     boxes[main_box.id] = main_box
     return main_box
 
@@ -656,7 +646,7 @@ valid_json = (json) ->
         return JSON.parse json
     catch exception
         if exception instanceof SyntaxError
-            return alert "Invalid JSON: #{json}"
+            return alert "#{exception} Invalid JSON: #{json}"
         else
             throw exception
     
@@ -686,23 +676,26 @@ window.Controller = ->
     @import = ->
         hide_subroutines()
         import_source @import_export_text
-        scene.add current_scope.view
+        @edit_subroutine current_scope if current_scope
 
     import_source = (source) =>
-        subroutines = load_state valid_json source
-        for id, subroutine of subroutines
+        data = load_state valid_json source
+        for id, subroutine of data.subroutines
             @subroutines[subroutine.id] = subroutine
+        for id, builtin of data.builtins
+            @builtins[builtin.id] = builtin
 
     @load_example_programs = =>
         hide_subroutines()
         for name, source of example_programs
             import_source source
-        current_scope = @subroutines["2092fbbc04daf231793ce4d1d6761172"]
+        current_scope = @subroutines[playground_id]
         scene.add current_scope.view
 
     @export_all = ->
         data =
             subroutines:@subroutines
+            builtins:@builtins
             schema_version:schema_version
         @import_export_text = JSON.stringify data
 
@@ -713,6 +706,7 @@ window.Controller = ->
         @import_export_text = JSON.stringify builtin.export()
 
     @revert = ->
+        hide_subroutines()
         @subroutines = {}
         @load_example_programs()
 
@@ -722,9 +716,8 @@ window.Controller = ->
         new Literal V(0,0), @literal_text, value
         @literal_text = ''
 
-    @use_builtin = (id) =>
-        information = builtins[id]
-        new FunctionApplication V(0,0), information.name, information
+    @use_builtin = (builtin) =>
+        new FunctionApplication V(0,0), builtin.name, builtin
 
     @use_subroutine = (subroutine) =>
         new FunctionApplication V(0,0), subroutine.name,
@@ -809,8 +802,11 @@ window.Controller = ->
     if localStorage.state?
         data = JSON.parse localStorage.state
         try
-            @subroutines = load_state data
-            @edit_subroutine current_scope
+            loaded_state = load_state data
+            @builtins = loaded_state.builtins
+            @subroutines = loaded_state.subroutines
+            current_scope = obj_first @subroutines
+            @edit_subroutine current_scope if current_scope
         catch exception
             setTimeout -> throw exception # don't break this execution thread because of a loading exception
     else
@@ -819,20 +815,37 @@ window.Controller = ->
     system_arrow = make_arrow V(0,0), V(1,0), false
     save_timer = setInterval save_state, 500
 
+execute = (routine) ->
+    try
+        alert JSON.stringify routine()
+    catch exception
+        if exception is 'NotConnected'
+            alert "Something in the program is disconnected"
+        else if exception is 'Exit'
+            alert "Program Exited"
+        else throw exception
+
 load_state = (data) ->
     subroutines = {}
+    builtins = {}
 
-    # load structures first
+    # load builtins
+    for id, builtin_data of data.builtins
+        builtin = new Builtin builtin_data
+        builtins[builtin.id] = builtin
+
+    # load subroutine declarations
     for id, subroutine_data of data.subroutines
-        subroutine = load_subroutine subroutine_data
+        subroutine = new SubRoutine subroutine_data.name, subroutine_data.inputs, subroutine_data.outputs, subroutine_data.id
         subroutines[subroutine.id] = subroutine
 
-    # load implementations next
+    # load subroutine implementations
     for id, subroutine of subroutines
         current_scope = subroutine
         load_implementation data.subroutines[id]
 
-    return subroutines
+    subroutines:subroutines
+    builtins:builtins
     
 make_main = ->
     new SubRoutine 'default', [], ['OUT']
@@ -844,16 +857,6 @@ make_basic_program = ->
     c1 = five.outputs[0].connect plus.inputs[0]
     c2 = three.outputs[0].connect plus.inputs[1]
     c3 = plus.outputs[0].connect current_scope.outputs[0]
-
-
-load_program = (data) ->
-    # TODO: it's possible for one subroutine to make use of another one before that one is loaded.
-    # Loading should happen in two passes: first create all the subroutines, then run through them and load nodes into them.
-    subroutine = load_subroutine data.subroutine
-    return new Program data.name, subroutine, data.id
-
-load_subroutine = (data) ->
-    subroutine = new SubRoutine data.name, data.inputs, data.outputs, data.id
 
 load_implementation = (data) ->
     for node in data.nodes
@@ -891,5 +894,6 @@ load_implementation = (data) ->
 
         source_connector[connection.output.index].connect sink_connector[connection.input.index]
 
+playground_id = UUID()
 example_programs =
-    playground:"""{"subroutines":{"2092fbbc04daf231793ce4d1d6761172":{"id":"2092fbbc04daf231793ce4d1d6761172","name":"playground","nodes":[],"connections":[],"inputs":[],"outputs":["OUT"]}}}"""
+    playground:"""{"subroutines":{"#{playground_id}":{"id":"#{playground_id}","name":"playground","nodes":[],"connections":[],"inputs":[],"outputs":["OUT"]}},"builtins":{"894652d702c3bb123ce8ed9e2bdcc71b":{"id":"894652d702c3bb123ce8ed9e2bdcc71b","name":"+","inputs":["L","R"],"outputs":["R"],"memo_implementation":null,"output_implementation":"function (left, right) {\\n        return left() + right();\\n      }"},"99dc67480b5e5fe8adcab5fc6540c8a0":{"id":"99dc67480b5e5fe8adcab5fc6540c8a0","name":"-","inputs":["L","R"],"outputs":["R"],"memo_implementation":null,"output_implementation":"function (left, right) {\\n        return left() - right();\\n      }"},"c70ac0c10dcfce8249b937ad164413ec":{"id":"c70ac0c10dcfce8249b937ad164413ec","name":"*","inputs":["L","R"],"outputs":["R"],"memo_implementation":null,"output_implementation":"function (left, right) {\\n        return left() * right();\\n      }"},"3080574badf11047d6df2ed24f8248df":{"id":"3080574badf11047d6df2ed24f8248df","name":"/","inputs":["L","R"],"outputs":["R"],"memo_implementation":null,"output_implementation":"function (left, right) {\\n        return left() / right();\\n      }"},"993ad152a2a888f6c0e6a6bd8a1c385a":{"id":"993ad152a2a888f6c0e6a6bd8a1c385a","name":"<","inputs":["L","R"],"outputs":["R"],"memo_implementation":null,"output_implementation":"function (left, right) {\\n        return left() < right();\\n      }"},"3030973e37ce53b896735a3ad6b369d6":{"id":"3030973e37ce53b896735a3ad6b369d6","name":"<=","inputs":["L","R"],"outputs":["R"],"memo_implementation":null,"output_implementation":"function (left, right) {\\n        return left() <= right();\\n      }"},"54e3469201277e5325db02aa56ab5218":{"id":"54e3469201277e5325db02aa56ab5218","name":"=","inputs":["L","R"],"outputs":["R"],"memo_implementation":null,"output_implementation":"function (left, right) {\\n        return left() === right();\\n      }"},"4d0b2cd39670d8a70ded2c5f7a6fd5be":{"id":"4d0b2cd39670d8a70ded2c5f7a6fd5be","name":">=","inputs":["L","R"],"outputs":["R"],"memo_implementation":null,"output_implementation":"function (left, right) {\\n        return left() >= right();\\n      }"},"68af5453eda7b4c9cbe6a86e12b5fba2":{"id":"68af5453eda7b4c9cbe6a86e12b5fba2","name":">","inputs":["L","R"],"outputs":["R"],"memo_implementation":null,"output_implementation":"function (left, right) {\\n        return left() > right();\\n      }"},"29c894a04e219f47477672bedc3ad620":{"id":"29c894a04e219f47477672bedc3ad620","name":"if","inputs":["T","C","F"],"outputs":["R"],"memo_implementation":null,"output_implementation":"function (true_result, condition, false_result) {\\n        if (condition()) {\\n          return true_result();\\n        } else {\\n          return false_result();\\n        }\\n      }"},"be7936fcdcc1fe8c8f1024aa91b475e5":{"id":"be7936fcdcc1fe8c8f1024aa91b475e5","name":"prompt","inputs":["M","S"],"outputs":["R","S"],"memo_implementation":"function (message, sequencer) {\\n        try {\\n          sequencer();\\n        } catch (exception) {\\n          if (exception !== \\"NotConnected\\") {\\n            throw exception;\\n          }\\n        }\\n        return prompt(message());\\n      }","output_implementation":"function (message, sequencer, index, memo) {\\n        if (index === 0) {\\n          return memo;\\n        } else {\\n          return null;\\n        }\\n      }"},"06b207d17227570db276cd4aaef57a2b":{"id":"06b207d17227570db276cd4aaef57a2b","name":"funnel","inputs":["V","S"],"outputs":["V"],"memo_implementation":null,"output_implementation":"function (value, sequencer) {\\n        try {\\n          sequencer();\\n        } catch (exception) {\\n          if (exception !== \\"NotConnected\\") {\\n            throw exception;\\n          }\\n        }\\n        return value();\\n      }"},"51f15a4fe5f0c1bf1e31f63733aa1618":{"id":"51f15a4fe5f0c1bf1e31f63733aa1618","name":"log","inputs":["in"],"outputs":["out"],"memo_implementation":null,"output_implementation":"function (input) {\\n        var value;\\n        value = input();\\n        console.log(value);\\n        return value;\\n      }"},"1baf12a4702a0ecc724592ad8dd285f3":{"id":"1baf12a4702a0ecc724592ad8dd285f3","name":"exit","inputs":[],"outputs":["R"],"memo_implementation":null,"output_implementation":"function () {\\n        throw \\"Exit\\";\\n      }"},"09f91a7ec8fd64baacda01ee70760569":{"id":"09f91a7ec8fd64baacda01ee70760569","name":"replace","inputs":["text","rem","ins"],"outputs":["result"],"memo_implementation":null,"output_implementation":"function (text, pattern, replacement) {\\n        return text().replace(pattern(), replacement());\\n      }"},"a612be6f7bae3de3ae2f883bc3f245c4":{"id":"a612be6f7bae3de3ae2f883bc3f245c4","name":"two_outputs","inputs":[],"outputs":["L","R"],"memo_implementation":null,"output_implementation":"function (index) {\\n        if (index === 0) {\\n          return \\"left\\";\\n        } else {\\n          return \\"right\\";\\n        }\\n      }"},"a9f07bc7545769b8b8b31a9d7ac77229":{"id":"a9f07bc7545769b8b8b31a9d7ac77229","name":"int","inputs":["IN"],"outputs":["int"],"memo_implementation":null,"output_implementation":"function (str) {\\n        return parseInt(str());\\n      }"},"7cca8f80ac29c5a1e72c371c574e7414":{"id":"7cca8f80ac29c5a1e72c371c574e7414","name":"float","inputs":["IN"],"outputs":["float"],"memo_implementation":null,"output_implementation":"function (str) {\\n        return parseFloat(str());\\n      }"},"b5b3023a4a839ed106882e74923dab88":{"id":"b5b3023a4a839ed106882e74923dab88","name":"str","inputs":["IN"],"outputs":["str"],"memo_implementation":null,"output_implementation":"function (obj) {\\n        return '' + obj();\\n      }"},"3827fa434cfc1b71555e0e958633e1ca":{"id":"3827fa434cfc1b71555e0e958633e1ca","name":"from json","inputs":["str"],"outputs":["obj"],"memo_implementation":null,"output_implementation":"function (str) {\\n        return JSON.parse(str());\\n      }"},"aa8c65ccce7abc2c524349c843bb4fc5":{"id":"aa8c65ccce7abc2c524349c843bb4fc5","name":"to json","inputs":["obj"],"outputs":["str"],"memo_implementation":null,"output_implementation":"function (obj) {\\n        return JSON.stringify(obj());\\n      }"},"9a7d34a3c313a193ba47e747b4ff9132":{"id":"9a7d34a3c313a193ba47e747b4ff9132","name":"random float","inputs":[],"outputs":["OUT"],"memo_implementation":null,"output_implementation":"function () {\\n        return Math.random();\\n      }"},"325fa3507bac12a3673f2789e12a1e41":{"id":"325fa3507bac12a3673f2789e12a1e41","name":"call","inputs":["SUB","IN"],"outputs":["OUT"],"memo_implementation":null,"output_implementation":"function (subroutine, input) {\\n        return subroutine().invoke(0, [input]);\\n      }"},"9fbdec485d1149e1c24d54f332099247":{"id":"9fbdec485d1149e1c24d54f332099247","name":"call-n","inputs":["SUB","IN"],"outputs":["OUT"],"memo_implementation":null,"output_implementation":"function (subroutine, inputs) {\\n        return subroutine().invoke(0, inputs());\\n      }"},"0b40d2d29e6df169bc95d854f41ff476":{"id":"0b40d2d29e6df169bc95d854f41ff476","name":"cons","inputs":["LIST","ELE"],"outputs":["LIST"],"memo_implementation":null,"output_implementation":"function (list, element) {\\n        return list().concat(element());\\n      }"},"73b5d938605bb060c7ddfa031fe29d46":{"id":"73b5d938605bb060c7ddfa031fe29d46","name":"lazy input","inputs":["IN"],"outputs":["OUT"],"memo_implementation":null,"output_implementation":"function (input) {\\n        return input;\\n      }"}},"schema_version":1}"""
