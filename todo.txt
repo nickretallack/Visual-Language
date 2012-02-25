@@ -1,6 +1,3 @@
-- loosely bind builtins with function applications, like subroutines, so if you edit them the changes apply everywhere
-- make export subroutine include builtin dependencies
-
 - when you scroll down, the picker isn't correct.  Adjust it for that.
 
 - add some higher order functions

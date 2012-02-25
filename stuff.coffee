@@ -304,14 +304,18 @@ class SubRoutine
 
     export: ->
         dependencies = @get_dependencies()
-        subroutines:dependencies
-        schema_version:schema_version
+        dependencies.schema_version = schema_version
+        dependencies
 
-    get_dependencies: (dependencies={}) ->
-        dependencies[@id] = @ if @id not of dependencies
-        for node in @nodes
-            if node.type is 'function'
-                dependencies = dependencies.concat node.subroutine.get_dependencies dependencies
+    get_dependencies: (dependencies={subroutines:{},builtins:{}}) ->
+        dependencies.subroutines[@id] = @ if @id not of dependencies.subroutines
+        for id, node of @nodes
+            if node instanceof SubroutineApplication
+                child_dependencies = node.implementation.get_dependencies dependencies
+                _.extend dependencies.subroutines, child_dependencies.subroutines
+                _.extend dependencies.builtins, child_dependencies.builtins
+            else if node instanceof BuiltinApplication
+                dependencies.builtins[@id] = node.implementation
         dependencies
 
     subroutines_referenced: ->

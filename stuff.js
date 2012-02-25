@@ -411,24 +411,29 @@
     SubRoutine.prototype["export"] = function() {
       var dependencies;
       dependencies = this.get_dependencies();
-      return {
-        subroutines: dependencies,
-        schema_version: schema_version
-      };
+      dependencies.schema_version = schema_version;
+      return dependencies;
     };
     SubRoutine.prototype.get_dependencies = function(dependencies) {
-      var node, _i, _len, _ref;
+      var child_dependencies, id, node, _ref;
       if (dependencies == null) {
-        dependencies = {};
+        dependencies = {
+          subroutines: {},
+          builtins: {}
+        };
       }
-      if (!(this.id in dependencies)) {
-        dependencies[this.id] = this;
+      if (!(this.id in dependencies.subroutines)) {
+        dependencies.subroutines[this.id] = this;
       }
       _ref = this.nodes;
-      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-        node = _ref[_i];
-        if (node.type === 'function') {
-          dependencies = dependencies.concat(node.subroutine.get_dependencies(dependencies));
+      for (id in _ref) {
+        node = _ref[id];
+        if (node instanceof SubroutineApplication) {
+          child_dependencies = node.implementation.get_dependencies(dependencies);
+          _.extend(dependencies.subroutines, child_dependencies.subroutines);
+          _.extend(dependencies.builtins, child_dependencies.builtins);
+        } else if (node instanceof BuiltinApplication) {
+          dependencies.builtins[this.id] = node.implementation;
         }
       }
       return dependencies;
