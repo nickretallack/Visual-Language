@@ -386,7 +386,7 @@ class BuiltinApplication extends FunctionApplication
         
     evaluation: (the_scope, output_index) ->
         input_values = @virtual_inputs the_scope
-        memo_function = eval_expression @implementation.memo_implementation if @implementation.memo_implementation
+        memo_function = eval_expression @implementation.memo_implementation
         output_function = eval_expression @implementation.output_implementation
 
         args = (input_values.concat [output_index])
@@ -756,6 +756,11 @@ window.Controller = ->
         @new_subroutine = angular.copy @initial_subroutine
         @new_subroutine.inputs = []
         @new_subroutine.outputs = []
+
+    @add_builtin = =>
+        builtin = new Builtin {}
+        @builtins[builtin.id] = builtin
+        @edit_builtin builtin
 
     @run_subroutine = (subroutine, output_index) =>
         input_values = []

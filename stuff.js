@@ -550,9 +550,7 @@
     BuiltinApplication.prototype.evaluation = function(the_scope, output_index) {
       var args, input_values, memo_function, output_function;
       input_values = this.virtual_inputs(the_scope);
-      if (this.implementation.memo_implementation) {
-        memo_function = eval_expression(this.implementation.memo_implementation);
-      }
+      memo_function = eval_expression(this.implementation.memo_implementation);
       output_function = eval_expression(this.implementation.output_implementation);
       args = input_values.concat([output_index]);
       if (memo_function && !(this.id in the_scope.memos)) {
@@ -1043,6 +1041,12 @@
       this.new_subroutine = angular.copy(this.initial_subroutine);
       this.new_subroutine.inputs = [];
       return this.new_subroutine.outputs = [];
+    }, this);
+    this.add_builtin = __bind(function() {
+      var builtin;
+      builtin = new Builtin({});
+      this.builtins[builtin.id] = builtin;
+      return this.edit_builtin(builtin);
     }, this);
     this.run_subroutine = __bind(function(subroutine, output_index) {
       var input, input_index, input_values, _fn, _len, _ref;

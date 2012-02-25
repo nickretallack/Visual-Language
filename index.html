@@ -48,7 +48,7 @@ Output Implementation:
     <a ng:click="export_subroutine(subroutine)">export</a>
     <a ng:show="edit_mode == 'subroutine'" ng:click="use_subroutine(subroutine)">use</a>
     <a ng:show="edit_mode == 'subroutine'" ng:click="use_subroutine_value(subroutine)">value</a>
-    {{subroutine.name}}
+    <span class="name">{{subroutine.name}}</span>
     (<span ng:repeat="input in subroutine.inputs">{{input.text}} </span> -&gt;
     <span ng:repeat="output in subroutine.outputs">
         <a ng:click="run_subroutine(subroutine, output.index)">{{output.text}}</a>
@@ -63,12 +63,14 @@ Output Implementation:
 <h2>Literals (JSON)</h2>
 <form ng:submit="use_literal()"> <input ng:model="literal_text"> <button>Use Literal</button> </form>
 
-<h2>Builtins</h2>
+<h2>Builtins
+<button ng:click="add_builtin()">New Builtin</button>
+</h2>
 <ul id="builtins"><li ng:repeat="(id, builtin) in builtins">
     <a ng:click="edit_builtin(builtin)">edit</a>
     <a ng:click="export_builtin(builtin)">export</a>
     <a ng:show="edit_mode == 'subroutine'" ng:click="use_builtin(builtin)">use</a>
-    {{builtin.name}}
+    <span class="name">{{builtin.name}}</span>
     (<span ng:repeat="input in builtin.inputs">{{input}} </span> -&gt;
     <span ng:repeat="output in builtin.outputs">
         <a ng:click="run_builtin(builtin, $index)">{{output}}</a>
