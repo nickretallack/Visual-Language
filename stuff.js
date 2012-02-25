@@ -305,8 +305,8 @@
         outputs: ['OUT'],
         id: UUID()
       }, this.name = _ref.name, this.output_implementation = _ref.output_implementation, this.memo_implementation = _ref.memo_implementation, this.inputs = _ref.inputs, this.outputs = _ref.outputs, this.id = _ref.id;
-      this.output_function = this.output_implementation;
-      this.memo_function = this.memo_implementation;
+      this.output_function = eval("(" + this.output_implementation + ")");
+      this.memo_function = eval("(" + this.memo_implementation + ")");
       all_builtins[this.id] = this;
     }
     return Builtin;
@@ -314,6 +314,8 @@
   for (id in builtins) {
     info = builtins[id];
     info.id = id;
+    info.output_implementation = '' + info.output_implementation;
+    info.memo_implementation = '' + info.memo_implementation;
     new Builtin(info);
   }
   SubRoutine = (function() {

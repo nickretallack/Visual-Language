@@ -216,13 +216,15 @@ execute = (routine) ->
 
 class Builtin
     constructor:({@name, @output_implementation, @memo_implementation, @inputs, @outputs, @id}={memo_implementation:null, inputs:[], outputs:['OUT'], id:UUID()}) ->
-        @output_function = @output_implementation
-        @memo_function = @memo_implementation
+        @output_function = eval "(#{@output_implementation})"
+        @memo_function = eval "(#{@memo_implementation})"
         all_builtins[@id] = @
 
 # populate id field in builtins.  Should be the other way around but oh well.
 for id, info of builtins
     info.id = id
+    info.output_implementation = ''+info.output_implementation
+    info.memo_implementation   = ''+info.memo_implementation
     new Builtin info
 
 class SubRoutine
