@@ -1185,6 +1185,7 @@
         if (current_scope) {
           this.edit_subroutine(current_scope);
         }
+        save_timer = setInterval(save_state, 1000);
       } catch (exception) {
         setTimeout(function() {
           throw exception;
@@ -1193,8 +1194,7 @@
     } else {
       this.load_example_programs();
     }
-    system_arrow = make_arrow(V(0, 0), V(1, 0), false);
-    return save_timer = setInterval(save_state, 1000);
+    return system_arrow = make_arrow(V(0, 0), V(1, 0), false);
   };
   execute = function(routine) {
     try {

@@ -847,13 +847,13 @@ window.Controller = ->
             @subroutines = loaded_state.subroutines
             current_scope = obj_first @subroutines
             @edit_subroutine current_scope if current_scope
+            save_timer = setInterval save_state, 1000
         catch exception
             setTimeout -> throw exception # don't break this execution thread because of a loading exception
     else
         @load_example_programs()
 
     system_arrow = make_arrow V(0,0), V(1,0), false
-    save_timer = setInterval save_state, 1000
 
 execute = (routine) ->
     try
