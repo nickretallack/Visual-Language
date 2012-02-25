@@ -1,5 +1,5 @@
 (function() {
-  var Connection, FunctionApplication, Input, InputError, Literal, Nib, Node, Output, SubRoutine, all_subroutines, animate, boxes, builtins, camera, connecting_object, connection_view, current_scope, dragging_object, dragging_offset, example_programs, get_absolute_nib_position, get_nib_position, height, id, info, last, load_implementation, load_program, load_state, load_subroutine, make_arrow, make_basic_program, make_box, make_connection, make_main, make_nib_view, make_node_view, make_subroutine_view, make_text, mouse_coords, mouse_down, mouse_move, mouse_up, node_registry, obj_first, projector, ray_cast_mouse, renderer, scene, schema_version, system_arrow, update, valid_json, whitespace_split, width;
+  var Builtin, Connection, FunctionApplication, Input, InputError, Literal, Nib, Node, Output, SubRoutine, all_builtins, all_subroutines, animate, boxes, builtins, camera, connecting_object, connection_view, current_scope, dragging_object, dragging_offset, example_programs, execute, get_absolute_nib_position, get_nib_position, height, id, info, last, load_implementation, load_program, load_state, load_subroutine, make_arrow, make_basic_program, make_box, make_connection, make_main, make_nib_view, make_node_view, make_subroutine_view, make_text, mouse_coords, mouse_down, mouse_move, mouse_up, node_registry, obj_first, projector, ray_cast_mouse, renderer, scene, schema_version, system_arrow, update, valid_json, whitespace_split, width;
   var __hasProp = Object.prototype.hasOwnProperty, __extends = function(child, parent) {
     for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; }
     function ctor() { this.constructor = child; }
@@ -30,6 +30,7 @@
   boxes = {};
   node_registry = {};
   all_subroutines = {};
+  all_builtins = {};
   current_scope = null;
   system_arrow = null;
   update = function() {
@@ -44,7 +45,7 @@
       name: '+',
       inputs: ['L', 'R'],
       outputs: ['R'],
-      definition: function(left, right) {
+      output_implementation: function(left, right) {
         return left() + right();
       }
     },
@@ -52,7 +53,7 @@
       name: '-',
       inputs: ['L', 'R'],
       outputs: ['R'],
-      definition: function(left, right) {
+      output_implementation: function(left, right) {
         return left() - right();
       }
     },
@@ -60,7 +61,7 @@
       name: '*',
       inputs: ['L', 'R'],
       outputs: ['R'],
-      definition: function(left, right) {
+      output_implementation: function(left, right) {
         return left() * right();
       }
     },
@@ -68,7 +69,7 @@
       name: '/',
       inputs: ['L', 'R'],
       outputs: ['R'],
-      definition: function(left, right) {
+      output_implementation: function(left, right) {
         return left() / right();
       }
     },
@@ -76,7 +77,7 @@
       name: '<',
       inputs: ['L', 'R'],
       outputs: ['R'],
-      definition: function(left, right) {
+      output_implementation: function(left, right) {
         return left() < right();
       }
     },
@@ -84,7 +85,7 @@
       name: '<=',
       inputs: ['L', 'R'],
       outputs: ['R'],
-      definition: function(left, right) {
+      output_implementation: function(left, right) {
         return left() <= right();
       }
     },
@@ -92,7 +93,7 @@
       name: '=',
       inputs: ['L', 'R'],
       outputs: ['R'],
-      definition: function(left, right) {
+      output_implementation: function(left, right) {
         return left() === right();
       }
     },
@@ -100,7 +101,7 @@
       name: '>=',
       inputs: ['L', 'R'],
       outputs: ['R'],
-      definition: function(left, right) {
+      output_implementation: function(left, right) {
         return left() >= right();
       }
     },
@@ -108,7 +109,7 @@
       name: '>',
       inputs: ['L', 'R'],
       outputs: ['R'],
-      definition: function(left, right) {
+      output_implementation: function(left, right) {
         return left() > right();
       }
     },
@@ -116,7 +117,7 @@
       name: 'if',
       inputs: ['T', 'C', 'F'],
       outputs: ['R'],
-      definition: function(true_result, condition, false_result) {
+      output_implementation: function(true_result, condition, false_result) {
         if (condition()) {
           return true_result();
         } else {
@@ -128,7 +129,7 @@
       name: 'prompt',
       inputs: ['M', 'S'],
       outputs: ['R', 'S'],
-      memo: function(message, sequencer) {
+      memo_implementation: function(message, sequencer) {
         try {
           sequencer();
         } catch (exception) {
@@ -138,7 +139,7 @@
         }
         return prompt(message());
       },
-      definition: function(message, sequencer, index, memo) {
+      output_implementation: function(message, sequencer, index, memo) {
         if (index === 0) {
           return memo;
         } else {
@@ -150,7 +151,7 @@
       name: 'funnel',
       inputs: ['V', 'S'],
       outputs: ['V'],
-      definition: function(value, sequencer) {
+      output_implementation: function(value, sequencer) {
         try {
           sequencer();
         } catch (exception) {
@@ -165,7 +166,7 @@
       name: 'log',
       inputs: ['in'],
       outputs: ['out'],
-      definition: function(input) {
+      output_implementation: function(input) {
         var value;
         value = input();
         console.log(value);
@@ -176,7 +177,7 @@
       name: 'exit',
       inputs: [],
       outputs: ['R'],
-      definition: function() {
+      output_implementation: function() {
         throw "Exit";
       }
     },
@@ -184,7 +185,7 @@
       name: 'replace',
       inputs: ['text', 'rem', 'ins'],
       outputs: ['result'],
-      definition: function(text, pattern, replacement) {
+      output_implementation: function(text, pattern, replacement) {
         return text().replace(pattern(), replacement());
       }
     },
@@ -192,7 +193,7 @@
       name: 'two_outputs',
       inputs: [],
       outputs: ['L', 'R'],
-      definition: function(index) {
+      output_implementation: function(index) {
         if (index === 0) {
           return "left";
         } else {
@@ -202,25 +203,25 @@
     },
     "a9f07bc7545769b8b8b31a9d7ac77229": {
       name: 'int',
-      inputs: ['str'],
+      inputs: ['IN'],
       outputs: ['int'],
-      definition: function(str) {
+      output_implementation: function(str) {
         return parseInt(str());
       }
     },
     "7cca8f80ac29c5a1e72c371c574e7414": {
       name: 'float',
-      inputs: ['str'],
+      inputs: ['IN'],
       outputs: ['float'],
-      definition: function(str) {
+      output_implementation: function(str) {
         return parseFloat(str());
       }
     },
     "b5b3023a4a839ed106882e74923dab88": {
       name: 'str',
-      inputs: ['obj'],
-      outputs: ['float'],
-      definition: function(obj) {
+      inputs: ['IN'],
+      outputs: ['str'],
+      output_implementation: function(obj) {
         return '' + obj();
       }
     },
@@ -228,7 +229,7 @@
       name: 'from json',
       inputs: ['str'],
       outputs: ['obj'],
-      definition: function(str) {
+      output_implementation: function(str) {
         return JSON.parse(str());
       }
     },
@@ -236,7 +237,7 @@
       name: 'to json',
       inputs: ['obj'],
       outputs: ['str'],
-      definition: function(obj) {
+      output_implementation: function(obj) {
         return JSON.stringify(obj());
       }
     },
@@ -244,7 +245,7 @@
       name: 'random float',
       inputs: [],
       outputs: ['OUT'],
-      definition: function() {
+      output_implementation: function() {
         return Math.random();
       }
     },
@@ -252,7 +253,7 @@
       name: 'call',
       inputs: ['SUB', 'IN'],
       outputs: ['OUT'],
-      definition: function(subroutine, input) {
+      output_implementation: function(subroutine, input) {
         return subroutine().invoke(0, [input]);
       }
     },
@@ -260,7 +261,7 @@
       name: 'call-n',
       inputs: ['SUB', 'IN'],
       outputs: ['OUT'],
-      definition: function(subroutine, inputs) {
+      output_implementation: function(subroutine, inputs) {
         return subroutine().invoke(0, inputs());
       }
     },
@@ -268,7 +269,7 @@
       name: 'cons',
       inputs: ['LIST', 'ELE'],
       outputs: ['LIST'],
-      definition: function(list, element) {
+      output_implementation: function(list, element) {
         return list().concat(element());
       }
     },
@@ -276,16 +277,45 @@
       name: 'lazy input',
       inputs: ['IN'],
       outputs: ['OUT'],
-      definition: function(input) {
+      output_implementation: function(input) {
         return input;
       }
     }
   };
+  execute = function(routine) {
+    try {
+      return alert(JSON.stringify(routine()));
+    } catch (exception) {
+      if (exception === 'NotConnected') {
+        return alert("Something in the program is disconnected");
+      } else if (exception === 'Exit') {
+        return alert("Program Exited");
+      } else {
+        throw exception;
+      }
+    }
+  };
+  /* MODELS */
+  Builtin = (function() {
+    function Builtin(_arg) {
+      var _ref;
+      _ref = _arg != null ? _arg : {
+        memo_implementation: null,
+        inputs: [],
+        outputs: ['OUT'],
+        id: UUID()
+      }, this.name = _ref.name, this.output_implementation = _ref.output_implementation, this.memo_implementation = _ref.memo_implementation, this.inputs = _ref.inputs, this.outputs = _ref.outputs, this.id = _ref.id;
+      this.output_function = this.output_implementation;
+      this.memo_function = this.memo_implementation;
+      all_builtins[this.id] = this;
+    }
+    return Builtin;
+  })();
   for (id in builtins) {
     info = builtins[id];
     info.id = id;
+    new Builtin(info);
   }
-  /* MODELS */
   SubRoutine = (function() {
     function SubRoutine(name, inputs, outputs, id) {
       var index, text;
@@ -372,17 +402,9 @@
       return _results;
     };
     SubRoutine.prototype.run = function(output_index, input_values) {
-      try {
-        return alert(this.invoke(output_index, input_values));
-      } catch (exception) {
-        if (exception === 'NotConnected') {
-          return alert("Something in the program is disconnected");
-        } else if (exception === 'Exit') {
-          return alert("Program Exited");
-        } else {
-          throw exception;
-        }
-      }
+      return execute(function() {
+        return this.invoke(output_index, input_values);
+      });
     };
     SubRoutine.prototype["export"] = function() {
       var dependencies;
@@ -1030,7 +1052,7 @@
         var value;
         value = _.memoize(function() {
           var result;
-          result = prompt("Provide a JSON value for \"" + input.text + "\":");
+          result = prompt("Provide a JSON value for input " + input_index + ": \"" + input.text + "\"");
           if (result === null) {
             throw "Exit";
           }
@@ -1060,6 +1082,26 @@
         }
       }
     }, this);
+    this.run_builtin = __bind(function(builtin, output_index) {
+      return execute(function() {
+        var args, input, input_index, input_values, memo, result, _fn, _len, _ref;
+        input_values = [];
+        _ref = builtin.inputs;
+        _fn = function(input_index, input) {
+          return input_values.push(function() {
+            return valid_json(prompt("Provide a JSON value for input " + input_index + ": \"" + input + "\""));
+          });
+        };
+        for (input_index = 0, _len = _ref.length; input_index < _len; input_index++) {
+          input = _ref[input_index];
+          _fn(input_index, input);
+        }
+        args = input_values.concat([output_index]);
+        memo = typeof builtin.memo_function === "function" ? builtin.memo_function.apply(builtin, args) : void 0;
+        result = builtin.output_function.apply(builtin, args.concat([memo]));
+        return result;
+      });
+    }, this);
     save_state = __bind(function() {
       var state;
       state = {
@@ -1068,7 +1110,7 @@
       };
       return localStorage.state = JSON.stringify(state);
     }, this);
-    this.builtins = builtins;
+    this.builtins = all_builtins;
     if (localStorage.state != null) {
       data = JSON.parse(localStorage.state);
       try {

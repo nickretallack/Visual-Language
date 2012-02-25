@@ -19,6 +19,7 @@ schema_version = 1
 boxes = {}
 node_registry = {}
 all_subroutines = {}
+all_builtins = {}
 current_scope = null
 system_arrow = null
 
@@ -34,60 +35,60 @@ builtins =
         name:'+'
         inputs:['L','R']
         outputs:['R']
-        definition: (left, right) -> left() + right()
+        output_implementation: (left, right) -> left() + right()
     "99dc67480b5e5fe8adcab5fc6540c8a0":
         name:'-'
         inputs:['L','R']
         outputs:['R']
-        definition: (left, right) -> left() - right()
+        output_implementation: (left, right) -> left() - right()
     "c70ac0c10dcfce8249b937ad164413ec":
         name:'*'
         inputs:['L','R']
         outputs:['R']
-        definition: (left, right) -> left() * right()
+        output_implementation: (left, right) -> left() * right()
     "3080574badf11047d6df2ed24f8248df":
         name:'/'
         inputs:['L','R']
         outputs:['R']
-        definition: (left, right) -> left() / right()
+        output_implementation: (left, right) -> left() / right()
 
     "993ad152a2a888f6c0e6a6bd8a1c385a":
         name:'<'
         inputs:['L','R']
         outputs:['R']
-        definition: (left, right) -> left() < right()
+        output_implementation: (left, right) -> left() < right()
     "3030973e37ce53b896735a3ad6b369d6":
         name:'<='
         inputs:['L','R']
         outputs:['R']
-        definition: (left, right) -> left() <= right()
+        output_implementation: (left, right) -> left() <= right()
     "54e3469201277e5325db02aa56ab5218":
         name:'='
         inputs:['L','R']
         outputs:['R']
-        definition: (left, right) -> left() is right()
+        output_implementation: (left, right) -> left() is right()
     "4d0b2cd39670d8a70ded2c5f7a6fd5be":
         name:'>='
         inputs:['L','R']
         outputs:['R']
-        definition: (left, right) -> left() >= right()
+        output_implementation: (left, right) -> left() >= right()
     "68af5453eda7b4c9cbe6a86e12b5fba2":
         name:'>'
         inputs:['L','R']
         outputs:['R']
-        definition: (left, right) -> left() > right()
+        output_implementation: (left, right) -> left() > right()
 
     "29c894a04e219f47477672bedc3ad620":
         name:'if'
         inputs:['T','C','F']
         outputs:['R']
-        definition: (true_result, condition, false_result) -> if condition() then true_result() else false_result()
+        output_implementation: (true_result, condition, false_result) -> if condition() then true_result() else false_result()
 
     "be7936fcdcc1fe8c8f1024aa91b475e5":
         name:'prompt'
         inputs:['M','S']
         outputs:['R','S']
-        memo: (message, sequencer) ->
+        memo_implementation: (message, sequencer) ->
             try
                 sequencer()
             catch exception
@@ -96,7 +97,7 @@ builtins =
  
             return prompt message()
             
-        definition: (message, sequencer, index, memo) ->
+        output_implementation: (message, sequencer, index, memo) ->
             if index is 0
                 return memo
             else
@@ -106,7 +107,7 @@ builtins =
          name:'funnel'
          inputs:['V','S']
          outputs:['V']
-         definition: (value, sequencer) ->
+         output_implementation: (value, sequencer) ->
              try
                  sequencer()
              catch exception
@@ -119,7 +120,7 @@ builtins =
         name:'log'
         inputs:['in']
         outputs:['out']
-        definition: (input) ->
+        output_implementation: (input) ->
             value = input()
             console.log value
             return value
@@ -128,84 +129,101 @@ builtins =
         name:'exit'
         inputs:[]
         outputs:['R']
-        definition: -> throw "Exit"
+        output_implementation: -> throw "Exit"
 
     "09f91a7ec8fd64baacda01ee70760569":
         name:'replace'
         inputs:['text','rem','ins']
         outputs:['result']
-        definition: (text, pattern, replacement) -> text().replace pattern(), replacement()
+        output_implementation: (text, pattern, replacement) -> text().replace pattern(), replacement()
 
     "a612be6f7bae3de3ae2f883bc3f245c4":
         name:'two_outputs'
         inputs:[]
         outputs:['L','R']
-        definition: (index) -> if index is 0 then "left" else "right"
+        output_implementation: (index) -> if index is 0 then "left" else "right"
 
     "a9f07bc7545769b8b8b31a9d7ac77229":
         name:'int'
-        inputs:['str']
+        inputs:['IN']
         outputs:['int']
-        definition: (str) -> parseInt str()
+        output_implementation: (str) -> parseInt str()
     "7cca8f80ac29c5a1e72c371c574e7414":
         name:'float'
-        inputs:['str']
+        inputs:['IN']
         outputs:['float']
-        definition: (str) -> parseFloat str()
+        output_implementation: (str) -> parseFloat str()
     "b5b3023a4a839ed106882e74923dab88":
         name:'str'
-        inputs:['obj']
-        outputs:['float']
-        definition: (obj) -> ''+ obj()
+        inputs:['IN']
+        outputs:['str']
+        output_implementation: (obj) -> ''+ obj()
     "3827fa434cfc1b71555e0e958633e1ca":
         name:'from json'
         inputs:['str']
         outputs:['obj']
-        definition: (str) -> JSON.parse str()
+        output_implementation: (str) -> JSON.parse str()
     "aa8c65ccce7abc2c524349c843bb4fc5":
         name:'to json'
         inputs:['obj']
         outputs:['str']
-        definition: (obj) -> JSON.stringify obj()
+        output_implementation: (obj) -> JSON.stringify obj()
 
     "9a7d34a3c313a193ba47e747b4ff9132":
         name:'random float'
         inputs:[]
         outputs:['OUT']
-        definition: -> Math.random()
+        output_implementation: -> Math.random()
 
     "325fa3507bac12a3673f2789e12a1e41":
         name:'call'
         inputs:['SUB','IN']
         outputs:['OUT']
-        definition: (subroutine, input) ->
+        output_implementation: (subroutine, input) ->
             subroutine().invoke 0, [input]
 
     "9fbdec485d1149e1c24d54f332099247":
         name:'call-n'
         inputs:['SUB','IN']
         outputs:['OUT']
-        definition: (subroutine, inputs) ->
+        output_implementation: (subroutine, inputs) ->
             subroutine().invoke 0, inputs()
 
     "0b40d2d29e6df169bc95d854f41ff476":
         name:'cons'
         inputs:['LIST','ELE']
         outputs:['LIST']
-        definition: (list, element) -> list().concat element()
+        output_implementation: (list, element) -> list().concat element()
             
     "73b5d938605bb060c7ddfa031fe29d46":
         name:'lazy input'
         inputs:['IN']
         outputs:['OUT']
-        definition: (input) -> input
+        output_implementation: (input) -> input
+
+        
+execute = (routine) ->
+    try
+        alert JSON.stringify routine()
+    catch exception
+        if exception is 'NotConnected'
+            alert "Something in the program is disconnected"
+        else if exception is 'Exit'
+            alert "Program Exited"
+        else throw exception
+
+### MODELS ###
+
+class Builtin
+    constructor:({@name, @output_implementation, @memo_implementation, @inputs, @outputs, @id}={memo_implementation:null, inputs:[], outputs:['OUT'], id:UUID()}) ->
+        @output_function = @output_implementation
+        @memo_function = @memo_implementation
+        all_builtins[@id] = @
 
 # populate id field in builtins.  Should be the other way around but oh well.
 for id, info of builtins
     info.id = id
-        
-
-### MODELS ###
+    new Builtin info
 
 class SubRoutine
     constructor:(@name='', inputs=[], outputs=[], @id=UUID()) ->
@@ -248,14 +266,7 @@ class SubRoutine
     get_outputs: -> (output.text for output in @outputs)
 
     run: (output_index, input_values) ->
-        try
-            alert @invoke(output_index, input_values)
-        catch exception
-            if exception is 'NotConnected'
-                alert "Something in the program is disconnected"
-            else if exception is 'Exit'
-                alert "Program Exited"
-            else throw exception
+        execute -> @invoke(output_index, input_values)
 
     export: ->
         dependencies = @get_dependencies()
@@ -713,7 +724,7 @@ window.Controller = ->
         for input, input_index in subroutine.inputs
             do (input_index, input) ->
                 value = _.memoize ->
-                    result = prompt "Provide a JSON value for \"#{input.text}\":"
+                    result = prompt "Provide a JSON value for input #{input_index}: \"#{input.text}\""
                     throw "Exit" if result is null
                     try
                         return JSON.parse result
@@ -730,6 +741,19 @@ window.Controller = ->
                 alert "Invalid JSON: #{exception.message}"
             else
                 throw exception
+
+    @run_builtin = (builtin, output_index) =>
+        execute ->
+            input_values = []
+            for input, input_index in builtin.inputs
+                do (input_index, input) ->
+                    input_values.push ->
+                        valid_json prompt "Provide a JSON value for input #{input_index}: \"#{input}\""
+
+            args = input_values.concat [output_index]
+            memo = builtin.memo_function? args...
+            result = builtin.output_function (args.concat [memo])...
+            return result
         
     save_state = =>
         state =
@@ -738,7 +762,7 @@ window.Controller = ->
 
         localStorage.state = JSON.stringify state
 
-    @builtins = builtins
+    @builtins = all_builtins
 
     if localStorage.state?
         data = JSON.parse localStorage.state
