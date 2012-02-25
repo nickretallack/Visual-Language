@@ -1,13 +1,13 @@
 (function() {
-  var Builtin, Connection, FunctionApplication, Input, InputError, Literal, Nib, Node, Output, SubRoutine, all_builtins, all_subroutines, animate, boxes, builtins, camera, connecting_object, connection_view, current_scope, dragging_object, dragging_offset, example_programs, execute, get_absolute_nib_position, get_nib_position, height, last, load_implementation, load_state, make_arrow, make_basic_program, make_box, make_connection, make_main, make_nib_view, make_node_view, make_subroutine_view, make_text, mouse_coords, mouse_down, mouse_move, mouse_up, node_registry, obj_first, playground_id, projector, ray_cast_mouse, renderer, scene, schema_version, should_animate, system_arrow, update, valid_json, whitespace_split, width;
-  var __hasProp = Object.prototype.hasOwnProperty, __extends = function(child, parent) {
+  var Builtin, BuiltinApplication, Connection, FunctionApplication, Input, InputError, Literal, Nib, Node, Output, SubRoutine, SubroutineApplication, all_builtins, all_subroutines, animate, boxes, camera, connecting_object, connection_view, current_scope, dragging_object, dragging_offset, eval_expression, example_programs, execute, get_absolute_nib_position, get_nib_position, height, last, load_implementation, load_state, make_arrow, make_basic_program, make_box, make_connection, make_main, make_nib_view, make_node_view, make_subroutine_view, make_text, mouse_coords, mouse_down, mouse_move, mouse_up, node_registry, obj_first, playground_id, projector, ray_cast_mouse, renderer, scene, schema_version, should_animate, system_arrow, update, valid_json, whitespace_split, width;
+  var __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; }, __hasProp = Object.prototype.hasOwnProperty, __extends = function(child, parent) {
     for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; }
     function ctor() { this.constructor = child; }
     ctor.prototype = parent.prototype;
     child.prototype = new ctor;
     child.__super__ = parent.prototype;
     return child;
-  }, __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
+  };
   height = 500;
   width = 500;
   camera = new THREE.OrthographicCamera(0, width, height, 0, -2000, 1000);
@@ -43,247 +43,180 @@
       return update();
     }
   };
-  builtins = {
-    "894652d702c3bb123ce8ed9e2bdcc71b": {
-      name: '+',
-      inputs: ['L', 'R'],
-      outputs: ['R'],
-      output_implementation: function(left, right) {
-        return left() + right();
-      }
-    },
-    "99dc67480b5e5fe8adcab5fc6540c8a0": {
-      name: '-',
-      inputs: ['L', 'R'],
-      outputs: ['R'],
-      output_implementation: function(left, right) {
-        return left() - right();
-      }
-    },
-    "c70ac0c10dcfce8249b937ad164413ec": {
-      name: '*',
-      inputs: ['L', 'R'],
-      outputs: ['R'],
-      output_implementation: function(left, right) {
-        return left() * right();
-      }
-    },
-    "3080574badf11047d6df2ed24f8248df": {
-      name: '/',
-      inputs: ['L', 'R'],
-      outputs: ['R'],
-      output_implementation: function(left, right) {
-        return left() / right();
-      }
-    },
-    "993ad152a2a888f6c0e6a6bd8a1c385a": {
-      name: '<',
-      inputs: ['L', 'R'],
-      outputs: ['R'],
-      output_implementation: function(left, right) {
-        return left() < right();
-      }
-    },
-    "3030973e37ce53b896735a3ad6b369d6": {
-      name: '<=',
-      inputs: ['L', 'R'],
-      outputs: ['R'],
-      output_implementation: function(left, right) {
-        return left() <= right();
-      }
-    },
-    "54e3469201277e5325db02aa56ab5218": {
-      name: '=',
-      inputs: ['L', 'R'],
-      outputs: ['R'],
-      output_implementation: function(left, right) {
-        return left() === right();
-      }
-    },
-    "4d0b2cd39670d8a70ded2c5f7a6fd5be": {
-      name: '>=',
-      inputs: ['L', 'R'],
-      outputs: ['R'],
-      output_implementation: function(left, right) {
-        return left() >= right();
-      }
-    },
-    "68af5453eda7b4c9cbe6a86e12b5fba2": {
-      name: '>',
-      inputs: ['L', 'R'],
-      outputs: ['R'],
-      output_implementation: function(left, right) {
-        return left() > right();
-      }
-    },
-    "29c894a04e219f47477672bedc3ad620": {
-      name: 'if',
-      inputs: ['T', 'C', 'F'],
-      outputs: ['R'],
-      output_implementation: function(true_result, condition, false_result) {
-        if (condition()) {
-          return true_result();
-        } else {
-          return false_result();
-        }
-      }
-    },
-    "be7936fcdcc1fe8c8f1024aa91b475e5": {
-      name: 'prompt',
-      inputs: ['M', 'S'],
-      outputs: ['R', 'S'],
-      memo_implementation: function(message, sequencer) {
-        try {
-          sequencer();
-        } catch (exception) {
-          if (exception !== "NotConnected") {
-            throw exception;
-          }
-        }
-        return prompt(message());
-      },
-      output_implementation: function(message, sequencer, index, memo) {
-        if (index === 0) {
-          return memo;
-        } else {
-          return null;
-        }
-      }
-    },
-    "06b207d17227570db276cd4aaef57a2b": {
-      name: 'funnel',
-      inputs: ['V', 'S'],
-      outputs: ['V'],
-      output_implementation: function(value, sequencer) {
-        try {
-          sequencer();
-        } catch (exception) {
-          if (exception !== "NotConnected") {
-            throw exception;
-          }
-        }
-        return value();
-      }
-    },
-    "51f15a4fe5f0c1bf1e31f63733aa1618": {
-      name: 'log',
-      inputs: ['in'],
-      outputs: ['out'],
-      output_implementation: function(input) {
-        var value;
-        value = input();
-        console.log(value);
-        return value;
-      }
-    },
-    "1baf12a4702a0ecc724592ad8dd285f3": {
-      name: 'exit',
-      inputs: [],
-      outputs: ['R'],
-      output_implementation: function() {
-        throw "Exit";
-      }
-    },
-    "09f91a7ec8fd64baacda01ee70760569": {
-      name: 'replace',
-      inputs: ['text', 'rem', 'ins'],
-      outputs: ['result'],
-      output_implementation: function(text, pattern, replacement) {
-        return text().replace(pattern(), replacement());
-      }
-    },
-    "a612be6f7bae3de3ae2f883bc3f245c4": {
-      name: 'two_outputs',
-      inputs: [],
-      outputs: ['L', 'R'],
-      output_implementation: function(index) {
-        if (index === 0) {
-          return "left";
-        } else {
-          return "right";
-        }
-      }
-    },
-    "a9f07bc7545769b8b8b31a9d7ac77229": {
-      name: 'int',
-      inputs: ['IN'],
-      outputs: ['int'],
-      output_implementation: function(str) {
-        return parseInt(str());
-      }
-    },
-    "7cca8f80ac29c5a1e72c371c574e7414": {
-      name: 'float',
-      inputs: ['IN'],
-      outputs: ['float'],
-      output_implementation: function(str) {
-        return parseFloat(str());
-      }
-    },
-    "b5b3023a4a839ed106882e74923dab88": {
-      name: 'str',
-      inputs: ['IN'],
-      outputs: ['str'],
-      output_implementation: function(obj) {
-        return '' + obj();
-      }
-    },
-    "3827fa434cfc1b71555e0e958633e1ca": {
-      name: 'from json',
-      inputs: ['str'],
-      outputs: ['obj'],
-      output_implementation: function(str) {
-        return JSON.parse(str());
-      }
-    },
-    "aa8c65ccce7abc2c524349c843bb4fc5": {
-      name: 'to json',
-      inputs: ['obj'],
-      outputs: ['str'],
-      output_implementation: function(obj) {
-        return JSON.stringify(obj());
-      }
-    },
-    "9a7d34a3c313a193ba47e747b4ff9132": {
-      name: 'random float',
-      inputs: [],
-      outputs: ['OUT'],
-      output_implementation: function() {
-        return Math.random();
-      }
-    },
-    "325fa3507bac12a3673f2789e12a1e41": {
-      name: 'call',
-      inputs: ['SUB', 'IN'],
-      outputs: ['OUT'],
-      output_implementation: function(subroutine, input) {
-        return subroutine().invoke(0, [input]);
-      }
-    },
-    "9fbdec485d1149e1c24d54f332099247": {
-      name: 'call-n',
-      inputs: ['SUB', 'IN'],
-      outputs: ['OUT'],
-      output_implementation: function(subroutine, inputs) {
-        return subroutine().invoke(0, inputs());
-      }
-    },
-    "0b40d2d29e6df169bc95d854f41ff476": {
-      name: 'cons',
-      inputs: ['LIST', 'ELE'],
-      outputs: ['LIST'],
-      output_implementation: function(list, element) {
-        return list().concat(element());
-      }
-    },
-    "73b5d938605bb060c7ddfa031fe29d46": {
-      name: 'lazy input',
-      inputs: ['IN'],
-      outputs: ['OUT'],
-      output_implementation: function(input) {
-        return input;
-      }
-    }
+  /*
+  example_builtins =
+      "894652d702c3bb123ce8ed9e2bdcc71b":
+          name:'+'
+          inputs:['L','R']
+          outputs:['R']
+          output_implementation: (left, right) -> left() + right()
+      "99dc67480b5e5fe8adcab5fc6540c8a0":
+          name:'-'
+          inputs:['L','R']
+          outputs:['R']
+          output_implementation: (left, right) -> left() - right()
+      "c70ac0c10dcfce8249b937ad164413ec":
+          name:'*'
+          inputs:['L','R']
+          outputs:['R']
+          output_implementation: (left, right) -> left() * right()
+      "3080574badf11047d6df2ed24f8248df":
+          name:'/'
+          inputs:['L','R']
+          outputs:['R']
+          output_implementation: (left, right) -> left() / right()
+  
+      "993ad152a2a888f6c0e6a6bd8a1c385a":
+          name:'<'
+          inputs:['L','R']
+          outputs:['R']
+          output_implementation: (left, right) -> left() < right()
+      "3030973e37ce53b896735a3ad6b369d6":
+          name:'<='
+          inputs:['L','R']
+          outputs:['R']
+          output_implementation: (left, right) -> left() <= right()
+      "54e3469201277e5325db02aa56ab5218":
+          name:'='
+          inputs:['L','R']
+          outputs:['R']
+          output_implementation: (left, right) -> left() is right()
+      "4d0b2cd39670d8a70ded2c5f7a6fd5be":
+          name:'>='
+          inputs:['L','R']
+          outputs:['R']
+          output_implementation: (left, right) -> left() >= right()
+      "68af5453eda7b4c9cbe6a86e12b5fba2":
+          name:'>'
+          inputs:['L','R']
+          outputs:['R']
+          output_implementation: (left, right) -> left() > right()
+  
+      "29c894a04e219f47477672bedc3ad620":
+          name:'if'
+          inputs:['T','C','F']
+          outputs:['R']
+          output_implementation: (true_result, condition, false_result) -> if condition() then true_result() else false_result()
+  
+      "be7936fcdcc1fe8c8f1024aa91b475e5":
+          name:'prompt'
+          inputs:['M','S']
+          outputs:['R','S']
+          memo_implementation: (message, sequencer) ->
+              try
+                  sequencer()
+              catch exception
+                  if exception isnt "NotConnected"
+                      throw exception
+   
+              return prompt message()
+              
+          output_implementation: (message, sequencer, index, memo) ->
+              if index is 0
+                  return memo
+              else
+                  return null
+   
+      "06b207d17227570db276cd4aaef57a2b":
+           name:'funnel'
+           inputs:['V','S']
+           outputs:['V']
+           output_implementation: (value, sequencer) ->
+               try
+                   sequencer()
+               catch exception
+                   if exception isnt "NotConnected"
+                       throw exception
+   
+               return value()
+  
+      "51f15a4fe5f0c1bf1e31f63733aa1618":
+          name:'log'
+          inputs:['in']
+          outputs:['out']
+          output_implementation: (input) ->
+              value = input()
+              console.log value
+              return value
+  
+      "1baf12a4702a0ecc724592ad8dd285f3":
+          name:'exit'
+          inputs:[]
+          outputs:['R']
+          output_implementation: -> throw "Exit"
+  
+      "09f91a7ec8fd64baacda01ee70760569":
+          name:'replace'
+          inputs:['text','rem','ins']
+          outputs:['result']
+          output_implementation: (text, pattern, replacement) -> text().replace pattern(), replacement()
+  
+      "a612be6f7bae3de3ae2f883bc3f245c4":
+          name:'two_outputs'
+          inputs:[]
+          outputs:['L','R']
+          output_implementation: (index) -> if index is 0 then "left" else "right"
+  
+      "a9f07bc7545769b8b8b31a9d7ac77229":
+          name:'int'
+          inputs:['IN']
+          outputs:['int']
+          output_implementation: (str) -> parseInt str()
+      "7cca8f80ac29c5a1e72c371c574e7414":
+          name:'float'
+          inputs:['IN']
+          outputs:['float']
+          output_implementation: (str) -> parseFloat str()
+      "b5b3023a4a839ed106882e74923dab88":
+          name:'str'
+          inputs:['IN']
+          outputs:['str']
+          output_implementation: (obj) -> ''+ obj()
+      "3827fa434cfc1b71555e0e958633e1ca":
+          name:'from json'
+          inputs:['str']
+          outputs:['obj']
+          output_implementation: (str) -> JSON.parse str()
+      "aa8c65ccce7abc2c524349c843bb4fc5":
+          name:'to json'
+          inputs:['obj']
+          outputs:['str']
+          output_implementation: (obj) -> JSON.stringify obj()
+  
+      "9a7d34a3c313a193ba47e747b4ff9132":
+          name:'random float'
+          inputs:[]
+          outputs:['OUT']
+          output_implementation: -> Math.random()
+  
+      "325fa3507bac12a3673f2789e12a1e41":
+          name:'call'
+          inputs:['SUB','IN']
+          outputs:['OUT']
+          output_implementation: (subroutine, input) ->
+              subroutine().invoke 0, [input]
+  
+      "9fbdec485d1149e1c24d54f332099247":
+          name:'call-n'
+          inputs:['SUB','IN']
+          outputs:['OUT']
+          output_implementation: (subroutine, inputs) ->
+              subroutine().invoke 0, inputs()
+  
+      "0b40d2d29e6df169bc95d854f41ff476":
+          name:'cons'
+          inputs:['LIST','ELE']
+          outputs:['LIST']
+          output_implementation: (list, element) -> list().concat element()
+              
+      "73b5d938605bb060c7ddfa031fe29d46":
+          name:'lazy input'
+          inputs:['IN']
+          outputs:['OUT']
+          output_implementation: (input) -> input
+  */
+  eval_expression = function(expression) {
+    return eval("(" + expression + ")");
   };
   /* MODELS */
   Builtin = (function() {
@@ -310,8 +243,6 @@
       } else {
         this.id = UUID();
       };
-      this.output_function = eval("(" + this.output_implementation + ")");
-      this.memo_function = eval("(" + this.memo_implementation + ")");
       all_builtins[this.id] = this;
     }
     Builtin.prototype.toJSON = function() {
@@ -325,6 +256,7 @@
       };
     };
     Builtin.prototype["export"] = function() {
+      var builtins;
       builtins = {};
       builtins[this.id] = this;
       return {
@@ -428,9 +360,9 @@
       return _results;
     };
     SubRoutine.prototype.run = function(output_index, input_values) {
-      return execute(function() {
+      return execute(__bind(function() {
         return this.invoke(output_index, input_values);
-      });
+      }, this));
     };
     SubRoutine.prototype["export"] = function() {
       var dependencies;
@@ -512,46 +444,40 @@
     return Node;
   })();
   FunctionApplication = (function() {
-    function FunctionApplication(position, text, information, id) {
-      var index, text;
-      this.position = position;
-      this.text = text;
-      this.id = id != null ? id : UUID();
-      if (information.definition instanceof SubRoutine) {
-        this.subroutine = information.definition;
-        this.implementation = this.subroutine;
-        this.type = 'function';
-      } else {
-        this.value = information.definition;
-        this.implementation = information;
-        this.memo = information.memo;
-        this.type = 'builtin';
-      }
+    function FunctionApplication(_arg) {
+      var index, inputs, name, outputs, text;
+      name = _arg.name, inputs = _arg.inputs, outputs = _arg.outputs;
+      this.text = name;
       FunctionApplication.__super__.constructor.call(this);
       this.inputs = (function() {
-        var _len, _ref, _results;
-        _ref = information.inputs;
+        var _len, _results;
         _results = [];
-        for (index = 0, _len = _ref.length; index < _len; index++) {
-          text = _ref[index];
-          _results.push(new Input(this, text, index, information.inputs.length - 1));
+        for (index = 0, _len = inputs.length; index < _len; index++) {
+          text = inputs[index];
+          _results.push(new Input(this, text, index, inputs.length - 1));
         }
         return _results;
       }).call(this);
       this.outputs = (function() {
-        var _len, _ref, _results;
-        _ref = information.outputs;
+        var _len, _results;
         _results = [];
-        for (index = 0, _len = _ref.length; index < _len; index++) {
-          text = _ref[index];
-          _results.push(new Output(this, text, index, information.outputs.length - 1));
+        for (index = 0, _len = outputs.length; index < _len; index++) {
+          text = outputs[index];
+          _results.push(new Output(this, text, index, outputs.length - 1));
         }
         return _results;
       }).call(this);
     }
     __extends(FunctionApplication, Node);
-    FunctionApplication.prototype.evaluation = function(the_scope, output_index) {
-      var args, input, input_values, _fn, _i, _len, _ref;
+    FunctionApplication.prototype.evaluation = function(the_scope, output_index) {};
+    FunctionApplication.prototype.toJSON = function() {
+      var json;
+      json = FunctionApplication.__super__.toJSON.call(this);
+      json.implementation_id = this.implementation.id;
+      return json;
+    };
+    FunctionApplication.prototype.virtual_inputs = function(the_scope) {
+      var input, input_values, _fn, _i, _len, _ref;
       input_values = [];
       _ref = this.inputs;
       _fn = function(input) {
@@ -572,23 +498,29 @@
         input = _ref[_i];
         _fn(input);
       }
-      if (this.subroutine != null) {
-        return this.subroutine.invoke(output_index, input_values);
-      } else {
-        args = input_values.concat([output_index]);
-        if (this.memo && !(this.id in the_scope.memos)) {
-          the_scope.memos[this.id] = this.memo.apply(this, args);
-        }
-        return this.value.apply(this, args.concat([the_scope.memos[this.id]]));
-      }
+      return input_values;
     };
-    FunctionApplication.prototype.toJSON = function() {
-      var json;
-      json = FunctionApplication.__super__.toJSON.call(this);
-      json.implementation_id = this.implementation.id;
-      return json;
+    return FunctionApplication;
+  })();
+  SubroutineApplication = (function() {
+    function SubroutineApplication(position, implementation, id) {
+      this.position = position;
+      this.implementation = implementation;
+      this.id = id != null ? id : UUID();
+      this.type = 'function';
+      SubroutineApplication.__super__.constructor.call(this, {
+        name: this.implementation.name,
+        inputs: this.implementation.get_inputs(),
+        outputs: this.implementation.get_outputs()
+      });
+    }
+    __extends(SubroutineApplication, FunctionApplication);
+    SubroutineApplication.prototype.evaluation = function(the_scope, output_index) {
+      var input_values;
+      input_values = this.virtual_inputs(the_scope);
+      return this.implementation.invoke(output_index, input_values);
     };
-    FunctionApplication.prototype.subroutines_referenced = function() {
+    SubroutineApplication.prototype.subroutines_referenced = function() {
       var input, parent, results, resuts, _i, _len, _ref, _ref2;
       results = [];
       _ref = this.inputs;
@@ -604,7 +536,31 @@
       }
       return results;
     };
-    return FunctionApplication;
+    return SubroutineApplication;
+  })();
+  BuiltinApplication = (function() {
+    function BuiltinApplication(position, implementation, id) {
+      this.position = position;
+      this.implementation = implementation;
+      this.id = id != null ? id : UUID();
+      this.type = 'builtin';
+      BuiltinApplication.__super__.constructor.call(this, this.implementation);
+    }
+    __extends(BuiltinApplication, FunctionApplication);
+    BuiltinApplication.prototype.evaluation = function(the_scope, output_index) {
+      var args, input_values, memo_function, output_function;
+      input_values = this.virtual_inputs(the_scope);
+      if (this.implementation.memo_implementation) {
+        memo_function = eval_expression(this.implementation.memo_implementation);
+      }
+      output_function = eval_expression(this.implementation.output_implementation);
+      args = input_values.concat([output_index]);
+      if (memo_function && !(this.id in the_scope.memos)) {
+        the_scope.memos[this.id] = memo_function.apply(null, args);
+      }
+      return output_function.apply(null, args.concat([the_scope.memos[this.id]]));
+    };
+    return BuiltinApplication;
   })();
   Literal = (function() {
     function Literal(position, text, value, id) {
@@ -1059,14 +1015,10 @@
       return this.literal_text = '';
     }, this);
     this.use_builtin = __bind(function(builtin) {
-      return new FunctionApplication(V(0, 0), builtin.name, builtin);
+      return new BuiltinApplication(V(0, 0), builtin);
     }, this);
     this.use_subroutine = __bind(function(subroutine) {
-      return new FunctionApplication(V(0, 0), subroutine.name, {
-        inputs: subroutine.get_inputs(),
-        outputs: subroutine.get_outputs(),
-        definition: subroutine
-      });
+      return new SubroutineApplication(V(0, 0), subroutine);
     }, this);
     this.use_subroutine_value = __bind(function(subroutine) {
       return new Literal(V(0, 0), subroutine.name, subroutine);
@@ -1131,7 +1083,7 @@
       }
     }, this);
     this.run_builtin = __bind(function(builtin, output_index) {
-      return execute(function() {
+      return execute(__bind(function() {
         var args, input, input_index, input_values, memo, result, _fn, _len, _ref;
         input_values = [];
         _ref = builtin.inputs;
@@ -1148,7 +1100,7 @@
         memo = typeof builtin.memo_function === "function" ? builtin.memo_function.apply(builtin, args) : void 0;
         result = builtin.output_function.apply(builtin, args.concat([memo]));
         return result;
-      });
+      }, this));
     }, this);
     this.edit_builtin = __bind(function(builtin) {
       teardown_field();
@@ -1200,7 +1152,7 @@
     }
   };
   load_state = function(data) {
-    var builtin, builtin_data, id, subroutine, subroutine_data, subroutines, _ref, _ref2;
+    var builtin, builtin_data, builtins, id, subroutine, subroutine_data, subroutines, _ref, _ref2;
     subroutines = {};
     builtins = {};
     _ref = data.builtins;
@@ -1238,7 +1190,7 @@
     return c3 = plus.outputs[0].connect(current_scope.outputs[0]);
   };
   load_implementation = function(data) {
-    var connection, information, name, node, position, sink, sink_connector, source, source_connector, sub_subroutine, value, _i, _j, _len, _len2, _ref, _ref2, _results;
+    var builtin, connection, node, position, sink, sink_connector, source, source_connector, sub_subroutine, value, _i, _j, _len, _len2, _ref, _ref2, _results;
     _ref = data.nodes;
     for (_i = 0, _len = _ref.length; _i < _len; _i++) {
       node = _ref[_i];
@@ -1248,15 +1200,10 @@
         if (!sub_subroutine) {
           console.log("Oh no, subroutine wasn't loaded yet");
         }
-        new FunctionApplication(position, sub_subroutine.name, {
-          inputs: sub_subroutine.get_inputs(),
-          outputs: sub_subroutine.get_outputs(),
-          definition: sub_subroutine
-        }, node.id);
+        new SubroutineApplication(position, sub_subroutine, node.id);
       } else if (node.type === 'builtin') {
-        information = builtins[node.implementation_id];
-        name = information.name;
-        new FunctionApplication(position, name, information, node.id);
+        builtin = all_builtins[node.implementation_id];
+        new BuiltinApplication(position, builtin, node.id);
       } else if (node.type === 'literal') {
         if ('implementation_id' in node) {
           sub_subroutine = all_subroutines[node.implementation_id];

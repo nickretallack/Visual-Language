@@ -31,7 +31,8 @@ animate = ->
     requestAnimationFrame animate
     update() if should_animate
 
-builtins =
+###
+example_builtins =
     "894652d702c3bb123ce8ed9e2bdcc71b":
         name:'+'
         inputs:['L','R']
@@ -201,7 +202,9 @@ builtins =
         inputs:['IN']
         outputs:['OUT']
         output_implementation: (input) -> input
+###
 
+eval_expression = (expression) -> eval "(#{expression})"
         
 ### MODELS ###
 
@@ -211,9 +214,6 @@ class Builtin
         @inputs ?= []
         @outputs ?= ['OUT']
         @id ?= UUID()
-
-        @output_function = eval "(#{@output_implementation})"
-        @memo_function = eval "(#{@memo_implementation})"
         all_builtins[@id] = @
 
     toJSON: ->
@@ -282,7 +282,7 @@ class SubRoutine
     get_outputs: -> (output.text for output in @outputs)
 
     run: (output_index, input_values) ->
-        execute -> @invoke(output_index, input_values)
+        execute => @invoke(output_index, input_values)
 
     export: ->
         dependencies = @get_dependencies()
@@ -306,7 +306,7 @@ class SubRoutine
                 resuts = results.concat parent.subroutines_referenced()
         return results
     
-class Node
+class Node # Abstract
     constructor: ->
         node_registry[@id] = @
         @scope = current_scope
@@ -331,23 +331,21 @@ class Node
         id:@id
         type:@type
 
-class FunctionApplication extends Node
-    constructor:(@position, @text, information, @id=UUID()) ->
-        if information.definition instanceof SubRoutine
-            @subroutine = information.definition
-            @implementation = @subroutine
-            @type = 'function'
-        else
-            @value = information.definition
-            @implementation = information
-            @memo = information.memo
-            @type = 'builtin'
-
+class FunctionApplication extends Node # Abstract
+    constructor:({name, inputs, outputs}) ->
+        @text = name
         super()
-        @inputs = (new Input @, text, index, information.inputs.length-1 for text, index in information.inputs)
-        @outputs = (new Output @, text, index, information.outputs.length-1 for text, index in information.outputs)
+        @inputs = (new Input @, text, index, inputs.length-1 for text, index in inputs)
+        @outputs = (new Output @, text, index, outputs.length-1 for text, index in outputs)
 
     evaluation: (the_scope, output_index) ->
+
+    toJSON: ->
+        json = super()
+        json.implementation_id = @implementation.id
+        json
+
+    virtual_inputs: (the_scope) ->
         input_values = []
         for input in @inputs
             do (input) ->
@@ -358,19 +356,19 @@ class FunctionApplication extends Node
                         return the_scope.inputs[output.index]()
                     else if output.parent instanceof Node
                         return output.parent.evaluation the_scope, output.index
+        return input_values
+        
+class SubroutineApplication extends FunctionApplication
+    constructor:(@position, @implementation, @id=UUID()) ->
+        @type = 'function'
+        super
+            name:@implementation.name
+            inputs:@implementation.get_inputs()
+            outputs:@implementation.get_outputs()
 
-        if @subroutine?
-            return @subroutine.invoke output_index, input_values
-        else
-            args = (input_values.concat [output_index])
-            if @memo and @id not of the_scope.memos
-                the_scope.memos[@id] = @memo args...
-            return @value (args.concat [the_scope.memos[@id]])...
-
-    toJSON: ->
-        json = super()
-        json.implementation_id = @implementation.id
-        json
+    evaluation: (the_scope, output_index) ->
+        input_values = @virtual_inputs the_scope
+        return @implementation.invoke output_index, input_values
 
     subroutines_referenced: ->
         results = []
@@ -381,6 +379,20 @@ class FunctionApplication extends Node
                 resuts = results.concat parent.subroutines_referenced()
         return results
         
+class BuiltinApplication extends FunctionApplication
+    constructor:(@position, @implementation, @id=UUID()) ->
+        @type = 'builtin'
+        super @implementation
+        
+    evaluation: (the_scope, output_index) ->
+        input_values = @virtual_inputs the_scope
+        memo_function = eval_expression @implementation.memo_implementation if @implementation.memo_implementation
+        output_function = eval_expression @implementation.output_implementation
+
+        args = (input_values.concat [output_index])
+        if memo_function and @id not of the_scope.memos
+            the_scope.memos[@id] = memo_function args...
+        return output_function (args.concat [the_scope.memos[@id]])...
 
 class Literal extends Node
     constructor:(@position, @text, @value, @id=UUID()) ->
@@ -717,13 +729,10 @@ window.Controller = ->
         @literal_text = ''
 
     @use_builtin = (builtin) =>
-        new FunctionApplication V(0,0), builtin.name, builtin
+        new BuiltinApplication V(0,0), builtin
 
     @use_subroutine = (subroutine) =>
-        new FunctionApplication V(0,0), subroutine.name,
-            inputs:subroutine.get_inputs()
-            outputs:subroutine.get_outputs()
-            definition:subroutine
+        new SubroutineApplication V(0,0), subroutine
 
     @use_subroutine_value = (subroutine) =>
         new Literal V(0,0), subroutine.name, subroutine
@@ -772,7 +781,7 @@ window.Controller = ->
                 throw exception
 
     @run_builtin = (builtin, output_index) =>
-        execute ->
+        execute =>
             input_values = []
             for input, input_index in builtin.inputs
                 do (input_index, input) ->
@@ -864,15 +873,10 @@ load_implementation = (data) ->
         if node.type is 'function'
             sub_subroutine = all_subroutines[node.implementation_id]
             console.log "Oh no, subroutine wasn't loaded yet" unless sub_subroutine
-            new FunctionApplication position, sub_subroutine.name,
-                inputs:sub_subroutine.get_inputs()
-                outputs:sub_subroutine.get_outputs()
-                definition:sub_subroutine
-            , node.id
+            new SubroutineApplication position, sub_subroutine, node.id
         else if node.type is 'builtin'
-            information = builtins[node.implementation_id]
-            name = information.name
-            new FunctionApplication position, name, information, node.id
+            builtin = all_builtins[node.implementation_id]
+            new BuiltinApplication position, builtin, node.id
         else if node.type is 'literal'
             if 'implementation_id' of node
                 sub_subroutine = all_subroutines[node.implementation_id]
