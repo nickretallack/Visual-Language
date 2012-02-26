@@ -454,6 +454,22 @@
       }
       return results;
     };
+    SubRoutine.prototype.remove_node = function(node) {
+      this.view.remove(node.view);
+      return delete this.nodes[node.id];
+    };
+    SubRoutine.prototype.add_node = function(node) {
+      this.view.add(node.view);
+      return this.nodes[node.id] = node;
+    };
+    SubRoutine.prototype.remove_connection = function(connection) {
+      this.view.remove(connection.view);
+      return delete this.connections[connection.id];
+    };
+    SubRoutine.prototype.add_connection = function(connection) {
+      this.view.add(connection.view);
+      return this.connections[connection.id] = connection;
+    };
     return SubRoutine;
   })();
   Node = (function() {
@@ -1123,13 +1139,70 @@
       scene.add(subroutine.view);
       return setTimeout(init_field);
     }, this);
+    this.delete_subroutine = __bind(function(subroutine) {
+      if (subroutine.id === current_scope.id) {
+        hide_subroutines();
+      }
+      return delete this.subroutines[subroutine.id];
+    }, this);
     this.add_subroutine = __bind(function() {
-      var subroutine;
+      var connection, contained_connections, id, in_connections, nib, node, out_connections, subroutine, _ref, _ref2, _ref3, _ref4;
       subroutine = new SubRoutine(this.new_subroutine.name, this.new_subroutine.inputs, this.new_subroutine.outputs);
+      in_connections = {};
+      out_connections = {};
+      for (id in highlighted_objects) {
+        node = highlighted_objects[id];
+        _ref = node.inputs;
+        for (id in _ref) {
+          nib = _ref[id];
+          _ref2 = nib.connections;
+          for (id in _ref2) {
+            connection = _ref2[id];
+            in_connections[connection.connection.id] = connection.connection;
+          }
+        }
+        _ref3 = node.outputs;
+        for (id in _ref3) {
+          nib = _ref3[id];
+          _ref4 = nib.connections;
+          for (id in _ref4) {
+            connection = _ref4[id];
+            out_connections[connection.connection.id] = connection.connection;
+          }
+        }
+      }
+      contained_connections = {};
+      for (id in in_connections) {
+        connection = in_connections[id];
+        if (connection.id in out_connections) {
+          contained_connections[connection.id] = connection;
+          delete in_connections[connection.id];
+          delete out_connections[connection.id];
+        }
+      }
+      for (id in contained_connections) {
+        connection = contained_connections[id];
+        current_scope.remove_connection(connection);
+        subroutine.add_connection(connection);
+      }
+      for (id in in_connections) {
+        connection = in_connections[id];
+        connection["delete"]();
+      }
+      for (id in out_connections) {
+        connection = out_connections[id];
+        connection["delete"]();
+      }
+      for (id in highlighted_objects) {
+        node = highlighted_objects[id];
+        current_scope.remove_node(node);
+        subroutine.add_node(node);
+      }
       this.subroutines[subroutine.id] = subroutine;
       this.new_subroutine = angular.copy(this.initial_subroutine);
       this.new_subroutine.inputs = [];
-      return this.new_subroutine.outputs = [];
+      this.new_subroutine.outputs = [];
+      return this.edit_subroutine(subroutine);
     }, this);
     this.add_builtin = __bind(function() {
       var builtin;
@@ -1210,26 +1283,20 @@
       return localStorage.state = JSON.stringify(state);
     }, this);
     this.builtins = all_builtins;
+    system_arrow = make_arrow(V(0, 0), V(1, 0), false);
     if (localStorage.state != null) {
       data = JSON.parse(localStorage.state);
-      try {
-        loaded_state = load_state(data);
-        this.builtins = loaded_state.builtins;
-        this.subroutines = loaded_state.subroutines;
-        current_scope = obj_first(this.subroutines);
-        if (current_scope) {
-          this.edit_subroutine(current_scope);
-        }
-        save_timer = setInterval(save_state, 1000);
-      } catch (exception) {
-        setTimeout(function() {
-          throw exception;
-        });
+      loaded_state = load_state(data);
+      this.builtins = loaded_state.builtins;
+      this.subroutines = loaded_state.subroutines;
+      current_scope = obj_first(this.subroutines);
+      if (current_scope) {
+        this.edit_subroutine(current_scope);
       }
+      return save_timer = setInterval(save_state, 1000);
     } else {
-      this.load_example_programs();
+      return this.load_example_programs();
     }
-    return system_arrow = make_arrow(V(0, 0), V(1, 0), false);
   };
   execute = function(routine) {
     try {

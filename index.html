@@ -46,6 +46,7 @@ Output Implementation:
 <ul><li ng:repeat="(id, subroutine) in subroutines">
     <a ng:click="edit_subroutine(subroutine)">edit</a>
     <a ng:click="export_subroutine(subroutine)">export</a>
+    <a ng:click="delete_subroutine(subroutine)">delete</a>
     <a ng:show="edit_mode == 'subroutine'" ng:click="use_subroutine(subroutine)">use</a>
     <a ng:show="edit_mode == 'subroutine'" ng:click="use_subroutine_value(subroutine)">value</a>
     <span class="name">{{subroutine.name}}</span>

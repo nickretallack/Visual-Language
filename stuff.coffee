@@ -327,6 +327,22 @@ class SubRoutine
                 results.push parent.id if parent.type is 'function'
                 resuts = results.concat parent.subroutines_referenced()
         return results
+
+    remove_node: (node) ->
+        @view.remove node.view
+        delete @nodes[node.id]
+
+    add_node: (node) ->
+        @view.add node.view
+        @nodes[node.id] = node
+        
+    remove_connection: (connection) ->
+        @view.remove connection.view
+        delete @connections[connection.id]
+
+    add_connection: (connection) ->
+        @view.add connection.view
+        @connections[connection.id] = connection
     
 class Node # Abstract
     constructor: ->
@@ -803,12 +819,55 @@ window.Controller = ->
         scene.add subroutine.view
         setTimeout init_field
 
+    @delete_subroutine = (subroutine) =>
+        if subroutine.id is current_scope.id
+            hide_subroutines()
+        delete @subroutines[subroutine.id]
+
     @add_subroutine = =>
         subroutine = new SubRoutine @new_subroutine.name, @new_subroutine.inputs, @new_subroutine.outputs
+
+        # first find all the connections
+        in_connections = {}
+        out_connections = {}
+        for id, node of highlighted_objects
+            for id, nib of node.inputs
+                for id, connection of nib.connections
+                    in_connections[connection.connection.id] = connection.connection
+            for id, nib of node.outputs
+                for id, connection of nib.connections
+                    out_connections[connection.connection.id] = connection.connection
+
+        # see which ones are contained in the system
+        contained_connections = {}
+        for id, connection of in_connections
+            if connection.id of out_connections
+                contained_connections[connection.id] = connection
+                delete in_connections[connection.id]
+                delete out_connections[connection.id]
+
+        # move the contained ones
+        for id, connection of contained_connections
+            current_scope.remove_connection connection
+            subroutine.add_connection connection
+        
+        # clip the others
+        for id, connection of in_connections
+            connection.delete()
+
+        for id, connection of out_connections
+            connection.delete()
+
+        # move the nodes
+        for id, node of highlighted_objects
+            current_scope.remove_node node
+            subroutine.add_node node
+
         @subroutines[subroutine.id] = subroutine
         @new_subroutine = angular.copy @initial_subroutine
         @new_subroutine.inputs = []
         @new_subroutine.outputs = []
+        @edit_subroutine subroutine
 
     @add_builtin = =>
         builtin = new Builtin {}
@@ -865,22 +924,22 @@ window.Controller = ->
         localStorage.state = JSON.stringify state
 
     @builtins = all_builtins
+    system_arrow = make_arrow V(0,0), V(1,0), false
 
     if localStorage.state?
         data = JSON.parse localStorage.state
-        try
-            loaded_state = load_state data
-            @builtins = loaded_state.builtins
-            @subroutines = loaded_state.subroutines
-            current_scope = obj_first @subroutines
-            @edit_subroutine current_scope if current_scope
-            save_timer = setInterval save_state, 1000
-        catch exception
-            setTimeout -> throw exception # don't break this execution thread because of a loading exception
+        #try
+        loaded_state = load_state data
+        @builtins = loaded_state.builtins
+        @subroutines = loaded_state.subroutines
+        current_scope = obj_first @subroutines
+        @edit_subroutine current_scope if current_scope
+        save_timer = setInterval save_state, 1000
+        #catch exception
+        #    setTimeout -> throw exception # don't break this execution thread because of a loading exception
     else
         @load_example_programs()
 
-    system_arrow = make_arrow V(0,0), V(1,0), false
 
 execute = (routine) ->
     try
