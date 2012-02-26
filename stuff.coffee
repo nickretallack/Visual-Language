@@ -729,7 +729,8 @@ valid_json = (json) ->
             return alert "#{exception} Invalid JSON: #{json}"
         else
             throw exception
-    
+
+pretty_json = (obj) -> JSON.stringify obj, undefined, 2
 
 window.Controller = ->
 
@@ -751,6 +752,9 @@ window.Controller = ->
         for index, subroutine of @subroutines
             scene.remove subroutine.view
 
+    saving = false
+    start_saving = -> setInterval save_state, 500 if not saving
+
     @edit_mode = null
     @editing_builtin = null
     @import_export_text = ''
@@ -760,6 +764,7 @@ window.Controller = ->
         hide_subroutines()
         import_source @import_export_text
         @edit_subroutine current_scope if current_scope
+        start_saving()
 
     import_source = (source) =>
         data = load_state valid_json source
@@ -774,19 +779,20 @@ window.Controller = ->
             import_source source
         current_scope = @subroutines[playground_id]
         scene.add current_scope.view
+        start_saving()
 
     @export_all = ->
         data =
             subroutines:@subroutines
             builtins:@builtins
             schema_version:schema_version
-        @import_export_text = JSON.stringify data
+        @import_export_text = pretty_json data
 
     @export_subroutine = (subroutine) =>
-        @import_export_text = JSON.stringify subroutine.export()
+        @import_export_text = pretty_json subroutine.export()
 
     @export_builtin = (builtin) =>
-        @import_export_text = JSON.stringify builtin.export()
+        @import_export_text = pretty_json builtin.export()
 
     @revert = ->
         hide_subroutines()
@@ -944,19 +950,23 @@ window.Controller = ->
     system_arrow = make_arrow V(0,0), V(1,0), false
 
     if localStorage.state?
-        data = JSON.parse localStorage.state
-        try
+        dissociate_exception =>
+            data = JSON.parse localStorage.state
             loaded_state = load_state data
             @builtins = loaded_state.builtins
             @subroutines = loaded_state.subroutines
             current_scope = obj_first @subroutines
             @edit_subroutine current_scope if current_scope
-            save_timer = setInterval save_state, 1000
-        catch exception
-            setTimeout -> throw exception # don't break this execution thread because of a loading exception
+            start_saving()
     else
         @load_example_programs()
 
+dissociate_exception = (procedure) ->
+    try
+        procedure()
+    catch exception
+        setTimeout -> throw exception # don't break this execution thread because of a loading exception
+    
 
 execute = (routine) ->
     try

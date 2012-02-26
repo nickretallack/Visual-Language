@@ -1,5 +1,5 @@
 (function() {
-  var Builtin, BuiltinApplication, BuiltinSyntaxError, Connection, Exit, FunctionApplication, Input, InputError, Literal, Nib, Node, NotConnected, NotImplemented, Output, RuntimeException, SubRoutine, SubroutineApplication, all_builtins, all_subroutines, animate, boxes, camera, connecting_object, connection_view, current_scope, dragging_object, dragging_offset, eval_expression, example_programs, execute, get_absolute_nib_position, get_nib_position, height, highlight, highlighted_node_material, highlighted_objects, ignore_if_disconnected, last, load_implementation, load_state, make_arrow, make_basic_program, make_box, make_connection, make_main, make_nib_view, make_node_view, make_subroutine_view, make_text, mouse_coords, mouse_down, mouse_move, mouse_up, node_material, node_registry, obj_first, playground_id, projector, ray_cast_mouse, renderer, scene, schema_version, should_animate, subroutine_material, system_arrow, unhighlight, unhighlight_all, update, valid_json, whitespace_split, width;
+  var Builtin, BuiltinApplication, BuiltinSyntaxError, Connection, Exit, FunctionApplication, Input, InputError, Literal, Nib, Node, NotConnected, NotImplemented, Output, RuntimeException, SubRoutine, SubroutineApplication, all_builtins, all_subroutines, animate, boxes, camera, connecting_object, connection_view, current_scope, dissociate_exception, dragging_object, dragging_offset, eval_expression, example_programs, execute, get_absolute_nib_position, get_nib_position, height, highlight, highlighted_node_material, highlighted_objects, ignore_if_disconnected, last, load_implementation, load_state, make_arrow, make_basic_program, make_box, make_connection, make_main, make_nib_view, make_node_view, make_subroutine_view, make_text, mouse_coords, mouse_down, mouse_move, mouse_up, node_material, node_registry, obj_first, playground_id, pretty_json, projector, ray_cast_mouse, renderer, scene, schema_version, should_animate, subroutine_material, system_arrow, unhighlight, unhighlight_all, update, valid_json, whitespace_split, width;
   var __hasProp = Object.prototype.hasOwnProperty, __extends = function(child, parent) {
     for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; }
     function ctor() { this.constructor = child; }
@@ -1024,8 +1024,11 @@
       }
     }
   };
+  pretty_json = function(obj) {
+    return JSON.stringify(obj, void 0, 2);
+  };
   window.Controller = function() {
-    var data, hide_subroutines, import_source, init_field, loaded_state, save_state, save_timer, teardown_field;
+    var hide_subroutines, import_source, init_field, save_state, saving, start_saving, teardown_field;
     init_field = function() {
       var field;
       if (!should_animate) {
@@ -1054,6 +1057,12 @@
       }
       return _results;
     }, this);
+    saving = false;
+    start_saving = function() {
+      if (!saving) {
+        return setInterval(save_state, 500);
+      }
+    };
     this.edit_mode = null;
     this.editing_builtin = null;
     this.import_export_text = '';
@@ -1063,8 +1072,9 @@
       hide_subroutines();
       import_source(this.import_export_text);
       if (current_scope) {
-        return this.edit_subroutine(current_scope);
+        this.edit_subroutine(current_scope);
       }
+      return start_saving();
     };
     import_source = __bind(function(source) {
       var builtin, data, id, subroutine, _ref, _ref2, _results;
@@ -1090,7 +1100,8 @@
         import_source(source);
       }
       current_scope = this.subroutines[playground_id];
-      return scene.add(current_scope.view);
+      scene.add(current_scope.view);
+      return start_saving();
     }, this);
     this.export_all = function() {
       var data;
@@ -1099,13 +1110,13 @@
         builtins: this.builtins,
         schema_version: schema_version
       };
-      return this.import_export_text = JSON.stringify(data);
+      return this.import_export_text = pretty_json(data);
     };
     this.export_subroutine = __bind(function(subroutine) {
-      return this.import_export_text = JSON.stringify(subroutine["export"]());
+      return this.import_export_text = pretty_json(subroutine["export"]());
     }, this);
     this.export_builtin = __bind(function(builtin) {
-      return this.import_export_text = JSON.stringify(builtin["export"]());
+      return this.import_export_text = pretty_json(builtin["export"]());
     }, this);
     this.revert = function() {
       hide_subroutines();
@@ -1307,8 +1318,9 @@
     this.builtins = all_builtins;
     system_arrow = make_arrow(V(0, 0), V(1, 0), false);
     if (localStorage.state != null) {
-      data = JSON.parse(localStorage.state);
-      try {
+      return dissociate_exception(__bind(function() {
+        var data, loaded_state;
+        data = JSON.parse(localStorage.state);
         loaded_state = load_state(data);
         this.builtins = loaded_state.builtins;
         this.subroutines = loaded_state.subroutines;
@@ -1316,14 +1328,19 @@
         if (current_scope) {
           this.edit_subroutine(current_scope);
         }
-        return save_timer = setInterval(save_state, 1000);
-      } catch (exception) {
-        return setTimeout(function() {
-          throw exception;
-        });
-      }
+        return start_saving();
+      }, this));
     } else {
       return this.load_example_programs();
+    }
+  };
+  dissociate_exception = function(procedure) {
+    try {
+      return procedure();
+    } catch (exception) {
+      return setTimeout(function() {
+        throw exception;
+      });
     }
   };
   execute = function(routine) {
