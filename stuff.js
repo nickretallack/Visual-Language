@@ -1250,7 +1250,7 @@
     }, this);
     this.run_builtin = __bind(function(builtin, output_index) {
       return execute(__bind(function() {
-        var args, input, input_index, input_values, memo, result, _fn, _len, _ref;
+        var args, input, input_index, input_values, memo, memo_function, output_function, the_scope, _fn, _len, _ref;
         input_values = [];
         _ref = builtin.inputs;
         _fn = function(input_index, input) {
@@ -1262,10 +1262,27 @@
           input = _ref[input_index];
           _fn(input_index, input);
         }
+        the_scope = {
+          memos: {}
+        };
+        try {
+          memo_function = eval_expression(builtin.memo_implementation);
+          output_function = eval_expression(builtin.output_implementation);
+        } catch (exception) {
+          if (exception instanceof SyntaxError) {
+            throw new BuiltinSyntaxError(builtin.text, exception);
+          } else {
+            throw exception;
+          }
+        }
+        if (!output_function) {
+          throw new NotImplemented(builtin.text);
+        }
         args = input_values.concat([output_index]);
-        memo = typeof builtin.memo_function === "function" ? builtin.memo_function.apply(builtin, args) : void 0;
-        result = builtin.output_function.apply(builtin, args.concat([memo]));
-        return result;
+        if (memo_function) {
+          memo = memo_function.apply(null, args);
+        }
+        return output_function.apply(null, args.concat([memo]));
       }, this));
     }, this);
     this.edit_builtin = __bind(function(builtin) {

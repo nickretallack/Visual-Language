@@ -434,7 +434,7 @@ class BuiltinApplication extends FunctionApplication
 
         throw new NotImplemented @text unless output_function
 
-        args = (input_values.concat [output_index])
+        args = input_values.concat [output_index]
         if memo_function and @id not of the_scope.memos
             the_scope.memos[@id] = memo_function args...
         return output_function (args.concat [the_scope.memos[@id]])...
@@ -905,10 +905,22 @@ window.Controller = ->
                     input_values.push ->
                         valid_json prompt "Provide a JSON value for input #{input_index}: \"#{input}\""
 
+            the_scope = memos:{}
+
+            # lifted from evaluation.  TODO: add to builtin class
+            try
+                memo_function = eval_expression builtin.memo_implementation
+                output_function = eval_expression builtin.output_implementation
+            catch exception
+                if exception instanceof SyntaxError
+                    throw new BuiltinSyntaxError builtin.text, exception
+                else throw exception
+
+            throw new NotImplemented builtin.text unless output_function
+
             args = input_values.concat [output_index]
-            memo = builtin.memo_function? args...
-            result = builtin.output_function (args.concat [memo])...
-            return result
+            memo = memo_function args... if memo_function
+            return output_function (args.concat [memo])...
 
     @edit_builtin = (builtin) =>
         teardown_field()
