@@ -1057,6 +1057,8 @@
     this.edit_mode = null;
     this.editing_builtin = null;
     this.import_export_text = '';
+    this.subroutines = {};
+    this.builtins = {};
     this["import"] = function() {
       hide_subroutines();
       import_source(this.import_export_text);

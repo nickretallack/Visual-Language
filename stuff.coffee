@@ -754,6 +754,8 @@ window.Controller = ->
     @edit_mode = null
     @editing_builtin = null
     @import_export_text = ''
+    @subroutines = {}
+    @builtins = {}
     @import = ->
         hide_subroutines()
         import_source @import_export_text
