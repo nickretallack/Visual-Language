@@ -812,7 +812,7 @@
       curveSegments: 2
     });
     geometry.computeBoundingBox();
-    centerOffset = -0.5 * (geometry.boundingBox.x[1] - geometry.boundingBox.x[0]);
+    centerOffset = -0.5 * (geometry.boundingBox.max.x - geometry.boundingBox.min.x);
     material = new THREE.MeshBasicMaterial({
       color: 0x000000,
       overdraw: true
