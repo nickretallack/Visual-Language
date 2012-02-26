@@ -1,18 +1,24 @@
-- when you scroll down, the picker isn't correct.  Adjust it for that.
-- use Ace editor for the javascript editors
-- edit the number of inputs/outputs on existing subroutines
-
-- add some higher order functions
-- make the blank project source have a random id so people can share it without clobbering
-- remember what program you were looking at in localstorage
-- add a 'fork' button for subroutines that makes a copy with a different id
-- add memoize builtin to fibonacci example.  use underscore
-- implement builtins for dealing with lists and maps
-
 - add a smart delete feature for subroutines
     - list the number of subroutines that use this one.  Click this to see their names
     - if this subroutine is used by another, ask if we should delete that one as well
     - if there are other subroutines that are only used by this subroutine, ask if we should delete those as well
+
+- load example programs from an external file
+
+- when you scroll down, the picker isn't correct.  Adjust it for that.
+- use Ace editor for the javascript editors
+- edit the number of inputs/outputs on existing subroutines
+
+- think about how version control could work
+    - save every version of a function
+    - allow users to upgrade theirs and notice when input compatibility is broken.
+
+- add some higher order functions
+    - map, reduce
+- remember what program you were looking at in localstorage
+- add a 'fork' button for subroutines that makes a copy with a different id
+- add memoize builtin to fibonacci example.  use underscore
+- implement builtins for dealing with lists and maps
 
 
 - instructions on page

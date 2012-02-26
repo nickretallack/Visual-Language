@@ -1147,6 +1147,9 @@
       }
       return delete this.subroutines[subroutine.id];
     }, this);
+    this.delet_builtin = __bind(function(builtin) {
+      return delete this.builtins[builtin.id];
+    }, this);
     this.add_subroutine = __bind(function() {
       var connection, contained_connections, id, in_connections, nib, node, out_connections, subroutine, _ref, _ref2, _ref3, _ref4;
       subroutine = new SubRoutine(this.new_subroutine.name, this.new_subroutine.inputs, this.new_subroutine.outputs);
@@ -1305,14 +1308,20 @@
     system_arrow = make_arrow(V(0, 0), V(1, 0), false);
     if (localStorage.state != null) {
       data = JSON.parse(localStorage.state);
-      loaded_state = load_state(data);
-      this.builtins = loaded_state.builtins;
-      this.subroutines = loaded_state.subroutines;
-      current_scope = obj_first(this.subroutines);
-      if (current_scope) {
-        this.edit_subroutine(current_scope);
+      try {
+        loaded_state = load_state(data);
+        this.builtins = loaded_state.builtins;
+        this.subroutines = loaded_state.subroutines;
+        current_scope = obj_first(this.subroutines);
+        if (current_scope) {
+          this.edit_subroutine(current_scope);
+        }
+        return save_timer = setInterval(save_state, 1000);
+      } catch (exception) {
+        return setTimeout(function() {
+          throw exception;
+        });
       }
-      return save_timer = setInterval(save_state, 1000);
     } else {
       return this.load_example_programs();
     }

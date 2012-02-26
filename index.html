@@ -70,6 +70,7 @@ Output Implementation:
 <ul id="builtins"><li ng:repeat="(id, builtin) in builtins">
     <a ng:click="edit_builtin(builtin)">edit</a>
     <a ng:click="export_builtin(builtin)">export</a>
+    <a ng:click="delete_builtin(builtin)">delete</a>
     <a ng:show="edit_mode == 'subroutine'" ng:click="use_builtin(builtin)">use</a>
     <span class="name">{{builtin.name}}</span>
     (<span ng:repeat="input in builtin.inputs">{{input}} </span> -&gt;

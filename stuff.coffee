@@ -826,6 +826,9 @@ window.Controller = ->
             hide_subroutines()
         delete @subroutines[subroutine.id]
 
+    @delet_builtin = (builtin) =>
+        delete @builtins[builtin.id]
+
     @add_subroutine = =>
         subroutine = new SubRoutine @new_subroutine.name, @new_subroutine.inputs, @new_subroutine.outputs
 
@@ -942,15 +945,15 @@ window.Controller = ->
 
     if localStorage.state?
         data = JSON.parse localStorage.state
-        #try
-        loaded_state = load_state data
-        @builtins = loaded_state.builtins
-        @subroutines = loaded_state.subroutines
-        current_scope = obj_first @subroutines
-        @edit_subroutine current_scope if current_scope
-        save_timer = setInterval save_state, 1000
-        #catch exception
-        #    setTimeout -> throw exception # don't break this execution thread because of a loading exception
+        try
+            loaded_state = load_state data
+            @builtins = loaded_state.builtins
+            @subroutines = loaded_state.subroutines
+            current_scope = obj_first @subroutines
+            @edit_subroutine current_scope if current_scope
+            save_timer = setInterval save_state, 1000
+        catch exception
+            setTimeout -> throw exception # don't break this execution thread because of a loading exception
     else
         @load_example_programs()
 
