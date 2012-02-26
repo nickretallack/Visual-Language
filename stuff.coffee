@@ -22,14 +22,14 @@ all_subroutines = {}
 all_builtins = {}
 current_scope = null
 system_arrow = null
-should_animate = true
+should_animate = false
 
 update = ->
     renderer.render scene, camera
 
-animate = ->
-    requestAnimationFrame animate
-    update() if should_animate
+animate = (field) ->
+    update()
+    requestAnimationFrame animate, field if should_animate
 
 ###
 example_builtins =
@@ -718,14 +718,15 @@ valid_json = (json) ->
 window.Controller = ->
 
     init_field = ->
-        should_animate = true
-        field = $("#field")
-        field.append renderer.domElement
-        animate()
-        field.mousedown mouse_down
-        field.mouseup mouse_up
-        field.mousemove mouse_move
-        field.bind 'contextmenu', -> false
+        if not should_animate
+            field = $("#field")
+            field.append renderer.domElement
+            should_animate = true
+            animate field[0]
+            field.mousedown mouse_down
+            field.mouseup mouse_up
+            field.mousemove mouse_move
+            field.bind 'contextmenu', -> false
 
     teardown_field = ->
         should_animate = false

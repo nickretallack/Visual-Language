@@ -33,14 +33,14 @@
   all_builtins = {};
   current_scope = null;
   system_arrow = null;
-  should_animate = true;
+  should_animate = false;
   update = function() {
     return renderer.render(scene, camera);
   };
-  animate = function() {
-    requestAnimationFrame(animate);
+  animate = function(field) {
+    update();
     if (should_animate) {
-      return update();
+      return requestAnimationFrame(animate, field);
     }
   };
   /*
@@ -1012,16 +1012,18 @@
     var data, hide_subroutines, import_source, init_field, loaded_state, save_state, save_timer, teardown_field;
     init_field = function() {
       var field;
-      should_animate = true;
-      field = $("#field");
-      field.append(renderer.domElement);
-      animate();
-      field.mousedown(mouse_down);
-      field.mouseup(mouse_up);
-      field.mousemove(mouse_move);
-      return field.bind('contextmenu', function() {
-        return false;
-      });
+      if (!should_animate) {
+        field = $("#field");
+        field.append(renderer.domElement);
+        should_animate = true;
+        animate(field[0]);
+        field.mousedown(mouse_down);
+        field.mouseup(mouse_up);
+        field.mousemove(mouse_move);
+        return field.bind('contextmenu', function() {
+          return false;
+        });
+      }
     };
     teardown_field = function() {
       return should_animate = false;
