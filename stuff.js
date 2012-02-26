@@ -1,5 +1,5 @@
 (function() {
-  var Builtin, BuiltinApplication, BuiltinSyntaxError, Connection, Exit, FunctionApplication, Input, InputError, Literal, Nib, Node, NotConnected, NotImplemented, Output, RuntimeException, SubRoutine, SubroutineApplication, all_builtins, all_subroutines, animate, boxes, camera, connecting_object, connection_view, current_scope, dissociate_exception, dragging_object, dragging_offset, eval_expression, example_programs, execute, get_absolute_nib_position, get_nib_position, height, highlight, highlighted_node_material, highlighted_objects, ignore_if_disconnected, last, load_implementation, load_state, make_arrow, make_basic_program, make_box, make_connection, make_main, make_nib_view, make_node_view, make_subroutine_view, make_text, mouse_coords, mouse_down, mouse_move, mouse_up, node_material, node_registry, obj_first, playground_id, pretty_json, projector, ray_cast_mouse, renderer, scene, schema_version, should_animate, subroutine_material, system_arrow, unhighlight, unhighlight_all, update, valid_json, whitespace_split, width;
+  var Builtin, BuiltinApplication, BuiltinSyntaxError, Connection, Exit, FunctionApplication, Input, InputError, Literal, Nib, Node, NotConnected, NotImplemented, Output, RuntimeException, SubRoutine, SubroutineApplication, all_builtins, all_subroutines, animate, boxes, camera, connecting_object, connection_view, current_scope, dissociate_exception, dragging_object, dragging_offset, eval_expression, execute, get_absolute_nib_position, get_nib_position, height, highlight, highlighted_node_material, highlighted_objects, ignore_if_disconnected, last, load_implementation, load_state, make_arrow, make_basic_program, make_box, make_connection, make_main, make_nib_view, make_node_view, make_subroutine_view, make_text, mouse_coords, mouse_down, mouse_move, mouse_up, node_material, node_registry, obj_first, playground_id, pretty_json, projector, ray_cast_mouse, renderer, scene, schema_version, should_animate, subroutine_material, system_arrow, unhighlight, unhighlight_all, update, valid_json, whitespace_split, width;
   var __hasProp = Object.prototype.hasOwnProperty, __extends = function(child, parent) {
     for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; }
     function ctor() { this.constructor = child; }
@@ -1027,8 +1027,8 @@
   pretty_json = function(obj) {
     return JSON.stringify(obj, void 0, 2);
   };
-  window.Controller = function() {
-    var hide_subroutines, import_source, init_field, save_state, saving, start_saving, teardown_field;
+  window.Controller = function($http) {
+    var hide_subroutines, import_data, import_source, init_field, save_state, saving, start_saving, teardown_field;
     init_field = function() {
       var field;
       if (!should_animate) {
@@ -1077,8 +1077,12 @@
       return start_saving();
     };
     import_source = __bind(function(source) {
-      var builtin, data, id, subroutine, _ref, _ref2, _results;
+      var data;
       data = load_state(valid_json(source));
+      return import_data(data);
+    }, this);
+    import_data = __bind(function(data) {
+      var builtin, id, subroutine, _ref, _ref2, _results;
       _ref = data.subroutines;
       for (id in _ref) {
         subroutine = _ref[id];
@@ -1093,15 +1097,15 @@
       return _results;
     }, this);
     this.load_example_programs = __bind(function() {
-      var name, source;
       hide_subroutines();
-      for (name in example_programs) {
-        source = example_programs[name];
-        import_source(source);
-      }
-      current_scope = this.subroutines[playground_id];
-      scene.add(current_scope.view);
-      return start_saving();
+      return $http.get('examples.json').success(__bind(function(source) {
+        var playground;
+        import_data(source);
+        playground = new SubRoutine('playground');
+        this.subroutines[playground.id] = playground;
+        this.edit_subroutine(playground);
+        return start_saving();
+      }, this));
     }, this);
     this.export_all = function() {
       var data;
@@ -1121,6 +1125,7 @@
     this.revert = function() {
       hide_subroutines();
       this.subroutines = {};
+      this.builtins = {};
       return this.load_example_programs();
     };
     this.literal_text = '';
@@ -1158,7 +1163,7 @@
       }
       return delete this.subroutines[subroutine.id];
     }, this);
-    this.delet_builtin = __bind(function(builtin) {
+    this.delete_builtin = __bind(function(builtin) {
       return delete this.builtins[builtin.id];
     }, this);
     this.add_subroutine = __bind(function() {
@@ -1442,7 +1447,4 @@
     return _results;
   };
   playground_id = UUID();
-  example_programs = {
-    playground: "{\"subroutines\":{\"" + playground_id + "\":{\"id\":\"" + playground_id + "\",\"name\":\"playground\",\"nodes\":[],\"connections\":[],\"inputs\":[],\"outputs\":[\"OUT\"]}},\"builtins\":{\"894652d702c3bb123ce8ed9e2bdcc71b\":{\"id\":\"894652d702c3bb123ce8ed9e2bdcc71b\",\"name\":\"+\",\"inputs\":[\"L\",\"R\"],\"outputs\":[\"R\"],\"memo_implementation\":null,\"output_implementation\":\"function (left, right) {\\n        return left() + right();\\n      }\"},\"99dc67480b5e5fe8adcab5fc6540c8a0\":{\"id\":\"99dc67480b5e5fe8adcab5fc6540c8a0\",\"name\":\"-\",\"inputs\":[\"L\",\"R\"],\"outputs\":[\"R\"],\"memo_implementation\":null,\"output_implementation\":\"function (left, right) {\\n        return left() - right();\\n      }\"},\"c70ac0c10dcfce8249b937ad164413ec\":{\"id\":\"c70ac0c10dcfce8249b937ad164413ec\",\"name\":\"*\",\"inputs\":[\"L\",\"R\"],\"outputs\":[\"R\"],\"memo_implementation\":null,\"output_implementation\":\"function (left, right) {\\n        return left() * right();\\n      }\"},\"3080574badf11047d6df2ed24f8248df\":{\"id\":\"3080574badf11047d6df2ed24f8248df\",\"name\":\"/\",\"inputs\":[\"L\",\"R\"],\"outputs\":[\"R\"],\"memo_implementation\":null,\"output_implementation\":\"function (left, right) {\\n        return left() / right();\\n      }\"},\"993ad152a2a888f6c0e6a6bd8a1c385a\":{\"id\":\"993ad152a2a888f6c0e6a6bd8a1c385a\",\"name\":\"<\",\"inputs\":[\"L\",\"R\"],\"outputs\":[\"R\"],\"memo_implementation\":null,\"output_implementation\":\"function (left, right) {\\n        return left() < right();\\n      }\"},\"3030973e37ce53b896735a3ad6b369d6\":{\"id\":\"3030973e37ce53b896735a3ad6b369d6\",\"name\":\"<=\",\"inputs\":[\"L\",\"R\"],\"outputs\":[\"R\"],\"memo_implementation\":null,\"output_implementation\":\"function (left, right) {\\n        return left() <= right();\\n      }\"},\"54e3469201277e5325db02aa56ab5218\":{\"id\":\"54e3469201277e5325db02aa56ab5218\",\"name\":\"=\",\"inputs\":[\"L\",\"R\"],\"outputs\":[\"R\"],\"memo_implementation\":null,\"output_implementation\":\"function (left, right) {\\n        return left() === right();\\n      }\"},\"4d0b2cd39670d8a70ded2c5f7a6fd5be\":{\"id\":\"4d0b2cd39670d8a70ded2c5f7a6fd5be\",\"name\":\">=\",\"inputs\":[\"L\",\"R\"],\"outputs\":[\"R\"],\"memo_implementation\":null,\"output_implementation\":\"function (left, right) {\\n        return left() >= right();\\n      }\"},\"68af5453eda7b4c9cbe6a86e12b5fba2\":{\"id\":\"68af5453eda7b4c9cbe6a86e12b5fba2\",\"name\":\">\",\"inputs\":[\"L\",\"R\"],\"outputs\":[\"R\"],\"memo_implementation\":null,\"output_implementation\":\"function (left, right) {\\n        return left() > right();\\n      }\"},\"29c894a04e219f47477672bedc3ad620\":{\"id\":\"29c894a04e219f47477672bedc3ad620\",\"name\":\"if\",\"inputs\":[\"T\",\"C\",\"F\"],\"outputs\":[\"R\"],\"memo_implementation\":null,\"output_implementation\":\"function (true_result, condition, false_result) {\\n        if (condition()) {\\n          return true_result();\\n        } else {\\n          return false_result();\\n        }\\n      }\"},\"be7936fcdcc1fe8c8f1024aa91b475e5\":{\"id\":\"be7936fcdcc1fe8c8f1024aa91b475e5\",\"name\":\"prompt\",\"inputs\":[\"M\",\"S\"],\"outputs\":[\"R\",\"S\"],\"memo_implementation\":\"function (message, sequencer) {\\n        try {\\n          sequencer();\\n        } catch (exception) {\\n          if (!(exception instanceof NotConnected)) {\\n            throw exception;\\n          }\\n        }\\n        return prompt(message());\\n      }\",\"output_implementation\":\"function (message, sequencer, index, memo) {\\n        if (index === 0) {\\n          return memo;\\n        } else {\\n          return null;\\n        }\\n      }\"},\"06b207d17227570db276cd4aaef57a2b\":{\"id\":\"06b207d17227570db276cd4aaef57a2b\",\"name\":\"funnel\",\"inputs\":[\"V\",\"S\"],\"outputs\":[\"V\"],\"memo_implementation\":null,\"output_implementation\":\"function (value, sequencer) {\\n        try {\\n          sequencer();\\n        } catch (exception) {\\n          if (!(exception instanceof NotConnected)) {\\n            throw exception;\\n          }\\n        }\\n        return value();\\n      }\"},\"51f15a4fe5f0c1bf1e31f63733aa1618\":{\"id\":\"51f15a4fe5f0c1bf1e31f63733aa1618\",\"name\":\"log\",\"inputs\":[\"in\"],\"outputs\":[\"out\"],\"memo_implementation\":null,\"output_implementation\":\"function (input) {\\n        var value;\\n        value = input();\\n        console.log(value);\\n        return value;\\n      }\"},\"1baf12a4702a0ecc724592ad8dd285f3\":{\"id\":\"1baf12a4702a0ecc724592ad8dd285f3\",\"name\":\"exit\",\"inputs\":[],\"outputs\":[\"R\"],\"memo_implementation\":null,\"output_implementation\":\"function () {\\n        throw new Exit;\\n      }\"},\"09f91a7ec8fd64baacda01ee70760569\":{\"id\":\"09f91a7ec8fd64baacda01ee70760569\",\"name\":\"replace\",\"inputs\":[\"text\",\"rem\",\"ins\"],\"outputs\":[\"result\"],\"memo_implementation\":null,\"output_implementation\":\"function (text, pattern, replacement) {\\n        return text().replace(pattern(), replacement());\\n      }\"},\"a612be6f7bae3de3ae2f883bc3f245c4\":{\"id\":\"a612be6f7bae3de3ae2f883bc3f245c4\",\"name\":\"two_outputs\",\"inputs\":[],\"outputs\":[\"L\",\"R\"],\"memo_implementation\":null,\"output_implementation\":\"function (index) {\\n        if (index === 0) {\\n          return \\\"left\\\";\\n        } else {\\n          return \\\"right\\\";\\n        }\\n      }\"},\"a9f07bc7545769b8b8b31a9d7ac77229\":{\"id\":\"a9f07bc7545769b8b8b31a9d7ac77229\",\"name\":\"int\",\"inputs\":[\"IN\"],\"outputs\":[\"int\"],\"memo_implementation\":null,\"output_implementation\":\"function (str) {\\n        return parseInt(str());\\n      }\"},\"7cca8f80ac29c5a1e72c371c574e7414\":{\"id\":\"7cca8f80ac29c5a1e72c371c574e7414\",\"name\":\"float\",\"inputs\":[\"IN\"],\"outputs\":[\"float\"],\"memo_implementation\":null,\"output_implementation\":\"function (str) {\\n        return parseFloat(str());\\n      }\"},\"b5b3023a4a839ed106882e74923dab88\":{\"id\":\"b5b3023a4a839ed106882e74923dab88\",\"name\":\"str\",\"inputs\":[\"IN\"],\"outputs\":[\"str\"],\"memo_implementation\":null,\"output_implementation\":\"function (obj) {\\n        return '' + obj();\\n      }\"},\"3827fa434cfc1b71555e0e958633e1ca\":{\"id\":\"3827fa434cfc1b71555e0e958633e1ca\",\"name\":\"from json\",\"inputs\":[\"str\"],\"outputs\":[\"obj\"],\"memo_implementation\":null,\"output_implementation\":\"function (str) {\\n        return JSON.parse(str());\\n      }\"},\"aa8c65ccce7abc2c524349c843bb4fc5\":{\"id\":\"aa8c65ccce7abc2c524349c843bb4fc5\",\"name\":\"to json\",\"inputs\":[\"obj\"],\"outputs\":[\"str\"],\"memo_implementation\":null,\"output_implementation\":\"function (obj) {\\n        return JSON.stringify(obj());\\n      }\"},\"9a7d34a3c313a193ba47e747b4ff9132\":{\"id\":\"9a7d34a3c313a193ba47e747b4ff9132\",\"name\":\"random float\",\"inputs\":[],\"outputs\":[\"OUT\"],\"memo_implementation\":null,\"output_implementation\":\"function () {\\n        return Math.random();\\n      }\"},\"325fa3507bac12a3673f2789e12a1e41\":{\"id\":\"325fa3507bac12a3673f2789e12a1e41\",\"name\":\"call\",\"inputs\":[\"SUB\",\"IN\"],\"outputs\":[\"OUT\"],\"memo_implementation\":null,\"output_implementation\":\"function (subroutine, input) {\\n        return subroutine().invoke(0, [input]);\\n      }\"},\"9fbdec485d1149e1c24d54f332099247\":{\"id\":\"9fbdec485d1149e1c24d54f332099247\",\"name\":\"call-n\",\"inputs\":[\"SUB\",\"IN\"],\"outputs\":[\"OUT\"],\"memo_implementation\":null,\"output_implementation\":\"function (subroutine, inputs) {\\n        return subroutine().invoke(0, inputs());\\n      }\"},\"0b40d2d29e6df169bc95d854f41ff476\":{\"id\":\"0b40d2d29e6df169bc95d854f41ff476\",\"name\":\"cons\",\"inputs\":[\"LIST\",\"ELE\"],\"outputs\":[\"LIST\"],\"memo_implementation\":null,\"output_implementation\":\"function (list, element) {\\n        return list().concat(element());\\n      }\"},\"73b5d938605bb060c7ddfa031fe29d46\":{\"id\":\"73b5d938605bb060c7ddfa031fe29d46\",\"name\":\"lazy input\",\"inputs\":[\"IN\"],\"outputs\":[\"OUT\"],\"memo_implementation\":null,\"output_implementation\":\"function (input) {\\n        return input;\\n      }\"}},\"schema_version\":1}"
-  };
 }).call(this);

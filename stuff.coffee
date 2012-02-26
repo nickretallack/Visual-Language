@@ -732,7 +732,7 @@ valid_json = (json) ->
 
 pretty_json = (obj) -> JSON.stringify obj, undefined, 2
 
-window.Controller = ->
+window.Controller = ($http) ->
 
     init_field = ->
         if not should_animate
@@ -768,6 +768,9 @@ window.Controller = ->
 
     import_source = (source) =>
         data = load_state valid_json source
+        import_data data
+
+    import_data = (data) =>
         for id, subroutine of data.subroutines
             @subroutines[subroutine.id] = subroutine
         for id, builtin of data.builtins
@@ -775,11 +778,14 @@ window.Controller = ->
 
     @load_example_programs = =>
         hide_subroutines()
-        for name, source of example_programs
-            import_source source
-        current_scope = @subroutines[playground_id]
-        scene.add current_scope.view
-        start_saving()
+        $http.get('examples.json').success (source) =>
+            import_data source
+
+            # make the playground
+            playground = new SubRoutine 'playground'
+            @subroutines[playground.id] = playground
+            @edit_subroutine playground
+            start_saving()
 
     @export_all = ->
         data =
@@ -797,6 +803,7 @@ window.Controller = ->
     @revert = ->
         hide_subroutines()
         @subroutines = {}
+        @builtins = {}
         @load_example_programs()
 
     @literal_text = ''
@@ -832,7 +839,7 @@ window.Controller = ->
             hide_subroutines()
         delete @subroutines[subroutine.id]
 
-    @delet_builtin = (builtin) =>
+    @delete_builtin = (builtin) =>
         delete @builtins[builtin.id]
 
     @add_subroutine = =>
@@ -1047,5 +1054,3 @@ load_implementation = (data) ->
         source_connector[connection.output.index].connect sink_connector[connection.input.index]
 
 playground_id = UUID()
-example_programs =
-    playground:"""{"subroutines":{"#{playground_id}":{"id":"#{playground_id}","name":"playground","nodes":[],"connections":[],"inputs":[],"outputs":["OUT"]}},"builtins":{"894652d702c3bb123ce8ed9e2bdcc71b":{"id":"894652d702c3bb123ce8ed9e2bdcc71b","name":"+","inputs":["L","R"],"outputs":["R"],"memo_implementation":null,"output_implementation":"function (left, right) {\\n        return left() + right();\\n      }"},"99dc67480b5e5fe8adcab5fc6540c8a0":{"id":"99dc67480b5e5fe8adcab5fc6540c8a0","name":"-","inputs":["L","R"],"outputs":["R"],"memo_implementation":null,"output_implementation":"function (left, right) {\\n        return left() - right();\\n      }"},"c70ac0c10dcfce8249b937ad164413ec":{"id":"c70ac0c10dcfce8249b937ad164413ec","name":"*","inputs":["L","R"],"outputs":["R"],"memo_implementation":null,"output_implementation":"function (left, right) {\\n        return left() * right();\\n      }"},"3080574badf11047d6df2ed24f8248df":{"id":"3080574badf11047d6df2ed24f8248df","name":"/","inputs":["L","R"],"outputs":["R"],"memo_implementation":null,"output_implementation":"function (left, right) {\\n        return left() / right();\\n      }"},"993ad152a2a888f6c0e6a6bd8a1c385a":{"id":"993ad152a2a888f6c0e6a6bd8a1c385a","name":"<","inputs":["L","R"],"outputs":["R"],"memo_implementation":null,"output_implementation":"function (left, right) {\\n        return left() < right();\\n      }"},"3030973e37ce53b896735a3ad6b369d6":{"id":"3030973e37ce53b896735a3ad6b369d6","name":"<=","inputs":["L","R"],"outputs":["R"],"memo_implementation":null,"output_implementation":"function (left, right) {\\n        return left() <= right();\\n      }"},"54e3469201277e5325db02aa56ab5218":{"id":"54e3469201277e5325db02aa56ab5218","name":"=","inputs":["L","R"],"outputs":["R"],"memo_implementation":null,"output_implementation":"function (left, right) {\\n        return left() === right();\\n      }"},"4d0b2cd39670d8a70ded2c5f7a6fd5be":{"id":"4d0b2cd39670d8a70ded2c5f7a6fd5be","name":">=","inputs":["L","R"],"outputs":["R"],"memo_implementation":null,"output_implementation":"function (left, right) {\\n        return left() >= right();\\n      }"},"68af5453eda7b4c9cbe6a86e12b5fba2":{"id":"68af5453eda7b4c9cbe6a86e12b5fba2","name":">","inputs":["L","R"],"outputs":["R"],"memo_implementation":null,"output_implementation":"function (left, right) {\\n        return left() > right();\\n      }"},"29c894a04e219f47477672bedc3ad620":{"id":"29c894a04e219f47477672bedc3ad620","name":"if","inputs":["T","C","F"],"outputs":["R"],"memo_implementation":null,"output_implementation":"function (true_result, condition, false_result) {\\n        if (condition()) {\\n          return true_result();\\n        } else {\\n          return false_result();\\n        }\\n      }"},"be7936fcdcc1fe8c8f1024aa91b475e5":{"id":"be7936fcdcc1fe8c8f1024aa91b475e5","name":"prompt","inputs":["M","S"],"outputs":["R","S"],"memo_implementation":"function (message, sequencer) {\\n        try {\\n          sequencer();\\n        } catch (exception) {\\n          if (!(exception instanceof NotConnected)) {\\n            throw exception;\\n          }\\n        }\\n        return prompt(message());\\n      }","output_implementation":"function (message, sequencer, index, memo) {\\n        if (index === 0) {\\n          return memo;\\n        } else {\\n          return null;\\n        }\\n      }"},"06b207d17227570db276cd4aaef57a2b":{"id":"06b207d17227570db276cd4aaef57a2b","name":"funnel","inputs":["V","S"],"outputs":["V"],"memo_implementation":null,"output_implementation":"function (value, sequencer) {\\n        try {\\n          sequencer();\\n        } catch (exception) {\\n          if (!(exception instanceof NotConnected)) {\\n            throw exception;\\n          }\\n        }\\n        return value();\\n      }"},"51f15a4fe5f0c1bf1e31f63733aa1618":{"id":"51f15a4fe5f0c1bf1e31f63733aa1618","name":"log","inputs":["in"],"outputs":["out"],"memo_implementation":null,"output_implementation":"function (input) {\\n        var value;\\n        value = input();\\n        console.log(value);\\n        return value;\\n      }"},"1baf12a4702a0ecc724592ad8dd285f3":{"id":"1baf12a4702a0ecc724592ad8dd285f3","name":"exit","inputs":[],"outputs":["R"],"memo_implementation":null,"output_implementation":"function () {\\n        throw new Exit;\\n      }"},"09f91a7ec8fd64baacda01ee70760569":{"id":"09f91a7ec8fd64baacda01ee70760569","name":"replace","inputs":["text","rem","ins"],"outputs":["result"],"memo_implementation":null,"output_implementation":"function (text, pattern, replacement) {\\n        return text().replace(pattern(), replacement());\\n      }"},"a612be6f7bae3de3ae2f883bc3f245c4":{"id":"a612be6f7bae3de3ae2f883bc3f245c4","name":"two_outputs","inputs":[],"outputs":["L","R"],"memo_implementation":null,"output_implementation":"function (index) {\\n        if (index === 0) {\\n          return \\"left\\";\\n        } else {\\n          return \\"right\\";\\n        }\\n      }"},"a9f07bc7545769b8b8b31a9d7ac77229":{"id":"a9f07bc7545769b8b8b31a9d7ac77229","name":"int","inputs":["IN"],"outputs":["int"],"memo_implementation":null,"output_implementation":"function (str) {\\n        return parseInt(str());\\n      }"},"7cca8f80ac29c5a1e72c371c574e7414":{"id":"7cca8f80ac29c5a1e72c371c574e7414","name":"float","inputs":["IN"],"outputs":["float"],"memo_implementation":null,"output_implementation":"function (str) {\\n        return parseFloat(str());\\n      }"},"b5b3023a4a839ed106882e74923dab88":{"id":"b5b3023a4a839ed106882e74923dab88","name":"str","inputs":["IN"],"outputs":["str"],"memo_implementation":null,"output_implementation":"function (obj) {\\n        return '' + obj();\\n      }"},"3827fa434cfc1b71555e0e958633e1ca":{"id":"3827fa434cfc1b71555e0e958633e1ca","name":"from json","inputs":["str"],"outputs":["obj"],"memo_implementation":null,"output_implementation":"function (str) {\\n        return JSON.parse(str());\\n      }"},"aa8c65ccce7abc2c524349c843bb4fc5":{"id":"aa8c65ccce7abc2c524349c843bb4fc5","name":"to json","inputs":["obj"],"outputs":["str"],"memo_implementation":null,"output_implementation":"function (obj) {\\n        return JSON.stringify(obj());\\n      }"},"9a7d34a3c313a193ba47e747b4ff9132":{"id":"9a7d34a3c313a193ba47e747b4ff9132","name":"random float","inputs":[],"outputs":["OUT"],"memo_implementation":null,"output_implementation":"function () {\\n        return Math.random();\\n      }"},"325fa3507bac12a3673f2789e12a1e41":{"id":"325fa3507bac12a3673f2789e12a1e41","name":"call","inputs":["SUB","IN"],"outputs":["OUT"],"memo_implementation":null,"output_implementation":"function (subroutine, input) {\\n        return subroutine().invoke(0, [input]);\\n      }"},"9fbdec485d1149e1c24d54f332099247":{"id":"9fbdec485d1149e1c24d54f332099247","name":"call-n","inputs":["SUB","IN"],"outputs":["OUT"],"memo_implementation":null,"output_implementation":"function (subroutine, inputs) {\\n        return subroutine().invoke(0, inputs());\\n      }"},"0b40d2d29e6df169bc95d854f41ff476":{"id":"0b40d2d29e6df169bc95d854f41ff476","name":"cons","inputs":["LIST","ELE"],"outputs":["LIST"],"memo_implementation":null,"output_implementation":"function (list, element) {\\n        return list().concat(element());\\n      }"},"73b5d938605bb060c7ddfa031fe29d46":{"id":"73b5d938605bb060c7ddfa031fe29d46","name":"lazy input","inputs":["IN"],"outputs":["OUT"],"memo_implementation":null,"output_implementation":"function (input) {\\n        return input;\\n      }"}},"schema_version":1}"""
