@@ -510,15 +510,14 @@ class Connection
 make_subroutine_view = (subroutine) ->
     box_size = V 500,500
     position = box_size.scale(1/2.0)
-    box = make_box subroutine.name, box_size, 10, 0xEEEEEE, position, false
+    box = make_box subroutine.name, box_size, 10, subroutine_material, position, false
     box.model = subroutine
     boxes[box.id] = box
     return box
 
 make_node_view = (node) ->
     main_box_size = V 50,50
-    color = 0x888888
-    main_box = make_box node.text, main_box_size, 10, color, node.position
+    main_box = make_box node.text, main_box_size, 10, node_material, node.position
     main_box.model = node
     node.scope.view.add main_box
     boxes[main_box.id] = main_box
@@ -526,7 +525,6 @@ make_node_view = (node) ->
 
 make_nib_view = (nib, is_node) ->
     sub_box_size = V 20,20
-    sub_box_color = 0x888888
 
     parent_size = if is_node then V(60,60) else V(490,490)
 
@@ -535,7 +533,7 @@ make_nib_view = (nib, is_node) ->
     x_position = -parent_size.x / 2.0 + parent_size.x * nib.index/nib.siblings
     y_position = y_offset * (if nib instanceof Input then 1 else -1) * (if is_node then 1 else -1)
 
-    sub_box = make_box nib.text, sub_box_size, 5, sub_box_color, V x_position,y_position
+    sub_box = make_box nib.text, sub_box_size, 5, node_material, V x_position,y_position
     sub_box.model = nib
 
     parent = nib.parent.view
@@ -575,11 +573,14 @@ make_text = (text, size) ->
     mesh.position.x = centerOffset
     return mesh
 
-make_box = (name, size, text_size, color, position, outline=false) ->
+node_material = new THREE.MeshBasicMaterial color:0x888888
+highlighted_node_material = new THREE.MeshBasicMaterial color:0x8888FF
+subroutine_material = new THREE.MeshBasicMaterial color:0xEEEEEE
+
+make_box = (name, size, text_size, material, position, outline=false) ->
     box = new THREE.Object3D()
 
     geometry = new THREE.PlaneGeometry size.components()...
-    material = new THREE.MeshBasicMaterial color:color, wireframe:outline
     mesh = new THREE.Mesh geometry, material
     mesh.position = V(0,0).three()
     box.add mesh
@@ -633,6 +634,19 @@ dragging_object = null
 connecting_object = null
 dragging_offset = V 0,0
 
+highlighted_objects = {}
+
+highlight = (node) ->
+    node.view.children[0].material = highlighted_node_material
+    highlighted_objects[node.id] = node
+
+unhighlight = (node) ->
+    node.view.children[0].material = node_material
+    delete highlighted_objects[node.id]
+
+unhighlight_all = ->
+    for id, obj of highlighted_objects
+        unhighlight obj
 
 mouse_down = (event) ->
     event.preventDefault()
@@ -641,6 +655,8 @@ mouse_down = (event) ->
         if target.model instanceof Node
             if event.which is 3
                 target.model.delete()
+            else if event.shiftKey
+                highlight target.model
             else
                 dragging_object = target
         else if target.model instanceof Nib
@@ -650,6 +666,9 @@ mouse_down = (event) ->
                 system_arrow.geometry.vertices[0].position = system_arrow.geometry.vertices[1].position = get_absolute_nib_position target.model
                 scene.add system_arrow
                 connecting_object = target
+        else
+            unless event.shiftKey
+                unhighlight_all()
 
 mouse_up = (event) ->
     dragging_object = null
@@ -663,14 +682,21 @@ mouse_up = (event) ->
 
 mouse_move = (event) ->
     mouse_vector = mouse_coords(event)
-    adjusted_vector = mouse_vector.minus(V(250,250)).three()
+    adjusted_vector = mouse_vector.minus(V(250,250))
     vector = mouse_vector.three()
     if dragging_object
         node = dragging_object.model
-        node.set_position adjusted_vector
-        for nib in node.get_nibs()
-            for id, connection of nib.connections
-                connection.vertex.position.copy get_nib_position nib
+        original_position = Vector.from node.view.position
+        delta = adjusted_vector.minus original_position
+
+        effected_nodes = if node.id of highlighted_objects then _.values highlighted_objects else [node]
+
+        for node in effected_nodes
+            node.set_position Vector.from(node.position).plus(delta).three()
+            for nib in node.get_nibs()
+                for id, connection of nib.connections
+                    connection.vertex.position.copy get_nib_position nib
+
     if connecting_object
         system_arrow.geometry.vertices[1].position = vector
 
