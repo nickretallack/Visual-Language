@@ -1,0 +1,1942 @@
+{
+  "subroutines": {
+    "ace0c51e4ee3f9d7483ec10780d1ed43": {
+      "id": "ace0c51e4ee3f9d7483ec10780d1ed43",
+      "name": "factorial",
+      "nodes": [
+        {
+          "position": {
+            "x": 172,
+            "y": 215
+          },
+          "text": "1",
+          "id": "f754c0b1104429a6b2be1b4b3292678f",
+          "type": "literal",
+          "value": "1"
+        },
+        {
+          "position": {
+            "x": 86,
+            "y": 120
+          },
+          "text": "-",
+          "id": "258a7ea59bd6451b73fdf122f6b1a83d",
+          "type": "builtin",
+          "implementation_id": "99dc67480b5e5fe8adcab5fc6540c8a0"
+        },
+        {
+          "position": {
+            "x": 55,
+            "y": -75
+          },
+          "text": "*",
+          "id": "6843e1f1d6911af6fa98e633674bd319",
+          "type": "builtin",
+          "implementation_id": "c70ac0c10dcfce8249b937ad164413ec"
+        },
+        {
+          "position": {
+            "x": 87,
+            "y": 21
+          },
+          "text": "factorial",
+          "id": "e659e8c844064d80a4cd77390194baa9",
+          "type": "function",
+          "implementation_id": "ace0c51e4ee3f9d7483ec10780d1ed43"
+        },
+        {
+          "position": {
+            "x": -11,
+            "y": -181
+          },
+          "text": "if",
+          "id": "7dd51224c933f3f10af9b715dee205ec",
+          "type": "builtin",
+          "implementation_id": "29c894a04e219f47477672bedc3ad620"
+        },
+        {
+          "position": {
+            "x": -145,
+            "y": 45
+          },
+          "text": "<=",
+          "id": "858161a07e8e1f306e568322f85d985d",
+          "type": "builtin",
+          "implementation_id": "3030973e37ce53b896735a3ad6b369d6"
+        },
+        {
+          "position": {
+            "x": -41,
+            "y": 137
+          },
+          "text": "1",
+          "id": "62ef42a232d532c3653eaa32d37c9c39",
+          "type": "literal",
+          "value": "1"
+        },
+        {
+          "position": {
+            "x": -121,
+            "y": -93
+          },
+          "text": "1",
+          "id": "f7473fb3e917402f2643264b95cdab70",
+          "type": "literal",
+          "value": "1"
+        }
+      ],
+      "connections": [
+        {
+          "input": {
+            "index": 0,
+            "parent_id": "258a7ea59bd6451b73fdf122f6b1a83d"
+          },
+          "output": {
+            "index": 0,
+            "parent_id": "ace0c51e4ee3f9d7483ec10780d1ed43"
+          }
+        },
+        {
+          "input": {
+            "index": 1,
+            "parent_id": "258a7ea59bd6451b73fdf122f6b1a83d"
+          },
+          "output": {
+            "index": 0,
+            "parent_id": "f754c0b1104429a6b2be1b4b3292678f"
+          }
+        },
+        {
+          "input": {
+            "index": 0,
+            "parent_id": "6843e1f1d6911af6fa98e633674bd319"
+          },
+          "output": {
+            "index": 0,
+            "parent_id": "ace0c51e4ee3f9d7483ec10780d1ed43"
+          }
+        },
+        {
+          "input": {
+            "index": 0,
+            "parent_id": "e659e8c844064d80a4cd77390194baa9"
+          },
+          "output": {
+            "index": 0,
+            "parent_id": "258a7ea59bd6451b73fdf122f6b1a83d"
+          }
+        },
+        {
+          "input": {
+            "index": 1,
+            "parent_id": "6843e1f1d6911af6fa98e633674bd319"
+          },
+          "output": {
+            "index": 0,
+            "parent_id": "e659e8c844064d80a4cd77390194baa9"
+          }
+        },
+        {
+          "input": {
+            "index": 0,
+            "parent_id": "858161a07e8e1f306e568322f85d985d"
+          },
+          "output": {
+            "index": 0,
+            "parent_id": "ace0c51e4ee3f9d7483ec10780d1ed43"
+          }
+        },
+        {
+          "input": {
+            "index": 1,
+            "parent_id": "7dd51224c933f3f10af9b715dee205ec"
+          },
+          "output": {
+            "index": 0,
+            "parent_id": "858161a07e8e1f306e568322f85d985d"
+          }
+        },
+        {
+          "input": {
+            "index": 0,
+            "parent_id": "ace0c51e4ee3f9d7483ec10780d1ed43"
+          },
+          "output": {
+            "index": 0,
+            "parent_id": "7dd51224c933f3f10af9b715dee205ec"
+          }
+        },
+        {
+          "input": {
+            "index": 0,
+            "parent_id": "7dd51224c933f3f10af9b715dee205ec"
+          },
+          "output": {
+            "index": 0,
+            "parent_id": "f7473fb3e917402f2643264b95cdab70"
+          }
+        },
+        {
+          "input": {
+            "index": 1,
+            "parent_id": "858161a07e8e1f306e568322f85d985d"
+          },
+          "output": {
+            "index": 0,
+            "parent_id": "62ef42a232d532c3653eaa32d37c9c39"
+          }
+        },
+        {
+          "input": {
+            "index": 2,
+            "parent_id": "7dd51224c933f3f10af9b715dee205ec"
+          },
+          "output": {
+            "index": 0,
+            "parent_id": "6843e1f1d6911af6fa98e633674bd319"
+          }
+        }
+      ],
+      "inputs": [
+        "n"
+      ],
+      "outputs": [
+        "OUT"
+      ]
+    },
+    "cbe7ae233398c7a4bd147d2d60db4109": {
+      "id": "cbe7ae233398c7a4bd147d2d60db4109",
+      "name": "ordered prompts",
+      "nodes": [
+        {
+          "position": {
+            "x": 138,
+            "y": 136
+          },
+          "text": "prompt",
+          "id": "fe6a30255ce506483da843f8a7b6753b",
+          "type": "builtin",
+          "implementation_id": "be7936fcdcc1fe8c8f1024aa91b475e5"
+        },
+        {
+          "position": {
+            "x": 140,
+            "y": 12
+          },
+          "text": "prompt",
+          "id": "cf235c6df8dae4d729684b4d67581df8",
+          "type": "builtin",
+          "implementation_id": "be7936fcdcc1fe8c8f1024aa91b475e5"
+        },
+        {
+          "position": {
+            "x": -135,
+            "y": 193
+          },
+          "text": "\"Question 1: What's your name?\"",
+          "id": "502fb0ae0601c4d3847e067ca4b5a07d",
+          "type": "literal",
+          "value": "\"Question 1: What's your name?\""
+        },
+        {
+          "position": {
+            "x": -135,
+            "y": 77
+          },
+          "text": "\"Question 2: What's your number?\"",
+          "id": "1ca07d67d156590465d02e7d6aeef9ed",
+          "type": "literal",
+          "value": "\"Question 2: What's your number?\""
+        },
+        {
+          "position": {
+            "x": -5,
+            "y": -155
+          },
+          "text": "funnel",
+          "id": "22b5f62071fb1f49bc88453010b2ee99",
+          "type": "builtin",
+          "implementation_id": "06b207d17227570db276cd4aaef57a2b"
+        }
+      ],
+      "connections": [
+        {
+          "input": {
+            "index": 0,
+            "parent_id": "cf235c6df8dae4d729684b4d67581df8"
+          },
+          "output": {
+            "index": 0,
+            "parent_id": "1ca07d67d156590465d02e7d6aeef9ed"
+          }
+        },
+        {
+          "input": {
+            "index": 0,
+            "parent_id": "fe6a30255ce506483da843f8a7b6753b"
+          },
+          "output": {
+            "index": 0,
+            "parent_id": "502fb0ae0601c4d3847e067ca4b5a07d"
+          }
+        },
+        {
+          "input": {
+            "index": 1,
+            "parent_id": "cf235c6df8dae4d729684b4d67581df8"
+          },
+          "output": {
+            "index": 1,
+            "parent_id": "fe6a30255ce506483da843f8a7b6753b"
+          }
+        },
+        {
+          "input": {
+            "index": 0,
+            "parent_id": "cbe7ae233398c7a4bd147d2d60db4109"
+          },
+          "output": {
+            "index": 0,
+            "parent_id": "22b5f62071fb1f49bc88453010b2ee99"
+          }
+        },
+        {
+          "input": {
+            "index": 1,
+            "parent_id": "22b5f62071fb1f49bc88453010b2ee99"
+          },
+          "output": {
+            "index": 1,
+            "parent_id": "cf235c6df8dae4d729684b4d67581df8"
+          }
+        },
+        {
+          "input": {
+            "index": 0,
+            "parent_id": "22b5f62071fb1f49bc88453010b2ee99"
+          },
+          "output": {
+            "index": 0,
+            "parent_id": "fe6a30255ce506483da843f8a7b6753b"
+          }
+        }
+      ],
+      "inputs": [],
+      "outputs": [
+        "OUT"
+      ]
+    },
+    "49fa75aa9637736d527032cc91116679": {
+      "id": "49fa75aa9637736d527032cc91116679",
+      "name": "fibonacci",
+      "nodes": [
+        {
+          "position": {
+            "x": -16,
+            "y": 63
+          },
+          "text": "-",
+          "id": "bc8be7ca3c45757e7169b12a31019eb8",
+          "type": "builtin",
+          "implementation_id": "99dc67480b5e5fe8adcab5fc6540c8a0"
+        },
+        {
+          "position": {
+            "x": 151,
+            "y": 89
+          },
+          "text": "-",
+          "id": "e340b8bf4dad516756b45586ed0c8393",
+          "type": "builtin",
+          "implementation_id": "99dc67480b5e5fe8adcab5fc6540c8a0"
+        },
+        {
+          "position": {
+            "x": 24,
+            "y": 158
+          },
+          "text": "1",
+          "id": "880ec2c7e76d086477f811263cb33e8a",
+          "type": "literal",
+          "value": "1"
+        },
+        {
+          "position": {
+            "x": 171,
+            "y": 201
+          },
+          "text": "2",
+          "id": "e5864f87e0b430d83d6da0c4a1ddcfa9",
+          "type": "literal",
+          "value": "2"
+        },
+        {
+          "position": {
+            "x": -97,
+            "y": 135
+          },
+          "text": "1",
+          "id": "b3ec61fdc11e80791c9145c97b374765",
+          "type": "literal",
+          "value": "1"
+        },
+        {
+          "position": {
+            "x": 149,
+            "y": -18
+          },
+          "text": "fibonacci",
+          "id": "f8cd1b5b9879caa1c6ad3e263048fb63",
+          "type": "function",
+          "implementation_id": "49fa75aa9637736d527032cc91116679"
+        },
+        {
+          "position": {
+            "x": -24,
+            "y": -52
+          },
+          "text": "fibonacci",
+          "id": "a9bffea09783f5df5ae8c2ce2de3116c",
+          "type": "function",
+          "implementation_id": "49fa75aa9637736d527032cc91116679"
+        },
+        {
+          "position": {
+            "x": 69,
+            "y": -127
+          },
+          "text": "+",
+          "id": "22055d2c5d0428d3f331f61be7d1e6c0",
+          "type": "builtin",
+          "implementation_id": "894652d702c3bb123ce8ed9e2bdcc71b"
+        },
+        {
+          "position": {
+            "x": -190,
+            "y": 81
+          },
+          "text": "<=",
+          "id": "4edcb91971eeb5b8827c521e41eaf248",
+          "type": "builtin",
+          "implementation_id": "3030973e37ce53b896735a3ad6b369d6"
+        },
+        {
+          "position": {
+            "x": -120,
+            "y": -178
+          },
+          "text": "if",
+          "id": "95fe324f3ac807874fdea911986ef901",
+          "type": "builtin",
+          "implementation_id": "29c894a04e219f47477672bedc3ad620"
+        },
+        {
+          "position": {
+            "x": -202,
+            "y": -114
+          },
+          "text": "1",
+          "id": "28d6f3f972821c0fc6ee0967ff45fb16",
+          "type": "literal",
+          "value": "1"
+        }
+      ],
+      "connections": [
+        {
+          "input": {
+            "index": 0,
+            "parent_id": "e340b8bf4dad516756b45586ed0c8393"
+          },
+          "output": {
+            "index": 0,
+            "parent_id": "49fa75aa9637736d527032cc91116679"
+          }
+        },
+        {
+          "input": {
+            "index": 1,
+            "parent_id": "e340b8bf4dad516756b45586ed0c8393"
+          },
+          "output": {
+            "index": 0,
+            "parent_id": "e5864f87e0b430d83d6da0c4a1ddcfa9"
+          }
+        },
+        {
+          "input": {
+            "index": 0,
+            "parent_id": "a9bffea09783f5df5ae8c2ce2de3116c"
+          },
+          "output": {
+            "index": 0,
+            "parent_id": "bc8be7ca3c45757e7169b12a31019eb8"
+          }
+        },
+        {
+          "input": {
+            "index": 0,
+            "parent_id": "bc8be7ca3c45757e7169b12a31019eb8"
+          },
+          "output": {
+            "index": 0,
+            "parent_id": "49fa75aa9637736d527032cc91116679"
+          }
+        },
+        {
+          "input": {
+            "index": 1,
+            "parent_id": "bc8be7ca3c45757e7169b12a31019eb8"
+          },
+          "output": {
+            "index": 0,
+            "parent_id": "880ec2c7e76d086477f811263cb33e8a"
+          }
+        },
+        {
+          "input": {
+            "index": 0,
+            "parent_id": "f8cd1b5b9879caa1c6ad3e263048fb63"
+          },
+          "output": {
+            "index": 0,
+            "parent_id": "e340b8bf4dad516756b45586ed0c8393"
+          }
+        },
+        {
+          "input": {
+            "index": 0,
+            "parent_id": "22055d2c5d0428d3f331f61be7d1e6c0"
+          },
+          "output": {
+            "index": 0,
+            "parent_id": "a9bffea09783f5df5ae8c2ce2de3116c"
+          }
+        },
+        {
+          "input": {
+            "index": 1,
+            "parent_id": "22055d2c5d0428d3f331f61be7d1e6c0"
+          },
+          "output": {
+            "index": 0,
+            "parent_id": "f8cd1b5b9879caa1c6ad3e263048fb63"
+          }
+        },
+        {
+          "input": {
+            "index": 0,
+            "parent_id": "49fa75aa9637736d527032cc91116679"
+          },
+          "output": {
+            "index": 0,
+            "parent_id": "95fe324f3ac807874fdea911986ef901"
+          }
+        },
+        {
+          "input": {
+            "index": 2,
+            "parent_id": "95fe324f3ac807874fdea911986ef901"
+          },
+          "output": {
+            "index": 0,
+            "parent_id": "22055d2c5d0428d3f331f61be7d1e6c0"
+          }
+        },
+        {
+          "input": {
+            "index": 1,
+            "parent_id": "95fe324f3ac807874fdea911986ef901"
+          },
+          "output": {
+            "index": 0,
+            "parent_id": "4edcb91971eeb5b8827c521e41eaf248"
+          }
+        },
+        {
+          "input": {
+            "index": 0,
+            "parent_id": "4edcb91971eeb5b8827c521e41eaf248"
+          },
+          "output": {
+            "index": 0,
+            "parent_id": "49fa75aa9637736d527032cc91116679"
+          }
+        },
+        {
+          "input": {
+            "index": 1,
+            "parent_id": "4edcb91971eeb5b8827c521e41eaf248"
+          },
+          "output": {
+            "index": 0,
+            "parent_id": "b3ec61fdc11e80791c9145c97b374765"
+          }
+        },
+        {
+          "input": {
+            "index": 0,
+            "parent_id": "95fe324f3ac807874fdea911986ef901"
+          },
+          "output": {
+            "index": 0,
+            "parent_id": "28d6f3f972821c0fc6ee0967ff45fb16"
+          }
+        }
+      ],
+      "inputs": [
+        "n"
+      ],
+      "outputs": [
+        "OUT"
+      ]
+    },
+    "dadb803dfdee6768253b2a1e3fe8416e": {
+      "id": "dadb803dfdee6768253b2a1e3fe8416e",
+      "name": "simple",
+      "nodes": [],
+      "connections": [],
+      "inputs": [],
+      "outputs": [
+        "OUT"
+      ]
+    },
+    "5282199e7a30c2bcaeb645c1b67d9f84": {
+      "id": "5282199e7a30c2bcaeb645c1b67d9f84",
+      "name": "How are you?",
+      "nodes": [
+        {
+          "position": {
+            "x": -13,
+            "y": -171
+          },
+          "text": "if",
+          "id": "9c35482fe34d408ecb837c44ded62bbc",
+          "type": "builtin",
+          "implementation_id": "29c894a04e219f47477672bedc3ad620"
+        },
+        {
+          "position": {
+            "x": 103,
+            "y": -65
+          },
+          "text": "\"ok\"",
+          "id": "77743b25cd5433cc61e00451ed9d1066",
+          "type": "literal",
+          "value": "\"ok\""
+        },
+        {
+          "position": {
+            "x": -150,
+            "y": -60
+          },
+          "text": "\"Great!\"",
+          "id": "da5dcb5fd936316773be7e7519ecc915",
+          "type": "literal",
+          "value": "\"Great!\""
+        },
+        {
+          "position": {
+            "x": 8,
+            "y": 197
+          },
+          "text": "\"How are you?\"",
+          "id": "01ebfca641277b8c7636716252a6e14a",
+          "type": "literal",
+          "value": "\"How are you?\""
+        },
+        {
+          "position": {
+            "x": 33,
+            "y": 68
+          },
+          "text": "prompt",
+          "id": "f2b42b7cda47a0301e74302d35cae637",
+          "type": "builtin",
+          "implementation_id": "be7936fcdcc1fe8c8f1024aa91b475e5"
+        },
+        {
+          "position": {
+            "x": -23,
+            "y": -58
+          },
+          "text": "=",
+          "id": "a8c4bc0abb08acf3eec88bdfe8a3b617",
+          "type": "builtin",
+          "implementation_id": "54e3469201277e5325db02aa56ab5218"
+        },
+        {
+          "position": {
+            "x": -108,
+            "y": 98
+          },
+          "text": "\"good\"",
+          "id": "92fcd762a45c1bd96d24c52ec504f21d",
+          "type": "literal",
+          "value": "\"good\""
+        }
+      ],
+      "connections": [
+        {
+          "input": {
+            "index": 2,
+            "parent_id": "9c35482fe34d408ecb837c44ded62bbc"
+          },
+          "output": {
+            "index": 0,
+            "parent_id": "77743b25cd5433cc61e00451ed9d1066"
+          }
+        },
+        {
+          "input": {
+            "index": 0,
+            "parent_id": "9c35482fe34d408ecb837c44ded62bbc"
+          },
+          "output": {
+            "index": 0,
+            "parent_id": "da5dcb5fd936316773be7e7519ecc915"
+          }
+        },
+        {
+          "input": {
+            "index": 0,
+            "parent_id": "f2b42b7cda47a0301e74302d35cae637"
+          },
+          "output": {
+            "index": 0,
+            "parent_id": "01ebfca641277b8c7636716252a6e14a"
+          }
+        },
+        {
+          "input": {
+            "index": 1,
+            "parent_id": "a8c4bc0abb08acf3eec88bdfe8a3b617"
+          },
+          "output": {
+            "index": 0,
+            "parent_id": "f2b42b7cda47a0301e74302d35cae637"
+          }
+        },
+        {
+          "input": {
+            "index": 1,
+            "parent_id": "9c35482fe34d408ecb837c44ded62bbc"
+          },
+          "output": {
+            "index": 0,
+            "parent_id": "a8c4bc0abb08acf3eec88bdfe8a3b617"
+          }
+        },
+        {
+          "input": {
+            "index": 0,
+            "parent_id": "a8c4bc0abb08acf3eec88bdfe8a3b617"
+          },
+          "output": {
+            "index": 0,
+            "parent_id": "92fcd762a45c1bd96d24c52ec504f21d"
+          }
+        },
+        {
+          "input": {
+            "index": 0,
+            "parent_id": "5282199e7a30c2bcaeb645c1b67d9f84"
+          },
+          "output": {
+            "index": 0,
+            "parent_id": "9c35482fe34d408ecb837c44ded62bbc"
+          }
+        }
+      ],
+      "inputs": [],
+      "outputs": [
+        "OUT"
+      ]
+    },
+    "6dd0271ee9c5ab6cd2f987291ad48d41": {
+      "id": "6dd0271ee9c5ab6cd2f987291ad48d41",
+      "name": "Guess the Number",
+      "nodes": [
+        {
+          "position": {
+            "x": 35,
+            "y": 91
+          },
+          "text": "\"Guess a number from 1 to 100\"",
+          "id": "37cebc003cd0d1b6649dab23f3cadb71",
+          "type": "literal",
+          "value": "\"Guess a number from 1 to 100\""
+        },
+        {
+          "position": {
+            "x": -169,
+            "y": 170
+          },
+          "text": "100",
+          "id": "04240cd4d358bfee589755e4dbd057ef",
+          "type": "literal",
+          "value": "100"
+        },
+        {
+          "position": {
+            "x": -134,
+            "y": 47
+          },
+          "text": "random integer between",
+          "id": "b5975dc1299fd4b52f36782cd7664f56",
+          "type": "function",
+          "implementation_id": "f69c6bcb9aeb6c40af7292b203c47544"
+        },
+        {
+          "position": {
+            "x": -95,
+            "y": 172
+          },
+          "text": "1",
+          "id": "b5af00d85aab7c5d469b35561170e42f",
+          "type": "literal",
+          "value": "1"
+        },
+        {
+          "position": {
+            "x": -3,
+            "y": -86
+          },
+          "text": "guess again",
+          "id": "e25de09c96d8bca15f0164d645e2f2ea",
+          "type": "function",
+          "implementation_id": "b3f0e2b7f6d4fb6a4603686c4cc67313"
+        }
+      ],
+      "connections": [
+        {
+          "input": {
+            "index": 0,
+            "parent_id": "b5975dc1299fd4b52f36782cd7664f56"
+          },
+          "output": {
+            "index": 0,
+            "parent_id": "04240cd4d358bfee589755e4dbd057ef"
+          }
+        },
+        {
+          "input": {
+            "index": 1,
+            "parent_id": "b5975dc1299fd4b52f36782cd7664f56"
+          },
+          "output": {
+            "index": 0,
+            "parent_id": "b5af00d85aab7c5d469b35561170e42f"
+          }
+        },
+        {
+          "input": {
+            "index": 0,
+            "parent_id": "e25de09c96d8bca15f0164d645e2f2ea"
+          },
+          "output": {
+            "index": 0,
+            "parent_id": "b5975dc1299fd4b52f36782cd7664f56"
+          }
+        },
+        {
+          "input": {
+            "index": 1,
+            "parent_id": "e25de09c96d8bca15f0164d645e2f2ea"
+          },
+          "output": {
+            "index": 0,
+            "parent_id": "37cebc003cd0d1b6649dab23f3cadb71"
+          }
+        },
+        {
+          "input": {
+            "index": 0,
+            "parent_id": "6dd0271ee9c5ab6cd2f987291ad48d41"
+          },
+          "output": {
+            "index": 0,
+            "parent_id": "e25de09c96d8bca15f0164d645e2f2ea"
+          }
+        }
+      ],
+      "inputs": [],
+      "outputs": [
+        "OUT"
+      ]
+    },
+    "f69c6bcb9aeb6c40af7292b203c47544": {
+      "id": "f69c6bcb9aeb6c40af7292b203c47544",
+      "name": "random integer between",
+      "nodes": [
+        {
+          "position": {
+            "x": 68,
+            "y": 155
+          },
+          "text": "random float",
+          "id": "b590b6cc428d4b91ab8193aa16cb42f6",
+          "type": "builtin",
+          "implementation_id": "9a7d34a3c313a193ba47e747b4ff9132"
+        },
+        {
+          "position": {
+            "x": -53,
+            "y": 161
+          },
+          "text": "-",
+          "id": "ad1e595920c7f10822ba4f3d3de40132",
+          "type": "builtin",
+          "implementation_id": "99dc67480b5e5fe8adcab5fc6540c8a0"
+        },
+        {
+          "position": {
+            "x": -1,
+            "y": 57
+          },
+          "text": "*",
+          "id": "41926b26fbdd2fa2b1d90dabe4682a50",
+          "type": "builtin",
+          "implementation_id": "c70ac0c10dcfce8249b937ad164413ec"
+        },
+        {
+          "position": {
+            "x": 49,
+            "y": -53
+          },
+          "text": "+",
+          "id": "c8c77f3a7eabc0832d0ae8c87b6ecaae",
+          "type": "builtin",
+          "implementation_id": "894652d702c3bb123ce8ed9e2bdcc71b"
+        },
+        {
+          "position": {
+            "x": 0,
+            "y": -169
+          },
+          "text": "int",
+          "id": "10b0e23072b619e4d226719e9215bacd",
+          "type": "builtin",
+          "implementation_id": "a9f07bc7545769b8b8b31a9d7ac77229"
+        }
+      ],
+      "connections": [
+        {
+          "input": {
+            "index": 0,
+            "parent_id": "ad1e595920c7f10822ba4f3d3de40132"
+          },
+          "output": {
+            "index": 0,
+            "parent_id": "f69c6bcb9aeb6c40af7292b203c47544"
+          }
+        },
+        {
+          "input": {
+            "index": 1,
+            "parent_id": "ad1e595920c7f10822ba4f3d3de40132"
+          },
+          "output": {
+            "index": 1,
+            "parent_id": "f69c6bcb9aeb6c40af7292b203c47544"
+          }
+        },
+        {
+          "input": {
+            "index": 0,
+            "parent_id": "41926b26fbdd2fa2b1d90dabe4682a50"
+          },
+          "output": {
+            "index": 0,
+            "parent_id": "ad1e595920c7f10822ba4f3d3de40132"
+          }
+        },
+        {
+          "input": {
+            "index": 1,
+            "parent_id": "41926b26fbdd2fa2b1d90dabe4682a50"
+          },
+          "output": {
+            "index": 0,
+            "parent_id": "b590b6cc428d4b91ab8193aa16cb42f6"
+          }
+        },
+        {
+          "input": {
+            "index": 0,
+            "parent_id": "c8c77f3a7eabc0832d0ae8c87b6ecaae"
+          },
+          "output": {
+            "index": 0,
+            "parent_id": "41926b26fbdd2fa2b1d90dabe4682a50"
+          }
+        },
+        {
+          "input": {
+            "index": 1,
+            "parent_id": "c8c77f3a7eabc0832d0ae8c87b6ecaae"
+          },
+          "output": {
+            "index": 1,
+            "parent_id": "f69c6bcb9aeb6c40af7292b203c47544"
+          }
+        },
+        {
+          "input": {
+            "index": 0,
+            "parent_id": "10b0e23072b619e4d226719e9215bacd"
+          },
+          "output": {
+            "index": 0,
+            "parent_id": "c8c77f3a7eabc0832d0ae8c87b6ecaae"
+          }
+        },
+        {
+          "input": {
+            "index": 0,
+            "parent_id": "f69c6bcb9aeb6c40af7292b203c47544"
+          },
+          "output": {
+            "index": 0,
+            "parent_id": "10b0e23072b619e4d226719e9215bacd"
+          }
+        }
+      ],
+      "inputs": [
+        "hi",
+        "lo"
+      ],
+      "outputs": [
+        "OUT"
+      ]
+    },
+    "b3f0e2b7f6d4fb6a4603686c4cc67313": {
+      "id": "b3f0e2b7f6d4fb6a4603686c4cc67313",
+      "name": "guess again",
+      "nodes": [
+        {
+          "position": {
+            "x": 195,
+            "y": 187
+          },
+          "text": "prompt",
+          "id": "2aafc632fb79c05b04ff6833560d9612",
+          "type": "builtin",
+          "implementation_id": "be7936fcdcc1fe8c8f1024aa91b475e5"
+        },
+        {
+          "position": {
+            "x": -72,
+            "y": 74
+          },
+          "text": "=",
+          "id": "db2a08aab1b3ff54ff75b3afb319b949",
+          "type": "builtin",
+          "implementation_id": "54e3469201277e5325db02aa56ab5218"
+        },
+        {
+          "position": {
+            "x": 114,
+            "y": 128
+          },
+          "text": "int",
+          "id": "e1d2cc261bfd5e2f5ced5fff99515352",
+          "type": "builtin",
+          "implementation_id": "a9f07bc7545769b8b8b31a9d7ac77229"
+        },
+        {
+          "position": {
+            "x": -71,
+            "y": -191
+          },
+          "text": "if",
+          "id": "034c9954b03833aeaed93957d62f2793",
+          "type": "builtin",
+          "implementation_id": "29c894a04e219f47477672bedc3ad620"
+        },
+        {
+          "position": {
+            "x": -134,
+            "y": -99
+          },
+          "text": "\"Correct\"",
+          "id": "7c2a55f2dee04a3d7b82c6f9d5cbbabb",
+          "type": "literal",
+          "value": "\"Correct\""
+        },
+        {
+          "position": {
+            "x": 39,
+            "y": -127
+          },
+          "text": "guess again",
+          "id": "c6910c009fadc9604e3a58e92b488f17",
+          "type": "function",
+          "implementation_id": "b3f0e2b7f6d4fb6a4603686c4cc67313"
+        },
+        {
+          "position": {
+            "x": 121,
+            "y": 42
+          },
+          "text": "<",
+          "id": "d28e599c4ad66a62f8c68ab1a527edf1",
+          "type": "builtin",
+          "implementation_id": "993ad152a2a888f6c0e6a6bd8a1c385a"
+        },
+        {
+          "position": {
+            "x": 125,
+            "y": -64
+          },
+          "text": "if",
+          "id": "738a80e23be01dacdf2c2fa314ee392b",
+          "type": "builtin",
+          "implementation_id": "29c894a04e219f47477672bedc3ad620"
+        },
+        {
+          "position": {
+            "x": 193,
+            "y": 28
+          },
+          "text": "\"Higher\"",
+          "id": "5ba2b39609daf89c727bf42c77fd5e91",
+          "type": "literal",
+          "value": "\"Higher\""
+        },
+        {
+          "position": {
+            "x": 45,
+            "y": 27
+          },
+          "text": "\"Lower\"",
+          "id": "849cfbf47695122d37c05928eb6b2dba",
+          "type": "literal",
+          "value": "\"Lower\""
+        }
+      ],
+      "connections": [
+        {
+          "input": {
+            "index": 0,
+            "parent_id": "2aafc632fb79c05b04ff6833560d9612"
+          },
+          "output": {
+            "index": 1,
+            "parent_id": "b3f0e2b7f6d4fb6a4603686c4cc67313"
+          }
+        },
+        {
+          "input": {
+            "index": 0,
+            "parent_id": "e1d2cc261bfd5e2f5ced5fff99515352"
+          },
+          "output": {
+            "index": 0,
+            "parent_id": "2aafc632fb79c05b04ff6833560d9612"
+          }
+        },
+        {
+          "input": {
+            "index": 1,
+            "parent_id": "db2a08aab1b3ff54ff75b3afb319b949"
+          },
+          "output": {
+            "index": 0,
+            "parent_id": "e1d2cc261bfd5e2f5ced5fff99515352"
+          }
+        },
+        {
+          "input": {
+            "index": 0,
+            "parent_id": "db2a08aab1b3ff54ff75b3afb319b949"
+          },
+          "output": {
+            "index": 0,
+            "parent_id": "b3f0e2b7f6d4fb6a4603686c4cc67313"
+          }
+        },
+        {
+          "input": {
+            "index": 1,
+            "parent_id": "034c9954b03833aeaed93957d62f2793"
+          },
+          "output": {
+            "index": 0,
+            "parent_id": "db2a08aab1b3ff54ff75b3afb319b949"
+          }
+        },
+        {
+          "input": {
+            "index": 0,
+            "parent_id": "b3f0e2b7f6d4fb6a4603686c4cc67313"
+          },
+          "output": {
+            "index": 0,
+            "parent_id": "034c9954b03833aeaed93957d62f2793"
+          }
+        },
+        {
+          "input": {
+            "index": 0,
+            "parent_id": "034c9954b03833aeaed93957d62f2793"
+          },
+          "output": {
+            "index": 0,
+            "parent_id": "7c2a55f2dee04a3d7b82c6f9d5cbbabb"
+          }
+        },
+        {
+          "input": {
+            "index": 2,
+            "parent_id": "034c9954b03833aeaed93957d62f2793"
+          },
+          "output": {
+            "index": 0,
+            "parent_id": "c6910c009fadc9604e3a58e92b488f17"
+          }
+        },
+        {
+          "input": {
+            "index": 0,
+            "parent_id": "c6910c009fadc9604e3a58e92b488f17"
+          },
+          "output": {
+            "index": 0,
+            "parent_id": "b3f0e2b7f6d4fb6a4603686c4cc67313"
+          }
+        },
+        {
+          "input": {
+            "index": 1,
+            "parent_id": "c6910c009fadc9604e3a58e92b488f17"
+          },
+          "output": {
+            "index": 0,
+            "parent_id": "738a80e23be01dacdf2c2fa314ee392b"
+          }
+        },
+        {
+          "input": {
+            "index": 1,
+            "parent_id": "738a80e23be01dacdf2c2fa314ee392b"
+          },
+          "output": {
+            "index": 0,
+            "parent_id": "d28e599c4ad66a62f8c68ab1a527edf1"
+          }
+        },
+        {
+          "input": {
+            "index": 0,
+            "parent_id": "d28e599c4ad66a62f8c68ab1a527edf1"
+          },
+          "output": {
+            "index": 0,
+            "parent_id": "b3f0e2b7f6d4fb6a4603686c4cc67313"
+          }
+        },
+        {
+          "input": {
+            "index": 1,
+            "parent_id": "d28e599c4ad66a62f8c68ab1a527edf1"
+          },
+          "output": {
+            "index": 0,
+            "parent_id": "e1d2cc261bfd5e2f5ced5fff99515352"
+          }
+        },
+        {
+          "input": {
+            "index": 2,
+            "parent_id": "738a80e23be01dacdf2c2fa314ee392b"
+          },
+          "output": {
+            "index": 0,
+            "parent_id": "5ba2b39609daf89c727bf42c77fd5e91"
+          }
+        },
+        {
+          "input": {
+            "index": 0,
+            "parent_id": "738a80e23be01dacdf2c2fa314ee392b"
+          },
+          "output": {
+            "index": 0,
+            "parent_id": "849cfbf47695122d37c05928eb6b2dba"
+          }
+        }
+      ],
+      "inputs": [
+        "answer",
+        "response"
+      ],
+      "outputs": [
+        "OUT"
+      ]
+    },
+    "28f55e2a6ce4ed931638a6b38a913711": {
+      "id": "28f55e2a6ce4ed931638a6b38a913711",
+      "name": "something",
+      "nodes": [
+        {
+          "position": {
+            "x": 132,
+            "y": 14
+          },
+          "text": "2",
+          "id": "a5149715ae256c3e3e132418b3f541d6",
+          "type": "literal",
+          "value": "2"
+        },
+        {
+          "position": {
+            "x": -107,
+            "y": 3
+          },
+          "text": "1",
+          "id": "c54869ef460daa3cb84527b589fc3aa5",
+          "type": "literal",
+          "value": "1"
+        },
+        {
+          "position": {
+            "x": 20,
+            "y": -130
+          },
+          "text": "+",
+          "id": "4470896cd4b95596bbc6074aeea6bf1b",
+          "type": "builtin",
+          "implementation_id": "894652d702c3bb123ce8ed9e2bdcc71b"
+        }
+      ],
+      "connections": [
+        {
+          "input": {
+            "index": 0,
+            "parent_id": "4470896cd4b95596bbc6074aeea6bf1b"
+          },
+          "output": {
+            "index": 0,
+            "parent_id": "c54869ef460daa3cb84527b589fc3aa5"
+          }
+        },
+        {
+          "input": {
+            "index": 1,
+            "parent_id": "4470896cd4b95596bbc6074aeea6bf1b"
+          },
+          "output": {
+            "index": 0,
+            "parent_id": "a5149715ae256c3e3e132418b3f541d6"
+          }
+        },
+        {
+          "input": {
+            "index": 0,
+            "parent_id": "28f55e2a6ce4ed931638a6b38a913711"
+          },
+          "output": {
+            "index": 0,
+            "parent_id": "4470896cd4b95596bbc6074aeea6bf1b"
+          }
+        }
+      ],
+      "inputs": [],
+      "outputs": [
+        "OUT"
+      ]
+    },
+    "a4d5d2a33d3160b4aed4ab79509f8964": {
+      "id": "a4d5d2a33d3160b4aed4ab79509f8964",
+      "name": "But Thou Must!",
+      "nodes": [
+        {
+          "position": {
+            "x": -6,
+            "y": 90
+          },
+          "text": "\"Do you want to save the day?\"",
+          "id": "c0c48535a0a1ac3bf2ee7288c80bce0a",
+          "type": "literal",
+          "value": "\"Do you want to save the day?\""
+        },
+        {
+          "position": {
+            "x": -3,
+            "y": -82
+          },
+          "text": "But Thou Must R",
+          "id": "20d41ed489aa258fe6e3e55aceb98271",
+          "type": "function",
+          "implementation_id": "4648daf11feabdcf073285809daf8278"
+        }
+      ],
+      "connections": [
+        {
+          "input": {
+            "index": 0,
+            "parent_id": "20d41ed489aa258fe6e3e55aceb98271"
+          },
+          "output": {
+            "index": 0,
+            "parent_id": "c0c48535a0a1ac3bf2ee7288c80bce0a"
+          }
+        },
+        {
+          "input": {
+            "index": 0,
+            "parent_id": "a4d5d2a33d3160b4aed4ab79509f8964"
+          },
+          "output": {
+            "index": 0,
+            "parent_id": "20d41ed489aa258fe6e3e55aceb98271"
+          }
+        }
+      ],
+      "inputs": [
+        "S"
+      ],
+      "outputs": [
+        "OUT"
+      ]
+    },
+    "4648daf11feabdcf073285809daf8278": {
+      "id": "4648daf11feabdcf073285809daf8278",
+      "name": "But Thou Must R",
+      "nodes": [
+        {
+          "position": {
+            "x": 24,
+            "y": 124
+          },
+          "text": "prompt",
+          "id": "aef91af9fb3bede7d39a6bde6073bfe5",
+          "type": "builtin",
+          "implementation_id": "be7936fcdcc1fe8c8f1024aa91b475e5"
+        },
+        {
+          "position": {
+            "x": -155,
+            "y": 116
+          },
+          "text": "\"yes\"",
+          "id": "fe4f55db40386dc765c934f3f0dabffb",
+          "type": "literal",
+          "value": "\"yes\""
+        },
+        {
+          "position": {
+            "x": -123,
+            "y": 2
+          },
+          "text": "=",
+          "id": "c651e8b8fa932bea88279acfcf6d32ca",
+          "type": "builtin",
+          "implementation_id": "54e3469201277e5325db02aa56ab5218"
+        },
+        {
+          "position": {
+            "x": -203,
+            "y": -79
+          },
+          "text": "\"Good!\"",
+          "id": "d50d4bf415a311df92b19076f040fafe",
+          "type": "literal",
+          "value": "\"Good!\""
+        },
+        {
+          "position": {
+            "x": -4,
+            "y": -150
+          },
+          "text": "if",
+          "id": "1e42e8b29c597813210c013690b35890",
+          "type": "builtin",
+          "implementation_id": "29c894a04e219f47477672bedc3ad620"
+        },
+        {
+          "position": {
+            "x": 157,
+            "y": -6
+          },
+          "text": "But Thou Must R",
+          "id": "8d4c1e7fd1039d3375c94053a4b18141",
+          "type": "function",
+          "implementation_id": "4648daf11feabdcf073285809daf8278"
+        },
+        {
+          "position": {
+            "x": 158,
+            "y": 114
+          },
+          "text": "\"But Thou Must!\"",
+          "id": "745db1d1b043930ef23c117324830bd3",
+          "type": "literal",
+          "value": "\"But Thou Must!\""
+        }
+      ],
+      "connections": [
+        {
+          "input": {
+            "index": 0,
+            "parent_id": "c651e8b8fa932bea88279acfcf6d32ca"
+          },
+          "output": {
+            "index": 0,
+            "parent_id": "fe4f55db40386dc765c934f3f0dabffb"
+          }
+        },
+        {
+          "input": {
+            "index": 1,
+            "parent_id": "c651e8b8fa932bea88279acfcf6d32ca"
+          },
+          "output": {
+            "index": 0,
+            "parent_id": "aef91af9fb3bede7d39a6bde6073bfe5"
+          }
+        },
+        {
+          "input": {
+            "index": 0,
+            "parent_id": "1e42e8b29c597813210c013690b35890"
+          },
+          "output": {
+            "index": 0,
+            "parent_id": "d50d4bf415a311df92b19076f040fafe"
+          }
+        },
+        {
+          "input": {
+            "index": 1,
+            "parent_id": "1e42e8b29c597813210c013690b35890"
+          },
+          "output": {
+            "index": 0,
+            "parent_id": "c651e8b8fa932bea88279acfcf6d32ca"
+          }
+        },
+        {
+          "input": {
+            "index": 2,
+            "parent_id": "1e42e8b29c597813210c013690b35890"
+          },
+          "output": {
+            "index": 0,
+            "parent_id": "8d4c1e7fd1039d3375c94053a4b18141"
+          }
+        },
+        {
+          "input": {
+            "index": 0,
+            "parent_id": "8d4c1e7fd1039d3375c94053a4b18141"
+          },
+          "output": {
+            "index": 0,
+            "parent_id": "745db1d1b043930ef23c117324830bd3"
+          }
+        },
+        {
+          "input": {
+            "index": 0,
+            "parent_id": "4648daf11feabdcf073285809daf8278"
+          },
+          "output": {
+            "index": 0,
+            "parent_id": "1e42e8b29c597813210c013690b35890"
+          }
+        },
+        {
+          "input": {
+            "index": 0,
+            "parent_id": "aef91af9fb3bede7d39a6bde6073bfe5"
+          },
+          "output": {
+            "index": 0,
+            "parent_id": "4648daf11feabdcf073285809daf8278"
+          }
+        }
+      ],
+      "inputs": [
+        "message"
+      ],
+      "outputs": [
+        "OUT"
+      ]
+    }
+  },
+  "builtins": {
+    "894652d702c3bb123ce8ed9e2bdcc71b": {
+      "id": "894652d702c3bb123ce8ed9e2bdcc71b",
+      "name": "+",
+      "inputs": [
+        "L",
+        "R"
+      ],
+      "outputs": [
+        "R"
+      ],
+      "memo_implementation": null,
+      "output_implementation": "function (left, right) {\n        return left() + right();\n      }"
+    },
+    "99dc67480b5e5fe8adcab5fc6540c8a0": {
+      "id": "99dc67480b5e5fe8adcab5fc6540c8a0",
+      "name": "-",
+      "inputs": [
+        "L",
+        "R"
+      ],
+      "outputs": [
+        "R"
+      ],
+      "memo_implementation": null,
+      "output_implementation": "function (left, right) {\n        return left() - right();\n      }"
+    },
+    "c70ac0c10dcfce8249b937ad164413ec": {
+      "id": "c70ac0c10dcfce8249b937ad164413ec",
+      "name": "*",
+      "inputs": [
+        "L",
+        "R"
+      ],
+      "outputs": [
+        "R"
+      ],
+      "memo_implementation": null,
+      "output_implementation": "function (left, right) {\n        return left() * right();\n      }"
+    },
+    "3080574badf11047d6df2ed24f8248df": {
+      "id": "3080574badf11047d6df2ed24f8248df",
+      "name": "/",
+      "inputs": [
+        "L",
+        "R"
+      ],
+      "outputs": [
+        "R"
+      ],
+      "memo_implementation": null,
+      "output_implementation": "function (left, right) {\n        return left() / right();\n      }"
+    },
+    "993ad152a2a888f6c0e6a6bd8a1c385a": {
+      "id": "993ad152a2a888f6c0e6a6bd8a1c385a",
+      "name": "<",
+      "inputs": [
+        "L",
+        "R"
+      ],
+      "outputs": [
+        "R"
+      ],
+      "memo_implementation": null,
+      "output_implementation": "function (left, right) {\n        return left() < right();\n      }"
+    },
+    "3030973e37ce53b896735a3ad6b369d6": {
+      "id": "3030973e37ce53b896735a3ad6b369d6",
+      "name": "<=",
+      "inputs": [
+        "L",
+        "R"
+      ],
+      "outputs": [
+        "R"
+      ],
+      "memo_implementation": null,
+      "output_implementation": "function (left, right) {\n        return left() <= right();\n      }"
+    },
+    "54e3469201277e5325db02aa56ab5218": {
+      "id": "54e3469201277e5325db02aa56ab5218",
+      "name": "=",
+      "inputs": [
+        "L",
+        "R"
+      ],
+      "outputs": [
+        "R"
+      ],
+      "memo_implementation": null,
+      "output_implementation": "function (left, right) {\n        return left() === right();\n      }"
+    },
+    "4d0b2cd39670d8a70ded2c5f7a6fd5be": {
+      "id": "4d0b2cd39670d8a70ded2c5f7a6fd5be",
+      "name": ">=",
+      "inputs": [
+        "L",
+        "R"
+      ],
+      "outputs": [
+        "R"
+      ],
+      "memo_implementation": null,
+      "output_implementation": "function (left, right) {\n        return left() >= right();\n      }"
+    },
+    "68af5453eda7b4c9cbe6a86e12b5fba2": {
+      "id": "68af5453eda7b4c9cbe6a86e12b5fba2",
+      "name": ">",
+      "inputs": [
+        "L",
+        "R"
+      ],
+      "outputs": [
+        "R"
+      ],
+      "memo_implementation": null,
+      "output_implementation": "function (left, right) {\n        return left() > right();\n      }"
+    },
+    "29c894a04e219f47477672bedc3ad620": {
+      "id": "29c894a04e219f47477672bedc3ad620",
+      "name": "if",
+      "inputs": [
+        "T",
+        "C",
+        "F"
+      ],
+      "outputs": [
+        "R"
+      ],
+      "memo_implementation": null,
+      "output_implementation": "function (true_result, condition, false_result) {\n        if (condition()) {\n          return true_result();\n        } else {\n          return false_result();\n        }\n      }"
+    },
+    "be7936fcdcc1fe8c8f1024aa91b475e5": {
+      "id": "be7936fcdcc1fe8c8f1024aa91b475e5",
+      "name": "prompt",
+      "inputs": [
+        "M",
+        "S"
+      ],
+      "outputs": [
+        "R",
+        "S"
+      ],
+      "memo_implementation": "function (message, sequencer) {\n        ignore_if_disconnected(sequencer);\n        return prompt(message());\n      }",
+      "output_implementation": "function (message, sequencer, index, memo) {\n        if (index === 0) {\n          return memo;\n        } else {\n          return null;\n        }\n      }"
+    },
+    "06b207d17227570db276cd4aaef57a2b": {
+      "id": "06b207d17227570db276cd4aaef57a2b",
+      "name": "funnel",
+      "inputs": [
+        "V",
+        "S"
+      ],
+      "outputs": [
+        "V"
+      ],
+      "memo_implementation": null,
+      "output_implementation": "function (value, sequencer) {\n        try {\n          sequencer();\n        } catch (exception) {\n          if (!(exception instanceof NotConnected)) {\n            throw exception;\n          }\n        }\n        return value();\n      }"
+    },
+    "51f15a4fe5f0c1bf1e31f63733aa1618": {
+      "id": "51f15a4fe5f0c1bf1e31f63733aa1618",
+      "name": "log",
+      "inputs": [
+        "in"
+      ],
+      "outputs": [
+        "out"
+      ],
+      "memo_implementation": null,
+      "output_implementation": "function (input) {\n        var value;\n        value = input();\n        console.log(value);\n        return value;\n      }"
+    },
+    "1baf12a4702a0ecc724592ad8dd285f3": {
+      "id": "1baf12a4702a0ecc724592ad8dd285f3",
+      "name": "exit",
+      "inputs": [],
+      "outputs": [
+        "R"
+      ],
+      "memo_implementation": null,
+      "output_implementation": "function () {\n        throw new Exit;\n      }"
+    },
+    "09f91a7ec8fd64baacda01ee70760569": {
+      "id": "09f91a7ec8fd64baacda01ee70760569",
+      "name": "replace",
+      "inputs": [
+        "text",
+        "rem",
+        "ins"
+      ],
+      "outputs": [
+        "result"
+      ],
+      "memo_implementation": null,
+      "output_implementation": "function (text, pattern, replacement) {\n        return text().replace(pattern(), replacement());\n      }"
+    },
+    "a612be6f7bae3de3ae2f883bc3f245c4": {
+      "id": "a612be6f7bae3de3ae2f883bc3f245c4",
+      "name": "two_outputs",
+      "inputs": [],
+      "outputs": [
+        "L",
+        "R"
+      ],
+      "memo_implementation": null,
+      "output_implementation": "function (index) {\n        if (index === 0) {\n          return \"left\";\n        } else {\n          return \"right\";\n        }\n      }"
+    },
+    "a9f07bc7545769b8b8b31a9d7ac77229": {
+      "id": "a9f07bc7545769b8b8b31a9d7ac77229",
+      "name": "int",
+      "inputs": [
+        "IN"
+      ],
+      "outputs": [
+        "int"
+      ],
+      "memo_implementation": null,
+      "output_implementation": "function (str) {\n        return parseInt(str());\n      }"
+    },
+    "7cca8f80ac29c5a1e72c371c574e7414": {
+      "id": "7cca8f80ac29c5a1e72c371c574e7414",
+      "name": "float",
+      "inputs": [
+        "IN"
+      ],
+      "outputs": [
+        "float"
+      ],
+      "memo_implementation": null,
+      "output_implementation": "function (str) {\n        return parseFloat(str());\n      }"
+    },
+    "b5b3023a4a839ed106882e74923dab88": {
+      "id": "b5b3023a4a839ed106882e74923dab88",
+      "name": "str",
+      "inputs": [
+        "IN"
+      ],
+      "outputs": [
+        "str"
+      ],
+      "memo_implementation": null,
+      "output_implementation": "function (obj) {\n        return '' + obj();\n      }"
+    },
+    "3827fa434cfc1b71555e0e958633e1ca": {
+      "id": "3827fa434cfc1b71555e0e958633e1ca",
+      "name": "from json",
+      "inputs": [
+        "str"
+      ],
+      "outputs": [
+        "obj"
+      ],
+      "memo_implementation": null,
+      "output_implementation": "function (str) {\n        return JSON.parse(str());\n      }"
+    },
+    "aa8c65ccce7abc2c524349c843bb4fc5": {
+      "id": "aa8c65ccce7abc2c524349c843bb4fc5",
+      "name": "to json",
+      "inputs": [
+        "obj"
+      ],
+      "outputs": [
+        "str"
+      ],
+      "memo_implementation": null,
+      "output_implementation": "function (obj) {\n        return JSON.stringify(obj());\n      }"
+    },
+    "9a7d34a3c313a193ba47e747b4ff9132": {
+      "id": "9a7d34a3c313a193ba47e747b4ff9132",
+      "name": "random float",
+      "inputs": [],
+      "outputs": [
+        "OUT"
+      ],
+      "memo_implementation": null,
+      "output_implementation": "function () {\n        return Math.random();\n      }"
+    },
+    "325fa3507bac12a3673f2789e12a1e41": {
+      "id": "325fa3507bac12a3673f2789e12a1e41",
+      "name": "call",
+      "inputs": [
+        "SUB",
+        "IN"
+      ],
+      "outputs": [
+        "OUT"
+      ],
+      "memo_implementation": null,
+      "output_implementation": "function (subroutine, input) {\n        return subroutine().invoke(0, [input]);\n      }"
+    },
+    "9fbdec485d1149e1c24d54f332099247": {
+      "id": "9fbdec485d1149e1c24d54f332099247",
+      "name": "call-n",
+      "inputs": [
+        "SUB",
+        "IN"
+      ],
+      "outputs": [
+        "OUT"
+      ],
+      "memo_implementation": null,
+      "output_implementation": "function (subroutine, inputs) {\n        return subroutine().invoke(0, inputs());\n      }"
+    },
+    "0b40d2d29e6df169bc95d854f41ff476": {
+      "id": "0b40d2d29e6df169bc95d854f41ff476",
+      "name": "cons",
+      "inputs": [
+        "LIST",
+        "ELE"
+      ],
+      "outputs": [
+        "LIST"
+      ],
+      "memo_implementation": null,
+      "output_implementation": "function (list, element) {\n        return list().concat(element());\n      }"
+    },
+    "73b5d938605bb060c7ddfa031fe29d46": {
+      "id": "73b5d938605bb060c7ddfa031fe29d46",
+      "name": "lazy input",
+      "inputs": [
+        "IN"
+      ],
+      "outputs": [
+        "OUT"
+      ],
+      "memo_implementation": null,
+      "output_implementation": "function (input) {\n        return input;\n      }"
+    },
+    "6f907fb4b165ba30346d16add6b67ab0": {
+      "id": "6f907fb4b165ba30346d16add6b67ab0",
+      "name": "nonono!",
+      "inputs": [],
+      "outputs": [
+        "OUT"
+      ],
+      "memo_implementation": null,
+      "output_implementation": "function(){return 5 }"
+    },
+    "f4a694d6183e7f53b0fb3dc465dd0284": {
+      "id": "f4a694d6183e7f53b0fb3dc465dd0284",
+      "name": "sleep",
+      "inputs": [
+        "delay",
+        "seq"
+      ],
+      "outputs": [
+        "seq"
+      ],
+      "memo_implementation": null,
+      "output_implementation": "function(delay, sequencer){\n  setTimeout(sequencer, delay());\n}"
+    },
+    "bcc073f0729315333b6d7dd89149189e": {
+      "id": "bcc073f0729315333b6d7dd89149189e",
+      "inputs": [],
+      "outputs": [
+        "OUT"
+      ],
+      "memo_implementation": null
+    },
+    "9bf8a1f7a31933181fb9743430e2d71f": {
+      "id": "9bf8a1f7a31933181fb9743430e2d71f",
+      "name": "confirm",
+      "inputs": [
+        "message",
+        "seq"
+      ],
+      "outputs": [
+        "input",
+        "seq"
+      ],
+      "memo_implementation": null,
+      "output_implementation": "function("
+    }
+  },
+  "schema_version": 1
+}

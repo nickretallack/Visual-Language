@@ -1028,7 +1028,7 @@
     return JSON.stringify(obj, void 0, 2);
   };
   window.Controller = function($http) {
-    var hide_subroutines, import_data, import_source, init_field, save_state, saving, start_saving, teardown_field;
+    var hide_subroutines, import_data, init_field, save_state, saving, start_saving, teardown_field;
     init_field = function() {
       var field;
       if (!should_animate) {
@@ -1070,19 +1070,15 @@
     this.builtins = {};
     this["import"] = function() {
       hide_subroutines();
-      import_source(this.import_export_text);
+      import_data(valid_source(this.import_export_text));
       if (current_scope) {
         this.edit_subroutine(current_scope);
       }
       return start_saving();
     };
-    import_source = __bind(function(source) {
-      var data;
-      data = load_state(valid_json(source));
-      return import_data(data);
-    }, this);
-    import_data = __bind(function(data) {
-      var builtin, id, subroutine, _ref, _ref2, _results;
+    import_data = __bind(function(source_data) {
+      var builtin, data, id, subroutine, _ref, _ref2, _results;
+      data = load_state(source_data);
       _ref = data.subroutines;
       for (id in _ref) {
         subroutine = _ref[id];
@@ -1098,9 +1094,9 @@
     }, this);
     this.load_example_programs = __bind(function() {
       hide_subroutines();
-      return $http.get('examples.json').success(__bind(function(source) {
+      return $http.get('examples.json').success(__bind(function(source_data) {
         var playground;
-        import_data(source);
+        import_data(source_data);
         playground = new SubRoutine('playground');
         this.subroutines[playground.id] = playground;
         this.edit_subroutine(playground);

@@ -762,15 +762,12 @@ window.Controller = ($http) ->
     @builtins = {}
     @import = ->
         hide_subroutines()
-        import_source @import_export_text
+        import_data valid_source @import_export_text
         @edit_subroutine current_scope if current_scope
         start_saving()
 
-    import_source = (source) =>
-        data = load_state valid_json source
-        import_data data
-
-    import_data = (data) =>
+    import_data = (source_data) =>
+        data = load_state source_data
         for id, subroutine of data.subroutines
             @subroutines[subroutine.id] = subroutine
         for id, builtin of data.builtins
@@ -778,8 +775,8 @@ window.Controller = ($http) ->
 
     @load_example_programs = =>
         hide_subroutines()
-        $http.get('examples.json').success (source) =>
-            import_data source
+        $http.get('examples.json').success (source_data) =>
+            import_data source_data
 
             # make the playground
             playground = new SubRoutine 'playground'
