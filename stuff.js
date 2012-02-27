@@ -1,5 +1,5 @@
 (function() {
-  var Builtin, BuiltinApplication, BuiltinSyntaxError, Connection, Exit, FunctionApplication, Input, InputError, Literal, Nib, Node, NotConnected, NotImplemented, Output, RuntimeException, SubRoutine, SubroutineApplication, UnknownNode, all_builtins, all_subroutines, animate, boxes, camera, connecting_object, connection_view, current_scope, dissociate_exception, dragging_object, dragging_offset, eval_expression, execute, get_absolute_nib_position, get_nib_position, height, highlight, highlighted_node_material, highlighted_objects, ignore_if_disconnected, last, load_implementation, load_state, make_arrow, make_basic_program, make_box, make_connection, make_main, make_nib_view, make_node_view, make_subroutine_view, make_text, mouse_coords, mouse_down, mouse_move, mouse_up, node_material, node_registry, obj_first, playground_id, pretty_json, projector, ray_cast_mouse, renderer, scene, schema_version, should_animate, subroutine_material, system_arrow, unhighlight, unhighlight_all, update, valid_json, whitespace_split, width;
+  var Builtin, BuiltinApplication, BuiltinSyntaxError, Connection, Exit, FunctionApplication, Input, InputError, Literal, Nib, Node, NotConnected, NotImplemented, Output, RuntimeException, SubRoutine, SubroutineApplication, UnknownNode, all_builtins, all_subroutines, animate, boxes, camera, connecting_object, connection_view, current_scope, dissociate_exception, dragging_object, dragging_offset, eval_expression, execute, get_absolute_nib_position, get_nib_position, height, highlight, highlighted_node_material, highlighted_objects, ignore_if_disconnected, last, load_implementation, load_state, make_arrow, make_basic_program, make_box, make_connection, make_main, make_nib_view, make_node_view, make_subroutine_view, make_text, mouse_coords, mouse_down, mouse_move, mouse_up, nib_geometry, nib_mesh, node_geometry, node_material, node_mesh, node_registry, obj_first, playground_id, pretty_json, projector, ray_cast_mouse, renderer, scene, schema_version, should_animate, subroutine_geometry, subroutine_material, subroutine_mesh, system_arrow, unhighlight, unhighlight_all, update, valid_json, whitespace_split, width;
   var __hasProp = Object.prototype.hasOwnProperty, __extends = function(child, parent) {
     for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; }
     function ctor() { this.constructor = child; }
@@ -607,28 +607,26 @@
     var box, box_size, position;
     box_size = V(500, 500);
     position = box_size.scale(1 / 2.0);
-    box = make_box(subroutine.name, box_size, 10, subroutine_material, position, false);
+    box = make_box(subroutine.name, subroutine_mesh, 10, position);
     box.model = subroutine;
     boxes[box.id] = box;
     return box;
   };
   make_node_view = function(node) {
-    var main_box, main_box_size;
-    main_box_size = V(50, 50);
-    main_box = make_box(node.text, main_box_size, 10, node_material, node.position);
+    var main_box;
+    main_box = make_box(node.text, node_mesh, 10, node.position);
     main_box.model = node;
     node.scope.view.add(main_box);
     boxes[main_box.id] = main_box;
     return main_box;
   };
   make_nib_view = function(nib, is_node) {
-    var parent, parent_size, sub_box, sub_box_size, x_position, y_offset, y_position;
-    sub_box_size = V(20, 20);
+    var parent, parent_size, sub_box, x_position, y_offset, y_position;
     parent_size = is_node ? V(60, 60) : V(490, 490);
     y_offset = parent_size.y / 2.0;
     x_position = -parent_size.x / 2.0 + parent_size.x * nib.index / nib.siblings;
     y_position = y_offset * (nib instanceof Input ? 1 : -1) * (is_node ? 1 : -1);
-    sub_box = make_box(nib.text, sub_box_size, 5, node_material, V(x_position, y_position));
+    sub_box = make_box(nib.text, nib_mesh, 5, V(x_position, y_position));
     sub_box.model = nib;
     parent = nib.parent.view;
     parent.add(sub_box);
@@ -680,21 +678,23 @@
   subroutine_material = new THREE.MeshBasicMaterial({
     color: 0xEEEEEE
   });
-  make_box = function(name, size, text_size, material, position, outline) {
-    var box, geometry, mesh;
-    if (outline == null) {
-      outline = false;
-    }
+  node_geometry = new THREE.PlaneGeometry(50, 50);
+  nib_geometry = new THREE.PlaneGeometry(20, 20);
+  subroutine_geometry = new THREE.PlaneGeometry(500, 500);
+  node_mesh = [node_geometry, node_material];
+  nib_mesh = [nib_geometry, node_material];
+  subroutine_mesh = [subroutine_geometry, subroutine_material];
+  make_box = function(name, mesh, text_size, position) {
+    var box;
     box = new THREE.Object3D();
-    geometry = (function(func, args, ctor) {
+    box.add((function(func, args, ctor) {
       ctor.prototype = func.prototype;
       var child = new ctor, result = func.apply(child, args);
       return typeof result === "object" ? result : child;
-    })(THREE.PlaneGeometry, size.components(), function() {});
-    mesh = new THREE.Mesh(geometry, material);
-    mesh.position = V(0, 0).three();
-    box.add(mesh);
-    box.add(make_text(name, text_size));
+    })(THREE.Mesh, mesh, function() {}));
+    if (name) {
+      box.add(make_text(name, text_size));
+    }
     box.position = position.three();
     return box;
   };

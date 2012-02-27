@@ -350,22 +350,19 @@ class Connection
 make_subroutine_view = (subroutine) ->
     box_size = V 500,500
     position = box_size.scale(1/2.0)
-    box = make_box subroutine.name, box_size, 10, subroutine_material, position, false
+    box = make_box subroutine.name, subroutine_mesh, 10, position
     box.model = subroutine
     boxes[box.id] = box
     return box
 
 make_node_view = (node) ->
-    main_box_size = V 50,50
-    main_box = make_box node.text, main_box_size, 10, node_material, node.position
+    main_box = make_box node.text, node_mesh, 10, node.position
     main_box.model = node
     node.scope.view.add main_box
     boxes[main_box.id] = main_box
     return main_box
 
 make_nib_view = (nib, is_node) ->
-    sub_box_size = V 20,20
-
     parent_size = if is_node then V(60,60) else V(490,490)
 
     y_offset = parent_size.y / 2.0
@@ -373,7 +370,7 @@ make_nib_view = (nib, is_node) ->
     x_position = -parent_size.x / 2.0 + parent_size.x * nib.index/nib.siblings
     y_position = y_offset * (if nib instanceof Input then 1 else -1) * (if is_node then 1 else -1)
 
-    sub_box = make_box nib.text, sub_box_size, 5, node_material, V x_position,y_position
+    sub_box = make_box nib.text, nib_mesh, 5, V(x_position,y_position)
     sub_box.model = nib
 
     parent = nib.parent.view
@@ -417,15 +414,21 @@ node_material = new THREE.MeshBasicMaterial color:0x888888
 highlighted_node_material = new THREE.MeshBasicMaterial color:0x8888FF
 subroutine_material = new THREE.MeshBasicMaterial color:0xEEEEEE
 
-make_box = (name, size, text_size, material, position, outline=false) ->
+node_geometry = new THREE.PlaneGeometry 50,50
+nib_geometry = new THREE.PlaneGeometry 20,20
+subroutine_geometry = new THREE.PlaneGeometry 500,500
+
+node_mesh = [node_geometry, node_material]
+nib_mesh = [nib_geometry, node_material]
+subroutine_mesh = [subroutine_geometry, subroutine_material]
+
+make_box = (name, mesh, text_size, position) ->
     box = new THREE.Object3D()
+    box.add new THREE.Mesh mesh...
 
-    geometry = new THREE.PlaneGeometry size.components()...
-    mesh = new THREE.Mesh geometry, material
-    mesh.position = V(0,0).three()
-    box.add mesh
+    if name
+        box.add make_text name, text_size
 
-    box.add make_text name, text_size
     box.position = position.three()
     return box
 
