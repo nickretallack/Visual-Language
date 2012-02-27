@@ -459,7 +459,7 @@ ray_cast_mouse = ->
         (last intersections).object.parent
 
 mouse_coords = (event) ->
-    V event.clientX, height-event.clientY
+    V event.pageX, height-event.pageY
     #V ((event.clientX / window.innerWidth) * 2 - 1), (-(event.clientY / window.innerHeight) * 2 + 1)
 
 get_nib_position = (nib) ->

@@ -737,7 +737,7 @@
     }
   };
   mouse_coords = function(event) {
-    return V(event.clientX, height - event.clientY);
+    return V(event.pageX, height - event.pageY);
   };
   get_nib_position = function(nib) {
     if (nib.parent instanceof Node) {
