@@ -22,6 +22,21 @@
 <div ng:switch-when="subroutine">
 <h2><input ng:model="current_object.name"></h2>
 <div id="field"></div>
+
+<div id="inputs_editor">
+<h3>Inputs</h3>
+<ul><li ng:repeat="input in current_object.inputs">
+    <input ng:model="input.text">
+</li></ul>
+</div>
+
+<div id="outputs_editor">
+<h3>Outputs</h3>
+<ul><li ng:repeat="output in current_object.outputs">
+    <input ng:model="output.text">
+</li></ul>
+</div>
+
 </div>
 
 <div ng:switch-when="literal">
