@@ -1003,8 +1003,8 @@
     this.new_subroutine = angular.copy(this.initial_subroutine);
     this.delete_subroutine = __bind(function(subroutine) {
       if (subroutine.id === current_scope.id) {
-        hide_subroutines();
         this.current_object = null;
+        teardown_field();
       }
       return delete this.subroutines[subroutine.id];
     }, this);

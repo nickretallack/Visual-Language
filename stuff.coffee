@@ -672,8 +672,8 @@ window.Controller = ($http) ->
 
     @delete_subroutine = (subroutine) =>
         if subroutine.id is current_scope.id
-            hide_subroutines()
             @current_object = null
+            teardown_field()
         delete @subroutines[subroutine.id]
 
     @delete_builtin = (builtin) =>
