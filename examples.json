@@ -1722,7 +1722,7 @@
         "V"
       ],
       "memo_implementation": null,
-      "output_implementation": "function (value, sequencer) {\n        try {\n          sequencer();\n        } catch (exception) {\n          if (!(exception instanceof NotConnected)) {\n            throw exception;\n          }\n        }\n        return value();\n      }"
+      "output_implementation":"function (value, sequencer) {\n        ignore_if_disconnected(sequencer);\n        return value();\n      }"
     },
     "51f15a4fe5f0c1bf1e31f63733aa1618": {
       "id": "51f15a4fe5f0c1bf1e31f63733aa1618",
