@@ -1,7 +1,15 @@
+- add some kind of smart behavior for when you reference something that doesn't exist.  Perhaps it should just insert an "Unknown" node that raises an error, not unlike "Exit" does.
+
 - add a smart delete feature for subroutines
     - list the number of subroutines that use this one.  Click this to see their names
     - if this subroutine is used by another, ask if we should delete that one as well
     - if there are other subroutines that are only used by this subroutine, ask if we should delete those as well
+
+- universal editing
+    - control-click? to edit any box
+    - literals should be editable too
+    - remove the name from the background of a subroutine and make it in html above
+
 
 - when you scroll down, the picker isn't correct.  Adjust it for that.
 - use Ace editor for the javascript editors
@@ -10,6 +18,11 @@
 - think about how version control could work
     - save every version of a function
     - allow users to upgrade theirs and notice when input compatibility is broken.
+
+- online persistence
+    - should still allow you to play around in localstorage if you are not registered, but you must register in order to upload your work.
+    - allow you to search through all the users and see their things
+        - mark things private?  But you can't do that if you used them in public programs.  Notify that all referencing functions must be private too.
 
 - add some higher order functions
     - map, reduce
@@ -35,3 +48,4 @@
 - replace alerts with a console?
 - Add box/multi-select
     - convert selection to subroutine, counting inputs and outputs
+
