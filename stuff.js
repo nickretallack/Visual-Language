@@ -1004,6 +1004,7 @@
     this.delete_subroutine = __bind(function(subroutine) {
       if (subroutine.id === current_scope.id) {
         hide_subroutines();
+        this.current_object = null;
       }
       return delete this.subroutines[subroutine.id];
     }, this);
