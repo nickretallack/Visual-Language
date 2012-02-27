@@ -1,5 +1,5 @@
 (function() {
-  var Builtin, BuiltinApplication, BuiltinSyntaxError, Connection, Exit, FunctionApplication, Input, InputError, Literal, Nib, Node, NotConnected, NotImplemented, Output, RuntimeException, SubRoutine, SubroutineApplication, UnknownNode, all_builtins, all_subroutines, animate, boxes, camera, connecting_object, connection_view, current_scope, dissociate_exception, dragging_object, dragging_offset, eval_expression, execute, get_absolute_nib_position, get_nib_position, height, highlight, highlighted_node_material, highlighted_objects, ignore_if_disconnected, last, load_implementation, load_state, make_arrow, make_basic_program, make_box, make_connection, make_main, make_nib_view, make_node_view, make_subroutine_view, make_text, mouse_coords, mouse_down, mouse_move, mouse_up, nib_geometry, nib_mesh, node_geometry, node_material, node_mesh, node_registry, obj_first, playground_id, pretty_json, projector, ray_cast_mouse, renderer, scene, schema_version, should_animate, subroutine_geometry, subroutine_material, subroutine_mesh, system_arrow, unhighlight, unhighlight_all, update, valid_json, whitespace_split, width;
+  var Builtin, BuiltinApplication, BuiltinSyntaxError, Connection, Exit, FunctionApplication, Input, InputError, Literal, Nib, Node, NotConnected, NotImplemented, Output, RuntimeException, SubRoutine, SubroutineApplication, UnknownNode, all_builtins, all_subroutines, animate, boxes, camera, connecting_object, connection_view, current_scope, dissociate_exception, dragging_object, dragging_offset, eval_expression, execute, get_absolute_nib_position, get_nib_position, height, highlight, highlighted_node_material, highlighted_objects, ignore_if_disconnected, last, load_implementation, load_state, make_arrow, make_basic_program, make_box, make_connection, make_main, make_nib_view, make_node_view, make_subroutine_view, make_text, mouse_coords, nib_geometry, nib_mesh, node_geometry, node_material, node_mesh, node_registry, obj_first, playground_id, pretty_json, projector, ray_cast_mouse, renderer, scene, schema_version, should_animate, subroutine_geometry, subroutine_material, subroutine_mesh, system_arrow, unhighlight, unhighlight_all, update, valid_json, whitespace_split, width;
   var __hasProp = Object.prototype.hasOwnProperty, __extends = function(child, parent) {
     for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; }
     function ctor() { this.constructor = child; }
@@ -774,74 +774,6 @@
     }
     return _results;
   };
-  mouse_down = function(event) {
-    var target;
-    event.preventDefault();
-    target = ray_cast_mouse();
-    if (target) {
-      if (target.model instanceof Node) {
-        if (event.which === 3) {
-          return target.model["delete"]();
-        } else if (event.shiftKey) {
-          return highlight(target.model);
-        } else {
-          return dragging_object = target;
-        }
-      } else if (target.model instanceof Nib) {
-        if (event.which === 3) {
-          return target.model.delete_connections();
-        } else {
-          system_arrow.geometry.vertices[0].position = system_arrow.geometry.vertices[1].position = get_absolute_nib_position(target.model);
-          scene.add(system_arrow);
-          return connecting_object = target;
-        }
-      } else {
-        if (!event.shiftKey) {
-          return unhighlight_all();
-        }
-      }
-    }
-  };
-  mouse_up = function(event) {
-    var connection, target;
-    dragging_object = null;
-    if (connecting_object) {
-      target = ray_cast_mouse();
-      if ((target != null ? target.model : void 0) instanceof Nib) {
-        connection = make_connection(connecting_object, target);
-      }
-      connecting_object = null;
-      return scene.remove(system_arrow);
-    }
-  };
-  mouse_move = function(event) {
-    var adjusted_vector, connection, delta, effected_nodes, id, mouse_vector, nib, node, original_position, vector, _i, _j, _len, _len2, _ref, _ref2;
-    mouse_vector = mouse_coords(event);
-    adjusted_vector = mouse_vector.minus(V(250, 250));
-    vector = mouse_vector.three();
-    if (dragging_object) {
-      node = dragging_object.model;
-      original_position = Vector.from(node.view.position);
-      delta = adjusted_vector.minus(original_position);
-      effected_nodes = node.id in highlighted_objects ? _.values(highlighted_objects) : [node];
-      for (_i = 0, _len = effected_nodes.length; _i < _len; _i++) {
-        node = effected_nodes[_i];
-        node.set_position(Vector.from(node.position).plus(delta).three());
-        _ref = node.get_nibs();
-        for (_j = 0, _len2 = _ref.length; _j < _len2; _j++) {
-          nib = _ref[_j];
-          _ref2 = nib.connections;
-          for (id in _ref2) {
-            connection = _ref2[id];
-            connection.vertex.position.copy(get_nib_position(nib));
-          }
-        }
-      }
-    }
-    if (connecting_object) {
-      return system_arrow.geometry.vertices[1].position = vector;
-    }
-  };
   whitespace_split = function(input) {
     var results;
     results = input.split(/\s+/);
@@ -865,7 +797,7 @@
     return JSON.stringify(obj, void 0, 2);
   };
   window.Controller = function($http) {
-    var data, hide_subroutines, import_data, init_field, loaded_state, save_state, saving, start_saving, teardown_field;
+    var data, hide_subroutines, import_data, init_field, loaded_state, mouse_down, mouse_move, mouse_up, save_state, saving, start_saving, teardown_field;
     init_field = function() {
       var field;
       if (!should_animate) {
@@ -884,6 +816,77 @@
     teardown_field = function() {
       return should_animate = false;
     };
+    mouse_down = __bind(function(event) {
+      var target;
+      event.preventDefault();
+      target = ray_cast_mouse();
+      if (target) {
+        if (target.model instanceof Node) {
+          if (event.which === 3) {
+            return target.model["delete"]();
+          } else if (event.shiftKey) {
+            return highlight(target.model);
+          } else if (event.ctrlKey) {
+            this.edit(target.model.implementation);
+            return this.$digest();
+          } else {
+            return dragging_object = target;
+          }
+        } else if (target.model instanceof Nib) {
+          if (event.which === 3) {
+            return target.model.delete_connections();
+          } else {
+            system_arrow.geometry.vertices[0].position = system_arrow.geometry.vertices[1].position = get_absolute_nib_position(target.model);
+            scene.add(system_arrow);
+            return connecting_object = target;
+          }
+        } else {
+          if (!event.shiftKey) {
+            return unhighlight_all();
+          }
+        }
+      }
+    }, this);
+    mouse_up = __bind(function(event) {
+      var connection, target;
+      dragging_object = null;
+      if (connecting_object) {
+        target = ray_cast_mouse();
+        if ((target != null ? target.model : void 0) instanceof Nib) {
+          connection = make_connection(connecting_object, target);
+        }
+        connecting_object = null;
+        return scene.remove(system_arrow);
+      }
+    }, this);
+    mouse_move = __bind(function(event) {
+      var adjusted_vector, connection, delta, effected_nodes, id, mouse_vector, nib, node, original_position, vector, _i, _j, _len, _len2, _ref, _ref2;
+      mouse_vector = mouse_coords(event);
+      adjusted_vector = mouse_vector.minus(V(250, 250));
+      vector = mouse_vector.three();
+      if (dragging_object) {
+        node = dragging_object.model;
+        original_position = Vector.from(node.view.position);
+        delta = adjusted_vector.minus(original_position);
+        effected_nodes = node.id in highlighted_objects ? _.values(highlighted_objects) : [node];
+        for (_i = 0, _len = effected_nodes.length; _i < _len; _i++) {
+          node = effected_nodes[_i];
+          node.set_position(Vector.from(node.position).plus(delta).three());
+          _ref = node.get_nibs();
+          for (_j = 0, _len2 = _ref.length; _j < _len2; _j++) {
+            nib = _ref[_j];
+            _ref2 = nib.connections;
+            for (id in _ref2) {
+              connection = _ref2[id];
+              connection.vertex.position.copy(get_nib_position(nib));
+            }
+          }
+        }
+      }
+      if (connecting_object) {
+        return system_arrow.geometry.vertices[1].position = vector;
+      }
+    }, this);
     hide_subroutines = __bind(function() {
       var index, subroutine, _ref, _results;
       _ref = this.subroutines;

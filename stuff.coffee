@@ -496,58 +496,6 @@ unhighlight_all = ->
     for id, obj of highlighted_objects
         unhighlight obj
 
-mouse_down = (event) ->
-    event.preventDefault()
-    target = ray_cast_mouse()
-    if target
-        if target.model instanceof Node
-            if event.which is 3
-                target.model.delete()
-            else if event.shiftKey
-                highlight target.model
-            else
-                dragging_object = target
-        else if target.model instanceof Nib
-            if event.which is 3
-                target.model.delete_connections()
-            else
-                system_arrow.geometry.vertices[0].position = system_arrow.geometry.vertices[1].position = get_absolute_nib_position target.model
-                scene.add system_arrow
-                connecting_object = target
-        else
-            unless event.shiftKey
-                unhighlight_all()
-
-mouse_up = (event) ->
-    dragging_object = null
-
-    if connecting_object
-        target = ray_cast_mouse()
-        if target?.model instanceof Nib
-            connection = make_connection connecting_object, target
-        connecting_object = null
-        scene.remove system_arrow
-
-mouse_move = (event) ->
-    mouse_vector = mouse_coords(event)
-    adjusted_vector = mouse_vector.minus(V(250,250))
-    vector = mouse_vector.three()
-    if dragging_object
-        node = dragging_object.model
-        original_position = Vector.from node.view.position
-        delta = adjusted_vector.minus original_position
-
-        effected_nodes = if node.id of highlighted_objects then _.values highlighted_objects else [node]
-
-        for node in effected_nodes
-            node.set_position Vector.from(node.position).plus(delta).three()
-            for nib in node.get_nibs()
-                for id, connection of nib.connections
-                    connection.vertex.position.copy get_nib_position nib
-
-    if connecting_object
-        system_arrow.geometry.vertices[1].position = vector
-
 whitespace_split = (input) ->
     results = input.split(/\s+/)
     results = results[1..] if results[0] is ''
@@ -579,6 +527,61 @@ window.Controller = ($http) ->
 
     teardown_field = ->
         should_animate = false
+
+    mouse_down = (event) =>
+        event.preventDefault()
+        target = ray_cast_mouse()
+        if target
+            if target.model instanceof Node
+                if event.which is 3
+                    target.model.delete()
+                else if event.shiftKey
+                    highlight target.model
+                else if event.ctrlKey
+                    @edit target.model.implementation
+                    @$digest()
+                else
+                    dragging_object = target
+            else if target.model instanceof Nib
+                if event.which is 3
+                    target.model.delete_connections()
+                else
+                    system_arrow.geometry.vertices[0].position = system_arrow.geometry.vertices[1].position = get_absolute_nib_position target.model
+                    scene.add system_arrow
+                    connecting_object = target
+            else
+                unless event.shiftKey
+                    unhighlight_all()
+
+    mouse_up = (event) =>
+        dragging_object = null
+
+        if connecting_object
+            target = ray_cast_mouse()
+            if target?.model instanceof Nib
+                connection = make_connection connecting_object, target
+            connecting_object = null
+            scene.remove system_arrow
+
+    mouse_move = (event) =>
+        mouse_vector = mouse_coords(event)
+        adjusted_vector = mouse_vector.minus(V(250,250))
+        vector = mouse_vector.three()
+        if dragging_object
+            node = dragging_object.model
+            original_position = Vector.from node.view.position
+            delta = adjusted_vector.minus original_position
+
+            effected_nodes = if node.id of highlighted_objects then _.values highlighted_objects else [node]
+
+            for node in effected_nodes
+                node.set_position Vector.from(node.position).plus(delta).three()
+                for nib in node.get_nibs()
+                    for id, connection of nib.connections
+                        connection.vertex.position.copy get_nib_position nib
+
+        if connecting_object
+            system_arrow.geometry.vertices[1].position = vector
 
     hide_subroutines = =>
         for index, subroutine of @subroutines
