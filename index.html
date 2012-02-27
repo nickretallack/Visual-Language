@@ -17,22 +17,30 @@
 
 <body ng:controller="Controller">
 
-<ng:switch on="edit_mode">
+<ng:switch on="current_object.type">
 
 <div ng:switch-when="subroutine">
-<h2><input ng:model="editing_subroutine.name"></h2>
+<h2><input ng:model="current_object.name"></h2>
+<div id="field"></div>
+</div>
+
+<div ng:switch-when="literal">
+<h2><input ng:model="current_object.text"></h2>
 <div id="field"></div>
 </div>
 
 <div ng:switch-when="builtin" id="builtin_editor">
-<h2><input ng:model="editing_builtin.name"></h2>
-<p>Inputs: <input type="list" ng:model="editing_builtin.inputs"></p>
-<p>Outputs: <input type="list" ng:model="editing_builtin.outputs"></p>
+<h2><input ng:model="current_object.name"></h2>
+<p>Inputs: <input type="list" ng:model="current_object.inputs"></p>
+<p>Outputs: <input type="list" ng:model="current_object.outputs"></p>
 Memo Implementation:
-<textarea ng:model="editing_builtin.memo_implementation"></textarea>
+<textarea ng:model="current_object.memo_implementation"></textarea>
 Output Implementation:
-<textarea ng:model="editing_builtin.output_implementation"></textarea>
+<textarea ng:model="current_object.output_implementation"></textarea>
 </div>
+
+
+
 </ng:switch>
 
 </div>
@@ -49,11 +57,11 @@ Output Implementation:
 
 <h2>Functions</h2>
 <ul><li ng:repeat="(id, subroutine) in subroutines">
-    <a ng:click="edit_subroutine(subroutine)">edit</a>
+    <a ng:click="edit(subroutine)">edit</a>
     <a ng:click="export_subroutine(subroutine)">export</a>
     <a ng:click="delete_subroutine(subroutine)">delete</a>
-    <a ng:show="edit_mode == 'subroutine'" ng:click="use_subroutine(subroutine)">use</a>
-    <a ng:show="edit_mode == 'subroutine'" ng:click="use_subroutine_value(subroutine)">value</a>
+    <a ng:show="current_object.type == 'subroutine'" ng:click="use_subroutine(subroutine)">use</a>
+    <a ng:show="current_object.type == 'subroutine'" ng:click="use_subroutine_value(subroutine)">value</a>
     <span class="name">{{subroutine.name}}</span>
     (<span ng:repeat="input in subroutine.inputs">{{input.text}} </span> -&gt;
     <span ng:repeat="output in subroutine.outputs">
@@ -73,10 +81,10 @@ Output Implementation:
 <button ng:click="add_builtin()">New Builtin</button>
 </h2>
 <ul id="builtins"><li ng:repeat="(id, builtin) in builtins">
-    <a ng:click="edit_builtin(builtin)">edit</a>
+    <a ng:click="edit(builtin)">edit</a>
     <a ng:click="export_builtin(builtin)">export</a>
     <a ng:click="delete_builtin(builtin)">delete</a>
-    <a ng:show="edit_mode == 'subroutine'" ng:click="use_builtin(builtin)">use</a>
+    <a ng:show="current_object.type == 'subroutine'" ng:click="use_builtin(builtin)">use</a>
     <span class="name">{{builtin.name}}</span>
     (<span ng:repeat="input in builtin.inputs">{{input}} </span> -&gt;
     <span ng:repeat="output in builtin.outputs">

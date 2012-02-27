@@ -60,6 +60,8 @@ class Builtin
         @id ?= UUID()
         all_builtins[@id] = @
 
+    type:'builtin'
+
     toJSON: ->
         id:@id
         name:@name
@@ -89,6 +91,8 @@ class SubRoutine
         @nodes = {}
         @connections = {}
         all_subroutines[@id] = @
+
+    type:'subroutine'
 
     toJSON: ->
         id:@id
@@ -271,6 +275,7 @@ class Literal extends Node
         @type = 'literal'
 
     evaluation: -> return @value
+    type:'literal'
 
     toJSON: ->
         json = super()
@@ -581,16 +586,16 @@ window.Controller = ($http) ->
 
     saving = false
     start_saving = -> setInterval save_state, 500 if not saving
+    @log = (expression) -> console.log expression
 
-    @edit_mode = null
-    @editing_builtin = null
+    @current_object = null
     @import_export_text = ''
     @subroutines = {}
     @builtins = {}
     @import = ->
         hide_subroutines()
         import_data valid_source @import_export_text
-        @edit_subroutine current_scope if current_scope
+        @edit current_scope if current_scope
         start_saving()
 
     import_data = (source_data) =>
@@ -608,7 +613,7 @@ window.Controller = ($http) ->
             # make the playground
             playground = new SubRoutine 'playground'
             @subroutines[playground.id] = playground
-            @edit_subroutine playground
+            @edit playground
             start_saving()
 
     @export_all = ->
@@ -650,14 +655,6 @@ window.Controller = ($http) ->
         inputs:[]
         outputs:[]
     @new_subroutine = angular.copy @initial_subroutine
-
-    @edit_subroutine = (subroutine) =>
-        @edit_mode = 'subroutine'
-        @editing_subroutine = subroutine
-        current_scope = subroutine
-        hide_subroutines()
-        scene.add subroutine.view
-        setTimeout init_field
 
     @delete_subroutine = (subroutine) =>
         if subroutine.id is current_scope.id
@@ -710,12 +707,12 @@ window.Controller = ($http) ->
         @new_subroutine = angular.copy @initial_subroutine
         @new_subroutine.inputs = []
         @new_subroutine.outputs = []
-        @edit_subroutine subroutine
+        @edit subroutine
 
     @add_builtin = =>
         builtin = new Builtin {}
         @builtins[builtin.id] = builtin
-        @edit_builtin builtin
+        @edit builtin
 
     @run_subroutine = (subroutine, output_index) =>
         input_values = []
@@ -765,11 +762,16 @@ window.Controller = ($http) ->
             memo = memo_function args... if memo_function
             return output_function (args.concat [memo])...
 
-    @edit_builtin = (builtin) =>
-        teardown_field()
-        @edit_mode = 'builtin'
-        @editing_builtin = builtin
-    
+    @edit = (value) =>
+        @current_object = value
+        if value instanceof SubRoutine
+            current_scope = value
+            hide_subroutines()
+            scene.add value.view
+            setTimeout init_field
+        else if value instanceof Builtin or value instanceof Literal
+            teardown_field()
+
     save_state = =>
         state =
             subroutines:@subroutines
@@ -782,13 +784,13 @@ window.Controller = ($http) ->
     system_arrow = make_arrow V(0,0), V(1,0), false
 
     if localStorage.state?
-        dissociate_exception =>
+        #dissociate_exception =>
             data = JSON.parse localStorage.state
             loaded_state = load_state data
             @builtins = loaded_state.builtins
             @subroutines = loaded_state.subroutines
             current_scope = obj_first @subroutines
-            @edit_subroutine current_scope if current_scope
+            @edit current_scope if current_scope
             start_saving()
     else
         @load_example_programs()

@@ -117,6 +117,7 @@
       };
       all_builtins[this.id] = this;
     }
+    Builtin.prototype.type = 'builtin';
     Builtin.prototype.toJSON = function() {
       return {
         id: this.id,
@@ -177,6 +178,7 @@
       this.connections = {};
       all_subroutines[this.id] = this;
     }
+    SubRoutine.prototype.type = 'subroutine';
     SubRoutine.prototype.toJSON = function() {
       return {
         id: this.id,
@@ -485,6 +487,7 @@
     Literal.prototype.evaluation = function() {
       return this.value;
     };
+    Literal.prototype.type = 'literal';
     Literal.prototype.toJSON = function() {
       var json;
       json = Literal.__super__.toJSON.call(this);
@@ -862,7 +865,7 @@
     return JSON.stringify(obj, void 0, 2);
   };
   window.Controller = function($http) {
-    var hide_subroutines, import_data, init_field, save_state, saving, start_saving, teardown_field;
+    var data, hide_subroutines, import_data, init_field, loaded_state, save_state, saving, start_saving, teardown_field;
     init_field = function() {
       var field;
       if (!should_animate) {
@@ -897,8 +900,10 @@
         return setInterval(save_state, 500);
       }
     };
-    this.edit_mode = null;
-    this.editing_builtin = null;
+    this.log = function(expression) {
+      return console.log(expression);
+    };
+    this.current_object = null;
     this.import_export_text = '';
     this.subroutines = {};
     this.builtins = {};
@@ -906,7 +911,7 @@
       hide_subroutines();
       import_data(valid_source(this.import_export_text));
       if (current_scope) {
-        this.edit_subroutine(current_scope);
+        this.edit(current_scope);
       }
       return start_saving();
     };
@@ -933,7 +938,7 @@
         import_data(source_data);
         playground = new SubRoutine('playground');
         this.subroutines[playground.id] = playground;
-        this.edit_subroutine(playground);
+        this.edit(playground);
         return start_saving();
       }, this));
     }, this);
@@ -980,14 +985,6 @@
       outputs: []
     };
     this.new_subroutine = angular.copy(this.initial_subroutine);
-    this.edit_subroutine = __bind(function(subroutine) {
-      this.edit_mode = 'subroutine';
-      this.editing_subroutine = subroutine;
-      current_scope = subroutine;
-      hide_subroutines();
-      scene.add(subroutine.view);
-      return setTimeout(init_field);
-    }, this);
     this.delete_subroutine = __bind(function(subroutine) {
       if (subroutine.id === current_scope.id) {
         hide_subroutines();
@@ -1054,13 +1051,13 @@
       this.new_subroutine = angular.copy(this.initial_subroutine);
       this.new_subroutine.inputs = [];
       this.new_subroutine.outputs = [];
-      return this.edit_subroutine(subroutine);
+      return this.edit(subroutine);
     }, this);
     this.add_builtin = __bind(function() {
       var builtin;
       builtin = new Builtin({});
       this.builtins[builtin.id] = builtin;
-      return this.edit_builtin(builtin);
+      return this.edit(builtin);
     }, this);
     this.run_subroutine = __bind(function(subroutine, output_index) {
       var input, input_index, input_values, _fn, _len, _ref;
@@ -1137,10 +1134,16 @@
         return output_function.apply(null, args.concat([memo]));
       }, this));
     }, this);
-    this.edit_builtin = __bind(function(builtin) {
-      teardown_field();
-      this.edit_mode = 'builtin';
-      return this.editing_builtin = builtin;
+    this.edit = __bind(function(value) {
+      this.current_object = value;
+      if (value instanceof SubRoutine) {
+        current_scope = value;
+        hide_subroutines();
+        scene.add(value.view);
+        return setTimeout(init_field);
+      } else if (value instanceof Builtin || value instanceof Literal) {
+        return teardown_field();
+      }
     }, this);
     save_state = __bind(function() {
       var state;
@@ -1154,18 +1157,15 @@
     this.builtins = all_builtins;
     system_arrow = make_arrow(V(0, 0), V(1, 0), false);
     if (localStorage.state != null) {
-      return dissociate_exception(__bind(function() {
-        var data, loaded_state;
-        data = JSON.parse(localStorage.state);
-        loaded_state = load_state(data);
-        this.builtins = loaded_state.builtins;
-        this.subroutines = loaded_state.subroutines;
-        current_scope = obj_first(this.subroutines);
-        if (current_scope) {
-          this.edit_subroutine(current_scope);
-        }
-        return start_saving();
-      }, this));
+      data = JSON.parse(localStorage.state);
+      loaded_state = load_state(data);
+      this.builtins = loaded_state.builtins;
+      this.subroutines = loaded_state.subroutines;
+      current_scope = obj_first(this.subroutines);
+      if (current_scope) {
+        this.edit(current_scope);
+      }
+      return start_saving();
     } else {
       return this.load_example_programs();
     }
