@@ -212,6 +212,14 @@ class FunctionApplication extends Node # Abstract
                         return output.parent.evaluation the_scope, output.index
         return input_values
         
+class UnknownNode extends Node
+    constructor:(@position, type, text, @id) ->
+        @type = 'unknown'
+        @text = "Unknown #{type}: #{text}"
+        @inputs = []
+        @outputs = []
+        super()
+
 class SubroutineApplication extends FunctionApplication
     constructor:(@position, @implementation, @id=UUID()) ->
         @type = 'function'
@@ -839,16 +847,21 @@ load_implementation = (data) ->
     for node in data.nodes
         position = Vector.from(node.position)
         if node.type is 'function'
-            sub_subroutine = all_subroutines[node.implementation_id]
-            console.log "Oh no, subroutine wasn't loaded yet" unless sub_subroutine
-            new SubroutineApplication position, sub_subroutine, node.id
+            subroutine = all_subroutines[node.implementation_id]
+            if subroutine
+                new SubroutineApplication position, subroutine, node.id
+            else
+                new UnknownNode position, node.type, node.text, node.id
         else if node.type is 'builtin'
             builtin = all_builtins[node.implementation_id]
-            new BuiltinApplication position, builtin, node.id
+            if builtin
+                new BuiltinApplication position, builtin, node.id
+            else
+                new UnknownNode position, node.type, node.text, node.id
         else if node.type is 'literal'
             if 'implementation_id' of node
-                sub_subroutine = all_subroutines[node.implementation_id]
-                value = sub_subroutine
+                subroutine = all_subroutines[node.implementation_id]
+                value = subroutine
             else
                 value = JSON.parse node.value
             new Literal position, node.text, value, node.id
@@ -863,7 +876,7 @@ load_implementation = (data) ->
 
         if connection.output.index >= source_connector.length or connection.input.index >= sink_connector.length
             console.log "Oh no, trying to make an invalid connection"
-
-        source_connector[connection.output.index].connect sink_connector[connection.input.index]
+        else
+            source_connector[connection.output.index].connect sink_connector[connection.input.index]
 
 playground_id = UUID()

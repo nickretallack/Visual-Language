@@ -1,5 +1,5 @@
 (function() {
-  var Builtin, BuiltinApplication, BuiltinSyntaxError, Connection, Exit, FunctionApplication, Input, InputError, Literal, Nib, Node, NotConnected, NotImplemented, Output, RuntimeException, SubRoutine, SubroutineApplication, all_builtins, all_subroutines, animate, boxes, camera, connecting_object, connection_view, current_scope, dissociate_exception, dragging_object, dragging_offset, eval_expression, execute, get_absolute_nib_position, get_nib_position, height, highlight, highlighted_node_material, highlighted_objects, ignore_if_disconnected, last, load_implementation, load_state, make_arrow, make_basic_program, make_box, make_connection, make_main, make_nib_view, make_node_view, make_subroutine_view, make_text, mouse_coords, mouse_down, mouse_move, mouse_up, node_material, node_registry, obj_first, playground_id, pretty_json, projector, ray_cast_mouse, renderer, scene, schema_version, should_animate, subroutine_material, system_arrow, unhighlight, unhighlight_all, update, valid_json, whitespace_split, width;
+  var Builtin, BuiltinApplication, BuiltinSyntaxError, Connection, Exit, FunctionApplication, Input, InputError, Literal, Nib, Node, NotConnected, NotImplemented, Output, RuntimeException, SubRoutine, SubroutineApplication, UnknownNode, all_builtins, all_subroutines, animate, boxes, camera, connecting_object, connection_view, current_scope, dissociate_exception, dragging_object, dragging_offset, eval_expression, execute, get_absolute_nib_position, get_nib_position, height, highlight, highlighted_node_material, highlighted_objects, ignore_if_disconnected, last, load_implementation, load_state, make_arrow, make_basic_program, make_box, make_connection, make_main, make_nib_view, make_node_view, make_subroutine_view, make_text, mouse_coords, mouse_down, mouse_move, mouse_up, node_material, node_registry, obj_first, playground_id, pretty_json, projector, ray_cast_mouse, renderer, scene, schema_version, should_animate, subroutine_material, system_arrow, unhighlight, unhighlight_all, update, valid_json, whitespace_split, width;
   var __hasProp = Object.prototype.hasOwnProperty, __extends = function(child, parent) {
     for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; }
     function ctor() { this.constructor = child; }
@@ -387,6 +387,19 @@
       return input_values;
     };
     return FunctionApplication;
+  })();
+  UnknownNode = (function() {
+    function UnknownNode(position, type, text, id) {
+      this.position = position;
+      this.id = id;
+      this.type = 'unknown';
+      this.text = "Unknown " + type + ": " + text;
+      this.inputs = [];
+      this.outputs = [];
+      UnknownNode.__super__.constructor.call(this);
+    }
+    __extends(UnknownNode, Node);
+    return UnknownNode;
   })();
   SubroutineApplication = (function() {
     function SubroutineApplication(position, implementation, id) {
@@ -1224,24 +1237,29 @@
     return c3 = plus.outputs[0].connect(current_scope.outputs[0]);
   };
   load_implementation = function(data) {
-    var builtin, connection, node, position, sink, sink_connector, source, source_connector, sub_subroutine, value, _i, _j, _len, _len2, _ref, _ref2, _results;
+    var builtin, connection, node, position, sink, sink_connector, source, source_connector, subroutine, value, _i, _j, _len, _len2, _ref, _ref2, _results;
     _ref = data.nodes;
     for (_i = 0, _len = _ref.length; _i < _len; _i++) {
       node = _ref[_i];
       position = Vector.from(node.position);
       if (node.type === 'function') {
-        sub_subroutine = all_subroutines[node.implementation_id];
-        if (!sub_subroutine) {
-          console.log("Oh no, subroutine wasn't loaded yet");
+        subroutine = all_subroutines[node.implementation_id];
+        if (subroutine) {
+          new SubroutineApplication(position, subroutine, node.id);
+        } else {
+          new UnknownNode(position, node.type, node.text, node.id);
         }
-        new SubroutineApplication(position, sub_subroutine, node.id);
       } else if (node.type === 'builtin') {
         builtin = all_builtins[node.implementation_id];
-        new BuiltinApplication(position, builtin, node.id);
+        if (builtin) {
+          new BuiltinApplication(position, builtin, node.id);
+        } else {
+          new UnknownNode(position, node.type, node.text, node.id);
+        }
       } else if (node.type === 'literal') {
         if ('implementation_id' in node) {
-          sub_subroutine = all_subroutines[node.implementation_id];
-          value = sub_subroutine;
+          subroutine = all_subroutines[node.implementation_id];
+          value = subroutine;
         } else {
           value = JSON.parse(node.value);
         }
@@ -1256,10 +1274,7 @@
       sink = node_registry[connection.input.parent_id];
       source_connector = source instanceof Node ? source.outputs : source.inputs;
       sink_connector = sink instanceof Node ? sink.inputs : sink.outputs;
-      if (connection.output.index >= source_connector.length || connection.input.index >= sink_connector.length) {
-        console.log("Oh no, trying to make an invalid connection");
-      }
-      _results.push(source_connector[connection.output.index].connect(sink_connector[connection.input.index]));
+      _results.push(connection.output.index >= source_connector.length || connection.input.index >= sink_connector.length ? console.log("Oh no, trying to make an invalid connection") : source_connector[connection.output.index].connect(sink_connector[connection.input.index]));
     }
     return _results;
   };
