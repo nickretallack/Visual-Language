@@ -350,7 +350,7 @@ class Connection
 make_subroutine_view = (subroutine) ->
     box_size = V 500,500
     position = box_size.scale(1/2.0)
-    box = make_box subroutine.name, subroutine_mesh, 10, position
+    box = make_box null, subroutine_mesh, 10, position
     box.model = subroutine
     boxes[box.id] = box
     return box
@@ -459,7 +459,7 @@ ray_cast_mouse = ->
         (last intersections).object.parent
 
 mouse_coords = (event) ->
-    V event.pageX, height-event.pageY
+    V event.offsetX, height-event.offsetY
     #V ((event.clientX / window.innerWidth) * 2 - 1), (-(event.clientY / window.innerHeight) * 2 + 1)
 
 get_nib_position = (nib) ->
@@ -653,6 +653,7 @@ window.Controller = ($http) ->
 
     @edit_subroutine = (subroutine) =>
         @edit_mode = 'subroutine'
+        @editing_subroutine = subroutine
         current_scope = subroutine
         hide_subroutines()
         scene.add subroutine.view

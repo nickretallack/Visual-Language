@@ -607,7 +607,7 @@
     var box, box_size, position;
     box_size = V(500, 500);
     position = box_size.scale(1 / 2.0);
-    box = make_box(subroutine.name, subroutine_mesh, 10, position);
+    box = make_box(null, subroutine_mesh, 10, position);
     box.model = subroutine;
     boxes[box.id] = box;
     return box;
@@ -737,7 +737,7 @@
     }
   };
   mouse_coords = function(event) {
-    return V(event.pageX, height - event.pageY);
+    return V(event.offsetX, height - event.offsetY);
   };
   get_nib_position = function(nib) {
     if (nib.parent instanceof Node) {
@@ -982,6 +982,7 @@
     this.new_subroutine = angular.copy(this.initial_subroutine);
     this.edit_subroutine = __bind(function(subroutine) {
       this.edit_mode = 'subroutine';
+      this.editing_subroutine = subroutine;
       current_scope = subroutine;
       hide_subroutines();
       scene.add(subroutine.view);

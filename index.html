@@ -16,11 +16,16 @@
 </head>
 
 <body ng:controller="Controller">
+
 <ng:switch on="edit_mode">
-<div ng:switch-when="subroutine" id="field"></div>
+
+<div ng:switch-when="subroutine">
+<h2><input ng:model="editing_subroutine.name"></h2>
+<div id="field"></div>
+</div>
+
 <div ng:switch-when="builtin" id="builtin_editor">
-<h2>Builtin Editor</h2>
-<p>Name: <input ng:model="editing_builtin.name"></p>
+<h2><input ng:model="editing_builtin.name"></h2>
 <p>Inputs: <input type="list" ng:model="editing_builtin.inputs"></p>
 <p>Outputs: <input type="list" ng:model="editing_builtin.outputs"></p>
 Memo Implementation:
