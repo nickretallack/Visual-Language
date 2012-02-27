@@ -1,17 +1,10 @@
-- add some kind of smart behavior for when you reference something that doesn't exist.  Perhaps it should just insert an "Unknown" node that raises an error, not unlike "Exit" does.
+- add a place to put documentation on implementations
 
 - add a smart delete feature for subroutines
     - list the number of subroutines that use this one.  Click this to see their names
     - if this subroutine is used by another, ask if we should delete that one as well
     - if there are other subroutines that are only used by this subroutine, ask if we should delete those as well
 
-- universal editing
-    - control-click? to edit any box
-    - literals should be editable too
-    - remove the name from the background of a subroutine and make it in html above
-
-
-- when you scroll down, the picker isn't correct.  Adjust it for that.
 - use Ace editor for the javascript editors
 - edit the number of inputs/outputs on existing subroutines
 

@@ -267,22 +267,32 @@ class BuiltinApplication extends FunctionApplication
             the_scope.memos[@id] = memo_function args...
         return output_function (args.concat [the_scope.memos[@id]])...
 
+class LiteralValue
+    constructor:(@text) ->
+    evaluation: -> return eval_expression @text
+    type:'literal'
+
 class Literal extends Node
-    constructor:(@position, @text, @value, @id=UUID()) ->
+    constructor:(@position, value, @id=UUID()) ->
+        @type = 'literal'
+
+        # TODO: sort this out later
+        if value instanceof SubRoutine
+            @implementation = value
+            @text = value.name
+        else
+            @implementation = new LiteralValue value
+            @text = value
         super()
         @inputs = []
         @outputs = [new Output(@, 'OUT')]
-        @type = 'literal'
 
-    evaluation: -> return @value
-    type:'literal'
+    evaluation: -> @implementation.evaluation()
 
     toJSON: ->
         json = super()
-        if @value instanceof SubRoutine
-            json.implementation_id = @value.id
-        else
-            json.value = JSON.stringify @value
+        if @implementation instanceof SubRoutine
+            json.implementation_id = @implementation.id
         json
 
     subroutines_referenced: -> []
@@ -506,7 +516,8 @@ valid_json = (json) ->
         return JSON.parse json
     catch exception
         if exception instanceof SyntaxError
-            return alert "#{exception} Invalid JSON: #{json}"
+            alert "#{exception} Invalid JSON: #{json}"
+            false
         else
             throw exception
 
@@ -640,9 +651,9 @@ window.Controller = ($http) ->
 
     @literal_text = ''
     @use_literal = =>
-        value = valid_json @literal_text
-        new Literal V(0,0), @literal_text, value
-        @literal_text = ''
+        if valid_json @literal_text
+            new Literal V(0,0), @literal_text
+            @literal_text = ''
 
     @use_builtin = (builtin) =>
         new BuiltinApplication V(0,0), builtin
@@ -651,7 +662,7 @@ window.Controller = ($http) ->
         new SubroutineApplication V(0,0), subroutine
 
     @use_subroutine_value = (subroutine) =>
-        new Literal V(0,0), subroutine.name, subroutine
+        new Literal V(0,0), subroutine
 
     @initial_subroutine =
         name:''
@@ -772,7 +783,7 @@ window.Controller = ($http) ->
             hide_subroutines()
             scene.add value.view
             setTimeout init_field
-        else if value instanceof Builtin or value instanceof Literal
+        else
             teardown_field()
 
     save_state = =>
@@ -872,8 +883,8 @@ load_implementation = (data) ->
                 subroutine = all_subroutines[node.implementation_id]
                 value = subroutine
             else
-                value = JSON.parse node.value
-            new Literal position, node.text, value, node.id
+                value = node.text
+            new Literal position, value, node.id
 
     for connection in data.connections
         source = node_registry[connection.output.parent_id]

@@ -1,5 +1,5 @@
 (function() {
-  var Builtin, BuiltinApplication, BuiltinSyntaxError, Connection, Exit, FunctionApplication, Input, InputError, Literal, Nib, Node, NotConnected, NotImplemented, Output, RuntimeException, SubRoutine, SubroutineApplication, UnknownNode, all_builtins, all_subroutines, animate, boxes, camera, connecting_object, connection_view, current_scope, dissociate_exception, dragging_object, dragging_offset, eval_expression, execute, get_absolute_nib_position, get_nib_position, height, highlight, highlighted_node_material, highlighted_objects, ignore_if_disconnected, last, load_implementation, load_state, make_arrow, make_basic_program, make_box, make_connection, make_main, make_nib_view, make_node_view, make_subroutine_view, make_text, mouse_coords, nib_geometry, nib_mesh, node_geometry, node_material, node_mesh, node_registry, obj_first, playground_id, pretty_json, projector, ray_cast_mouse, renderer, scene, schema_version, should_animate, subroutine_geometry, subroutine_material, subroutine_mesh, system_arrow, unhighlight, unhighlight_all, update, valid_json, whitespace_split, width;
+  var Builtin, BuiltinApplication, BuiltinSyntaxError, Connection, Exit, FunctionApplication, Input, InputError, Literal, LiteralValue, Nib, Node, NotConnected, NotImplemented, Output, RuntimeException, SubRoutine, SubroutineApplication, UnknownNode, all_builtins, all_subroutines, animate, boxes, camera, connecting_object, connection_view, current_scope, dissociate_exception, dragging_object, dragging_offset, eval_expression, execute, get_absolute_nib_position, get_nib_position, height, highlight, highlighted_node_material, highlighted_objects, ignore_if_disconnected, last, load_implementation, load_state, make_arrow, make_basic_program, make_box, make_connection, make_main, make_nib_view, make_node_view, make_subroutine_view, make_text, mouse_coords, nib_geometry, nib_mesh, node_geometry, node_material, node_mesh, node_registry, obj_first, playground_id, pretty_json, projector, ray_cast_mouse, renderer, scene, schema_version, should_animate, subroutine_geometry, subroutine_material, subroutine_mesh, system_arrow, unhighlight, unhighlight_all, update, valid_json, whitespace_split, width;
   var __hasProp = Object.prototype.hasOwnProperty, __extends = function(child, parent) {
     for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; }
     function ctor() { this.constructor = child; }
@@ -472,29 +472,41 @@
     };
     return BuiltinApplication;
   })();
-  Literal = (function() {
-    function Literal(position, text, value, id) {
-      this.position = position;
+  LiteralValue = (function() {
+    function LiteralValue(text) {
       this.text = text;
-      this.value = value;
+    }
+    LiteralValue.prototype.evaluation = function() {
+      return eval_expression(this.text);
+    };
+    LiteralValue.prototype.type = 'literal';
+    return LiteralValue;
+  })();
+  Literal = (function() {
+    function Literal(position, value, id) {
+      this.position = position;
       this.id = id != null ? id : UUID();
+      this.type = 'literal';
+      if (value instanceof SubRoutine) {
+        this.implementation = value;
+        this.text = value.name;
+      } else {
+        this.implementation = new LiteralValue(value);
+        this.text = value;
+      }
       Literal.__super__.constructor.call(this);
       this.inputs = [];
       this.outputs = [new Output(this, 'OUT')];
-      this.type = 'literal';
     }
     __extends(Literal, Node);
     Literal.prototype.evaluation = function() {
-      return this.value;
+      return this.implementation.evaluation();
     };
-    Literal.prototype.type = 'literal';
     Literal.prototype.toJSON = function() {
       var json;
       json = Literal.__super__.toJSON.call(this);
-      if (this.value instanceof SubRoutine) {
-        json.implementation_id = this.value.id;
-      } else {
-        json.value = JSON.stringify(this.value);
+      if (this.implementation instanceof SubRoutine) {
+        json.implementation_id = this.implementation.id;
       }
       return json;
     };
@@ -787,7 +799,8 @@
       return JSON.parse(json);
     } catch (exception) {
       if (exception instanceof SyntaxError) {
-        return alert("" + exception + " Invalid JSON: " + json);
+        alert("" + exception + " Invalid JSON: " + json);
+        return false;
       } else {
         throw exception;
       }
@@ -968,10 +981,10 @@
     };
     this.literal_text = '';
     this.use_literal = __bind(function() {
-      var value;
-      value = valid_json(this.literal_text);
-      new Literal(V(0, 0), this.literal_text, value);
-      return this.literal_text = '';
+      if (valid_json(this.literal_text)) {
+        new Literal(V(0, 0), this.literal_text);
+        return this.literal_text = '';
+      }
     }, this);
     this.use_builtin = __bind(function(builtin) {
       return new BuiltinApplication(V(0, 0), builtin);
@@ -980,7 +993,7 @@
       return new SubroutineApplication(V(0, 0), subroutine);
     }, this);
     this.use_subroutine_value = __bind(function(subroutine) {
-      return new Literal(V(0, 0), subroutine.name, subroutine);
+      return new Literal(V(0, 0), subroutine);
     }, this);
     this.initial_subroutine = {
       name: '',
@@ -1144,7 +1157,7 @@
         hide_subroutines();
         scene.add(value.view);
         return setTimeout(init_field);
-      } else if (value instanceof Builtin || value instanceof Literal) {
+      } else {
         return teardown_field();
       }
     }, this);
@@ -1265,9 +1278,9 @@
           subroutine = all_subroutines[node.implementation_id];
           value = subroutine;
         } else {
-          value = JSON.parse(node.value);
+          value = node.text;
         }
-        new Literal(position, node.text, value, node.id);
+        new Literal(position, value, node.id);
       }
     }
     _ref2 = data.connections;
