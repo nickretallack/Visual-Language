@@ -1,5 +1,5 @@
 (function() {
-  var Builtin, BuiltinApplication, BuiltinSyntaxError, Connection, Exit, FunctionApplication, Input, InputError, Literal, LiteralValue, Nib, Node, NotConnected, NotImplemented, Output, RuntimeException, SubRoutine, SubroutineApplication, UnknownNode, all_builtins, all_subroutines, animate, boxes, camera, connecting_object, connection_view, current_scope, dissociate_exception, dragging_object, dragging_offset, eval_expression, execute, get_absolute_nib_position, get_nib_position, height, highlight, highlighted_node_material, highlighted_objects, ignore_if_disconnected, last, load_implementation, load_state, make_arrow, make_basic_program, make_box, make_connection, make_main, make_nib_view, make_node_view, make_subroutine_view, make_text, mouse_coords, nib_geometry, nib_mesh, node_geometry, node_material, node_mesh, node_registry, obj_first, playground_id, pretty_json, projector, ray_cast_mouse, renderer, scene, schema_version, should_animate, subroutine_geometry, subroutine_material, subroutine_mesh, system_arrow, unhighlight, unhighlight_all, update, valid_json, whitespace_split, width;
+  var Builtin, BuiltinApplication, BuiltinSyntaxError, Connection, Exit, FunctionApplication, Input, InputError, Literal, LiteralValue, Nib, Node, NotConnected, NotImplemented, Output, RuntimeException, SubRoutine, SubroutineApplication, UnknownNode, all_builtins, all_subroutines, animate, boxes, camera, connecting_object, connection_view, current_scope, dissociate_exception, dragging_object, dragging_offset, editor_size, eval_expression, execute, get_absolute_nib_position, get_nib_position, half_editor_size, highlight, highlighted_node_material, highlighted_objects, ignore_if_disconnected, last, load_implementation, load_state, make_arrow, make_box, make_connection, make_main, make_nib_view, make_node_view, make_subroutine_view, make_text, mouse_coords, nib_geometry, nib_mesh, node_geometry, node_material, node_mesh, node_registry, obj_first, playground_id, pretty_json, projector, ray_cast_mouse, renderer, scene, schema_version, should_animate, subroutine_geometry, subroutine_material, subroutine_mesh, system_arrow, unhighlight, unhighlight_all, update, valid_json, whitespace_split;
   var __hasProp = Object.prototype.hasOwnProperty, __extends = function(child, parent) {
     for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; }
     function ctor() { this.constructor = child; }
@@ -8,13 +8,13 @@
     child.__super__ = parent.prototype;
     return child;
   }, __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
-  height = 500;
-  width = 500;
-  camera = new THREE.OrthographicCamera(0, width, height, 0, -2000, 1000);
+  editor_size = V(600, 700);
+  half_editor_size = editor_size.scale(0.5);
+  camera = new THREE.OrthographicCamera(0, editor_size.x, editor_size.y, 0, -2000, 1000);
   scene = new THREE.Scene();
   scene.add(camera);
   renderer = new THREE.CanvasRenderer();
-  renderer.setSize(width, height);
+  renderer.setSize(editor_size.x, editor_size.y);
   projector = new THREE.Projector();
   last = function(list) {
     return list[list.length - 1];
@@ -620,7 +620,7 @@
   /* VIEWS */
   make_subroutine_view = function(subroutine) {
     var box, box_size, position;
-    box_size = V(500, 500);
+    box_size = editor_size;
     position = box_size.scale(1 / 2.0);
     box = make_box(null, subroutine_mesh, 10, position);
     box.model = subroutine;
@@ -637,7 +637,7 @@
   };
   make_nib_view = function(nib, is_node) {
     var parent, parent_size, sub_box, x_position, y_offset, y_position;
-    parent_size = is_node ? V(60, 60) : V(490, 490);
+    parent_size = is_node ? V(60, 60) : editor_size.minus(V(10, 10));
     y_offset = parent_size.y / 2.0;
     x_position = -parent_size.x / 2.0 + parent_size.x * nib.index / nib.siblings;
     y_position = y_offset * (nib instanceof Input ? 1 : -1) * (is_node ? 1 : -1);
@@ -695,7 +695,7 @@
   });
   node_geometry = new THREE.PlaneGeometry(50, 50);
   nib_geometry = new THREE.PlaneGeometry(20, 20);
-  subroutine_geometry = new THREE.PlaneGeometry(500, 500);
+  subroutine_geometry = new THREE.PlaneGeometry(editor_size.x, editor_size.y);
   node_mesh = [node_geometry, node_material];
   nib_mesh = [nib_geometry, node_material];
   subroutine_mesh = [subroutine_geometry, subroutine_material];
@@ -752,7 +752,7 @@
     }
   };
   mouse_coords = function(event) {
-    return V(event.offsetX, height - event.offsetY);
+    return V(event.offsetX, editor_size.y - event.offsetY);
   };
   get_nib_position = function(nib) {
     if (nib.parent instanceof Node) {
@@ -762,7 +762,7 @@
     }
   };
   get_absolute_nib_position = function(nib) {
-    return Vector.from(get_nib_position(nib)).plus(V(250, 250)).three();
+    return Vector.from(get_nib_position(nib)).plus(half_editor_size).three();
   };
   /* INTERACTION */
   dragging_object = null;
@@ -875,7 +875,7 @@
     mouse_move = __bind(function(event) {
       var adjusted_vector, connection, delta, effected_nodes, id, mouse_vector, nib, node, original_position, vector, _i, _j, _len, _len2, _ref, _ref2;
       mouse_vector = mouse_coords(event);
-      adjusted_vector = mouse_vector.minus(V(250, 250));
+      adjusted_vector = mouse_vector.minus(half_editor_size);
       vector = mouse_vector.three();
       if (dragging_object) {
         node = dragging_object.model;
@@ -1244,15 +1244,6 @@
   };
   make_main = function() {
     return new SubRoutine('default', [], ['OUT']);
-  };
-  make_basic_program = function() {
-    var c1, c2, c3, five, plus, three;
-    plus = make_node('+', V(250, 150));
-    five = make_node('5', V(200, 300));
-    three = make_node('3', V(300, 300));
-    c1 = five.outputs[0].connect(plus.inputs[0]);
-    c2 = three.outputs[0].connect(plus.inputs[1]);
-    return c3 = plus.outputs[0].connect(current_scope.outputs[0]);
   };
   load_implementation = function(data) {
     var builtin, connection, node, position, sink, sink_connector, source, source_connector, subroutine, value, _i, _j, _len, _len2, _ref, _ref2, _results;

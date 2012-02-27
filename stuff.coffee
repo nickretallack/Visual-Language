@@ -1,13 +1,13 @@
 #camera_radius = 250
-height = 500 #window.innerHeight
-width = 500 #window.innerWidth
-camera = new THREE.OrthographicCamera 0, width, height, 0, -2000, 1000
+editor_size = V 600,700
+half_editor_size = editor_size.scale 0.5
+camera = new THREE.OrthographicCamera 0, editor_size.x, editor_size.y, 0, -2000, 1000
 #camera = new THREE.OrthographicCamera -camera_radius, camera_radius,
 #     camera_radius, -camera_radius, -camera_radius, camera_radius
 scene = new THREE.Scene()
 scene.add camera
 renderer = new THREE.CanvasRenderer()
-renderer.setSize width, height #window.innerWidth, window.innerHeight
+renderer.setSize editor_size.x, editor_size.y #window.innerWidth, window.innerHeight
 projector = new THREE.Projector()
 
 last = (list) -> list[list.length-1]
@@ -363,7 +363,7 @@ class Connection
 ### VIEWS ###
 
 make_subroutine_view = (subroutine) ->
-    box_size = V 500,500
+    box_size = editor_size
     position = box_size.scale(1/2.0)
     box = make_box null, subroutine_mesh, 10, position
     box.model = subroutine
@@ -378,7 +378,7 @@ make_node_view = (node) ->
     return main_box
 
 make_nib_view = (nib, is_node) ->
-    parent_size = if is_node then V(60,60) else V(490,490)
+    parent_size = if is_node then V(60,60) else editor_size.minus V 10,10
 
     y_offset = parent_size.y / 2.0
 
@@ -431,7 +431,7 @@ subroutine_material = new THREE.MeshBasicMaterial color:0xEEEEEE
 
 node_geometry = new THREE.PlaneGeometry 50,50
 nib_geometry = new THREE.PlaneGeometry 20,20
-subroutine_geometry = new THREE.PlaneGeometry 500,500
+subroutine_geometry = new THREE.PlaneGeometry editor_size.x,editor_size.y
 
 node_mesh = [node_geometry, node_material]
 nib_mesh = [nib_geometry, node_material]
@@ -474,7 +474,7 @@ ray_cast_mouse = ->
         (last intersections).object.parent
 
 mouse_coords = (event) ->
-    V event.offsetX, height-event.offsetY
+    V event.offsetX, editor_size.y-event.offsetY
     #V ((event.clientX / window.innerWidth) * 2 - 1), (-(event.clientY / window.innerHeight) * 2 + 1)
 
 get_nib_position = (nib) ->
@@ -483,7 +483,7 @@ get_nib_position = (nib) ->
     else Vector.from(nib.view.position).three()
 
 get_absolute_nib_position = (nib) ->
-    Vector.from(get_nib_position(nib)).plus(V(250,250)).three()
+    Vector.from(get_nib_position(nib)).plus(half_editor_size).three()
     
 
 ### INTERACTION ###
@@ -576,7 +576,7 @@ window.Controller = ($http) ->
 
     mouse_move = (event) =>
         mouse_vector = mouse_coords(event)
-        adjusted_vector = mouse_vector.minus(V(250,250))
+        adjusted_vector = mouse_vector.minus(half_editor_size)
         vector = mouse_vector.three()
         if dragging_object
             node = dragging_object.model
@@ -855,14 +855,6 @@ load_state = (data) ->
     
 make_main = ->
     new SubRoutine 'default', [], ['OUT']
-
-make_basic_program = ->
-    plus = make_node '+', V 250,150
-    five = make_node '5', V 200, 300
-    three = make_node '3', V 300, 300
-    c1 = five.outputs[0].connect plus.inputs[0]
-    c2 = three.outputs[0].connect plus.inputs[1]
-    c3 = plus.outputs[0].connect current_scope.outputs[0]
 
 load_implementation = (data) ->
     for node in data.nodes
