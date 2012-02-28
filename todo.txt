@@ -1,12 +1,28 @@
 - add a place to put documentation on implementations
-
+- don't allow connections from inputs to inputs or outputs to outputs
 - add a smart delete feature for subroutines
     - list the number of subroutines that use this one.  Click this to see their names
     - if this subroutine is used by another, ask if we should delete that one as well
     - if there are other subroutines that are only used by this subroutine, ask if we should delete those as well
 
+- add history support
+    - just use the id of the object you're editing
+
 - use Ace editor for the javascript editors
+
 - edit the number of inputs/outputs on existing subroutines
+    - needs lots of feedback for when you delete a nib that is in use in some program somewhere
+    - ugh, I'd rather this system didn't act so inflexible.  Perhaps I should make an 'unknown-nib' show up and bundle all the higher-index connections into there.
+        - this could help for unknown implementation nodes too!  Yeah.
+        - it could throw the NotConnected exception if you tried to evaluate off of it.
+
+- make a slider to increase the detail level (make everything smaller), and another to zoom in/out and pan like http://worrydream.com/#!/GesturalZoomAndPan
+
+- add an "Idempotent" checkbox to javascript functions.  If a all trees leading into an idempotent function are idempotetnt, its result can safely be memoized to improve performance of algorithms like fibonacci.
+    - add a checkbox to turn off this memoizing on a given subroutine if it takes too much memory
+    - only memoize at the furthest point that it is safe to.  Don't bother memoizing intermediate values.
+        - how to handle multiple inputs/outputs?  Well, we can only really memoize on a per-connection basis I guess.
+
 
 - think about how version control could work
     - save every version of a function
@@ -16,6 +32,10 @@
     - should still allow you to play around in localstorage if you are not registered, but you must register in order to upload your work.
     - allow you to search through all the users and see their things
         - mark things private?  But you can't do that if you used them in public programs.  Notify that all referencing functions must be private too.
+
+- don't let literal values contain non-json values.  Currently they can if you type stuff in.
+
+- perhaps I should have a save-on-run system?
 
 - add some higher order functions
     - map, reduce
@@ -28,14 +48,6 @@
 - instructions on page
     - right-click nodes to delete them, right-click nibs to delete connections
     - warn about clobbering with imports (based on id)
-
-- add more example programs
-    - fibonacci
-    - factorial
-    - guess the number
-    - how are you?
-    - but thou must!
-    - how should I respond?
 
 - fix the font somehow
 - replace alerts with a console?

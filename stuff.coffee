@@ -27,10 +27,18 @@ should_animate = false
 update = ->
     renderer.render scene, camera
 
+animations_counter = 0
+
 animate = (field) ->
+    requestAnimationFrame (-> animate field), field
+    animations_counter += 1
     update()
-    requestAnimationFrame animate, field if should_animate
 eval_expression = (expression) -> eval "(#{expression})"
+
+setInterval ->
+    console.log animations_counter
+    animations_counter = 0
+, 1000
 
 ### MODELS ###
 
@@ -524,6 +532,7 @@ valid_json = (json) ->
 pretty_json = (obj) -> JSON.stringify obj, undefined, 2
 
 window.Controller = ($http) ->
+
 
     init_field = ->
         if not should_animate

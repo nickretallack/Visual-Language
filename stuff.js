@@ -1,5 +1,5 @@
 (function() {
-  var Builtin, BuiltinApplication, BuiltinSyntaxError, Connection, Exit, FunctionApplication, Input, InputError, Literal, LiteralValue, Nib, Node, NotConnected, NotImplemented, Output, RuntimeException, SubRoutine, SubroutineApplication, UnknownNode, all_builtins, all_subroutines, animate, boxes, camera, connecting_object, connection_view, current_scope, dissociate_exception, dragging_object, dragging_offset, editor_size, eval_expression, execute, get_absolute_nib_position, get_nib_position, half_editor_size, highlight, highlighted_node_material, highlighted_objects, ignore_if_disconnected, last, load_implementation, load_state, make_arrow, make_box, make_connection, make_main, make_nib_view, make_node_view, make_subroutine_view, make_text, mouse_coords, nib_geometry, nib_mesh, node_geometry, node_material, node_mesh, node_registry, obj_first, playground_id, pretty_json, projector, ray_cast_mouse, renderer, scene, schema_version, should_animate, subroutine_geometry, subroutine_material, subroutine_mesh, system_arrow, unhighlight, unhighlight_all, update, valid_json, whitespace_split;
+  var Builtin, BuiltinApplication, BuiltinSyntaxError, Connection, Exit, FunctionApplication, Input, InputError, Literal, LiteralValue, Nib, Node, NotConnected, NotImplemented, Output, RuntimeException, SubRoutine, SubroutineApplication, UnknownNode, all_builtins, all_subroutines, animate, animations_counter, boxes, camera, connecting_object, connection_view, current_scope, dissociate_exception, dragging_object, dragging_offset, editor_size, eval_expression, execute, get_absolute_nib_position, get_nib_position, half_editor_size, highlight, highlighted_node_material, highlighted_objects, ignore_if_disconnected, last, load_implementation, load_state, make_arrow, make_box, make_connection, make_main, make_nib_view, make_node_view, make_subroutine_view, make_text, mouse_coords, nib_geometry, nib_mesh, node_geometry, node_material, node_mesh, node_registry, obj_first, playground_id, pretty_json, projector, ray_cast_mouse, renderer, scene, schema_version, should_animate, subroutine_geometry, subroutine_material, subroutine_mesh, system_arrow, unhighlight, unhighlight_all, update, valid_json, whitespace_split;
   var __hasProp = Object.prototype.hasOwnProperty, __extends = function(child, parent) {
     for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; }
     function ctor() { this.constructor = child; }
@@ -37,15 +37,21 @@
   update = function() {
     return renderer.render(scene, camera);
   };
+  animations_counter = 0;
   animate = function(field) {
-    update();
-    if (should_animate) {
-      return requestAnimationFrame(animate, field);
-    }
+    requestAnimationFrame((function() {
+      return animate(field);
+    }), field);
+    animations_counter += 1;
+    return update();
   };
   eval_expression = function(expression) {
     return eval("(" + expression + ")");
   };
+  setInterval(function() {
+    console.log(animations_counter);
+    return animations_counter = 0;
+  }, 1000);
   /* MODELS */
   RuntimeException = (function() {
     function RuntimeException(message) {
