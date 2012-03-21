@@ -10,6 +10,16 @@
 
 - use Ace editor for the javascript editors
 
+- Create dynamic function call node.  Speficy the inputs and outputs on it dynamically
+    Perhaps show it with no normal inputs/outputs at first, but have a special '+' input and output on the right.  When you connect things to this,
+    they become new inputs/outputs.  Would need a way to delete them too.  Perhaps as an option in a real right-click menu.
+
+- I should re-do the vis in canvas for more readability.  Should I rotate it to look like all the other visual languages out there?
+
+- make a server-side service that will request arbitrary urls for you
+
+- make a jquery selector builtin
+
 - edit the number of inputs/outputs on existing subroutines
     - needs lots of feedback for when you delete a nib that is in use in some program somewhere
     - ugh, I'd rather this system didn't act so inflexible.  Perhaps I should make an 'unknown-nib' show up and bundle all the higher-index connections into there.
