@@ -36,7 +36,7 @@ animate = (field) ->
 eval_expression = (expression) -> eval "(#{expression})"
 
 setInterval ->
-    console.log animations_counter
+    #console.log animations_counter
     animations_counter = 0
 , 1000
 
@@ -155,6 +155,36 @@ class SubRoutine
                 results.push parent.id if parent.type is 'function'
                 resuts = results.concat parent.subroutines_referenced()
         return results
+
+    build_adjacency_list: ->
+        # start by coloring all the nodes in some standardized traversal and numbering them.
+        input_queue = [].concat @outputs
+        for id, node of @nodes
+            node.adjacency_id = null
+
+        adjacency_list = []
+        while input_queue.length > 0
+            input = input_queue.pop()
+            node = input.get_node()
+            # TODO: if node is a subroutine, not a function call, then we've hit our inputs
+            if node instanceof Node and node.adjacency_id is null
+                item_count = adjacency_list.push
+                    node:node
+                    connections:[]
+                node.adjacency_id = item_count - 1 # length is offset by 1 from index
+                input_queue = input_queue.concat node.inputs
+
+        for item in adjacency_list
+            for input, input_index in item.node.inputs
+                node = input.get_node()
+                if node instanceof Node
+                    item.connections[input_index] = node.adjacency_id
+
+        adjacency_list
+        # TODO: handle outputs and inputs of the function itself
+        
+
+
 
     remove_node: (node) ->
         @view.remove node.view
@@ -330,6 +360,9 @@ class Input extends Nib
     get_connection: ->
         for id, connection of @connections
             return connection
+
+    get_node: ->
+        @get_connection()?.connection.output.parent
 
     connect:(output) ->
         new Connection @, output
@@ -793,6 +826,7 @@ window.Controller = ($http) ->
             hide_subroutines()
             scene.add value.view
             setTimeout init_field
+            console.log value.build_adjacency_list()
         else
             teardown_field()
 
