@@ -157,16 +157,24 @@ class SubRoutine
         return results
 
     build_adjacency_list: ->
-        # start by coloring all the nodes in some standardized traversal and numbering them.
-        input_queue = [].concat @outputs
+        # clear prior data
         for id, node of @nodes
             node.adjacency_id = null
 
         adjacency_list = []
+
+        # number and add self first
+        adjacency_list.push
+            node:@
+            connections:[]
+        @adjacency_id = 0
+
+        # number all the connected nodes in a predictable way, and add them to the list
+        input_queue = [].concat @outputs
         while input_queue.length > 0
-            input = input_queue.pop()
+            input = input_queue.shift()
             node = input.get_node()
-            # TODO: if node is a subroutine, not a function call, then we've hit our inputs
+            # NOTE: if node is a subroutine then we've reached ourselves again
             if node instanceof Node and node.adjacency_id is null
                 item_count = adjacency_list.push
                     node:node
@@ -174,16 +182,14 @@ class SubRoutine
                 node.adjacency_id = item_count - 1 # length is offset by 1 from index
                 input_queue = input_queue.concat node.inputs
 
+        # record all the connections based on the consistent numbering scheme
         for item in adjacency_list
-            for input, input_index in item.node.inputs
+            nibs = if item.node instanceof Node then item.node.inputs else item.node.outputs
+            for input, input_index in nibs
                 node = input.get_node()
-                if node instanceof Node
-                    item.connections[input_index] = node.adjacency_id
+                item.connections[input_index] = node.adjacency_id
 
         adjacency_list
-        # TODO: handle outputs and inputs of the function itself
-        
-
 
 
     remove_node: (node) ->

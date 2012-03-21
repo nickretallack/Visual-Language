@@ -324,16 +324,21 @@
     };
 
     SubRoutine.prototype.build_adjacency_list = function() {
-      var adjacency_list, id, input, input_index, input_queue, item, item_count, node, _i, _len, _len2, _ref, _ref2;
-      input_queue = [].concat(this.outputs);
+      var adjacency_list, id, input, input_index, input_queue, item, item_count, nibs, node, _i, _len, _len2, _ref;
       _ref = this.nodes;
       for (id in _ref) {
         node = _ref[id];
         node.adjacency_id = null;
       }
       adjacency_list = [];
+      adjacency_list.push({
+        node: this,
+        connections: []
+      });
+      this.adjacency_id = 0;
+      input_queue = [].concat(this.outputs);
       while (input_queue.length > 0) {
-        input = input_queue.pop();
+        input = input_queue.shift();
         node = input.get_node();
         if (node instanceof Node && node.adjacency_id === null) {
           item_count = adjacency_list.push({
@@ -346,13 +351,11 @@
       }
       for (_i = 0, _len = adjacency_list.length; _i < _len; _i++) {
         item = adjacency_list[_i];
-        _ref2 = item.node.inputs;
-        for (input_index = 0, _len2 = _ref2.length; input_index < _len2; input_index++) {
-          input = _ref2[input_index];
+        nibs = item.node instanceof Node ? item.node.inputs : item.node.outputs;
+        for (input_index = 0, _len2 = nibs.length; input_index < _len2; input_index++) {
+          input = nibs[input_index];
           node = input.get_node();
-          if (node instanceof Node) {
-            item.connections[input_index] = node.adjacency_id;
-          }
+          item.connections[input_index] = node.adjacency_id;
         }
       }
       return adjacency_list;
