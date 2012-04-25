@@ -1,14 +1,12 @@
 <!doctype html>
-<html xmlns:ng="http://angularjs.org" ng:app>
+<html ng:app="vislang">
 <head>
 <title>Visual Language</title>
-<script src="common/angular-0.10.6.js"></script>
-<script src="common/Three.js"></script>
-<script src="common/vector_compatibility.js"></script>
-<script src="common/animation_frame.js"></script>
+<script src="common/raphael.js"></script>
+<script src="common/angular-1.0.0rc6.js"></script>
+<script src="vector.js"></script>
 <script src="common/underscore.js"></script>
 <script src="common/minified/jquery.js"></script>
-<script src="fonts/helvetiker_regular.typeface.js"></script>
 <script src="common/uuid.js"></script>
 <script src="stuff.js"></script>
 <link rel="stylesheet" href="common/reset.css">
@@ -21,7 +19,7 @@
 
 <div ng:switch-when="subroutine">
 <h2><input ng:model="current_object.name"></h2>
-<div id="field"></div>
+<div id="field" subroutine="current_object"></div>
 
 <div id="inputs_editor">
 <h3>Inputs</h3>

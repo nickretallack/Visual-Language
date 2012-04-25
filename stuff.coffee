@@ -1,15 +1,11 @@
-#camera_radius = 250
 editor_size = V 600,700
-half_editor_size = editor_size.scale 0.5
-camera = new THREE.OrthographicCamera 0, editor_size.x, editor_size.y, 0, -2000, 1000
-#camera = new THREE.OrthographicCamera -camera_radius, camera_radius,
-#     camera_radius, -camera_radius, -camera_radius, camera_radius
-scene = new THREE.Scene()
-scene.add camera
-renderer = new THREE.CanvasRenderer()
-renderer.setSize editor_size.x, editor_size.y #window.innerWidth, window.innerHeight
-projector = new THREE.Projector()
 
+module = angular.module 'vislang', []
+module.directive 'subroutine', ->
+    (scope, element, attributes) ->
+        paper = Raphael element, editor_size.components...
+        paper.circle 20,20,20
+    
 last = (list) -> list[list.length-1]
 obj_first = (obj) ->
     for key, item of obj
@@ -472,6 +468,7 @@ make_text = (text, size) ->
     mesh.position.x = centerOffset
     return mesh
 
+###
 node_material = new THREE.MeshBasicMaterial color:0x888888
 highlighted_node_material = new THREE.MeshBasicMaterial color:0x8888FF
 subroutine_material = new THREE.MeshBasicMaterial color:0xEEEEEE
@@ -483,6 +480,7 @@ subroutine_geometry = new THREE.PlaneGeometry editor_size.x,editor_size.y
 node_mesh = [node_geometry, node_material]
 nib_mesh = [nib_geometry, node_material]
 subroutine_mesh = [subroutine_geometry, subroutine_material]
+###
 
 make_box = (name, mesh, text_size, position) ->
     box = new THREE.Object3D()
@@ -570,9 +568,8 @@ valid_json = (json) ->
 
 pretty_json = (obj) -> JSON.stringify obj, undefined, 2
 
-window.Controller = ($http) ->
-
-
+module.controller 'Controller', ($http) ->
+    ###
     init_field = ->
         if not should_animate
             field = $("#field")
@@ -858,6 +855,7 @@ window.Controller = ($http) ->
             start_saving()
     else
         @load_example_programs()
+    ###
 
 dissociate_exception = (procedure) ->
     try
