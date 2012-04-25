@@ -12,7 +12,7 @@
   module.directive('subroutine', function() {
     return function(scope, element, attributes) {
       var paper;
-      paper = Raphael.apply(null, [element].concat(__slice.call(editor_size.components)));
+      paper = Raphael.apply(null, [element[0]].concat(__slice.call(editor_size.components)));
       return paper.circle(20, 20, 20);
     };
   });
@@ -220,7 +220,6 @@
       }
       this.id = id != null ? id : UUID();
       node_registry[this.id] = this;
-      this.view = make_subroutine_view(this);
       if (!outputs.length) {
         outputs = ['OUT'];
       }
@@ -426,12 +425,10 @@
       node_registry[this.id] = this;
       this.scope = current_scope;
       this.scope.nodes[this.id] = this;
-      this.view = make_node_view(this);
     }
 
     Node.prototype.set_position = function(position) {
       this.position = position;
-      return this.view.position.copy(this.position);
     };
 
     Node.prototype.get_nibs = function() {
@@ -440,7 +437,6 @@
 
     Node.prototype["delete"] = function() {
       var nib, _i, _len, _ref, _results;
-      this.scope.view.remove(this.view);
       delete this.scope.nodes[this.id];
       _ref = this.get_nibs();
       _results = [];
@@ -705,7 +701,6 @@
     Nib.name = 'Nib';
 
     function Nib() {
-      this.view = make_nib_view(this, this.parent instanceof Node);
       this.connections = {};
     }
 
@@ -806,13 +801,9 @@
     Connection.name = 'Connection';
 
     function Connection(input, output, id) {
-      var input_vertex, output_vertex, _ref;
       this.input = input;
       this.output = output;
       this.id = id != null ? id : UUID();
-      _ref = connection_view(this), this.view = _ref[0], input_vertex = _ref[1], output_vertex = _ref[2];
-      this.input._add_connection(this, input_vertex);
-      this.output._add_connection(this, output_vertex);
       this.scope = current_scope;
       this.scope.connections[this.id] = this;
     }
@@ -831,7 +822,6 @@
     };
 
     Connection.prototype["delete"] = function() {
-      this.scope.view.remove(this.view);
       delete this.scope.connections[this.id];
       delete this.output.connections[this.id];
       return this.input.connections = {};
@@ -845,45 +835,57 @@
   */
 
 
-  make_subroutine_view = function(subroutine) {
-    var box, box_size, position;
-    box_size = editor_size;
-    position = box_size.scale(1 / 2.0);
-    box = make_box(null, subroutine_mesh, 10, position);
-    box.model = subroutine;
-    boxes[box.id] = box;
-    return box;
-  };
+  make_subroutine_view = function(subroutine) {};
 
-  make_node_view = function(node) {
-    var main_box;
-    main_box = make_box(node.text, node_mesh, 10, node.position);
-    main_box.model = node;
-    node.scope.view.add(main_box);
-    boxes[main_box.id] = main_box;
-    return main_box;
-  };
+  /*
+      box_size = editor_size
+      position = box_size.scale(1/2.0)
+      box = make_box null, subroutine_mesh, 10, position
+      box.model = subroutine
+      boxes[box.id] = box
+      return box
+  */
 
-  make_nib_view = function(nib, is_node) {
-    var parent, parent_size, sub_box, x_position, y_offset, y_position;
-    parent_size = is_node ? V(60, 60) : editor_size.minus(V(10, 10));
-    y_offset = parent_size.y / 2.0;
-    x_position = -parent_size.x / 2.0 + parent_size.x * nib.index / nib.siblings;
-    y_position = y_offset * (nib instanceof Input ? 1 : -1) * (is_node ? 1 : -1);
-    sub_box = make_box(nib.text, nib_mesh, 5, V(x_position, y_position));
-    sub_box.model = nib;
-    parent = nib.parent.view;
-    parent.add(sub_box);
-    return sub_box;
-  };
 
-  connection_view = function(connection) {
-    var arrow, point1, point2;
-    point1 = get_nib_position(connection.input);
-    point2 = get_nib_position(connection.output);
-    arrow = make_arrow(point1, point2);
-    return [arrow, arrow.geometry.vertices[0], arrow.geometry.vertices[1]];
-  };
+  make_node_view = function(node) {};
+
+  /*
+      main_box = make_box node.text, node_mesh, 10, node.position
+      main_box.model = node
+      node.scope.view.add main_box
+      boxes[main_box.id] = main_box
+      return main_box
+  */
+
+
+  make_nib_view = function(nib, is_node) {};
+
+  /*
+      parent_size = if is_node then V(60,60) else editor_size.minus V 10,10
+  
+      y_offset = parent_size.y / 2.0
+  
+      x_position = -parent_size.x / 2.0 + parent_size.x * nib.index/nib.siblings
+      y_position = y_offset * (if nib instanceof Input then 1 else -1) * (if is_node then 1 else -1)
+  
+      sub_box = make_box nib.text, nib_mesh, 5, V(x_position,y_position)
+      sub_box.model = nib
+  
+      parent = nib.parent.view
+      parent.add sub_box
+      return sub_box
+  */
+
+
+  connection_view = function(connection) {};
+
+  /*
+      point1 = get_nib_position connection.input
+      point2 = get_nib_position connection.output
+      arrow = make_arrow point1, point2
+      [arrow, arrow.geometry.vertices[0], arrow.geometry.vertices[1]]
+  */
+
 
   /* FACTORIES
   */
@@ -1070,7 +1072,7 @@
     return JSON.stringify(obj, void 0, 2);
   };
 
-  module.controller('Controller', function($http) {
+  module.controller('Controller', function($scope, $http) {
     /*
         init_field = ->
             if not should_animate
@@ -1096,8 +1098,8 @@
                     else if event.shiftKey
                         highlight target.model
                     else if event.ctrlKey
-                        @edit target.model.implementation
-                        @$digest()
+                        $scope.edit target.model.implementation
+                        $scope.$digest()
                     else
                         dragging_object = target
                 else if target.model instanceof Nib
@@ -1140,225 +1142,290 @@
     
             if connecting_object
                 system_arrow.geometry.vertices[1].position = vector
-    
-        hide_subroutines = =>
-            for index, subroutine of @subroutines
-                scene.remove subroutine.view
-    
-        saving = false
-        start_saving = -> setInterval save_state, 500 if not saving
-        @log = (expression) -> console.log expression
-    
-        @current_object = null
-        @import_export_text = ''
-        @subroutines = {}
-        @builtins = {}
-        @import = ->
-            hide_subroutines()
-            import_data valid_source @import_export_text
-            @edit current_scope if current_scope
-            start_saving()
-    
-        import_data = (source_data) =>
-            data = load_state source_data
-            for id, subroutine of data.subroutines
-                @subroutines[subroutine.id] = subroutine
-            for id, builtin of data.builtins
-                @builtins[builtin.id] = builtin
-    
-        @load_example_programs = =>
-            hide_subroutines()
-            $http.get('examples.json').success (source_data) =>
-                import_data source_data
-    
-                # make the playground
-                playground = new SubRoutine 'playground'
-                @subroutines[playground.id] = playground
-                @edit playground
-                start_saving()
-    
-        @export_all = ->
-            data =
-                subroutines:@subroutines
-                builtins:@builtins
-                schema_version:schema_version
-            @import_export_text = pretty_json data
-    
-        @export_subroutine = (subroutine) =>
-            @import_export_text = pretty_json subroutine.export()
-    
-        @export_builtin = (builtin) =>
-            @import_export_text = pretty_json builtin.export()
-    
-        @revert = ->
-            hide_subroutines()
-            @subroutines = {}
-            @builtins = {}
-            @load_example_programs()
-    
-        @literal_text = ''
-        @use_literal = =>
-            if valid_json @literal_text
-                new Literal V(0,0), @literal_text
-                @literal_text = ''
-    
-        @use_builtin = (builtin) =>
-            new BuiltinApplication V(0,0), builtin
-    
-        @use_subroutine = (subroutine) =>
-            new SubroutineApplication V(0,0), subroutine
-    
-        @use_subroutine_value = (subroutine) =>
-            new Literal V(0,0), subroutine
-    
-        @initial_subroutine =
-            name:''
-            inputs:[]
-            outputs:[]
-        @new_subroutine = angular.copy @initial_subroutine
-    
-        @delete_subroutine = (subroutine) =>
-            if subroutine.id is current_scope.id
-                @current_object = null
-                teardown_field()
-            delete @subroutines[subroutine.id]
-    
-        @delete_builtin = (builtin) =>
-            delete @builtins[builtin.id]
-    
-        @add_subroutine = =>
-            subroutine = new SubRoutine @new_subroutine.name, @new_subroutine.inputs, @new_subroutine.outputs
-    
-            # first find all the connections
-            in_connections = {}
-            out_connections = {}
-            for id, node of highlighted_objects
-                for id, nib of node.inputs
-                    for id, connection of nib.connections
-                        in_connections[connection.connection.id] = connection.connection
-                for id, nib of node.outputs
-                    for id, connection of nib.connections
-                        out_connections[connection.connection.id] = connection.connection
-    
-            # see which ones are contained in the system
-            contained_connections = {}
-            for id, connection of in_connections
-                if connection.id of out_connections
-                    contained_connections[connection.id] = connection
-                    delete in_connections[connection.id]
-                    delete out_connections[connection.id]
-    
-            # move the contained ones
-            for id, connection of contained_connections
-                current_scope.remove_connection connection
-                subroutine.add_connection connection
-            
-            # clip the others
-            for id, connection of in_connections
-                connection.delete()
-    
-            for id, connection of out_connections
-                connection.delete()
-    
-            # move the nodes
-            for id, node of highlighted_objects
-                current_scope.remove_node node
-                subroutine.add_node node
-    
-            @subroutines[subroutine.id] = subroutine
-            @new_subroutine = angular.copy @initial_subroutine
-            @new_subroutine.inputs = []
-            @new_subroutine.outputs = []
-            @edit subroutine
-    
-        @add_builtin = =>
-            builtin = new Builtin {}
-            @builtins[builtin.id] = builtin
-            @edit builtin
-    
-        @run_subroutine = (subroutine, output_index) =>
-            input_values = []
-            for input, input_index in subroutine.inputs
-                do (input_index, input) ->
-                    value = _.memoize ->
-                        result = prompt "Provide a JSON value for input #{input_index}: \"#{input.text}\""
-                        throw new Exit "cancelled execution" if result is null
-                        try
-                            return JSON.parse result
-                        catch exception
-                            if exception instanceof SyntaxError
-                                throw new InputError result
-                            else
-                                throw exception
-                    input_values.push value
-            try
-                setTimeout subroutine.run output_index, input_values
-            catch exception
-                if exception instanceof InputError
-                    alert "Invalid JSON: #{exception.message}"
-                else
-                    throw exception
-    
-        @run_builtin = (builtin, output_index) =>
-            execute =>
-                input_values = []
-                for input, input_index in builtin.inputs
-                    do (input_index, input) ->
-                        input_values.push ->
-                            valid_json prompt "Provide a JSON value for input #{input_index}: \"#{input}\""
-    
-                the_scope = memos:{}
-    
-                # lifted from evaluation.  TODO: add to builtin class
-                try
-                    memo_function = eval_expression builtin.memo_implementation
-                    output_function = eval_expression builtin.output_implementation
-                catch exception
-                    if exception instanceof SyntaxError
-                        throw new BuiltinSyntaxError builtin.text, exception
-                    else throw exception
-    
-                throw new NotImplemented builtin.text unless output_function
-    
-                args = input_values.concat [output_index]
-                memo = memo_function args... if memo_function
-                return output_function (args.concat [memo])...
-    
-        @edit = (value) =>
-            @current_object = value
-            if value instanceof SubRoutine
-                current_scope = value
-                hide_subroutines()
-                scene.add value.view
-                setTimeout init_field
-                console.log value.build_adjacency_list()
-            else
-                teardown_field()
-    
-        save_state = =>
-            state =
-                subroutines:@subroutines
-                builtins:@builtins
-                schema_version:schema_version
-    
-            localStorage.state = JSON.stringify state
-    
-        @builtins = all_builtins
-        system_arrow = make_arrow V(0,0), V(1,0), false
-    
-        if localStorage.state?
-            #dissociate_exception =>
-                data = JSON.parse localStorage.state
-                loaded_state = load_state data
-                @builtins = loaded_state.builtins
-                @subroutines = loaded_state.subroutines
-                current_scope = obj_first @subroutines
-                @edit current_scope if current_scope
-                start_saving()
-        else
-            @load_example_programs()
     */
 
+    var data, hide_subroutines, import_data, loaded_state, save_state, saving, start_saving,
+      _this = this;
+    hide_subroutines = function() {};
+    /*
+            for index, subroutine of $scope.subroutines
+                scene.remove subroutine.view
+    */
+
+    saving = false;
+    start_saving = function() {};
+    $scope.log = function(expression) {
+      return console.log(expression);
+    };
+    $scope.current_object = null;
+    $scope.import_export_text = '';
+    $scope.subroutines = {};
+    $scope.builtins = {};
+    $scope["import"] = function() {
+      hide_subroutines();
+      import_data(valid_source($scope.import_export_text));
+      if (current_scope) {
+        $scope.edit(current_scope);
+      }
+      return start_saving();
+    };
+    import_data = function(source_data) {
+      var builtin, data, id, subroutine, _ref, _ref1, _results;
+      data = load_state(source_data);
+      _ref = data.subroutines;
+      for (id in _ref) {
+        subroutine = _ref[id];
+        $scope.subroutines[subroutine.id] = subroutine;
+      }
+      _ref1 = data.builtins;
+      _results = [];
+      for (id in _ref1) {
+        builtin = _ref1[id];
+        _results.push($scope.builtins[builtin.id] = builtin);
+      }
+      return _results;
+    };
+    $scope.load_example_programs = function() {
+      hide_subroutines();
+      return $http.get('examples.json').success(function(source_data) {
+        var playground;
+        import_data(source_data);
+        playground = new SubRoutine('playground');
+        $scope.subroutines[playground.id] = playground;
+        $scope.edit(playground);
+        return start_saving();
+      });
+    };
+    $scope.export_all = function() {
+      var data;
+      data = {
+        subroutines: $scope.subroutines,
+        builtins: $scope.builtins,
+        schema_version: schema_version
+      };
+      return $scope.import_export_text = pretty_json(data);
+    };
+    $scope.export_subroutine = function(subroutine) {
+      return $scope.import_export_text = pretty_json(subroutine["export"]());
+    };
+    $scope.export_builtin = function(builtin) {
+      return $scope.import_export_text = pretty_json(builtin["export"]());
+    };
+    $scope.revert = function() {
+      hide_subroutines();
+      $scope.subroutines = {};
+      $scope.builtins = {};
+      return $scope.load_example_programs();
+    };
+    $scope.literal_text = '';
+    $scope.use_literal = function() {
+      if (valid_json($scope.literal_text)) {
+        new Literal(V(0, 0), $scope.literal_text);
+        return $scope.literal_text = '';
+      }
+    };
+    $scope.use_builtin = function(builtin) {
+      return new BuiltinApplication(V(0, 0), builtin);
+    };
+    $scope.use_subroutine = function(subroutine) {
+      return new SubroutineApplication(V(0, 0), subroutine);
+    };
+    $scope.use_subroutine_value = function(subroutine) {
+      return new Literal(V(0, 0), subroutine);
+    };
+    $scope.initial_subroutine = {
+      name: '',
+      inputs: [],
+      outputs: []
+    };
+    $scope.new_subroutine = angular.copy($scope.initial_subroutine);
+    $scope.delete_subroutine = function(subroutine) {
+      if (subroutine.id === current_scope.id) {
+        $scope.current_object = null;
+        teardown_field();
+      }
+      return delete $scope.subroutines[subroutine.id];
+    };
+    $scope.delete_builtin = function(builtin) {
+      return delete $scope.builtins[builtin.id];
+    };
+    $scope.add_subroutine = function() {
+      var connection, contained_connections, id, in_connections, nib, node, out_connections, subroutine, _ref, _ref1, _ref2, _ref3;
+      subroutine = new SubRoutine($scope.new_subroutine.name, $scope.new_subroutine.inputs, $scope.new_subroutine.outputs);
+      in_connections = {};
+      out_connections = {};
+      for (id in highlighted_objects) {
+        node = highlighted_objects[id];
+        _ref = node.inputs;
+        for (id in _ref) {
+          nib = _ref[id];
+          _ref1 = nib.connections;
+          for (id in _ref1) {
+            connection = _ref1[id];
+            in_connections[connection.connection.id] = connection.connection;
+          }
+        }
+        _ref2 = node.outputs;
+        for (id in _ref2) {
+          nib = _ref2[id];
+          _ref3 = nib.connections;
+          for (id in _ref3) {
+            connection = _ref3[id];
+            out_connections[connection.connection.id] = connection.connection;
+          }
+        }
+      }
+      contained_connections = {};
+      for (id in in_connections) {
+        connection = in_connections[id];
+        if (connection.id in out_connections) {
+          contained_connections[connection.id] = connection;
+          delete in_connections[connection.id];
+          delete out_connections[connection.id];
+        }
+      }
+      for (id in contained_connections) {
+        connection = contained_connections[id];
+        current_scope.remove_connection(connection);
+        subroutine.add_connection(connection);
+      }
+      for (id in in_connections) {
+        connection = in_connections[id];
+        connection["delete"]();
+      }
+      for (id in out_connections) {
+        connection = out_connections[id];
+        connection["delete"]();
+      }
+      for (id in highlighted_objects) {
+        node = highlighted_objects[id];
+        current_scope.remove_node(node);
+        subroutine.add_node(node);
+      }
+      $scope.subroutines[subroutine.id] = subroutine;
+      $scope.new_subroutine = angular.copy($scope.initial_subroutine);
+      $scope.new_subroutine.inputs = [];
+      $scope.new_subroutine.outputs = [];
+      return $scope.edit(subroutine);
+    };
+    $scope.add_builtin = function() {
+      var builtin;
+      builtin = new Builtin({});
+      $scope.builtins[builtin.id] = builtin;
+      return $scope.edit(builtin);
+    };
+    $scope.run_subroutine = function(subroutine, output_index) {
+      var input, input_index, input_values, _fn, _i, _len, _ref;
+      input_values = [];
+      _ref = subroutine.inputs;
+      _fn = function(input_index, input) {
+        var value;
+        value = _.memoize(function() {
+          var result;
+          result = prompt("Provide a JSON value for input " + input_index + ": \"" + input.text + "\"");
+          if (result === null) {
+            throw new Exit("cancelled execution");
+          }
+          try {
+            return JSON.parse(result);
+          } catch (exception) {
+            if (exception instanceof SyntaxError) {
+              throw new InputError(result);
+            } else {
+              throw exception;
+            }
+          }
+        });
+        return input_values.push(value);
+      };
+      for (input_index = _i = 0, _len = _ref.length; _i < _len; input_index = ++_i) {
+        input = _ref[input_index];
+        _fn(input_index, input);
+      }
+      try {
+        return setTimeout(subroutine.run(output_index, input_values));
+      } catch (exception) {
+        if (exception instanceof InputError) {
+          return alert("Invalid JSON: " + exception.message);
+        } else {
+          throw exception;
+        }
+      }
+    };
+    $scope.run_builtin = function(builtin, output_index) {
+      return execute(function() {
+        var args, input, input_index, input_values, memo, memo_function, output_function, the_scope, _fn, _i, _len, _ref;
+        input_values = [];
+        _ref = builtin.inputs;
+        _fn = function(input_index, input) {
+          return input_values.push(function() {
+            return valid_json(prompt("Provide a JSON value for input " + input_index + ": \"" + input + "\""));
+          });
+        };
+        for (input_index = _i = 0, _len = _ref.length; _i < _len; input_index = ++_i) {
+          input = _ref[input_index];
+          _fn(input_index, input);
+        }
+        the_scope = {
+          memos: {}
+        };
+        try {
+          memo_function = eval_expression(builtin.memo_implementation);
+          output_function = eval_expression(builtin.output_implementation);
+        } catch (exception) {
+          if (exception instanceof SyntaxError) {
+            throw new BuiltinSyntaxError(builtin.text, exception);
+          } else {
+            throw exception;
+          }
+        }
+        if (!output_function) {
+          throw new NotImplemented(builtin.text);
+        }
+        args = input_values.concat([output_index]);
+        if (memo_function) {
+          memo = memo_function.apply(null, args);
+        }
+        return output_function.apply(null, args.concat([memo]));
+      });
+    };
+    $scope.edit = function(value) {
+      return $scope.current_object = value;
+      /*
+              if value instanceof SubRoutine
+                  current_scope = value
+                  hide_subroutines()
+                  scene.add value.view
+                  setTimeout init_field
+                  console.log value.build_adjacency_list()
+              else
+                  teardown_field()
+      */
+
+    };
+    save_state = function() {
+      var state;
+      state = {
+        subroutines: $scope.subroutines,
+        builtins: $scope.builtins,
+        schema_version: schema_version
+      };
+      return localStorage.state = JSON.stringify(state);
+    };
+    $scope.builtins = all_builtins;
+    if (localStorage.state != null) {
+      data = JSON.parse(localStorage.state);
+      loaded_state = load_state(data);
+      $scope.builtins = loaded_state.builtins;
+      $scope.subroutines = loaded_state.subroutines;
+      current_scope = obj_first($scope.subroutines);
+      if (current_scope) {
+        $scope.edit(current_scope);
+      }
+      return start_saving();
+    } else {
+      return $scope.load_example_programs();
+    }
   });
 
   dissociate_exception = function(procedure) {
@@ -1429,7 +1496,7 @@
     _ref = data.nodes;
     for (_i = 0, _len = _ref.length; _i < _len; _i++) {
       node = _ref[_i];
-      position = Vector.from(node.position);
+      position = V(node.position);
       if (node.type === 'function') {
         subroutine = all_subroutines[node.implementation_id];
         if (subroutine) {

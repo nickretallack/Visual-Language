@@ -3,7 +3,7 @@ editor_size = V 600,700
 module = angular.module 'vislang', []
 module.directive 'subroutine', ->
     (scope, element, attributes) ->
-        paper = Raphael element, editor_size.components...
+        paper = Raphael element[0], editor_size.components...
         paper.circle 20,20,20
     
 last = (list) -> list[list.length-1]
@@ -84,7 +84,7 @@ class Builtin
 class SubRoutine
     constructor:(@name='', inputs=[], outputs=[], @id=UUID()) ->
         node_registry[@id] = @
-        @view = make_subroutine_view @
+        #@view = make_subroutine_view @
 
         # can't have a subroutine with no output
         outputs = ['OUT'] unless outputs.length
@@ -209,16 +209,16 @@ class Node # Abstract
         node_registry[@id] = @
         @scope = current_scope
         @scope.nodes[@id] = @
-        @view = make_node_view @
+        #@view = make_node_view @
 
     set_position:(@position) ->
-        @view.position.copy @position
+        #@view.position.copy @position
 
     get_nibs: ->
         @inputs.concat @outputs
 
     delete: ->
-        @scope.view.remove @view
+        #@scope.view.remove @view
         delete @scope.nodes[@id]
         for nib in @get_nibs()
             nib.delete_connections()
@@ -339,7 +339,7 @@ class Literal extends Node
     
 class Nib  # Abstract. Do not instantiate
     constructor: ->
-        @view = make_nib_view @, @parent instanceof Node
+        #@view = make_nib_view @, @parent instanceof Node
         @connections = {}
 
     delete_connections: ->
@@ -383,9 +383,9 @@ class Output extends Nib
 
 class Connection
     constructor:(@input, @output, @id=UUID()) ->
-        [@view, input_vertex, output_vertex] = connection_view @
-        @input._add_connection @, input_vertex
-        @output._add_connection @, output_vertex
+        #[@view, input_vertex, output_vertex] = connection_view @
+        #@input._add_connection @, input_vertex
+        #@output._add_connection @, output_vertex
         @scope = current_scope
         @scope.connections[@id] = @
 
@@ -398,7 +398,7 @@ class Connection
             parent_id:@output.parent.id
 
     delete: ->
-        @scope.view.remove @view
+        #@scope.view.remove @view
         delete @scope.connections[@id]
         delete @output.connections[@id]
         @input.connections = {}
@@ -406,21 +406,26 @@ class Connection
 ### VIEWS ###
 
 make_subroutine_view = (subroutine) ->
+###
     box_size = editor_size
     position = box_size.scale(1/2.0)
     box = make_box null, subroutine_mesh, 10, position
     box.model = subroutine
     boxes[box.id] = box
     return box
+###
 
 make_node_view = (node) ->
+###
     main_box = make_box node.text, node_mesh, 10, node.position
     main_box.model = node
     node.scope.view.add main_box
     boxes[main_box.id] = main_box
     return main_box
+###
 
 make_nib_view = (nib, is_node) ->
+###
     parent_size = if is_node then V(60,60) else editor_size.minus V 10,10
 
     y_offset = parent_size.y / 2.0
@@ -434,12 +439,15 @@ make_nib_view = (nib, is_node) ->
     parent = nib.parent.view
     parent.add sub_box
     return sub_box
+###
 
 connection_view = (connection) ->
+###
     point1 = get_nib_position connection.input
     point2 = get_nib_position connection.output
     arrow = make_arrow point1, point2
     [arrow, arrow.geometry.vertices[0], arrow.geometry.vertices[1]]
+###
             
 
 ### FACTORIES ###
@@ -568,7 +576,7 @@ valid_json = (json) ->
 
 pretty_json = (obj) -> JSON.stringify obj, undefined, 2
 
-module.controller 'Controller', ($http) ->
+module.controller 'Controller', ($scope, $http) ->
     ###
     init_field = ->
         if not should_animate
@@ -594,8 +602,8 @@ module.controller 'Controller', ($http) ->
                 else if event.shiftKey
                     highlight target.model
                 else if event.ctrlKey
-                    @edit target.model.implementation
-                    @$digest()
+                    $scope.edit target.model.implementation
+                    $scope.$digest()
                 else
                     dragging_object = target
             else if target.model instanceof Nib
@@ -639,93 +647,96 @@ module.controller 'Controller', ($http) ->
         if connecting_object
             system_arrow.geometry.vertices[1].position = vector
 
+    ###
     hide_subroutines = =>
-        for index, subroutine of @subroutines
+    ###
+        for index, subroutine of $scope.subroutines
             scene.remove subroutine.view
+    ###
 
     saving = false
-    start_saving = -> setInterval save_state, 500 if not saving
-    @log = (expression) -> console.log expression
+    start_saving = -> #setInterval save_state, 500 if not saving
+    $scope.log = (expression) -> console.log expression
 
-    @current_object = null
-    @import_export_text = ''
-    @subroutines = {}
-    @builtins = {}
-    @import = ->
+    $scope.current_object = null
+    $scope.import_export_text = ''
+    $scope.subroutines = {}
+    $scope.builtins = {}
+    $scope.import = ->
         hide_subroutines()
-        import_data valid_source @import_export_text
-        @edit current_scope if current_scope
+        import_data valid_source $scope.import_export_text
+        $scope.edit current_scope if current_scope
         start_saving()
 
     import_data = (source_data) =>
         data = load_state source_data
         for id, subroutine of data.subroutines
-            @subroutines[subroutine.id] = subroutine
+            $scope.subroutines[subroutine.id] = subroutine
         for id, builtin of data.builtins
-            @builtins[builtin.id] = builtin
+            $scope.builtins[builtin.id] = builtin
 
-    @load_example_programs = =>
+    $scope.load_example_programs = =>
         hide_subroutines()
         $http.get('examples.json').success (source_data) =>
             import_data source_data
 
             # make the playground
             playground = new SubRoutine 'playground'
-            @subroutines[playground.id] = playground
-            @edit playground
+            $scope.subroutines[playground.id] = playground
+            $scope.edit playground
             start_saving()
 
-    @export_all = ->
+    $scope.export_all = ->
         data =
-            subroutines:@subroutines
-            builtins:@builtins
+            subroutines:$scope.subroutines
+            builtins:$scope.builtins
             schema_version:schema_version
-        @import_export_text = pretty_json data
+        $scope.import_export_text = pretty_json data
 
-    @export_subroutine = (subroutine) =>
-        @import_export_text = pretty_json subroutine.export()
+    $scope.export_subroutine = (subroutine) =>
+        $scope.import_export_text = pretty_json subroutine.export()
 
-    @export_builtin = (builtin) =>
-        @import_export_text = pretty_json builtin.export()
+    $scope.export_builtin = (builtin) =>
+        $scope.import_export_text = pretty_json builtin.export()
 
-    @revert = ->
+    $scope.revert = ->
         hide_subroutines()
-        @subroutines = {}
-        @builtins = {}
-        @load_example_programs()
+        $scope.subroutines = {}
+        $scope.builtins = {}
+        $scope.load_example_programs()
 
-    @literal_text = ''
-    @use_literal = =>
-        if valid_json @literal_text
-            new Literal V(0,0), @literal_text
-            @literal_text = ''
+    $scope.literal_text = ''
+    $scope.use_literal = =>
+        if valid_json $scope.literal_text
+            new Literal V(0,0), $scope.literal_text
+            $scope.literal_text = ''
 
-    @use_builtin = (builtin) =>
+    $scope.use_builtin = (builtin) =>
         new BuiltinApplication V(0,0), builtin
 
-    @use_subroutine = (subroutine) =>
+    $scope.use_subroutine = (subroutine) =>
         new SubroutineApplication V(0,0), subroutine
 
-    @use_subroutine_value = (subroutine) =>
+    $scope.use_subroutine_value = (subroutine) =>
         new Literal V(0,0), subroutine
 
-    @initial_subroutine =
+    $scope.initial_subroutine =
         name:''
         inputs:[]
         outputs:[]
-    @new_subroutine = angular.copy @initial_subroutine
+    $scope.new_subroutine = angular.copy $scope.initial_subroutine
 
-    @delete_subroutine = (subroutine) =>
+    $scope.delete_subroutine = (subroutine) =>
         if subroutine.id is current_scope.id
-            @current_object = null
+            $scope.current_object = null
             teardown_field()
-        delete @subroutines[subroutine.id]
+        delete $scope.subroutines[subroutine.id]
 
-    @delete_builtin = (builtin) =>
-        delete @builtins[builtin.id]
+    $scope.delete_builtin = (builtin) =>
+        delete $scope.builtins[builtin.id]
 
-    @add_subroutine = =>
-        subroutine = new SubRoutine @new_subroutine.name, @new_subroutine.inputs, @new_subroutine.outputs
+    $scope.add_subroutine = =>
+        subroutine = new SubRoutine $scope.new_subroutine.name, $scope.new_subroutine.inputs, $scope.new_subroutine.outputs
 
         # first find all the connections
         in_connections = {}
@@ -763,18 +774,18 @@ module.controller 'Controller', ($http) ->
             current_scope.remove_node node
             subroutine.add_node node
 
-        @subroutines[subroutine.id] = subroutine
-        @new_subroutine = angular.copy @initial_subroutine
-        @new_subroutine.inputs = []
-        @new_subroutine.outputs = []
-        @edit subroutine
+        $scope.subroutines[subroutine.id] = subroutine
+        $scope.new_subroutine = angular.copy $scope.initial_subroutine
+        $scope.new_subroutine.inputs = []
+        $scope.new_subroutine.outputs = []
+        $scope.edit subroutine
 
-    @add_builtin = =>
+    $scope.add_builtin = =>
         builtin = new Builtin {}
-        @builtins[builtin.id] = builtin
-        @edit builtin
+        $scope.builtins[builtin.id] = builtin
+        $scope.edit builtin
 
-    @run_subroutine = (subroutine, output_index) =>
+    $scope.run_subroutine = (subroutine, output_index) =>
         input_values = []
         for input, input_index in subroutine.inputs
             do (input_index, input) ->
@@ -797,7 +808,7 @@ module.controller 'Controller', ($http) ->
             else
                 throw exception
 
-    @run_builtin = (builtin, output_index) =>
+    $scope.run_builtin = (builtin, output_index) =>
         execute =>
             input_values = []
             for input, input_index in builtin.inputs
@@ -822,8 +833,9 @@ module.controller 'Controller', ($http) ->
             memo = memo_function args... if memo_function
             return output_function (args.concat [memo])...
 
-    @edit = (value) =>
-        @current_object = value
+    $scope.edit = (value) =>
+        $scope.current_object = value
+        ###
         if value instanceof SubRoutine
             current_scope = value
             hide_subroutines()
@@ -832,30 +844,30 @@ module.controller 'Controller', ($http) ->
             console.log value.build_adjacency_list()
         else
             teardown_field()
+        ###
 
     save_state = =>
         state =
-            subroutines:@subroutines
-            builtins:@builtins
+            subroutines:$scope.subroutines
+            builtins:$scope.builtins
             schema_version:schema_version
 
         localStorage.state = JSON.stringify state
 
-    @builtins = all_builtins
-    system_arrow = make_arrow V(0,0), V(1,0), false
+    $scope.builtins = all_builtins
+    #system_arrow = make_arrow V(0,0), V(1,0), false
 
     if localStorage.state?
         #dissociate_exception =>
             data = JSON.parse localStorage.state
             loaded_state = load_state data
-            @builtins = loaded_state.builtins
-            @subroutines = loaded_state.subroutines
-            current_scope = obj_first @subroutines
-            @edit current_scope if current_scope
+            $scope.builtins = loaded_state.builtins
+            $scope.subroutines = loaded_state.subroutines
+            current_scope = obj_first $scope.subroutines
+            $scope.edit current_scope if current_scope
             start_saving()
     else
-        @load_example_programs()
-    ###
+        $scope.load_example_programs()
 
 dissociate_exception = (procedure) ->
     try
@@ -905,7 +917,7 @@ make_main = ->
 
 load_implementation = (data) ->
     for node in data.nodes
-        position = Vector.from(node.position)
+        position = V node.position
         if node.type is 'function'
             subroutine = all_subroutines[node.implementation_id]
             if subroutine
