@@ -6,4 +6,8 @@ textarea {display:block}
 #inputs_editor, #outputs_editor {display:inline-block; width:300px}
 
 #subroutine {position:relative;}
-.node {position:absolute;}
+.node {position:absolute; white-space:nowrap;}
+.node h1 {text-align:center;}
+.inputs, .outputs {display:inline-block; vertical-align:top;}
+.inputs {text-align:left;}
+.outputs {text-align:right;}
