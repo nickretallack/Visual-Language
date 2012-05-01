@@ -19,7 +19,12 @@
 
 <div ng:switch-when="subroutine">
 <h2><input ng:model="current_object.name"></h2>
-<div id="field" subroutine="current_object"></div>
+
+<div id="subroutine" ng-style="{'width':editor_size.x+'px', 'height':editor_size.y+'px'}">
+<div class="node" ng-repeat="node in current_object.nodes" ng-style="position(node)">
+{{node.text}}
+</div>
+</div>
 
 <div id="inputs_editor">
 <h3>Inputs</h3>

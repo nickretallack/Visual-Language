@@ -4,3 +4,6 @@ textarea {display:block}
 .name {font-weight:bold}
 
 #inputs_editor, #outputs_editor {display:inline-block; width:300px}
+
+#subroutine {position:relative;}
+.node {position:absolute;}

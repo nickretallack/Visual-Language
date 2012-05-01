@@ -2,6 +2,7 @@ editor_size = V 700,800
 V(1,1).plus(V(2,2))
 
 module = angular.module 'vislang', []
+###
 module.directive 'subroutine', ->
     (scope, element, attributes) ->
         graphics = Raphael element[0], editor_size.components()...
@@ -9,6 +10,8 @@ module.directive 'subroutine', ->
             graphics.clear()
             for id, node of subroutine.nodes
                 new NodeView graphics, node
+
+blab = -> console.log arguments
 
 class NodeView
     constructor: (@graphics, @node) ->
@@ -28,8 +31,12 @@ class NodeView
         text_width = @text.getBBox().width
 
         corner_position = position.minus V(text_width/2, 0)
-        @set.push graphics.rect corner_position.x-5, corner_position.y, text_width+10,size.y
+        @shape = graphics.rect corner_position.x-5, corner_position.y, text_width+10,size.y
+        @shape.attr 'fill', 'blue'
+        @set.push @shape
 
+        @shape.drag blab, blab, blab
+###
 
     
 last = (list) -> list[list.length-1]
@@ -609,6 +616,12 @@ valid_json = (json) ->
 pretty_json = (obj) -> JSON.stringify obj, undefined, 2
 
 module.controller 'Controller', ($scope, $http) ->
+    $scope.editor_size = editor_size
+    $scope.position = (node) ->
+        position = node.position.plus $scope.editor_size.scale 0.5
+        left:position.x+'px'
+        top:(editor_size.y - position.y)+'px'
+
     ###
     init_field = ->
         if not should_animate
