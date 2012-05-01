@@ -38,7 +38,7 @@
         ctor.prototype = func.prototype;
         var child = new ctor, result = func.apply(child, args), t = typeof result;
         return t == "object" || t == "function" ? result || child : child;
-      })(Vector, _.map(_.zip(this.components(), vector.components), function(components) {
+      })(Vector, _.map(_.zip(this.components(), vector.components()), function(components) {
         return action.apply(null, components);
       }), function(){});
     };
@@ -77,7 +77,7 @@
     };
 
     Vector.prototype.equals = function(vector) {
-      return _.all(_.zip(this.components(), vector.components), function(item) {
+      return _.all(_.zip(this.components(), vector.components()), function(item) {
         return item[0] === item[1];
       });
     };

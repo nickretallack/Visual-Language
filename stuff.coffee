@@ -1,10 +1,36 @@
-editor_size = V 600,700
+editor_size = V 700,800
+V(1,1).plus(V(2,2))
 
 module = angular.module 'vislang', []
 module.directive 'subroutine', ->
     (scope, element, attributes) ->
-        paper = Raphael element[0], editor_size.components...
-        paper.circle 20,20,20
+        graphics = Raphael element[0], editor_size.components()...
+        scope.$watch attributes.subroutine, (subroutine) ->
+            graphics.clear()
+            for id, node of subroutine.nodes
+                new NodeView graphics, node
+
+class NodeView
+    constructor: (@graphics, @node) ->
+        @set = graphics.set()
+
+        size = V(50,50)
+
+        # account for the fact that the origin is in the middle, and y
+        # has its sign reversed
+        editor_offset = editor_size.scale 0.5
+        position = V(node.position).plus editor_offset
+        position.y = editor_size.y - position.y
+
+        @text = graphics.text position.x, position.y+10, node.text
+        @text.attr 'text-anchor', 'middle'
+        @set.push @text
+        text_width = @text.getBBox().width
+
+        corner_position = position.minus V(text_width/2, 0)
+        @set.push graphics.rect corner_position.x-5, corner_position.y, text_width+10,size.y
+
+
     
 last = (list) -> list[list.length-1]
 obj_first = (obj) ->
@@ -80,6 +106,12 @@ class Builtin
         subroutines:{}
         builtins: builtins
         schema_version:schema_version
+
+###
+class SubroutineView
+    constructor:(@subroutine, @graphics) ->
+        for node in @subroutine.nodes
+###
 
 class SubRoutine
     constructor:(@name='', inputs=[], outputs=[], @id=UUID()) ->

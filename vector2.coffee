@@ -16,7 +16,7 @@ class Vector
         new Vector (_.map @components(), action)...
 
     vmap: (vector, action) ->
-        new Vector (_.map _.zip(@components(), vector.components), (components) -> action components...)...
+        new Vector (_.map _.zip(@components(), vector.components()), (components) -> action components...)...
 
     magnitude: ->
         Math.sqrt @reduce 0, (accumulator, component) -> accumulator + component*component
@@ -38,7 +38,7 @@ class Vector
         top:@y
 
     equals: (vector) ->
-        _.all _.zip(@components(), vector.components), (item) -> item[0] == item[1]
+        _.all _.zip(@components(), vector.components()), (item) -> item[0] == item[1]
 
     distance: (vector) ->
         @minus(vector).magnitude()
