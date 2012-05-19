@@ -1,4 +1,4 @@
-editor_size = V 700,800
+editor_size = V window.innerWidth,window.innerHeight
 V(1,1).plus(V(2,2))
 
 module = angular.module 'vislang', []
@@ -635,8 +635,8 @@ module.controller 'Controller', ($scope, $http) ->
     $scope.editor_size = editor_size
     $scope.position = (node) ->
         position = node.position.plus $scope.editor_size.scale 0.5
-        left:position.x+'px'
-        top:(editor_size.y - position.y)+'px'
+        left:position.y+'px'
+        top:(position.x - 700 + editor_size.y/2)+'px'
 
     ###
     init_field = ->

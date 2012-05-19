@@ -4,7 +4,7 @@
     __hasProp = {}.hasOwnProperty,
     __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor; child.__super__ = parent.prototype; return child; };
 
-  editor_size = V(700, 800);
+  editor_size = V(window.innerWidth, window.innerHeight);
 
   V(1, 1).plus(V(2, 2));
 
@@ -1143,8 +1143,8 @@
       var position;
       position = node.position.plus($scope.editor_size.scale(0.5));
       return {
-        left: position.x + 'px',
-        top: (editor_size.y - position.y) + 'px'
+        left: position.y + 'px',
+        top: (position.x - 700 + editor_size.y / 2) + 'px'
       };
     };
     /*
