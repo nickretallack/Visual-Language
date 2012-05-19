@@ -1,0 +1,29 @@
+<ng-switch on="current_object.type">
+
+<div ng:switch-when="subroutine" id="subroutine" subroutine="current_object">
+<h2><input ng:model="current_object.name"></h2>
+<div class="subroutine-input" ng-repeat="input in current_object.inputs" ng-style="{'top':(($index+1) * editor_size.y / (current_object.inputs.length+1)) + 'px'}">
+    <input ng-model="input.text">
+</div>
+
+<div class="node" ng-repeat="node in current_object.nodes" ng-style="position(node)">
+    <h1>{{node.text}}</h1>
+    <table class="inputs-outputs" io="node"></table>
+</div>
+</div>
+
+<div ng:switch-when="literal">
+<h2><input ng:model="current_object.text"></h2>
+</div>
+
+<div ng:switch-when="builtin" id="builtin_editor">
+<h2><input ng:model="current_object.name"></h2>
+<p>Inputs: <input type="list" ng:model="current_object.inputs"></p>
+<p>Outputs: <input type="list" ng:model="current_object.outputs"></p>
+Memo Implementation:
+<textarea rows="10" cols="50" ng:model="current_object.memo_implementation"></textarea>
+Output Implementation:
+<textarea rows="10" cols="50" ng:model="current_object.output_implementation"></textarea>
+</div>
+
+</ng-switch>

@@ -21,41 +21,13 @@
     <a>Publish</a>
 </nav>
 
-<ng-switch on="current_object.type">
-
-<div ng:switch-when="subroutine" id="subroutine" subroutine="current_object">
-<h2><input ng:model="current_object.name"></h2>
-<div class="subroutine-input" ng-repeat="input in current_object.inputs" ng-style="{'top':(($index+1) * editor_size.y / (current_object.inputs.length+1)) + 'px'}">
-    <input ng-model="input.text">
-</div>
-
-<div class="node" ng-repeat="node in current_object.nodes" ng-style="position(node)">
-    <h1>{{node.text}}</h1>
-    <table class="inputs-outputs" io="node"></table>
-</div>
-</div>
-
-<div ng:switch-when="literal">
-<h2><input ng:model="current_object.text"></h2>
-</div>
-
-<div ng:switch-when="builtin" id="builtin_editor">
-<h2><input ng:model="current_object.name"></h2>
-<p>Inputs: <input type="list" ng:model="current_object.inputs"></p>
-<p>Outputs: <input type="list" ng:model="current_object.outputs"></p>
-Memo Implementation:
-<textarea rows="10" cols="50" ng:model="current_object.memo_implementation"></textarea>
-Output Implementation:
-<textarea rows="10" cols="50" ng:model="current_object.output_implementation"></textarea>
-</div>
-
-</ng-switch>
+<ng-view></ng-view>
 
 </div>
 
 <ng-switch on="overlay">
 
-<div id="tools" ng-switch-when="library">
+<div id="tools" ng-switch-when="library" ng-controller="library">
 <h2>Import/Export</h2>
 <textarea ng:model="import_export_text"></textarea>
 <p>
@@ -67,38 +39,22 @@ Output Implementation:
 
 <h2>Functions</h2>
 <ul><li ng:repeat="(id, subroutine) in subroutines">
-    <a ng:click="edit(subroutine)">edit</a>
+    <a href="#{{subroutine.id}}">edit</a>
     <a ng:click="export_subroutine(subroutine)">export</a>
     <a ng:click="delete_subroutine(subroutine)">delete</a>
     <a ng:show="current_object.type == 'subroutine'" ng:click="use_subroutine(subroutine)">use</a>
     <a ng:show="current_object.type == 'subroutine'" ng:click="use_subroutine_value(subroutine)">value</a>
     <span class="name">{{subroutine.name}}</span>
-    (<span ng:repeat="input in subroutine.inputs">{{input.text}} </span> -&gt;
+    (<span ng:repeat="input in subroutine.inputs">{{input.text || input}} </span> -&gt;
     <span ng:repeat="output in subroutine.outputs">
-        <a ng:click="run_subroutine(subroutine, output.index)">{{output.text}}</a>
+        <a ng:click="run_subroutine(subroutine, output.index)">{{output.text || output}}</a>
     </span>)
 </li></ul>
 
 <h2>Literals (JSON)</h2>
 <form ng:submit="use_literal()"> <input ng:model="literal_text"> <button>Use Literal</button> </form>
-
-<h2>Builtins
-<button ng:click="add_builtin()">New Builtin</button>
-</h2>
-<ul id="builtins"><li ng:repeat="(id, builtin) in builtins">
-    <a ng:click="edit(builtin)">edit</a>
-    <a ng:click="export_builtin(builtin)">export</a>
-    <a ng:click="delete_builtin(builtin)">delete</a>
-    <a ng:show="current_object.type == 'subroutine'" ng:click="use_builtin(builtin)">use</a>
-    <span class="name">{{builtin.name}}</span>
-    (<span ng:repeat="input in builtin.inputs">{{input}} </span> -&gt;
-    <span ng:repeat="output in builtin.outputs">
-        <a ng:click="run_builtin(builtin, $index)">{{output}}</a>
-    </span>)
-</li></ul>
 </div>
 </ng-switch>
-
 
 </body>
 </html>

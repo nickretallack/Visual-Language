@@ -45,6 +45,24 @@
     };
   });
 
+  module.config(function($routeProvider) {
+    return $routeProvider.when('/:id', {
+      controller: 'subroutine',
+      template: "subroutine.html"
+    });
+  });
+
+  module.controller('subroutine', function($scope, $routeParams, subroutines, $q) {
+    return $q.when(subroutines, function(subroutines) {
+      $scope.current_object = subroutines[$routeParams.id];
+      return console.log($scope.current_object, $routeParams.id, subroutines);
+    });
+  });
+
+  module.controller('library', function($scope, subroutines, $q) {
+    return $scope.subroutines = subroutines;
+  });
+
   /*
   <ul class="inputs"><li ng-repeat="input in node.inputs">{{input.text}}</li></ul>
   <ul class="outputs"><li ng-repeat="output in node.outputs">{{output.text}}</li></ul>
@@ -1154,13 +1172,23 @@
     return JSON.stringify(obj, void 0, 2);
   };
 
-  module.controller('Controller', function($scope, $http) {
-    var data, hide_subroutines, import_data, loaded_state, save_state, saving, start_saving,
+  module.controller('Controller', function($scope, $http, $location) {
+    var hide_subroutines, import_data, save_state, saving, start_saving,
       _this = this;
     $scope.overlay = null;
     $scope.tab_click = function(tab) {
       return $scope.overlay = $scope.overlay === tab ? null : tab;
     };
+    $scope.$location = $location;
+    $scope.$watch('$location.path()', function(path) {
+      var object_id;
+      object_id = path.slice(1);
+      if (object_id in $scope.subroutines) {
+        return $scope.edit($scope.subroutines[object_id]);
+      } else {
+        return $scope.edit($scope.builtins[object_id]);
+      }
+    });
     /*
         init_field = ->
             if not should_animate
@@ -1243,7 +1271,6 @@
     $scope.log = function(expression) {
       return console.log(expression);
     };
-    $scope.current_object = null;
     $scope.import_export_text = '';
     $scope.subroutines = {};
     $scope.builtins = {};
@@ -1270,17 +1297,6 @@
         _results.push($scope.builtins[builtin.id] = builtin);
       }
       return _results;
-    };
-    $scope.load_example_programs = function() {
-      hide_subroutines();
-      return $http.get('examples.json').success(function(source_data) {
-        var playground;
-        import_data(source_data);
-        playground = new SubRoutine('playground');
-        $scope.subroutines[playground.id] = playground;
-        $scope.edit(playground);
-        return start_saving();
-      });
     };
     $scope.export_all = function() {
       var data;
@@ -1498,20 +1514,25 @@
       };
       return localStorage.state = JSON.stringify(state);
     };
-    $scope.builtins = all_builtins;
+    return $scope.builtins = all_builtins;
+  });
+
+  module.factory('subroutines', function($q, $http) {
+    var source_data;
     if (localStorage.state != null) {
-      data = JSON.parse(localStorage.state);
-      loaded_state = load_state(data);
-      $scope.builtins = loaded_state.builtins;
-      $scope.subroutines = loaded_state.subroutines;
-      current_scope = obj_first($scope.subroutines);
-      if (current_scope) {
-        $scope.edit(current_scope);
-      }
-      return start_saving();
+      source_data = localStorage.state;
     } else {
-      return $scope.load_example_programs();
+      source_data = $q.defer();
+      $http.get('examples.json').success(function(data) {
+        return source_data.resolve(data);
+      });
     }
+    return $q.when(source_data.promise, function(source_data) {
+      var data, subroutines;
+      data = load_state(source_data);
+      subroutines = $.extend(data.builtins, data.subroutines);
+      return subroutines;
+    });
   });
 
   dissociate_exception = function(procedure) {

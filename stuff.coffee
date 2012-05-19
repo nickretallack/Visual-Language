@@ -23,7 +23,16 @@ module.directive 'subroutine', ->
             left:(position.y - 250 + $scope.editor_size.x/2)+'px'
             top:(position.x - 700 + $scope.editor_size.y/2)+'px'
 
+module.config ($routeProvider) ->
+    $routeProvider.when '/:id', controller:'subroutine', template:"subroutine.html"
 
+module.controller 'subroutine', ($scope, $routeParams, subroutines, $q) ->
+    $q.when subroutines, (subroutines) ->
+        $scope.current_object = subroutines[$routeParams.id]
+        console.log $scope.current_object, $routeParams.id, subroutines
+
+module.controller 'library', ($scope, subroutines, $q) ->
+    $scope.subroutines = subroutines
 
 ###
 <ul class="inputs"><li ng-repeat="input in node.inputs">{{input.text}}</li></ul>
@@ -642,11 +651,18 @@ valid_json = (json) ->
 
 pretty_json = (obj) -> JSON.stringify obj, undefined, 2
 
-module.controller 'Controller', ($scope, $http) ->
+module.controller 'Controller', ($scope, $http, $location) ->
     $scope.overlay = null
     $scope.tab_click = (tab) ->
         $scope.overlay = if $scope.overlay is tab then null else tab
 
+    $scope.$location = $location
+    $scope.$watch '$location.path()', (path) ->
+        object_id = path[1..]
+        if object_id of $scope.subroutines
+            $scope.edit $scope.subroutines[object_id]
+        else
+            $scope.edit $scope.builtins[object_id]
 
     ###
     init_field = ->
@@ -729,7 +745,6 @@ module.controller 'Controller', ($scope, $http) ->
     start_saving = -> #setInterval save_state, 500 if not saving
     $scope.log = (expression) -> console.log expression
 
-    $scope.current_object = null
     $scope.import_export_text = ''
     $scope.subroutines = {}
     $scope.builtins = {}
@@ -745,17 +760,6 @@ module.controller 'Controller', ($scope, $http) ->
             $scope.subroutines[subroutine.id] = subroutine
         for id, builtin of data.builtins
             $scope.builtins[builtin.id] = builtin
-
-    $scope.load_example_programs = =>
-        hide_subroutines()
-        $http.get('examples.json').success (source_data) =>
-            import_data source_data
-
-            # make the playground
-            playground = new SubRoutine 'playground'
-            $scope.subroutines[playground.id] = playground
-            $scope.edit playground
-            start_saving()
 
     $scope.export_all = ->
         data =
@@ -928,17 +932,20 @@ module.controller 'Controller', ($scope, $http) ->
     $scope.builtins = all_builtins
     #system_arrow = make_arrow V(0,0), V(1,0), false
 
+
+module.factory 'subroutines', ($q, $http) ->
     if localStorage.state?
-        #dissociate_exception =>
-            data = JSON.parse localStorage.state
-            loaded_state = load_state data
-            $scope.builtins = loaded_state.builtins
-            $scope.subroutines = loaded_state.subroutines
-            current_scope = obj_first $scope.subroutines
-            $scope.edit current_scope if current_scope
-            start_saving()
+        source_data = localStorage.state
     else
-        $scope.load_example_programs()
+        source_data = $q.defer()
+        $http.get('examples.json').success (data) ->
+            source_data.resolve data
+
+    $q.when source_data.promise, (source_data) ->
+        data = load_state source_data
+        subroutines = $.extend data.builtins, data.subroutines
+        subroutines
+
 
 dissociate_exception = (procedure) ->
     try
