@@ -13,6 +13,17 @@ module.directive 'io', ->
                     <td class="output">#{pair[1]?.text or ''}</td>
                 </tr>"""
 
+module.directive 'subroutine', ->
+    link:(scope, element, attributes) ->
+    controller:($scope, $element) ->
+        $$element = $ $element
+        $scope.editor_size = V $$element.width(), $$element.height()
+        $scope.position = (node) ->
+            position = node.position.plus $scope.editor_size.scale 0.5
+            left:(position.y - 250 + $scope.editor_size.x/2)+'px'
+            top:(position.x - 700 + $scope.editor_size.y/2)+'px'
+
+
 
 ###
 <ul class="inputs"><li ng-repeat="input in node.inputs">{{input.text}}</li></ul>
@@ -632,11 +643,10 @@ valid_json = (json) ->
 pretty_json = (obj) -> JSON.stringify obj, undefined, 2
 
 module.controller 'Controller', ($scope, $http) ->
-    $scope.editor_size = editor_size
-    $scope.position = (node) ->
-        position = node.position.plus $scope.editor_size.scale 0.5
-        left:position.y+'px'
-        top:(position.x - 700 + editor_size.y/2)+'px'
+    $scope.overlay = null
+    $scope.tab_click = (tab) ->
+        $scope.overlay = if $scope.overlay is tab then null else tab
+
 
     ###
     init_field = ->

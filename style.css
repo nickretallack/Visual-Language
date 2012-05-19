@@ -5,8 +5,11 @@ textarea {display:block}
 
 #inputs_editor, #outputs_editor {display:inline-block; width:300px}
 
-#subroutine {position:relative;}
+#nav {position:absolute; top:0; left:0; right:0; height:30px;}
+#subroutine {position:absolute; top:30px; left:0; right:0; bottom:0;}
+
 .node {position:absolute; white-space:nowrap;}
 .node h1 {text-align:center;}
 .output {text-align:right;}
 .inputs-outputs {width:100%;}
+.subroutine-input {position:absolute; left:0;}

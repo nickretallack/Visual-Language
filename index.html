@@ -14,34 +14,25 @@
 </head>
 
 <body ng:controller="Controller">
+<nav id="top-bar">
+    <a>New</a>
+    <a ng-click="tab_click('library')">Library</a>
+    <a>Tests</a>
+    <a>Publish</a>
+</nav>
 
-<ng:switch on="current_object.type">
+<ng-switch on="current_object.type">
 
-<div ng:switch-when="subroutine">
+<div ng:switch-when="subroutine" id="subroutine" subroutine="current_object">
 <h2><input ng:model="current_object.name"></h2>
+<div class="subroutine-input" ng-repeat="input in current_object.inputs" ng-style="{'top':(($index+1) * editor_size.y / (current_object.inputs.length+1)) + 'px'}">
+    <input ng-model="input.text">
+</div>
 
-<div id="subroutine" ng-style="{'width':editor_size.x+'px', 'height':editor_size.y+'px'}">
 <div class="node" ng-repeat="node in current_object.nodes" ng-style="position(node)">
-<h1>{{node.text}}</h1>
-<table class="inputs-outputs" io="node"></table>
-
+    <h1>{{node.text}}</h1>
+    <table class="inputs-outputs" io="node"></table>
 </div>
-</div>
-
-<div id="inputs_editor">
-<h3>Inputs</h3>
-<ul><li ng:repeat="input in current_object.inputs">
-    <input ng:model="input.text">
-</li></ul>
-</div>
-
-<div id="outputs_editor">
-<h3>Outputs</h3>
-<ul><li ng:repeat="output in current_object.outputs">
-    <input ng:model="output.text">
-</li></ul>
-</div>
-
 </div>
 
 <div ng:switch-when="literal">
@@ -58,11 +49,13 @@ Output Implementation:
 <textarea rows="10" cols="50" ng:model="current_object.output_implementation"></textarea>
 </div>
 
-</ng:switch>
+</ng-switch>
 
 </div>
 
-<div id="tools">
+<ng-switch on="overlay">
+
+<div id="tools" ng-switch-when="library">
 <h2>Import/Export</h2>
 <textarea ng:model="import_export_text"></textarea>
 <p>
@@ -85,11 +78,6 @@ Output Implementation:
         <a ng:click="run_subroutine(subroutine, output.index)">{{output.text}}</a>
     </span>)
 </li></ul>
-<form ng:submit="add_subroutine()">
-<p>Name:<input ng:model="new_subroutine.name"></p>
-<p>Inputs:<input type="list" ng:model="new_subroutine.inputs"></p>
-<p>Outputs:<input type="list" ng:model="new_subroutine.outputs"></p>
-<button>Create Function</button> </form>
 
 <h2>Literals (JSON)</h2>
 <form ng:submit="use_literal()"> <input ng:model="literal_text"> <button>Use Literal</button> </form>
@@ -108,6 +96,9 @@ Output Implementation:
         <a ng:click="run_builtin(builtin, $index)">{{output}}</a>
     </span>)
 </li></ul>
+</div>
+</ng-switch>
+
 
 </body>
 </html>

@@ -26,6 +26,25 @@
     };
   });
 
+  module.directive('subroutine', function() {
+    return {
+      link: function(scope, element, attributes) {},
+      controller: function($scope, $element) {
+        var $$element;
+        $$element = $($element);
+        $scope.editor_size = V($$element.width(), $$element.height());
+        return $scope.position = function(node) {
+          var position;
+          position = node.position.plus($scope.editor_size.scale(0.5));
+          return {
+            left: (position.y - 250 + $scope.editor_size.x / 2) + 'px',
+            top: (position.x - 700 + $scope.editor_size.y / 2) + 'px'
+          };
+        };
+      }
+    };
+  });
+
   /*
   <ul class="inputs"><li ng-repeat="input in node.inputs">{{input.text}}</li></ul>
   <ul class="outputs"><li ng-repeat="output in node.outputs">{{output.text}}</li></ul>
@@ -1138,14 +1157,9 @@
   module.controller('Controller', function($scope, $http) {
     var data, hide_subroutines, import_data, loaded_state, save_state, saving, start_saving,
       _this = this;
-    $scope.editor_size = editor_size;
-    $scope.position = function(node) {
-      var position;
-      position = node.position.plus($scope.editor_size.scale(0.5));
-      return {
-        left: position.y + 'px',
-        top: (position.x - 700 + editor_size.y / 2) + 'px'
-      };
+    $scope.overlay = null;
+    $scope.tab_click = function(tab) {
+      return $scope.overlay = $scope.overlay === tab ? null : tab;
     };
     /*
         init_field = ->
