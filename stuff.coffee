@@ -558,7 +558,6 @@ dissociate_exception = (procedure) ->
     catch exception
         setTimeout -> throw exception # don't break this execution thread because of a loading exception
     
-
 execute = (routine) ->
     try
         alert JSON.stringify routine()
@@ -573,65 +572,3 @@ ignore_if_disconnected = (procedure) ->
    catch exception
       throw exception unless exception instanceof NotConnected
 
-load_state = (data) ->
-    subroutines = {}
-    builtins = {}
-
-    # load builtins
-    for id, builtin_data of data.builtins
-        builtin = new Builtin builtin_data
-        builtins[builtin.id] = builtin
-
-    # load subroutine declarations
-    for id, subroutine_data of data.subroutines
-        subroutine = new SubRoutine subroutine_data.name, subroutine_data.inputs, subroutine_data.outputs, subroutine_data.id
-        subroutines[subroutine.id] = subroutine
-
-    # load subroutine implementations
-    for id, subroutine of subroutines
-        current_scope = subroutine
-        load_implementation data.subroutines[id]
-
-    subroutines:subroutines
-    builtins:builtins
-    
-make_main = ->
-    new SubRoutine 'default', [], ['OUT']
-
-load_implementation = (data) ->
-    for node in data.nodes
-        position = V node.position
-        if node.type is 'function'
-            subroutine = all_subroutines[node.implementation_id]
-            if subroutine
-                new SubroutineApplication position, subroutine, node.id
-            else
-                new UnknownNode position, node.type, node.text, node.id
-        else if node.type is 'builtin'
-            builtin = all_builtins[node.implementation_id]
-            if builtin
-                new BuiltinApplication position, builtin, node.id
-            else
-                new UnknownNode position, node.type, node.text, node.id
-        else if node.type is 'literal'
-            if 'implementation_id' of node
-                subroutine = all_subroutines[node.implementation_id]
-                value = subroutine
-            else
-                value = node.text
-            new Literal position, value, node.id
-
-    for connection in data.connections
-        source = node_registry[connection.output.parent_id]
-        sink = node_registry[connection.input.parent_id]
-
-        # input/output reversal.  TODO: clean up subroutine implementation to avoid this
-        source_connector = if source instanceof Node then source.outputs else source.inputs
-        sink_connector = if sink instanceof Node then sink.inputs else sink.outputs
-
-        if connection.output.index >= source_connector.length or connection.input.index >= sink_connector.length
-            console.log "Oh no, trying to make an invalid connection"
-        else
-            source_connector[connection.output.index].connect sink_connector[connection.input.index]
-
-playground_id = UUID()
