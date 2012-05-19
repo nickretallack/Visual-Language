@@ -8,6 +8,5 @@ textarea {display:block}
 #subroutine {position:relative;}
 .node {position:absolute; white-space:nowrap;}
 .node h1 {text-align:center;}
-.inputs, .outputs {display:inline-block; vertical-align:top;}
-.inputs {text-align:left;}
-.outputs {text-align:right;}
+.output {text-align:right;}
+.inputs-outputs {width:100%;}

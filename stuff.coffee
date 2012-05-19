@@ -2,7 +2,23 @@ editor_size = V 700,800
 V(1,1).plus(V(2,2))
 
 module = angular.module 'vislang', []
+
+module.directive 'io', ->
+    (scope, element, attributes) ->
+        scope.$watch attributes.io, (node) ->
+            element.html ''
+            for pair in _.zip(node.inputs, node.outputs)
+                element.append $ """<tr>
+                    <td class="input">#{pair[0]?.text or ''}</td>
+                    <td class="output">#{pair[1]?.text or ''}</td>
+                </tr>"""
+
+
 ###
+<ul class="inputs"><li ng-repeat="input in node.inputs">{{input.text}}</li></ul>
+<ul class="outputs"><li ng-repeat="output in node.outputs">{{output.text}}</li></ul>
+
+
 module.directive 'subroutine', ->
     (scope, element, attributes) ->
         graphics = Raphael element[0], editor_size.components()...
@@ -10,6 +26,7 @@ module.directive 'subroutine', ->
             graphics.clear()
             for id, node of subroutine.nodes
                 new NodeView graphics, node
+###
 
 blab = -> console.log arguments
 
@@ -36,7 +53,6 @@ class NodeView
         @set.push @shape
 
         @shape.drag blab, blab, blab
-###
 
     
 last = (list) -> list[list.length-1]

@@ -23,9 +23,7 @@
 <div id="subroutine" ng-style="{'width':editor_size.x+'px', 'height':editor_size.y+'px'}">
 <div class="node" ng-repeat="node in current_object.nodes" ng-style="position(node)">
 <h1>{{node.text}}</h1>
-
-<ul class="inputs"><li ng-repeat="input in node.inputs">{{input.text}}</li></ul>
-<ul class="outputs"><li ng-repeat="output in node.outputs">{{output.text}}</li></ul>
+<table class="inputs-outputs" io="node"></table>
 
 </div>
 </div>
