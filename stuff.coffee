@@ -58,38 +58,6 @@ delay = (time, procedure) -> setTimeout procedure, time
 
 module.directive 'connections', ->
     link:(scope, element, attributes) ->
-        subroutine = null
-        header_height = 30
-        nib_center = V 5,5
-        canvas_offset = V(0,header_height).minus nib_center
-        
-        draw = -> async ->
-            if subroutine
-                line_height = 16
-                c = element[0].getContext '2d'
-                for id, connection of subroutine.connections
-                    #console.log connection, connection.input, connection.input.view
-                    input_element = connection.input.view
-                    output_element = connection.output.view
-
-                    if input_element and output_element
-                        input_position = V(input_element.offset()).subtract canvas_offset
-                        output_position = V(output_element.offset()).subtract canvas_offset
-                        c.beginPath()
-                        c.moveTo input_position.components()...
-                        c.lineTo output_position.components()...
-                        c.stroke()
-
-        resize_canvas = ->
-            element[0].width = $(element).width()
-            element[0].height = $(element).height()
-            draw()
-        $(window).on 'resize', resize_canvas
-        resize_canvas()
-
-        scope.$watch attributes.connections, (the_subroutine) ->
-            subroutine = the_subroutine
-            draw()
 
 transform_position = (position, editor_size) ->
     x:position.y + editor_size.x/2
@@ -126,7 +94,7 @@ module.directive 'subroutine', ->
                 console.log row.find('.input').css 'left'
         ###
 
-    controller:($scope, $element) ->
+    controller:($scope, $element, $attrs) ->
         $$element = $ $element
         $scope.editor_size = V $$element.width(), $$element.height()
         $scope.position = (node) ->
@@ -153,8 +121,42 @@ module.directive 'subroutine', ->
             $scope.mouse_position = new_mouse_position
             for node in $scope.selection
                 node.position = node.position.plus V -mouse_delta.y, -mouse_delta.x
+            draw()
         $element.bind 'mouseup', (event) -> $scope.$apply ->
             $scope.selection = []
+
+        subroutine = null
+        header_height = 30
+        nib_center = V 5,5
+        canvas_offset = V(0,header_height).minus nib_center
+        
+        canvas = $element.find('canvas')[0]
+        subroutine = $scope.$eval $attrs.subroutine
+        draw = -> async ->
+            if subroutine
+                line_height = 16
+                c = canvas.getContext '2d'
+                c.clearRect 0,0, $scope.editor_size.components()...
+                for id, connection of subroutine.connections
+                    #console.log connection, connection.input, connection.input.view
+                    input_element = connection.input.view
+                    output_element = connection.output.view
+
+                    if input_element and output_element
+                        input_position = V(input_element.offset()).subtract canvas_offset
+                        output_position = V(output_element.offset()).subtract canvas_offset
+                        c.beginPath()
+                        c.moveTo input_position.components()...
+                        c.lineTo output_position.components()...
+                        c.stroke()
+
+        resize_canvas = ->
+            canvas.width = $(canvas).width()
+            canvas.height = $(canvas).height()
+            draw()
+        $(window).on 'resize', resize_canvas
+        resize_canvas()
+
 
 module.config ($routeProvider) ->
     $routeProvider.when '/:id', controller:'subroutine', template:"subroutine.html"
