@@ -86,7 +86,9 @@ module.directive 'subroutine', ->
 
         $scope.release_nib = (nib) ->
             if $scope.drawing
-                console.log "Connecting", nib, $scope.drawing
+                [from, to] = [nib, $scope.drawing]
+                if from isnt to and not ((from instanceof Input and to instanceof Input) or (from instanceof Output and to instanceof Output))
+                    from.connect to
 
         $scope.draw_connections = -> draw()
 

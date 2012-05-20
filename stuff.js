@@ -130,8 +130,12 @@ module.directive('subroutine', function() {
         return $scope.drawing = nib;
       };
       $scope.release_nib = function(nib) {
+        var from, to, _ref;
         if ($scope.drawing) {
-          return console.log("Connecting", nib, $scope.drawing);
+          _ref = [nib, $scope.drawing], from = _ref[0], to = _ref[1];
+          if (from !== to && !((from instanceof Input && to instanceof Input) || (from instanceof Output && to instanceof Output))) {
+            return from.connect(to);
+          }
         }
       };
       $scope.draw_connections = function() {

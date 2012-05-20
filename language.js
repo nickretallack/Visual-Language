@@ -678,6 +678,14 @@ Nib = (function() {
     return _results;
   };
 
+  Nib.prototype.get_scope = function() {
+    if (this.parent instanceof SubRoutine) {
+      return this.parent;
+    } else {
+      return this.parent.scope;
+    }
+  };
+
   return Nib;
 
 })();
@@ -723,7 +731,7 @@ Input = (function(_super) {
   };
 
   Input.prototype.connect = function(output) {
-    return new Connection(this, output);
+    return new Connection(this.get_scope(), this, output);
   };
 
   return Input;
@@ -752,7 +760,7 @@ Output = (function(_super) {
   };
 
   Output.prototype.connect = function(input) {
-    return new Connection(input, this);
+    return new Connection(this.get_scope(), input, this);
   };
 
   return Output;
@@ -763,11 +771,11 @@ Connection = (function() {
 
   Connection.name = 'Connection';
 
-  function Connection(input, output, id) {
+  function Connection(scope, input, output, id) {
+    this.scope = scope;
     this.input = input;
     this.output = output;
     this.id = id != null ? id : UUID();
-    this.scope = current_scope;
     this.scope.connections[this.id] = this;
   }
 

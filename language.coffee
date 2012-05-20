@@ -324,6 +324,12 @@ class Nib  # Abstract. Do not instantiate
         for id, connection of @connections
             connection.connection.delete()
 
+    get_scope: ->
+        if this.parent instanceof SubRoutine
+            this.parent
+        else
+            this.parent.scope
+
 # TODO: change nib 'node' to parent since it might not be a node
 class Input extends Nib
     constructor:(@parent, @text, @index=0, @siblings=0) ->
@@ -345,7 +351,7 @@ class Input extends Nib
         @get_connection()?.connection.output.parent
 
     connect:(output) ->
-        new Connection @, output
+        new Connection @get_scope(), @, output
         
 class Output extends Nib
     constructor:(@parent, @text, @index=0, @siblings=0) ->
@@ -357,14 +363,14 @@ class Output extends Nib
             vertex:vertex
 
     connect:(input) ->
-        new Connection input, @
+        new Connection @get_scope(), input, @
 
 class Connection
-    constructor:(@input, @output, @id=UUID()) ->
+    constructor:(@scope, @input, @output, @id=UUID()) ->
         #[@view, input_vertex, output_vertex] = connection_view @
         #@input._add_connection @, input_vertex
         #@output._add_connection @, output_vertex
-        @scope = current_scope
+        #@scope = current_scope
         @scope.connections[@id] = @
 
     toJSON: ->
