@@ -9,6 +9,18 @@ module.directive 'linkNib', ->
         nib.view = $ element
         #console.log nib, element
 
+module.directive 'shrinkyInput', ->
+    (scope, element, attributes) ->
+        doppelganger = $ """<span class="offscreen"></span>"""
+        $(document.body).append doppelganger
+        scope.$watch attributes.shrinkyInput, (text) ->
+            doppelganger.text text
+            console.log text, doppelganger.width()
+            async ->
+                $(element).css  width:doppelganger.width()
+                scope.draw_connections()
+
+
 ###
 module.directive 'node', ->
     template:"""
@@ -124,6 +136,8 @@ module.directive 'subroutine', ->
             draw()
         $element.bind 'mouseup', (event) -> $scope.$apply ->
             $scope.selection = []
+
+        $scope.draw_connections = -> draw()
 
         subroutine = null
         header_height = 30

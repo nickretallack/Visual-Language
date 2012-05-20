@@ -16,6 +16,24 @@ module.directive('linkNib', function() {
   };
 });
 
+module.directive('shrinkyInput', function() {
+  return function(scope, element, attributes) {
+    var doppelganger;
+    doppelganger = $("<span class=\"offscreen\"></span>");
+    $(document.body).append(doppelganger);
+    return scope.$watch(attributes.shrinkyInput, function(text) {
+      doppelganger.text(text);
+      console.log(text, doppelganger.width());
+      return async(function() {
+        $(element).css({
+          width: doppelganger.width()
+        });
+        return scope.draw_connections();
+      });
+    });
+  };
+});
+
 /*
 module.directive 'node', ->
     template:"""
@@ -168,6 +186,9 @@ module.directive('subroutine', function() {
           return $scope.selection = [];
         });
       });
+      $scope.draw_connections = function() {
+        return draw();
+      };
       subroutine = null;
       header_height = 30;
       nib_center = V(5, 5);
