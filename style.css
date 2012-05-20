@@ -1,4 +1,4 @@
-#tools {position:absolute; left:600px; top:0}
+#tools {position:absolute; left:600px; top:0; bottom:0; background:white; overflow:auto;}
 h2 {margin-top:10px; font-weight:bold; font-family:helvetica}
 textarea {display:block}
 .name {font-weight:bold}

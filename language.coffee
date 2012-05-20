@@ -52,11 +52,45 @@ class Builtin
         builtins: builtins
         schema_version:schema_version
 
+    run: ->
+        execute =>
+            input_values = []
+            for input, input_index in @inputs
+                do (input_index, input) ->
+                    input_values.push ->
+                        valid_json prompt "Provide a JSON value for input #{input_index}: \"#{input}\""
+
+            the_scope = memos:{}
+
+            try
+                memo_function = eval_expression @memo_implementation
+                output_function = eval_expression @output_implementation
+            catch exception
+                if exception instanceof SyntaxError
+                    throw new BuiltinSyntaxError @text, exception
+                else throw exception
+
+            throw new NotImplemented @text unless output_function
+
+            args = input_values.concat [output_index]
+            memo = memo_function args... if memo_function
+            return output_function (args.concat [memo])...
+
+
 ###
 class SubroutineView
     constructor:(@subroutine, @graphics) ->
         for node in @subroutine.nodes
 ###
+
+execute = (routine) ->
+    try
+        alert JSON.stringify routine()
+    catch exception
+        if exception instanceof RuntimeException
+            alert "Error: #{exception.message}"
+        else throw exception
+
 
 class SubRoutine
     constructor:(@name='', inputs=[], outputs=[], @id=UUID()) ->
@@ -97,11 +131,32 @@ class SubRoutine
         else if output.parent instanceof Node
             return output.parent.evaluation the_scope, output.index
 
+    run: (output_index) ->
+        input_values = []
+        for input, input_index in @inputs
+            do (input_index, input) ->
+                value = _.memoize ->
+                    result = prompt "Provide a JSON value for input #{input_index}: \"#{input.text}\""
+                    throw new Exit "cancelled execution" if result is null
+                    try
+                        return JSON.parse result
+                    catch exception
+                        if exception instanceof SyntaxError
+                            throw new InputError result
+                        else
+                            throw exception
+                input_values.push value
+        try
+            setTimeout => execute => @invoke output_index, input_values
+        catch exception
+            if exception instanceof InputError
+                alert "Invalid JSON: #{exception.message}"
+            else
+                throw exception
+
+
     get_inputs: -> (input.text for input in @inputs)
     get_outputs: -> (output.text for output in @outputs)
-
-    run: (output_index, input_values) ->
-        execute => @invoke(output_index, input_values)
 
     export: ->
         dependencies = @get_dependencies()

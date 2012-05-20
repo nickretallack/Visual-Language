@@ -9,6 +9,17 @@ module.directive 'linkNib', ->
         nib.view = $ element
         #console.log nib, element
 
+module.directive 'nib', ->
+    template:"""<div class="nib" ng-mousedown="click_nib(input, $event)" ng-mouseup="release_nib(input)"></div>"""
+    replace:true
+    #transclude:true
+    scope:
+        nib:'bind'
+    link:(scope, element, attributes) ->
+        nib = scope.$eval attributes.linkNib
+        nib.view = $ element
+
+
 module.directive 'shrinkyInput', ->
     (scope, element, attributes) ->
         doppelganger = $ """<span class="offscreen"></span>"""
@@ -90,16 +101,19 @@ module.directive 'subroutine', ->
                 if from isnt to and not ((from instanceof Input and to instanceof Input) or (from instanceof Output and to instanceof Output))
                     from.connect to
 
+        $scope.evaluate_output = (output) ->
+            subroutine.run output
+
+
         $scope.draw_connections = -> draw()
 
-        subroutine = null
+        subroutine = $scope.$eval $attrs.subroutine
         header_height = 30
         nib_center = V 5,5
         canvas_offset = V(0,header_height)
         nib_offset = canvas_offset.minus nib_center
         
         canvas = $element.find('canvas')[0]
-        subroutine = $scope.$eval $attrs.subroutine
         draw = -> async ->
             if subroutine
                 line_height = 16
@@ -487,58 +501,7 @@ module.controller 'Controller', ($scope, $http, $location) ->
         $scope.edit builtin
 
     $scope.run_subroutine = (subroutine, output_index) ->
-        if subroutine instanceof SubRoutine
-            run_subroutine subroutine, output_index
-        else
-            run_native_routine subroutine, output_index
-
-    run_subroutine = (subroutine, output_index) ->
-        input_values = []
-        for input, input_index in subroutine.inputs
-            do (input_index, input) ->
-                value = _.memoize ->
-                    result = prompt "Provide a JSON value for input #{input_index}: \"#{input.text}\""
-                    throw new Exit "cancelled execution" if result is null
-                    try
-                        return JSON.parse result
-                    catch exception
-                        if exception instanceof SyntaxError
-                            throw new InputError result
-                        else
-                            throw exception
-                input_values.push value
-        try
-            setTimeout subroutine.run output_index, input_values
-        catch exception
-            if exception instanceof InputError
-                alert "Invalid JSON: #{exception.message}"
-            else
-                throw exception
-
-    run_native_routine = (builtin, output_index) ->
-        execute =>
-            input_values = []
-            for input, input_index in builtin.inputs
-                do (input_index, input) ->
-                    input_values.push ->
-                        valid_json prompt "Provide a JSON value for input #{input_index}: \"#{input}\""
-
-            the_scope = memos:{}
-
-            # lifted from evaluation.  TODO: add to builtin class
-            try
-                memo_function = eval_expression builtin.memo_implementation
-                output_function = eval_expression builtin.output_implementation
-            catch exception
-                if exception instanceof SyntaxError
-                    throw new BuiltinSyntaxError builtin.text, exception
-                else throw exception
-
-            throw new NotImplemented builtin.text unless output_function
-
-            args = input_values.concat [output_index]
-            memo = memo_function args... if memo_function
-            return output_function (args.concat [memo])...
+        subroutine.run output_index
 
     save_state = =>
         state =
@@ -571,13 +534,6 @@ dissociate_exception = (procedure) ->
     catch exception
         setTimeout -> throw exception # don't break this execution thread because of a loading exception
     
-execute = (routine) ->
-    try
-        alert JSON.stringify routine()
-    catch exception
-        if exception instanceof RuntimeException
-            alert "Error: #{exception.message}"
-        else throw exception
 
 ignore_if_disconnected = (procedure) ->
    try
