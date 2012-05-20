@@ -74,7 +74,7 @@ module.directive('connections', function() {
       nib_center = V(5, 5);
       canvas_offset = V(0, header_height).minus(nib_center);
       draw = function() {
-        return delay(500, function() {
+        return async(function() {
           var c, connection, id, input_element, input_position, line_height, output_element, output_position, _ref, _results;
           if (subroutine) {
             line_height = 16;

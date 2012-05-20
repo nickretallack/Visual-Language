@@ -63,7 +63,7 @@ module.directive 'connections', ->
         nib_center = V 5,5
         canvas_offset = V(0,header_height).minus nib_center
         
-        draw = -> delay 500, ->
+        draw = -> async ->
             if subroutine
                 line_height = 16
                 c = element[0].getContext '2d'

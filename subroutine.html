@@ -5,11 +5,11 @@
 <h2><input ng:model="current_object.name"></h2>
 
 <div class="subroutine-input" ng-repeat="input in current_object.inputs" ng-style="{'top':(($index+1) * editor_size.y / (current_object.inputs.length+1)) + 'px'}">
-    <input ng-model="input.text">
+    <div class="nib" link-nib="input"></div> <input ng-model="input.text">
 </div>
 
 <div class="subroutine-output" ng-repeat="output in current_object.outputs" ng-style="{'top':(($index+1) * editor_size.y / (current_object.outputs.length+1)) + 'px'}">
-    <input ng-model="output.text">
+    <input ng-model="output.text"> <div class="nib" link-nib="output"></div>
 </div>
 
 
