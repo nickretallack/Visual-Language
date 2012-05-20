@@ -3,9 +3,15 @@
 <div ng:switch-when="subroutine" id="subroutine" subroutine="current_object">
 <canvas id="connections" connections="current_object"></canvas>
 <h2><input ng:model="current_object.name"></h2>
+
 <div class="subroutine-input" ng-repeat="input in current_object.inputs" ng-style="{'top':(($index+1) * editor_size.y / (current_object.inputs.length+1)) + 'px'}">
     <input ng-model="input.text">
 </div>
+
+<div class="subroutine-output" ng-repeat="output in current_object.outputs" ng-style="{'top':(($index+1) * editor_size.y / (current_object.outputs.length+1)) + 'px'}">
+    <input ng-model="output.text">
+</div>
+
 
 <div class="node" ng-repeat="node in current_object.nodes" ng-style="position(node)">
     <h1>{{node.text}}</h1>

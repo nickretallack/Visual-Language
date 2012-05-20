@@ -39,7 +39,7 @@ module.directive 'connections', ->
             draw()
         $(window).on 'resize', resize_canvas
         resize_canvas()
-                
+
         scope.$watch attributes.connections, (the_subroutine) ->
             subroutine = the_subroutine
             draw()
