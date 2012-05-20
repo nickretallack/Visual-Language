@@ -75,7 +75,7 @@ module.directive('subroutine', function() {
   return {
     link: function(scope, element, attributes) {},
     controller: function($scope, $element, $attrs) {
-      var $$element, canvas, canvas_offset, draw, header_height, nib_center, resize_canvas, subroutine;
+      var $$element, canvas, canvas_offset, draw, header_height, nib_center, nib_offset, resize_canvas, subroutine;
       $$element = $($element);
       $scope.position = function(node) {
         var position;
@@ -117,8 +117,15 @@ module.directive('subroutine', function() {
         });
       });
       $scope.dragging = [];
-      $scope.click_node = function(node) {
+      $scope.click_node = function(node, $event) {
+        $event.preventDefault();
         return $scope.dragging = [node];
+      };
+      $scope.drawing = null;
+      $scope.click_nib = function(nib, $event) {
+        $event.preventDefault();
+        $event.stopPropagation();
+        return $scope.drawing = nib;
       };
       $scope.draw_connections = function() {
         return draw();
@@ -126,34 +133,39 @@ module.directive('subroutine', function() {
       subroutine = null;
       header_height = 30;
       nib_center = V(5, 5);
-      canvas_offset = V(0, header_height).minus(nib_center);
+      canvas_offset = V(0, header_height);
+      nib_offset = canvas_offset.minus(nib_center);
       canvas = $element.find('canvas')[0];
       subroutine = $scope.$eval($attrs.subroutine);
       draw = function() {
         return async(function() {
-          var c, connection, id, input_element, input_position, line_height, output_element, output_position, _ref, _results;
+          var c, connection, end_position, id, input_element, input_position, line_height, nib_position, output_element, output_position, _ref;
           if (subroutine) {
             line_height = 16;
             c = canvas.getContext('2d');
             c.clearRect.apply(c, [0, 0].concat(__slice.call($scope.editor_size.components())));
             _ref = subroutine.connections;
-            _results = [];
             for (id in _ref) {
               connection = _ref[id];
               input_element = connection.input.view;
               output_element = connection.output.view;
               if (input_element && output_element) {
-                input_position = V(input_element.offset()).subtract(canvas_offset);
-                output_position = V(output_element.offset()).subtract(canvas_offset);
+                input_position = V(input_element.offset()).subtract(nib_offset);
+                output_position = V(output_element.offset()).subtract(nib_offset);
                 c.beginPath();
                 c.moveTo.apply(c, input_position.components());
                 c.lineTo.apply(c, output_position.components());
-                _results.push(c.stroke());
-              } else {
-                _results.push(void 0);
+                c.stroke();
               }
             }
-            return _results;
+            if ($scope.drawing) {
+              nib_position = V($scope.drawing.view.offset()).subtract(nib_offset);
+              end_position = $scope.mouse_position.subtract(canvas_offset);
+              c.beginPath();
+              c.moveTo.apply(c, nib_position.components());
+              c.lineTo.apply(c, end_position.components());
+              return c.stroke();
+            }
           }
         });
       };

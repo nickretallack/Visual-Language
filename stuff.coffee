@@ -66,20 +66,29 @@ module.directive 'subroutine', ->
             $scope.mouse_position = new_mouse_position
             for node in $scope.dragging
                 node.position = node.position.plus V -mouse_delta.y, -mouse_delta.x
+
             draw()
         $element.bind 'mouseup', (event) -> $scope.$apply ->
             $scope.dragging = []
 
         $scope.dragging = []
-        $scope.click_node = (node) ->
+        $scope.click_node = (node, $event) ->
+            $event.preventDefault()
             $scope.dragging = [node]
+
+        $scope.drawing = null
+        $scope.click_nib = (nib, $event) ->
+            $event.preventDefault()
+            $event.stopPropagation()
+            $scope.drawing = nib
 
         $scope.draw_connections = -> draw()
 
         subroutine = null
         header_height = 30
         nib_center = V 5,5
-        canvas_offset = V(0,header_height).minus nib_center
+        canvas_offset = V(0,header_height)
+        nib_offset = canvas_offset.minus nib_center
         
         canvas = $element.find('canvas')[0]
         subroutine = $scope.$eval $attrs.subroutine
@@ -94,12 +103,22 @@ module.directive 'subroutine', ->
                     output_element = connection.output.view
 
                     if input_element and output_element
-                        input_position = V(input_element.offset()).subtract canvas_offset
-                        output_position = V(output_element.offset()).subtract canvas_offset
+                        input_position = V(input_element.offset()).subtract nib_offset
+                        output_position = V(output_element.offset()).subtract nib_offset
                         c.beginPath()
                         c.moveTo input_position.components()...
                         c.lineTo output_position.components()...
                         c.stroke()
+
+                if $scope.drawing
+                    nib_position = V($scope.drawing.view.offset()).subtract nib_offset
+                    end_position = $scope.mouse_position.subtract canvas_offset
+                    c.beginPath()
+                    c.moveTo nib_position.components()...
+                    c.lineTo end_position.components()...
+                    c.stroke()
+
+
 
         resize_canvas = -> 
             $scope.editor_size = V $$element.width(), $$element.height()
