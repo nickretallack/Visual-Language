@@ -42,10 +42,6 @@ transform_position = (position, editor_size) ->
 module.directive 'node', ->
     link:(scope, element, attributes) ->
         node = scope.$eval attributes.node
-        $(element).on 'mousedown', (event) -> scope.$apply ->
-            event.preventDefault()
-            console.log "CLICK"
-            scope.set_selection node
 
 
 module.directive 'subroutine', ->
@@ -63,22 +59,20 @@ module.directive 'subroutine', ->
                 pairs.push input:node.inputs[index], output:node.outputs[index]
             pairs
 
-        $scope.selection = []
-        $scope.set_selection = (node) ->
-            console.log "selection is set"
-            $scope.selection = [node]
-
         $scope.mouse_position = V 0,0
         $element.bind 'mousemove', (event) -> $scope.$apply ->
-            console.log "moving"
             new_mouse_position = V event.clientX, event.clientY
             mouse_delta = $scope.mouse_position.minus new_mouse_position
             $scope.mouse_position = new_mouse_position
-            for node in $scope.selection
+            for node in $scope.dragging
                 node.position = node.position.plus V -mouse_delta.y, -mouse_delta.x
             draw()
         $element.bind 'mouseup', (event) -> $scope.$apply ->
-            $scope.selection = []
+            $scope.dragging = []
+
+        $scope.dragging = []
+        $scope.click_node = (node) ->
+            $scope.dragging = [node]
 
         $scope.draw_connections = -> draw()
 

@@ -66,14 +66,7 @@ module.directive('node', function() {
   return {
     link: function(scope, element, attributes) {
       var node;
-      node = scope.$eval(attributes.node);
-      return $(element).on('mousedown', function(event) {
-        return scope.$apply(function() {
-          event.preventDefault();
-          console.log("CLICK");
-          return scope.set_selection(node);
-        });
-      });
+      return node = scope.$eval(attributes.node);
     }
   };
 });
@@ -103,20 +96,14 @@ module.directive('subroutine', function() {
         }
         return pairs;
       };
-      $scope.selection = [];
-      $scope.set_selection = function(node) {
-        console.log("selection is set");
-        return $scope.selection = [node];
-      };
       $scope.mouse_position = V(0, 0);
       $element.bind('mousemove', function(event) {
         return $scope.$apply(function() {
           var mouse_delta, new_mouse_position, node, _i, _len, _ref;
-          console.log("moving");
           new_mouse_position = V(event.clientX, event.clientY);
           mouse_delta = $scope.mouse_position.minus(new_mouse_position);
           $scope.mouse_position = new_mouse_position;
-          _ref = $scope.selection;
+          _ref = $scope.dragging;
           for (_i = 0, _len = _ref.length; _i < _len; _i++) {
             node = _ref[_i];
             node.position = node.position.plus(V(-mouse_delta.y, -mouse_delta.x));
@@ -126,9 +113,13 @@ module.directive('subroutine', function() {
       });
       $element.bind('mouseup', function(event) {
         return $scope.$apply(function() {
-          return $scope.selection = [];
+          return $scope.dragging = [];
         });
       });
+      $scope.dragging = [];
+      $scope.click_node = function(node) {
+        return $scope.dragging = [node];
+      };
       $scope.draw_connections = function() {
         return draw();
       };
