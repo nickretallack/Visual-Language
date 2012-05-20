@@ -335,13 +335,12 @@ class Input extends Nib
     constructor:(@parent, @text, @index=0, @siblings=0) ->
         super()
 
-    _add_connection: (connection, vertex) ->
+    _add_connection: (connection) ->
         # delete previous connection
         @get_connection()?.connection.delete()
         @connections = {}
         @connections[connection.id] =
             connection:connection
-            vertex:vertex
 
     get_connection: ->
         for id, connection of @connections
@@ -368,8 +367,8 @@ class Output extends Nib
 class Connection
     constructor:(@scope, @input, @output, @id=UUID()) ->
         #[@view, input_vertex, output_vertex] = connection_view @
-        #@input._add_connection @, input_vertex
-        #@output._add_connection @, output_vertex
+        @input._add_connection @
+        @output._add_connection @
         #@scope = current_scope
         @scope.connections[@id] = @
 

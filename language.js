@@ -704,15 +704,14 @@ Input = (function(_super) {
     Input.__super__.constructor.call(this);
   }
 
-  Input.prototype._add_connection = function(connection, vertex) {
+  Input.prototype._add_connection = function(connection) {
     var _ref;
     if ((_ref = this.get_connection()) != null) {
       _ref.connection["delete"]();
     }
     this.connections = {};
     return this.connections[connection.id] = {
-      connection: connection,
-      vertex: vertex
+      connection: connection
     };
   };
 
@@ -776,6 +775,8 @@ Connection = (function() {
     this.input = input;
     this.output = output;
     this.id = id != null ? id : UUID();
+    this.input._add_connection(this);
+    this.output._add_connection(this);
     this.scope.connections[this.id] = this;
   }
 
