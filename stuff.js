@@ -149,7 +149,6 @@ module.directive('subroutine', function() {
     controller: function($scope, $element, $attrs) {
       var $$element, canvas, canvas_offset, draw, header_height, nib_center, resize_canvas, subroutine;
       $$element = $($element);
-      $scope.editor_size = V($$element.width(), $$element.height());
       $scope.position = function(node) {
         var position;
         position = transform_position(node.position, $scope.editor_size);
@@ -233,11 +232,14 @@ module.directive('subroutine', function() {
         });
       };
       resize_canvas = function() {
-        canvas.width = $(canvas).width();
-        canvas.height = $(canvas).height();
+        var _ref;
+        $scope.editor_size = V($$element.width(), $$element.height());
+        _ref = $scope.editor_size.components(), canvas.width = _ref[0], canvas.height = _ref[1];
         return draw();
       };
-      $(window).on('resize', resize_canvas);
+      $(window).on('resize', function() {
+        return $scope.$apply(resize_canvas);
+      });
       return resize_canvas();
     }
   };

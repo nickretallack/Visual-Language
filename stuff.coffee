@@ -116,7 +116,6 @@ module.directive 'subroutine', ->
 
     controller:($scope, $element, $attrs) ->
         $$element = $ $element
-        $scope.editor_size = V $$element.width(), $$element.height()
         $scope.position = (node) ->
             position = transform_position node.position, $scope.editor_size
             left:position.x + 'px'
@@ -172,11 +171,11 @@ module.directive 'subroutine', ->
                         c.lineTo output_position.components()...
                         c.stroke()
 
-        resize_canvas = ->
-            canvas.width = $(canvas).width()
-            canvas.height = $(canvas).height()
+        resize_canvas = -> 
+            $scope.editor_size = V $$element.width(), $$element.height()
+            [canvas.width, canvas.height] = $scope.editor_size.components()
             draw()
-        $(window).on 'resize', resize_canvas
+        $(window).on 'resize', -> $scope.$apply resize_canvas
         resize_canvas()
 
 
