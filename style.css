@@ -16,5 +16,5 @@ textarea {display:block}
 .node {position:absolute; white-space:nowrap; border:1px solid black;}
 .node > * {display:inline-block; vertical-align:middle; white-space:nowrap;}
 .node li {display:block;}
-.output {text-align:right;}
+.input {text-align:right;}
 .nib {width:10px; height:10px; background:green; border-radius:10px; display:inline-block;}
