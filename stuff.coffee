@@ -29,50 +29,6 @@ module.directive 'shrinkyInput', ->
                 scope.draw_connections()
 
 
-###
-module.directive 'node', ->
-    template:"""
-    <div class="node">
-        <tr ng:repeat=>
-            <td class="input">#{input?.text or ''}</td>
-            <td class="output">#{output?.text or ''}</td>
-        </tr>
-    </div> 
-    """
-    link:(scope, element, attributes) ->
-        node_position = connection.input.parent.position
-                    if node_position
-                        position = transform_position node_position, scope.editor_size
-                   
-
-        scope.$watch attributes.io, (node) ->
-            element.html ''
-            for [input,output] in _.zip(node.inputs, node.outputs)
-                row = $ """<tr>
-                    <td class="input">#{input?.text or ''}</td>
-                    <td class="output">#{output?.text or ''}</td>
-                </tr>"""
-                element.append row
-                console.log row.find('.input').css 'left'
-###
-
-
-
-###
-module.directive 'io', ->
-    (scope, element, attributes) ->
-        scope.$watch attributes.io, (node) ->
-            element.html ''
-            for [input,output] in _.zip(node.inputs, node.outputs)
-                row = $ """<tr>
-                    <td class="input">#{input?.text or ''}</td>
-                    <td class="output">#{output?.text or ''}</td>
-                </tr>"""
-                element.append row
-                row.find('.input')
-                console.log row.find('.input').css 'left'
-###
-
 async = setTimeout
 delay = (time, procedure) -> setTimeout procedure, time
 
@@ -94,26 +50,6 @@ module.directive 'node', ->
 
 module.directive 'subroutine', ->
     link:(scope, element, attributes) ->
-        ###
-        scope.$watch attributes.subroutine, (subroutine) ->
-            for node in subroutine.nodes
-                node = $ """
-
-                """
-
-
-
-            for 
-            element.html ''
-            for [input,output] in _.zip(node.inputs, node.outputs)
-                row = $ """<tr>
-                    <td class="input">#{input?.text or ''}</td>
-                    <td class="output">#{output?.text or ''}</td>
-                </tr>"""
-                element.append row
-                console.log row.find('.input').css 'left'
-        ###
-
     controller:($scope, $element, $attrs) ->
         $$element = $ $element
         $scope.position = (node) ->
@@ -247,57 +183,6 @@ animate = (field) ->
     update()
 eval_expression = (expression) -> eval "(#{expression})"
 
-setInterval ->
-    #console.log animations_counter
-    animations_counter = 0
-, 1000
-
-### VIEWS ###
-
-make_subroutine_view = (subroutine) ->
-###
-    box_size = editor_size
-    position = box_size.scale(1/2.0)
-    box = make_box null, subroutine_mesh, 10, position
-    box.model = subroutine
-    boxes[box.id] = box
-    return box
-###
-
-make_node_view = (node) ->
-###
-    main_box = make_box node.text, node_mesh, 10, node.position
-    main_box.model = node
-    node.scope.view.add main_box
-    boxes[main_box.id] = main_box
-    return main_box
-###
-
-make_nib_view = (nib, is_node) ->
-###
-    parent_size = if is_node then V(60,60) else editor_size.minus V 10,10
-
-    y_offset = parent_size.y / 2.0
-
-    x_position = -parent_size.x / 2.0 + parent_size.x * nib.index/nib.siblings
-    y_position = y_offset * (if nib instanceof Input then 1 else -1) * (if is_node then 1 else -1)
-
-    sub_box = make_box nib.text, nib_mesh, 5, V(x_position,y_position)
-    sub_box.model = nib
-
-    parent = nib.parent.view
-    parent.add sub_box
-    return sub_box
-###
-
-connection_view = (connection) ->
-###
-    point1 = get_nib_position connection.input
-    point2 = get_nib_position connection.output
-    arrow = make_arrow point1, point2
-    [arrow, arrow.geometry.vertices[0], arrow.geometry.vertices[1]]
-###
-            
 
 ### FACTORIES ###
 
@@ -309,45 +194,6 @@ make_connection = (source, target) ->
         input = target.model
         output = source.model
     return new Connection input, output
-
-### CORE RENDERING ###
-
-make_text = (text, size) ->
-    geometry = new THREE.TextGeometry text,
-        size:size
-        font:'helvetiker'
-        curveSegments:2
-    geometry.computeBoundingBox()
-    centerOffset = -0.5 * (geometry.boundingBox.max.x - geometry.boundingBox.min.x)
-
-    material = new THREE.MeshBasicMaterial color:0x000000, overdraw:true
-    mesh = new THREE.Mesh geometry, material
-    mesh.position.x = centerOffset
-    return mesh
-
-###
-node_material = new THREE.MeshBasicMaterial color:0x888888
-highlighted_node_material = new THREE.MeshBasicMaterial color:0x8888FF
-subroutine_material = new THREE.MeshBasicMaterial color:0xEEEEEE
-
-node_geometry = new THREE.PlaneGeometry 50,50
-nib_geometry = new THREE.PlaneGeometry 20,20
-subroutine_geometry = new THREE.PlaneGeometry editor_size.x,editor_size.y
-
-node_mesh = [node_geometry, node_material]
-nib_mesh = [nib_geometry, node_material]
-subroutine_mesh = [subroutine_geometry, subroutine_material]
-###
-
-make_box = (name, mesh, text_size, position) ->
-    box = new THREE.Object3D()
-    box.add new THREE.Mesh mesh...
-
-    if name
-        box.add make_text name, text_size
-
-    box.position = position.three()
-    return box
 
 make_arrow = (source, target, scoped=true) ->
     arrow = new THREE.Object3D()
