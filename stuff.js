@@ -819,8 +819,8 @@ module.controller('Controller', function($scope, $http, $location) {
 
 module.factory('subroutines', function($q, $http) {
   var source_data;
-  if (localStorage.state != null) {
-    source_data = localStorage.state;
+  if (false) {
+    source_data = JSON.parse(localStorage.state);
   } else {
     source_data = $q.defer();
     $http.get('examples.json').success(function(data) {

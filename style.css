@@ -8,12 +8,12 @@ textarea {display:block}
 #nav {position:absolute; top:0; left:0; right:0; height:30px;}
 #subroutine {position:absolute; top:30px; left:0; right:0; bottom:0;}
 
-.node {position:absolute; white-space:nowrap;}
-.node h1 {text-align:center;}
-.output {text-align:right;}
-.inputs-outputs {width:100%;}
-
 .subroutine-input {position:absolute; right:0;}
 .subroutine-output {position:absolute; left:0;}
 
 #connections {position:absolute; width:100%; height:100%;}
+
+.node {position:absolute; white-space:nowrap; border:1px solid black;}
+.node > * {display:inline-block; vertical-align:middle;}
+.node li {display:block;}
+.output {text-align:right;}

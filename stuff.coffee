@@ -628,8 +628,8 @@ module.controller 'Controller', ($scope, $http, $location) ->
 
 
 module.factory 'subroutines', ($q, $http) ->
-    if localStorage.state?
-        source_data = localStorage.state
+    if false #localStorage.state?
+        source_data = JSON.parse localStorage.state
     else
         source_data = $q.defer()
         $http.get('examples.json').success (data) ->
