@@ -302,7 +302,7 @@ class Literal extends Node
             @text = value
         super()
         @inputs = []
-        @outputs = [new Output(@, 'OUT')]
+        @outputs = [new Output(@, '')]
 
     evaluation: -> @implementation.evaluation()
 

@@ -631,7 +631,7 @@ Literal = (function(_super) {
     }
     Literal.__super__.constructor.call(this);
     this.inputs = [];
-    this.outputs = [new Output(this, 'OUT')];
+    this.outputs = [new Output(this, '')];
   }
 
   Literal.prototype.evaluation = function() {

@@ -68,7 +68,7 @@ module.directive 'connections', ->
                 line_height = 16
                 c = element[0].getContext '2d'
                 for id, connection of subroutine.connections
-                    console.log connection, connection.input, connection.input.view
+                    #console.log connection, connection.input, connection.input.view
                     input_element = connection.input.view
                     output_element = connection.output.view
 
@@ -94,6 +94,14 @@ module.directive 'connections', ->
 transform_position = (position, editor_size) ->
     x:position.y + editor_size.x/2
     y:position.x + editor_size.y/2
+
+module.directive 'node', ->
+    link:(scope, element, attributes) ->
+        node = scope.$eval attributes.node
+        $(element).on 'mousedown', (event) -> scope.$apply ->
+            event.preventDefault()
+            console.log "CLICK"
+            scope.set_selection node
 
 
 module.directive 'subroutine', ->
@@ -132,13 +140,29 @@ module.directive 'subroutine', ->
                 pairs.push input:node.inputs[index], output:node.outputs[index]
             pairs
 
+        $scope.selection = []
+        $scope.set_selection = (node) ->
+            console.log "selection is set"
+            $scope.selection = [node]
+
+        $scope.mouse_position = V 0,0
+        $element.bind 'mousemove', (event) -> $scope.$apply ->
+            console.log "moving"
+            new_mouse_position = V event.clientX, event.clientY
+            mouse_delta = $scope.mouse_position.minus new_mouse_position
+            $scope.mouse_position = new_mouse_position
+            for node in $scope.selection
+                node.position = node.position.plus V -mouse_delta.y, -mouse_delta.x
+        $element.bind 'mouseup', (event) -> $scope.$apply ->
+            $scope.selection = []
+
 module.config ($routeProvider) ->
     $routeProvider.when '/:id', controller:'subroutine', template:"subroutine.html"
 
 module.controller 'subroutine', ($scope, $routeParams, subroutines, $q) ->
     $q.when subroutines, (subroutines) ->
         $scope.current_object = subroutines[$routeParams.id]
-        console.log $scope.current_object, $routeParams.id, subroutines
+        #console.log $scope.current_object, $routeParams.id, subroutines
 
 module.controller 'library', ($scope, subroutines, $q) ->
     $scope.subroutines = subroutines

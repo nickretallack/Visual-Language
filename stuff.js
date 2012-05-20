@@ -83,7 +83,6 @@ module.directive('connections', function() {
             _results = [];
             for (id in _ref) {
               connection = _ref[id];
-              console.log(connection, connection.input, connection.input.view);
               input_element = connection.input.view;
               output_element = connection.output.view;
               if (input_element && output_element) {
@@ -123,6 +122,22 @@ transform_position = function(position, editor_size) {
   };
 };
 
+module.directive('node', function() {
+  return {
+    link: function(scope, element, attributes) {
+      var node;
+      node = scope.$eval(attributes.node);
+      return $(element).on('mousedown', function(event) {
+        return scope.$apply(function() {
+          event.preventDefault();
+          console.log("CLICK");
+          return scope.set_selection(node);
+        });
+      });
+    }
+  };
+});
+
 module.directive('subroutine', function() {
   return {
     link: function(scope, element, attributes) {
@@ -159,7 +174,7 @@ module.directive('subroutine', function() {
           top: position.y + 'px'
         };
       };
-      return $scope.pairs = function(node) {
+      $scope.pairs = function(node) {
         var index, pairs, _i, _ref;
         pairs = [];
         for (index = _i = 0, _ref = Math.max(node.inputs.length, node.outputs.length); 0 <= _ref ? _i < _ref : _i > _ref; index = 0 <= _ref ? ++_i : --_i) {
@@ -170,6 +185,33 @@ module.directive('subroutine', function() {
         }
         return pairs;
       };
+      $scope.selection = [];
+      $scope.set_selection = function(node) {
+        console.log("selection is set");
+        return $scope.selection = [node];
+      };
+      $scope.mouse_position = V(0, 0);
+      $element.bind('mousemove', function(event) {
+        return $scope.$apply(function() {
+          var mouse_delta, new_mouse_position, node, _i, _len, _ref, _results;
+          console.log("moving");
+          new_mouse_position = V(event.clientX, event.clientY);
+          mouse_delta = $scope.mouse_position.minus(new_mouse_position);
+          $scope.mouse_position = new_mouse_position;
+          _ref = $scope.selection;
+          _results = [];
+          for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+            node = _ref[_i];
+            _results.push(node.position = node.position.plus(V(-mouse_delta.y, -mouse_delta.x)));
+          }
+          return _results;
+        });
+      });
+      return $element.bind('mouseup', function(event) {
+        return $scope.$apply(function() {
+          return $scope.selection = [];
+        });
+      });
     }
   };
 });
@@ -183,8 +225,7 @@ module.config(function($routeProvider) {
 
 module.controller('subroutine', function($scope, $routeParams, subroutines, $q) {
   return $q.when(subroutines, function(subroutines) {
-    $scope.current_object = subroutines[$routeParams.id];
-    return console.log($scope.current_object, $routeParams.id, subroutines);
+    return $scope.current_object = subroutines[$routeParams.id];
   });
 });
 

@@ -13,7 +13,7 @@
 </div>
 
 
-<div class="node" ng-repeat="node in current_object.nodes" ng-style="position(node)">
+<div class="node" ng-repeat="node in current_object.nodes" node="node" ng-style="position(node)">
     <ul><li ng-repeat="output in node.outputs" class="output"><div class="nib" link-nib="output"></div> {{output.text}}</li></ul>
     <h1>{{node.text}}</h1>
     <ul><li ng-repeat="input in node.inputs"  class="input">{{input.text}} <div class="nib" link-nib="input"></div></li></ul>
