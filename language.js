@@ -608,6 +608,10 @@ LiteralValue = (function() {
 
   LiteralValue.prototype.type = 'literal';
 
+  LiteralValue.prototype.content_id = function() {
+    return CryptoJS.SHA256(this.text).toString(CryptoJS.enc.Base64);
+  };
+
   return LiteralValue;
 
 })();

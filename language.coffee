@@ -288,6 +288,7 @@ class LiteralValue
     constructor:(@text) ->
     evaluation: -> return eval_expression @text
     type:'literal'
+    content_id: -> CryptoJS.SHA256(@text).toString(CryptoJS.enc.Base64)
 
 class Literal extends Node
     constructor:(@position, value, @id=UUID()) ->
