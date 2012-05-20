@@ -159,7 +159,7 @@ class SubRoutine
         for item in adjacency_list
             nibs = if item.node instanceof Node then item.node.inputs else item.node.outputs
             for input, input_index in nibs
-                node = input.get_node()
+                node = input.parent
                 item.connections[input_index] = node.adjacency_id
 
         adjacency_list

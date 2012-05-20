@@ -252,7 +252,6 @@ setInterval ->
     animations_counter = 0
 , 1000
 
-
 ### VIEWS ###
 
 make_subroutine_view = (subroutine) ->

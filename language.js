@@ -345,7 +345,7 @@ SubRoutine = (function() {
       nibs = item.node instanceof Node ? item.node.inputs : item.node.outputs;
       for (input_index = _j = 0, _len1 = nibs.length; _j < _len1; input_index = ++_j) {
         input = nibs[input_index];
-        node = input.get_node();
+        node = input.parent;
         item.connections[input_index] = node.adjacency_id;
       }
     }
