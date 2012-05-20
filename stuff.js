@@ -7,23 +7,57 @@ V(1, 1).plus(V(2, 2));
 
 module = angular.module('vislang', []);
 
-module.directive('io', function() {
+module.directive('link-nib', function() {
   return function(scope, element, attributes) {
-    return scope.$watch(attributes.io, function(node) {
-      var input, output, row, _i, _len, _ref, _ref1, _results;
-      element.html('');
-      _ref = _.zip(node.inputs, node.outputs);
-      _results = [];
-      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-        _ref1 = _ref[_i], input = _ref1[0], output = _ref1[1];
-        row = $("<tr>\n    <td class=\"input\">" + ((input != null ? input.text : void 0) || '') + "</td>\n    <td class=\"output\">" + ((output != null ? output.text : void 0) || '') + "</td>\n</tr>");
-        element.append(row);
-        _results.push(console.log(row.find('.input').css('left')));
-      }
-      return _results;
-    });
+    var nib;
+    nib = scope.$eval(attributes.linkNib);
+    return nib.view = element;
   };
 });
+
+/*
+module.directive 'node', ->
+    template:"""
+    <div class="node">
+        <tr ng:repeat=>
+            <td class="input">#{input?.text or ''}</td>
+            <td class="output">#{output?.text or ''}</td>
+        </tr>
+    </div> 
+    """
+    link:(scope, element, attributes) ->
+        node_position = connection.input.parent.position
+                    if node_position
+                        position = transform_position node_position, scope.editor_size
+                   
+
+        scope.$watch attributes.io, (node) ->
+            element.html ''
+            for [input,output] in _.zip(node.inputs, node.outputs)
+                row = $ """<tr>
+                    <td class="input">#{input?.text or ''}</td>
+                    <td class="output">#{output?.text or ''}</td>
+                </tr>"""
+                element.append row
+                console.log row.find('.input').css 'left'
+*/
+
+
+/*
+module.directive 'io', ->
+    (scope, element, attributes) ->
+        scope.$watch attributes.io, (node) ->
+            element.html ''
+            for [input,output] in _.zip(node.inputs, node.outputs)
+                row = $ """<tr>
+                    <td class="input">#{input?.text or ''}</td>
+                    <td class="output">#{output?.text or ''}</td>
+                </tr>"""
+                element.append row
+                row.find('.input')
+                console.log row.find('.input').css 'left'
+*/
+
 
 module.directive('connections', function() {
   return {
@@ -74,18 +108,50 @@ transform_position = function(position, editor_size) {
 
 module.directive('subroutine', function() {
   return {
-    link: function(scope, element, attributes) {},
+    link: function(scope, element, attributes) {
+      /*
+              scope.$watch attributes.subroutine, (subroutine) ->
+                  for node in subroutine.nodes
+                      node = $ """
+      
+                      """
+      
+      
+      
+                  for 
+                  element.html ''
+                  for [input,output] in _.zip(node.inputs, node.outputs)
+                      row = $ """<tr>
+                          <td class="input">#{input?.text or ''}</td>
+                          <td class="output">#{output?.text or ''}</td>
+                      </tr>"""
+                      element.append row
+                      console.log row.find('.input').css 'left'
+      */
+
+    },
     controller: function($scope, $element) {
       var $$element;
       $$element = $($element);
       $scope.editor_size = V($$element.width(), $$element.height());
-      return $scope.position = function(node) {
+      $scope.position = function(node) {
         var position;
         position = transform_position(node.position, $scope.editor_size);
         return {
           left: position.x + 'px',
           top: position.y + 'px'
         };
+      };
+      return $scope.pairs = function(node) {
+        var index, pairs, _i, _ref;
+        pairs = [];
+        for (index = _i = 0, _ref = Math.max(node.inputs.length, node.outputs.length); 0 <= _ref ? _i < _ref : _i > _ref; index = 0 <= _ref ? ++_i : --_i) {
+          pairs.push({
+            input: node.inputs[index],
+            output: node.outputs[index]
+          });
+        }
+        return pairs;
       };
     }
   };

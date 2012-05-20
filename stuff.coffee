@@ -3,6 +3,41 @@ V(1,1).plus(V(2,2))
 
 module = angular.module 'vislang', []
 
+module.directive 'link-nib', ->
+    (scope, element, attributes) ->
+        nib = scope.$eval attributes.linkNib
+        nib.view = element
+
+###
+module.directive 'node', ->
+    template:"""
+    <div class="node">
+        <tr ng:repeat=>
+            <td class="input">#{input?.text or ''}</td>
+            <td class="output">#{output?.text or ''}</td>
+        </tr>
+    </div> 
+    """
+    link:(scope, element, attributes) ->
+        node_position = connection.input.parent.position
+                    if node_position
+                        position = transform_position node_position, scope.editor_size
+                   
+
+        scope.$watch attributes.io, (node) ->
+            element.html ''
+            for [input,output] in _.zip(node.inputs, node.outputs)
+                row = $ """<tr>
+                    <td class="input">#{input?.text or ''}</td>
+                    <td class="output">#{output?.text or ''}</td>
+                </tr>"""
+                element.append row
+                console.log row.find('.input').css 'left'
+###
+
+
+
+###
 module.directive 'io', ->
     (scope, element, attributes) ->
         scope.$watch attributes.io, (node) ->
@@ -13,8 +48,9 @@ module.directive 'io', ->
                     <td class="output">#{output?.text or ''}</td>
                 </tr>"""
                 element.append row
+                row.find('.input')
                 console.log row.find('.input').css 'left'
-
+###
 
 
 module.directive 'connections', ->
@@ -45,13 +81,32 @@ module.directive 'connections', ->
             draw()
 
 transform_position = (position, editor_size) ->
-    #position = position.plus editor_size.scale 0.5
     x:position.y + editor_size.x/2
     y:position.x + editor_size.y/2
 
 
 module.directive 'subroutine', ->
     link:(scope, element, attributes) ->
+        ###
+        scope.$watch attributes.subroutine, (subroutine) ->
+            for node in subroutine.nodes
+                node = $ """
+
+                """
+
+
+
+            for 
+            element.html ''
+            for [input,output] in _.zip(node.inputs, node.outputs)
+                row = $ """<tr>
+                    <td class="input">#{input?.text or ''}</td>
+                    <td class="output">#{output?.text or ''}</td>
+                </tr>"""
+                element.append row
+                console.log row.find('.input').css 'left'
+        ###
+
     controller:($scope, $element) ->
         $$element = $ $element
         $scope.editor_size = V $$element.width(), $$element.height()
@@ -59,6 +114,12 @@ module.directive 'subroutine', ->
             position = transform_position node.position, $scope.editor_size
             left:position.x + 'px'
             top:position.y + 'px'
+        $scope.pairs = (node) ->
+            pairs = []
+            for index in [0...Math.max node.inputs.length, node.outputs.length]
+            #for input, output in _.zip(node.inputs, node.outputs)
+                pairs.push input:node.inputs[index], output:node.outputs[index]
+            pairs
 
 module.config ($routeProvider) ->
     $routeProvider.when '/:id', controller:'subroutine', template:"subroutine.html"

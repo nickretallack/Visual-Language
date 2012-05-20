@@ -15,7 +15,12 @@
 
 <div class="node" ng-repeat="node in current_object.nodes" ng-style="position(node)">
     <h1>{{node.text}}</h1>
-    <table class="inputs-outputs" io="node"></table>
+    <table class="inputs-outputs">
+    	<tr ng-repeat="pair in pairs(node)">
+    		<td link-nib="pair.input">{{pair.input.text}}</td>
+    		<td link-nib="pair.output">{{pair.output.text}}</td>
+    	</tr>
+    </table>
 </div>
 </div>
 
