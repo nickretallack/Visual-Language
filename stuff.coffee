@@ -70,6 +70,8 @@ module.directive 'subroutine', ->
             draw()
         $element.bind 'mouseup', (event) -> $scope.$apply ->
             $scope.dragging = []
+            $scope.drawing = null
+            draw()
 
         $scope.dragging = []
         $scope.click_node = (node, $event) ->
@@ -81,6 +83,10 @@ module.directive 'subroutine', ->
             $event.preventDefault()
             $event.stopPropagation()
             $scope.drawing = nib
+
+        $scope.release_nib = (nib) ->
+            if $scope.drawing
+                console.log "Connecting", nib, $scope.drawing
 
         $scope.draw_connections = -> draw()
 

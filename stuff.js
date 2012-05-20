@@ -113,7 +113,9 @@ module.directive('subroutine', function() {
       });
       $element.bind('mouseup', function(event) {
         return $scope.$apply(function() {
-          return $scope.dragging = [];
+          $scope.dragging = [];
+          $scope.drawing = null;
+          return draw();
         });
       });
       $scope.dragging = [];
@@ -126,6 +128,11 @@ module.directive('subroutine', function() {
         $event.preventDefault();
         $event.stopPropagation();
         return $scope.drawing = nib;
+      };
+      $scope.release_nib = function(nib) {
+        if ($scope.drawing) {
+          return console.log("Connecting", nib, $scope.drawing);
+        }
       };
       $scope.draw_connections = function() {
         return draw();
