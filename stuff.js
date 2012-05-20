@@ -68,12 +68,14 @@ delay = function(time, procedure) {
 module.directive('connections', function() {
   return {
     link: function(scope, element, attributes) {
-      var draw, header_height, resize_canvas, subroutine;
+      var canvas_offset, draw, header_height, nib_center, resize_canvas, subroutine;
       subroutine = null;
       header_height = 30;
+      nib_center = V(5, 5);
+      canvas_offset = V(0, header_height).minus(nib_center);
       draw = function() {
         return delay(500, function() {
-          var c, connection, id, input_element, line_height, position, _ref, _results;
+          var c, connection, id, input_element, input_position, line_height, output_element, output_position, _ref, _results;
           if (subroutine) {
             line_height = 16;
             c = element[0].getContext('2d');
@@ -83,23 +85,17 @@ module.directive('connections', function() {
               connection = _ref[id];
               console.log(connection, connection.input, connection.input.view);
               input_element = connection.input.view;
-              if (input_element) {
-                position = V(input_element.offset());
-                position.y -= header_height;
-                c.fillRect(position.x, position.y, 10, 10);
-                _results.push(console.log(JSON.stringify(position), JSON.stringify(input_element.offset())));
+              output_element = connection.output.view;
+              if (input_element && output_element) {
+                input_position = V(input_element.offset()).subtract(canvas_offset);
+                output_position = V(output_element.offset()).subtract(canvas_offset);
+                c.beginPath();
+                c.moveTo.apply(c, input_position.components());
+                c.lineTo.apply(c, output_position.components());
+                _results.push(c.stroke());
               } else {
                 _results.push(void 0);
               }
-              /*
-                                  node_position = connection.input.parent.position
-                                  if node_position
-                                      position = transform_position node_position, scope.editor_size
-                                      #console.log node_position, position
-                                      c.fillRect position.x, position.y, 10, 10
-                                      #console.log 'connection', connection
-              */
-
             }
             return _results;
           }

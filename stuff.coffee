@@ -60,6 +60,8 @@ module.directive 'connections', ->
     link:(scope, element, attributes) ->
         subroutine = null
         header_height = 30
+        nib_center = V 5,5
+        canvas_offset = V(0,header_height).minus nib_center
         
         draw = -> delay 500, ->
             if subroutine
@@ -68,20 +70,15 @@ module.directive 'connections', ->
                 for id, connection of subroutine.connections
                     console.log connection, connection.input, connection.input.view
                     input_element = connection.input.view
-                    if input_element
-                        position = V input_element.offset()
-                        position.y -= header_height
-                        c.fillRect position.x, position.y, 10, 10
-                        console.log (JSON.stringify position), (JSON.stringify input_element.offset())
+                    output_element = connection.output.view
 
-                    ###
-                    node_position = connection.input.parent.position
-                    if node_position
-                        position = transform_position node_position, scope.editor_size
-                        #console.log node_position, position
-                        c.fillRect position.x, position.y, 10, 10
-                        #console.log 'connection', connection
-                    ###
+                    if input_element and output_element
+                        input_position = V(input_element.offset()).subtract canvas_offset
+                        output_position = V(output_element.offset()).subtract canvas_offset
+                        c.beginPath()
+                        c.moveTo input_position.components()...
+                        c.lineTo output_position.components()...
+                        c.stroke()
 
         resize_canvas = ->
             element[0].width = $(element).width()
