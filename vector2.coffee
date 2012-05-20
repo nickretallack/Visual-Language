@@ -3,7 +3,11 @@ css_properties = ['top','left']
 class Vector
     constructor: ->
         if typeof arguments[0] is 'object'
-            {@x, @y} = arguments[0]
+            object = arguments[0]
+            if object.x? and object.y?
+                {@x, @y} = object
+            else if object.left? and object.top?
+                {left:@x, top:@y} = object
         else
             [@x, @y] = arguments
 

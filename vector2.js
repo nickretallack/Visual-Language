@@ -8,9 +8,14 @@ Vector = (function() {
   Vector.name = 'Vector';
 
   function Vector() {
-    var _ref;
+    var object;
     if (typeof arguments[0] === 'object') {
-      _ref = arguments[0], this.x = _ref.x, this.y = _ref.y;
+      object = arguments[0];
+      if ((object.x != null) && (object.y != null)) {
+        this.x = object.x, this.y = object.y;
+      } else if ((object.left != null) && (object.top != null)) {
+        this.x = object.left, this.y = object.top;
+      }
     } else {
       this.x = arguments[0], this.y = arguments[1];
     }

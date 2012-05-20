@@ -3,10 +3,11 @@ V(1,1).plus(V(2,2))
 
 module = angular.module 'vislang', []
 
-module.directive 'link-nib', ->
+module.directive 'linkNib', ->
     (scope, element, attributes) ->
         nib = scope.$eval attributes.linkNib
-        nib.view = element
+        nib.view = $ element
+        #console.log nib, element
 
 ###
 module.directive 'node', ->
@@ -52,22 +53,35 @@ module.directive 'io', ->
                 console.log row.find('.input').css 'left'
 ###
 
+async = setTimeout
+delay = (time, procedure) -> setTimeout procedure, time
 
 module.directive 'connections', ->
     link:(scope, element, attributes) ->
         subroutine = null
+        header_height = 30
         
-        draw = ->
+        draw = -> delay 500, ->
             if subroutine
                 line_height = 16
                 c = element[0].getContext '2d'
                 for id, connection of subroutine.connections
+                    console.log connection, connection.input, connection.input.view
+                    input_element = connection.input.view
+                    if input_element
+                        position = V input_element.offset()
+                        position.y -= header_height
+                        c.fillRect position.x, position.y, 10, 10
+                        console.log (JSON.stringify position), (JSON.stringify input_element.offset())
+
+                    ###
                     node_position = connection.input.parent.position
                     if node_position
                         position = transform_position node_position, scope.editor_size
                         #console.log node_position, position
                         c.fillRect position.x, position.y, 10, 10
                         #console.log 'connection', connection
+                    ###
 
         resize_canvas = ->
             element[0].width = $(element).width()

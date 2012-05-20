@@ -14,9 +14,11 @@
 
 
 <div class="node" ng-repeat="node in current_object.nodes" ng-style="position(node)">
-    <ul><li ng-repeat="input in node.inputs" link-nib="input" class="input">{{input.text}}</li></ul>
+    <ul><li ng-repeat="input in node.inputs"  class="input">
+    	<div class="nib" link-nib="input"></div> {{input.text}}</li></ul>
     <h1>{{node.text}}</h1>
-    <ul><li ng-repeat="output in node.outputs" link-nib="output" class="output">{{output.text}}</li></ul>
+    <ul><li ng-repeat="output in node.outputs" class="output">
+    	{{output.text}} <div class="nib" link-nib="output"></div></li></ul>
 </div>
 </div>
 
