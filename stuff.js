@@ -66,10 +66,9 @@ module.directive('connections', function() {
 });
 
 transform_position = function(position, editor_size) {
-  position = position.plus(editor_size.scale(0.5));
   return {
-    x: position.y - 250 + editor_size.x / 2,
-    y: position.x - 700 + editor_size.y / 2
+    x: position.y + editor_size.x / 2,
+    y: position.x + editor_size.y / 2
   };
 };
 

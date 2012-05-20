@@ -45,9 +45,10 @@ module.directive 'connections', ->
             draw()
 
 transform_position = (position, editor_size) ->
-    position = position.plus editor_size.scale 0.5
-    x:position.y - 250 + editor_size.x/2
-    y:position.x - 700 + editor_size.y/2
+    #position = position.plus editor_size.scale 0.5
+    x:position.y + editor_size.x/2
+    y:position.x + editor_size.y/2
+
 
 module.directive 'subroutine', ->
     link:(scope, element, attributes) ->
