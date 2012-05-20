@@ -2,7 +2,7 @@
 
 <div ng:switch-when="subroutine" id="subroutine" subroutine="current_object">
 <canvas id="connections" connections="current_object"></canvas>
-<h2><input ng:model="current_object.name"></h2>
+<input ng:model="current_object.name" class="title">
 
 <div class="subroutine-input" ng-repeat="input in current_object.inputs" ng-style="{'top':(($index+1) * editor_size.y / (current_object.inputs.length+1)) + 'px'}">
     <div class="nib" link-nib="input"></div> <input ng-model="input.text" shrinky-input="input.text">
