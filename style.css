@@ -18,4 +18,10 @@ textarea {display:block}
 .node li {display:block;}
 .input {text-align:right;}
 .nib {width:10px; height:10px; background:green; border-radius:10px; display:inline-block;}
-.offescreen {position:absolute; left:-9999px; top:-9999px;}
+
+.subroutine-input input, .subroutine-output input {border:0; padding:0;}
+
+
+input
+
+/*.offescreen {position:absolute; left:-9999px; top:-9999px;}*/

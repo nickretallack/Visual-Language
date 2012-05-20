@@ -18,15 +18,24 @@ module.directive('linkNib', function() {
 
 module.directive('shrinkyInput', function() {
   return function(scope, element, attributes) {
-    var doppelganger;
+    var $element, doppelganger;
     doppelganger = $("<span class=\"offscreen\"></span>");
+    $element = $(element);
+    doppelganger.css({
+      padding: $element.css('padding'),
+      border: $element.css('border'),
+      'min-width': '3ex',
+      position: 'absolute',
+      left: '-9999px',
+      top: '-9999px'
+    });
     $(document.body).append(doppelganger);
     return scope.$watch(attributes.shrinkyInput, function(text) {
       doppelganger.text(text);
       console.log(text, doppelganger.width());
       return async(function() {
         $(element).css({
-          width: doppelganger.width()
+          width: doppelganger.width() + 2
         });
         return scope.draw_connections();
       });

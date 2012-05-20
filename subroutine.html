@@ -9,7 +9,7 @@
 </div>
 
 <div class="subroutine-output" ng-repeat="output in current_object.outputs" ng-style="{'top':(($index+1) * editor_size.y / (current_object.outputs.length+1)) + 'px'}">
-    <input ng-model="output.text"> <div class="nib" link-nib="output"></div>
+    <input ng-model="output.text" shrinky-input="output.text"> <div class="nib" link-nib="output"></div>
 </div>
 
 

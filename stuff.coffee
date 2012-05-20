@@ -12,12 +12,20 @@ module.directive 'linkNib', ->
 module.directive 'shrinkyInput', ->
     (scope, element, attributes) ->
         doppelganger = $ """<span class="offscreen"></span>"""
+        $element = $ element
+        doppelganger.css
+            padding:$element.css 'padding'
+            border:$element.css 'border'
+            'min-width':'3ex'
+            position:'absolute'
+            left:'-9999px'
+            top:'-9999px'
         $(document.body).append doppelganger
         scope.$watch attributes.shrinkyInput, (text) ->
             doppelganger.text text
             console.log text, doppelganger.width()
             async ->
-                $(element).css  width:doppelganger.width()
+                $(element).css width:doppelganger.width()+2
                 scope.draw_connections()
 
 
