@@ -398,12 +398,12 @@ load_state = (data) ->
     # load subroutine implementations
     for id, subroutine of subroutines
         current_scope = subroutine
-        load_implementation data.subroutines[id]
+        load_implementation subroutine, data.subroutines[id]
 
     subroutines:subroutines
     builtins:builtins
 
-load_implementation = (data) ->
+load_implementation = (subroutine, data) ->
     for node in data.nodes
         position = V node.position
         if node.type is 'function'

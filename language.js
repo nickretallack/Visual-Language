@@ -809,7 +809,7 @@ load_state = function(data) {
   for (id in subroutines) {
     subroutine = subroutines[id];
     current_scope = subroutine;
-    load_implementation(data.subroutines[id]);
+    load_implementation(subroutine, data.subroutines[id]);
   }
   return {
     subroutines: subroutines,
@@ -817,8 +817,8 @@ load_state = function(data) {
   };
 };
 
-load_implementation = function(data) {
-  var builtin, connection, node, position, sink, sink_connector, source, source_connector, subroutine, value, _i, _j, _len, _len1, _ref, _ref1, _results;
+load_implementation = function(subroutine, data) {
+  var builtin, connection, node, position, sink, sink_connector, source, source_connector, value, _i, _j, _len, _len1, _ref, _ref1, _results;
   _ref = data.nodes;
   for (_i = 0, _len = _ref.length; _i < _len; _i++) {
     node = _ref[_i];

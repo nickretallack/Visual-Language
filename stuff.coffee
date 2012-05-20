@@ -7,11 +7,47 @@ module.directive 'io', ->
     (scope, element, attributes) ->
         scope.$watch attributes.io, (node) ->
             element.html ''
-            for pair in _.zip(node.inputs, node.outputs)
-                element.append $ """<tr>
-                    <td class="input">#{pair[0]?.text or ''}</td>
-                    <td class="output">#{pair[1]?.text or ''}</td>
+            for [input,output] in _.zip(node.inputs, node.outputs)
+                row = $ """<tr>
+                    <td class="input">#{input?.text or ''}</td>
+                    <td class="output">#{output?.text or ''}</td>
                 </tr>"""
+                element.append row
+                console.log row.find('.input').css 'left'
+
+
+
+module.directive 'connections', ->
+    link:(scope, element, attributes) ->
+        subroutine = null
+        
+        draw = ->
+            if subroutine
+                line_height = 16
+                c = element[0].getContext '2d'
+                for id, connection of subroutine.connections
+                    node_position = connection.input.parent.position
+                    if node_position
+                        position = transform_position node_position, scope.editor_size
+                        #console.log node_position, position
+                        c.fillRect position.x, position.y, 10, 10
+                        #console.log 'connection', connection
+
+        resize_canvas = ->
+            element[0].width = $(element).width()
+            element[0].height = $(element).height()
+            draw()
+        $(window).on 'resize', resize_canvas
+        resize_canvas()
+                
+        scope.$watch attributes.connections, (the_subroutine) ->
+            subroutine = the_subroutine
+            draw()
+
+transform_position = (position, editor_size) ->
+    position = position.plus editor_size.scale 0.5
+    x:position.y - 250 + editor_size.x/2
+    y:position.x - 700 + editor_size.y/2
 
 module.directive 'subroutine', ->
     link:(scope, element, attributes) ->
@@ -19,9 +55,9 @@ module.directive 'subroutine', ->
         $$element = $ $element
         $scope.editor_size = V $$element.width(), $$element.height()
         $scope.position = (node) ->
-            position = node.position.plus $scope.editor_size.scale 0.5
-            left:(position.y - 250 + $scope.editor_size.x/2)+'px'
-            top:(position.x - 700 + $scope.editor_size.y/2)+'px'
+            position = transform_position node.position, $scope.editor_size
+            left:position.x + 'px'
+            top:position.y + 'px'
 
 module.config ($routeProvider) ->
     $routeProvider.when '/:id', controller:'subroutine', template:"subroutine.html"
@@ -79,15 +115,6 @@ last = (list) -> list[list.length-1]
 obj_first = (obj) ->
     for key, item of obj
         return item
-
-schema_version = 1
-boxes = {}
-node_registry = {}
-all_subroutines = {}
-all_builtins = {}
-current_scope = null
-system_arrow = null
-should_animate = false
 
 update = ->
     renderer.render scene, camera

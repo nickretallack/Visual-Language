@@ -13,3 +13,4 @@ textarea {display:block}
 .output {text-align:right;}
 .inputs-outputs {width:100%;}
 .subroutine-input {position:absolute; left:0;}
+#connections {position:absolute; width:100%; height:100%;}
