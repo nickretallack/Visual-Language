@@ -33,7 +33,6 @@ module.directive 'shrinkyInput', ->
         $(document.body).append doppelganger
         scope.$watch attributes.shrinkyInput, (text) ->
             doppelganger.text text
-            console.log text, doppelganger.width()
             async ->
                 $(element).css width:doppelganger.width()+2
                 scope.draw_connections()
@@ -60,9 +59,7 @@ module.directive 'subroutine', ->
     controller:($scope, $element, $attrs) ->
         $$element = $ $element
         $scope.position = (node) ->
-            console.log "WTF"
             position = transform_position node.position, $scope.editor_size
-            console.log JSON.stringify position
             left:position.x + 'px'
             top:position.y + 'px'
         $scope.pairs = (node) ->
@@ -110,7 +107,6 @@ module.directive 'subroutine', ->
         $scope.draw_connections = -> draw()
 
         subroutine = $scope.$eval $attrs.subroutine
-        console.log "WTF", subroutine
 
         header_height = 30
         nib_center = V 5,5
@@ -124,7 +120,6 @@ module.directive 'subroutine', ->
                 c = canvas.getContext '2d'
                 c.clearRect 0,0, $scope.editor_size.components()...
                 for id, connection of subroutine.connections
-                    #console.log connection, connection.input, connection.input.view
                     input_element = connection.input.view
                     output_element = connection.output.view
 
@@ -160,7 +155,6 @@ module.config ($routeProvider) ->
 module.controller 'subroutine', ($scope, $routeParams, subroutines, $q) ->
     $q.when subroutines, (subroutines) ->
         $scope.current_object = subroutines[$routeParams.id]
-        #console.log $scope.current_object, $routeParams.id, subroutines
 
 module.controller 'library', ($scope, subroutines, $q) ->
     $scope.subroutines = subroutines

@@ -48,7 +48,6 @@ module.directive('shrinkyInput', function() {
     $(document.body).append(doppelganger);
     return scope.$watch(attributes.shrinkyInput, function(text) {
       doppelganger.text(text);
-      console.log(text, doppelganger.width());
       return async(function() {
         $(element).css({
           width: doppelganger.width() + 2
@@ -93,9 +92,7 @@ module.directive('subroutine', function() {
       $$element = $($element);
       $scope.position = function(node) {
         var position;
-        console.log("WTF");
         position = transform_position(node.position, $scope.editor_size);
-        console.log(JSON.stringify(position));
         return {
           left: position.x + 'px',
           top: position.y + 'px'
@@ -161,7 +158,6 @@ module.directive('subroutine', function() {
         return draw();
       };
       subroutine = $scope.$eval($attrs.subroutine);
-      console.log("WTF", subroutine);
       header_height = 30;
       nib_center = V(5, 5);
       canvas_offset = V(0, header_height);

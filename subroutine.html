@@ -5,18 +5,29 @@
 <input ng:model="current_object.name" class="title">
 
 <div class="subroutine-input" ng-repeat="input in current_object.inputs" ng-style="{'top':(($index+1) * editor_size.y / (current_object.inputs.length+1)) + 'px'}">
-    <div nib="input"></div> <input ng-model="input.text" shrinky-input="input.text">
+    <div nib="input"></div>
+    <input ng-model="input.text" shrinky-input="input.text">
 </div>
 
 <div class="subroutine-output" ng-repeat="output in current_object.outputs" ng-style="{'top':(($index+1) * editor_size.y / (current_object.outputs.length+1)) + 'px'}">
-    <a ng-click="evaluate_output($index)">eval</a><input ng-model="output.text" shrinky-input="output.text"> <div nib="output"></div>
+    <input ng-model="output.text" shrinky-input="output.text">
+    <div nib="output"></div>
+    <div><a ng-click="evaluate_output($index)">eval</a></div>
 </div>
 
 
 <div class="node" ng-repeat="node in current_object.nodes" node="node" ng-style="position(node)" ng-mousedown="click_node(node, $event)">
-    <ul><li ng-repeat="output in node.outputs" class="output"><div nib="output"></div> {{output.text}}</li></ul>
+    <ul><li ng-repeat="output in node.outputs" class="output">
+    	<div nib="output"></div>
+    	{{output.text}}
+    </li></ul>
+    
     <h1>{{node.text}}</h1>
-    <ul><li ng-repeat="input in node.inputs"  class="input">{{input.text}} <div nib="input"></div></li></ul>
+    
+    <ul><li ng-repeat="input in node.inputs" class="input">
+    	{{input.text}}
+    	<div nib="input"></div>
+    </li></ul>
 </div>
 </div>
 
