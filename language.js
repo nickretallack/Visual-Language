@@ -470,7 +470,6 @@ Node = (function() {
 
   function Node() {
     node_registry[this.id] = this;
-    this.scope = current_scope;
     this.scope.nodes[this.id] = this;
   }
 
@@ -602,7 +601,8 @@ SubroutineApplication = (function(_super) {
 
   SubroutineApplication.name = 'SubroutineApplication';
 
-  function SubroutineApplication(position, implementation, id) {
+  function SubroutineApplication(scope, position, implementation, id) {
+    this.scope = scope;
     this.position = position;
     this.implementation = implementation;
     this.id = id != null ? id : UUID();
@@ -647,7 +647,8 @@ BuiltinApplication = (function(_super) {
 
   BuiltinApplication.name = 'BuiltinApplication';
 
-  function BuiltinApplication(position, implementation, id) {
+  function BuiltinApplication(scope, position, implementation, id) {
+    this.scope = scope;
     this.position = position;
     this.implementation = implementation;
     this.id = id != null ? id : UUID();
@@ -710,7 +711,8 @@ Literal = (function(_super) {
 
   Literal.name = 'Literal';
 
-  function Literal(position, value, id) {
+  function Literal(scope, position, value, id) {
+    this.scope = scope;
     this.position = position;
     this.id = id != null ? id : UUID();
     this.type = 'literal';
@@ -927,14 +929,14 @@ load_implementation = function(subroutine, data) {
     if (node.type === 'function') {
       subroutine = all_subroutines[node.implementation_id];
       if (subroutine) {
-        new SubroutineApplication(position, subroutine, node.id);
+        new SubroutineApplication(subroutine, position, subroutine, node.id);
       } else {
         new UnknownNode(position, node.type, node.text, node.id);
       }
     } else if (node.type === 'builtin') {
       builtin = all_builtins[node.implementation_id];
       if (builtin) {
-        new BuiltinApplication(position, builtin, node.id);
+        new BuiltinApplication(subroutine, position, builtin, node.id);
       } else {
         new UnknownNode(position, node.type, node.text, node.id);
       }
@@ -945,7 +947,7 @@ load_implementation = function(subroutine, data) {
       } else {
         value = node.text;
       }
-      new Literal(position, value, node.id);
+      new Literal(subroutine, position, value, node.id);
     }
   }
   _ref1 = data.connections;

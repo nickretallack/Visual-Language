@@ -239,7 +239,7 @@ class SubRoutine
 class Node # Abstract
     constructor: ->
         node_registry[@id] = @
-        @scope = current_scope
+        #@scope = current_scope
         @scope.nodes[@id] = @
         #@view = make_node_view @
 
@@ -297,7 +297,7 @@ class UnknownNode extends Node
         super()
 
 class SubroutineApplication extends FunctionApplication
-    constructor:(@position, @implementation, @id=UUID()) ->
+    constructor:(@scope, @position, @implementation, @id=UUID()) ->
         @type = 'function'
         super
             name:@implementation.name
@@ -318,7 +318,7 @@ class SubroutineApplication extends FunctionApplication
         return results
         
 class BuiltinApplication extends FunctionApplication
-    constructor:(@position, @implementation, @id=UUID()) ->
+    constructor:(@scope, @position, @implementation, @id=UUID()) ->
         @type = 'builtin'
         super @implementation
         
@@ -346,7 +346,7 @@ class LiteralValue
     content_id: -> CryptoJS.SHA256(@text).toString(CryptoJS.enc.Base64)
 
 class Literal extends Node
-    constructor:(@position, value, @id=UUID()) ->
+    constructor:(@scope, @position, value, @id=UUID()) ->
         @type = 'literal'
 
         # TODO: sort this out later
@@ -470,13 +470,13 @@ load_implementation = (subroutine, data) ->
         if node.type is 'function'
             subroutine = all_subroutines[node.implementation_id]
             if subroutine
-                new SubroutineApplication position, subroutine, node.id
+                new SubroutineApplication subroutine, position, subroutine, node.id
             else
                 new UnknownNode position, node.type, node.text, node.id
         else if node.type is 'builtin'
             builtin = all_builtins[node.implementation_id]
             if builtin
-                new BuiltinApplication position, builtin, node.id
+                new BuiltinApplication subroutine, position, builtin, node.id
             else
                 new UnknownNode position, node.type, node.text, node.id
         else if node.type is 'literal'
@@ -485,7 +485,7 @@ load_implementation = (subroutine, data) ->
                 value = subroutine
             else
                 value = node.text
-            new Literal position, value, node.id
+            new Literal subroutine, position, value, node.id
 
     for connection in data.connections
         source = node_registry[connection.output.parent_id]
