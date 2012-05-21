@@ -7,16 +7,15 @@ module.directive 'linkNib', ->
     (scope, element, attributes) ->
         nib = scope.$eval attributes.linkNib
         nib.view = $ element
-        #console.log nib, element
 
 module.directive 'nib', ->
-    template:"""<div class="nib" ng-mousedown="click_nib(input, $event)" ng-mouseup="release_nib(input)"></div>"""
+    template:"""<div class="nib" ng-mousedown="click_nib(nib(), $event)" ng-mouseup="release_nib(nib())"></div>"""
     replace:true
-    #transclude:true
+    transclude:true
     scope:
-        nib:'bind'
+        nib:'accessor'
     link:(scope, element, attributes) ->
-        nib = scope.$eval attributes.linkNib
+        nib = scope.nib()
         nib.view = $ element
 
 
@@ -50,17 +49,20 @@ transform_position = (position, editor_size) ->
     x:position.y + editor_size.x/2
     y:position.x + editor_size.y/2
 
+###
 module.directive 'node', ->
     link:(scope, element, attributes) ->
         node = scope.$eval attributes.node
-
+###
 
 module.directive 'subroutine', ->
     link:(scope, element, attributes) ->
     controller:($scope, $element, $attrs) ->
         $$element = $ $element
         $scope.position = (node) ->
+            console.log "WTF"
             position = transform_position node.position, $scope.editor_size
+            console.log JSON.stringify position
             left:position.x + 'px'
             top:position.y + 'px'
         $scope.pairs = (node) ->
@@ -108,6 +110,8 @@ module.directive 'subroutine', ->
         $scope.draw_connections = -> draw()
 
         subroutine = $scope.$eval $attrs.subroutine
+        console.log "WTF", subroutine
+
         header_height = 30
         nib_center = V 5,5
         canvas_offset = V(0,header_height)

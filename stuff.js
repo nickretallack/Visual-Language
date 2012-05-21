@@ -18,14 +18,15 @@ module.directive('linkNib', function() {
 
 module.directive('nib', function() {
   return {
-    template: "<div class=\"nib\" ng-mousedown=\"click_nib(input, $event)\" ng-mouseup=\"release_nib(input)\"></div>",
+    template: "<div class=\"nib\" ng-mousedown=\"click_nib(nib(), $event)\" ng-mouseup=\"release_nib(nib())\"></div>",
     replace: true,
+    transclude: true,
     scope: {
-      nib: 'bind'
+      nib: 'accessor'
     },
     link: function(scope, element, attributes) {
       var nib;
-      nib = scope.$eval(attributes.linkNib);
+      nib = scope.nib();
       return nib.view = $(element);
     }
   };
@@ -77,14 +78,12 @@ transform_position = function(position, editor_size) {
   };
 };
 
-module.directive('node', function() {
-  return {
-    link: function(scope, element, attributes) {
-      var node;
-      return node = scope.$eval(attributes.node);
-    }
-  };
-});
+/*
+module.directive 'node', ->
+    link:(scope, element, attributes) ->
+        node = scope.$eval attributes.node
+*/
+
 
 module.directive('subroutine', function() {
   return {
@@ -94,7 +93,9 @@ module.directive('subroutine', function() {
       $$element = $($element);
       $scope.position = function(node) {
         var position;
+        console.log("WTF");
         position = transform_position(node.position, $scope.editor_size);
+        console.log(JSON.stringify(position));
         return {
           left: position.x + 'px',
           top: position.y + 'px'
@@ -160,6 +161,7 @@ module.directive('subroutine', function() {
         return draw();
       };
       subroutine = $scope.$eval($attrs.subroutine);
+      console.log("WTF", subroutine);
       header_height = 30;
       nib_center = V(5, 5);
       canvas_offset = V(0, header_height);
