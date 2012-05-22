@@ -10,16 +10,28 @@ module = angular.module('vislang', []);
 
 module.directive('nib', function() {
   return {
-    template: "<div class=\"nib\" ng-mousedown=\"click_nib(nib(), $event)\" ng-mouseup=\"release_nib(nib())\"></div>",
+    template: "<div class=\"nib\"></div>",
     replace: true,
     transclude: true,
+    require: '^subroutine',
     scope: {
       nib: 'accessor'
     },
-    link: function(scope, element, attributes) {
+    link: function(scope, element, attributes, controller) {
       var nib;
+      console.log(arguments);
       nib = scope.nib();
-      return nib.view = $(element);
+      nib.view = $(element);
+      element.bind('mousedown', function(event) {
+        return scope.$apply(function() {
+          return controller.click_nib(nib, event);
+        });
+      });
+      return element.bind('mouseup', function(event) {
+        return scope.$apply(function() {
+          return controller.release_nib(nib, event);
+        });
+      });
     }
   };
 });
@@ -126,16 +138,18 @@ module.directive('subroutine', function() {
       });
       $scope.dragging = [];
       $scope.click_node = function(node, $event) {
+        console.log("click node");
         $event.preventDefault();
         return $scope.dragging = [node];
       };
       $scope.drawing = null;
-      $scope.click_nib = function(nib, $event) {
+      this.click_nib = $scope.click_nib = function(nib, $event) {
+        console.log("click nib");
         $event.preventDefault();
         $event.stopPropagation();
         return $scope.drawing = nib;
       };
-      $scope.release_nib = function(nib) {
+      this.release_nib = $scope.release_nib = function(nib) {
         var from, to, _ref;
         if ($scope.drawing) {
           _ref = [nib, $scope.drawing], from = _ref[0], to = _ref[1];

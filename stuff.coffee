@@ -4,14 +4,20 @@ V(1,1).plus(V(2,2))
 module = angular.module 'vislang', []
 
 module.directive 'nib', ->
-    template:"""<div class="nib" ng-mousedown="click_nib(nib(), $event)" ng-mouseup="release_nib(nib())"></div>"""
+    template:"""<div class="nib"></div>"""
     replace:true
     transclude:true
+    require:'^subroutine'
     scope:
         nib:'accessor'
-    link:(scope, element, attributes) ->
+    link:(scope, element, attributes, controller) ->
+        console.log arguments
         nib = scope.nib()
         nib.view = $ element
+        element.bind 'mousedown', (event) -> scope.$apply ->
+            controller.click_nib nib, event
+        element.bind 'mouseup', (event) -> scope.$apply ->
+            controller.release_nib nib, event
 
 
 module.directive 'shrinkyInput', ->
@@ -80,16 +86,18 @@ module.directive 'subroutine', ->
 
         $scope.dragging = []
         $scope.click_node = (node, $event) ->
+            console.log "click node"
             $event.preventDefault()
             $scope.dragging = [node]
 
         $scope.drawing = null
-        $scope.click_nib = (nib, $event) ->
+        this.click_nib = $scope.click_nib = (nib, $event) ->
+            console.log "click nib"
             $event.preventDefault()
             $event.stopPropagation()
             $scope.drawing = nib
 
-        $scope.release_nib = (nib) ->
+        this.release_nib = $scope.release_nib = (nib) ->
             if $scope.drawing
                 [from, to] = [nib, $scope.drawing]
                 if from isnt to and not ((from instanceof Input and to instanceof Input) or (from instanceof Output and to instanceof Output))
