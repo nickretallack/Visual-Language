@@ -514,3 +514,5 @@ ignore_if_disconnected = (procedure) ->
       return procedure()
    catch exception
       throw exception unless exception instanceof NotConnected
+
+eval_expression = (expression) -> eval "(#{expression})"

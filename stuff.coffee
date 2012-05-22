@@ -156,33 +156,6 @@ module.controller 'library', ($scope, subroutines, $q) ->
             $scope.literal_text = ''
             hide()
 
-
-blab = -> console.log arguments
-
-last = (list) -> list[list.length-1]
-obj_first = (obj) ->
-    for key, item of obj
-        return item
-
-update = ->
-    renderer.render scene, camera
-
-animations_counter = 0
-
-animate = (field) ->
-    requestAnimationFrame (-> animate field), field
-    animations_counter += 1
-    update()
-eval_expression = (expression) -> eval "(#{expression})"
-
-
-### FACTORIES ###
-
-
-mouse_coords = (event) ->
-    V event.offsetX, editor_size.y-event.offsetY
-    #V ((event.clientX / window.innerWidth) * 2 - 1), (-(event.clientY / window.innerHeight) * 2 + 1)
-
 ### INTERACTION ###
 
 dragging_object = null
@@ -224,6 +197,7 @@ module.controller 'Controller', ($scope, $http, $location) ->
     $scope.tab_click = (tab) ->
         $scope.$root.overlay = if $scope.$root.overlay is tab then null else tab
 
+    ###
     saving = false
     start_saving = -> #setInterval save_state, 500 if not saving
     $scope.log = (expression) -> console.log expression
@@ -338,7 +312,7 @@ module.controller 'Controller', ($scope, $http, $location) ->
         localStorage.state = JSON.stringify state
 
     #system_arrow = make_arrow V(0,0), V(1,0), false
-
+    ###
 
 module.factory 'subroutines', ($q, $http) ->
     if false #localStorage.state?

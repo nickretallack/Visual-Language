@@ -1,4 +1,4 @@
-var animate, animations_counter, async, blab, connecting_object, delay, dragging_object, dragging_offset, eval_expression, highlight, highlighted_objects, last, module, mouse_coords, obj_first, pretty_json, transform_position, unhighlight, unhighlight_all, update, valid_json, whitespace_split,
+var async, connecting_object, delay, dragging_object, dragging_offset, highlight, highlighted_objects, module, pretty_json, transform_position, unhighlight, unhighlight_all, valid_json, whitespace_split,
   __slice = Array.prototype.slice;
 
 module = angular.module('vislang', []);
@@ -231,47 +231,6 @@ module.controller('library', function($scope, subroutines, $q) {
   };
 });
 
-blab = function() {
-  return console.log(arguments);
-};
-
-last = function(list) {
-  return list[list.length - 1];
-};
-
-obj_first = function(obj) {
-  var item, key;
-  for (key in obj) {
-    item = obj[key];
-    return item;
-  }
-};
-
-update = function() {
-  return renderer.render(scene, camera);
-};
-
-animations_counter = 0;
-
-animate = function(field) {
-  requestAnimationFrame((function() {
-    return animate(field);
-  }), field);
-  animations_counter += 1;
-  return update();
-};
-
-eval_expression = function(expression) {
-  return eval("(" + expression + ")");
-};
-
-/* FACTORIES
-*/
-
-mouse_coords = function(event) {
-  return V(event.offsetX, editor_size.y - event.offsetY);
-};
-
 /* INTERACTION
 */
 
@@ -328,153 +287,125 @@ pretty_json = function(obj) {
 };
 
 module.controller('Controller', function($scope, $http, $location) {
-  var import_data, save_state, saving, start_saving,
-    _this = this;
-  $scope.tab_click = function(tab) {
+  return $scope.tab_click = function(tab) {
     return $scope.$root.overlay = $scope.$root.overlay === tab ? null : tab;
   };
-  saving = false;
-  start_saving = function() {};
-  $scope.log = function(expression) {
-    return console.log(expression);
-  };
-  $scope.import_export_text = '';
-  $scope.subroutines = {};
-  $scope.builtins = {};
-  $scope["import"] = function() {
-    import_data(valid_source($scope.import_export_text));
-    if (current_scope) $scope.edit(current_scope);
-    return start_saving();
-  };
-  import_data = function(source_data) {
-    var builtin, data, id, subroutine, _ref, _ref2, _results;
-    data = load_state(source_data);
-    _ref = data.subroutines;
-    for (id in _ref) {
-      subroutine = _ref[id];
-      $scope.subroutines[subroutine.id] = subroutine;
-    }
-    _ref2 = data.builtins;
-    _results = [];
-    for (id in _ref2) {
-      builtin = _ref2[id];
-      _results.push($scope.builtins[builtin.id] = builtin);
-    }
-    return _results;
-  };
-  $scope.export_all = function() {
-    var data;
-    data = {
-      subroutines: $scope.subroutines,
-      builtins: $scope.builtins,
-      schema_version: schema_version
-    };
-    return $scope.import_export_text = pretty_json(data);
-  };
-  $scope.export_subroutine = function(subroutine) {
-    return $scope.import_export_text = pretty_json(subroutine["export"]());
-  };
-  $scope.export_builtin = function(builtin) {
-    return $scope.import_export_text = pretty_json(builtin["export"]());
-  };
-  $scope.revert = function() {
-    $scope.subroutines = {};
-    $scope.builtins = {};
-    return $scope.load_example_programs();
-  };
-  $scope.initial_subroutine = {
-    name: '',
-    inputs: [],
-    outputs: []
-  };
-  $scope.new_subroutine = angular.copy($scope.initial_subroutine);
-  $scope.delete_subroutine = function(subroutine) {
-    if (subroutine.id === current_scope.id) {
-      $scope.current_object = null;
-      teardown_field();
-    }
-    return delete $scope.subroutines[subroutine.id];
-  };
-  $scope.delete_builtin = function(builtin) {
-    return delete $scope.builtins[builtin.id];
-  };
-  $scope.add_subroutine = function() {
-    var connection, contained_connections, id, in_connections, nib, node, out_connections, subroutine, _ref, _ref2, _ref3, _ref4;
-    subroutine = new Subroutine($scope.new_subroutine.name, $scope.new_subroutine.inputs, $scope.new_subroutine.outputs);
-    in_connections = {};
-    out_connections = {};
-    for (id in highlighted_objects) {
-      node = highlighted_objects[id];
-      _ref = node.inputs;
-      for (id in _ref) {
-        nib = _ref[id];
-        _ref2 = nib.connections;
-        for (id in _ref2) {
-          connection = _ref2[id];
-          in_connections[connection.connection.id] = connection.connection;
-        }
-      }
-      _ref3 = node.outputs;
-      for (id in _ref3) {
-        nib = _ref3[id];
-        _ref4 = nib.connections;
-        for (id in _ref4) {
-          connection = _ref4[id];
-          out_connections[connection.connection.id] = connection.connection;
-        }
-      }
-    }
-    contained_connections = {};
-    for (id in in_connections) {
-      connection = in_connections[id];
-      if (connection.id in out_connections) {
-        contained_connections[connection.id] = connection;
-        delete in_connections[connection.id];
-        delete out_connections[connection.id];
-      }
-    }
-    for (id in contained_connections) {
-      connection = contained_connections[id];
-      current_scope.remove_connection(connection);
-      subroutine.add_connection(connection);
-    }
-    for (id in in_connections) {
-      connection = in_connections[id];
-      connection["delete"]();
-    }
-    for (id in out_connections) {
-      connection = out_connections[id];
-      connection["delete"]();
-    }
-    for (id in highlighted_objects) {
-      node = highlighted_objects[id];
-      current_scope.remove_node(node);
-      subroutine.add_node(node);
-    }
-    $scope.subroutines[subroutine.id] = subroutine;
-    $scope.new_subroutine = angular.copy($scope.initial_subroutine);
-    $scope.new_subroutine.inputs = [];
-    $scope.new_subroutine.outputs = [];
-    return $scope.edit(subroutine);
-  };
-  $scope.add_builtin = function() {
-    var builtin;
-    builtin = new Builtin({});
-    $scope.builtins[builtin.id] = builtin;
-    return $scope.edit(builtin);
-  };
-  $scope.run_subroutine = function(subroutine, output_index) {
-    return subroutine.run(output_index);
-  };
-  return save_state = function() {
-    var state;
-    state = {
-      subroutines: $scope.subroutines,
-      builtins: $scope.builtins,
-      schema_version: schema_version
-    };
-    return localStorage.state = JSON.stringify(state);
-  };
+  /*
+      saving = false
+      start_saving = -> #setInterval save_state, 500 if not saving
+      $scope.log = (expression) -> console.log expression
+  
+      $scope.import_export_text = ''
+      $scope.subroutines = {}
+      $scope.builtins = {}
+      $scope.import = ->
+          import_data valid_source $scope.import_export_text
+          $scope.edit current_scope if current_scope
+          start_saving()
+  
+      import_data = (source_data) =>
+          data = load_state source_data
+          for id, subroutine of data.subroutines
+              $scope.subroutines[subroutine.id] = subroutine
+          for id, builtin of data.builtins
+              $scope.builtins[builtin.id] = builtin
+  
+      $scope.export_all = ->
+          data =
+              subroutines:$scope.subroutines
+              builtins:$scope.builtins
+              schema_version:schema_version
+          $scope.import_export_text = pretty_json data
+  
+      $scope.export_subroutine = (subroutine) =>
+          $scope.import_export_text = pretty_json subroutine.export()
+  
+      $scope.export_builtin = (builtin) =>
+          $scope.import_export_text = pretty_json builtin.export()
+  
+      $scope.revert = ->
+          $scope.subroutines = {}
+          $scope.builtins = {}
+          $scope.load_example_programs()
+  
+      $scope.initial_subroutine =
+          name:''
+          inputs:[]
+          outputs:[]
+      $scope.new_subroutine = angular.copy $scope.initial_subroutine
+  
+      $scope.delete_subroutine = (subroutine) =>
+          if subroutine.id is current_scope.id
+              $scope.current_object = null
+              teardown_field()
+          delete $scope.subroutines[subroutine.id]
+  
+      $scope.delete_builtin = (builtin) =>
+          delete $scope.builtins[builtin.id]
+  
+      $scope.add_subroutine = =>
+          subroutine = new Subroutine $scope.new_subroutine.name, $scope.new_subroutine.inputs, $scope.new_subroutine.outputs
+  
+          # first find all the connections
+          in_connections = {}
+          out_connections = {}
+          for id, node of highlighted_objects
+              for id, nib of node.inputs
+                  for id, connection of nib.connections
+                      in_connections[connection.connection.id] = connection.connection
+              for id, nib of node.outputs
+                  for id, connection of nib.connections
+                      out_connections[connection.connection.id] = connection.connection
+  
+          # see which ones are contained in the system
+          contained_connections = {}
+          for id, connection of in_connections
+              if connection.id of out_connections
+                  contained_connections[connection.id] = connection
+                  delete in_connections[connection.id]
+                  delete out_connections[connection.id]
+  
+          # move the contained ones
+          for id, connection of contained_connections
+              current_scope.remove_connection connection
+              subroutine.add_connection connection
+  
+          # clip the others
+          for id, connection of in_connections
+              connection.delete()
+  
+          for id, connection of out_connections
+              connection.delete()
+  
+          # move the nodes
+          for id, node of highlighted_objects
+              current_scope.remove_node node
+              subroutine.add_node node
+  
+          $scope.subroutines[subroutine.id] = subroutine
+          $scope.new_subroutine = angular.copy $scope.initial_subroutine
+          $scope.new_subroutine.inputs = []
+          $scope.new_subroutine.outputs = []
+          $scope.edit subroutine
+  
+      $scope.add_builtin = =>
+          builtin = new Builtin {}
+          $scope.builtins[builtin.id] = builtin
+          $scope.edit builtin
+  
+      $scope.run_subroutine = (subroutine, output_index) ->
+          subroutine.run output_index
+  
+      save_state = =>
+          state =
+              subroutines:$scope.subroutines
+              builtins:$scope.builtins
+              schema_version:schema_version
+  
+          localStorage.state = JSON.stringify state
+  
+      #system_arrow = make_arrow V(0,0), V(1,0), false
+  */
 });
 
 module.factory('subroutines', function($q, $http) {
