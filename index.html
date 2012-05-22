@@ -23,9 +23,9 @@
     <a>Publish</a>
 </nav>
 
+
 <ng-view></ng-view>
 
-</div>
 
 <ng-switch on="overlay">
 
@@ -39,24 +39,23 @@
 <button ng:click="load_example_programs()">Revert Example Functions</button>
 </p>
 
+<h2>Literals (JSON)</h2>
+<form ng:submit="use_literal()"> <input ng:model="literal_text"> <button>Use Literal</button> </form>
+
 <h2>Functions</h2>
 <ul><li ng:repeat="(id, subroutine) in subroutines">
-    <a href="#{{subroutine.id}}">edit</a>
-    <a ng:click="export_subroutine(subroutine)">export</a>
-    <a ng:click="delete_subroutine(subroutine)">delete</a>
-    <a ng:click="use_subroutine(subroutine)">use</a>
-    <a ng:click="use_subroutine_value(subroutine)">value</a>
-    <span class="name">{{subroutine.name}}</span>
+    <a class="name" href="#{{subroutine.id}}">{{subroutine.name}}</a>
+    <a ng:click="use(subroutine)">use</a>
+    <a ng:click="use_value(subroutine)">value</a>
     (<span ng:repeat="input in subroutine.inputs">{{input.text || input}} </span> -&gt;
     <span ng:repeat="output in subroutine.outputs">
         <a ng:click="run_subroutine(subroutine, output.index)">{{output.text || output}}</a>
     </span>)
 </li></ul>
 
-<h2>Literals (JSON)</h2>
-<form ng:submit="use_literal()"> <input ng:model="literal_text"> <button>Use Literal</button> </form>
 </div>
 </ng-switch>
+
 
 </body>
 </html>

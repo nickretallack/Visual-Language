@@ -5,7 +5,7 @@ textarea {display:block}
 
 #inputs_editor, #outputs_editor {display:inline-block; width:300px}
 
-#top-bar {position:absolute; top:0; left:0; right:0; height:30px; line-height:30px; background:#eee;}
+#top-bar {position:relative; height:30px; line-height:30px; background:#eee;}
 #subroutine {position:absolute; top:30px; left:0; right:0; bottom:0;}
 
 .subroutine-input {position:absolute; right:0;}

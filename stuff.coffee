@@ -131,7 +131,7 @@ module.directive 'subroutine', ->
         nib_center = V 5,5
         canvas_offset = V(0,header_height)
         nib_offset = canvas_offset.minus nib_center
-        
+
         canvas = $element.find('canvas')[0]
         draw = -> async ->
             if subroutine
@@ -160,7 +160,7 @@ module.directive 'subroutine', ->
 
 
 
-        resize_canvas = -> 
+        resize_canvas = ->
             $scope.editor_size = V $$element.width(), $$element.height()
             [canvas.width, canvas.height] = $scope.editor_size.components()
             draw()
@@ -170,6 +170,7 @@ module.directive 'subroutine', ->
 
 module.config ($routeProvider) ->
     $routeProvider.when '/:id', controller:'subroutine', template:"subroutine.html"
+    $routeProvider.when '', template:"intro.html"
 
 module.controller 'subroutine', ($scope, $routeParams, subroutines, $q) ->
     $q.when subroutines, (subroutines) ->
@@ -218,7 +219,7 @@ class NodeView
 
         @shape.drag blab, blab, blab
 
-    
+
 last = (list) -> list[list.length-1]
 obj_first = (obj) ->
     for key, item of obj
@@ -284,7 +285,7 @@ get_nib_position = (nib) ->
 
 get_absolute_nib_position = (nib) ->
     Vector.from(get_nib_position(nib)).plus(half_editor_size).three()
-    
+
 
 ### INTERACTION ###
 
@@ -406,7 +407,7 @@ module.controller 'Controller', ($scope, $http, $location) ->
         for id, connection of contained_connections
             current_scope.remove_connection connection
             subroutine.add_connection connection
-        
+
         # clip the others
         for id, connection of in_connections
             connection.delete()
@@ -463,7 +464,7 @@ dissociate_exception = (procedure) ->
         procedure()
     catch exception
         setTimeout -> throw exception # don't break this execution thread because of a loading exception
-    
+
 
 ignore_if_disconnected = (procedure) ->
    try
