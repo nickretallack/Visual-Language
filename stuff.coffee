@@ -1,12 +1,15 @@
-editor_size = V window.innerWidth,window.innerHeight
-V(1,1).plus(V(2,2))
-
 module = angular.module 'vislang', []
+
+async = setTimeout
+delay = (time, procedure) -> setTimeout procedure, time
+
+transform_position = (position, editor_size) ->
+    x:position.y + editor_size.x/2
+    y:position.x + editor_size.y/2
 
 module.directive 'nib', ->
     template:"""<div class="nib"></div>"""
     replace:true
-    transclude:true
     require:'^subroutine'
     scope:
         nib:'accessor'
@@ -18,9 +21,9 @@ module.directive 'nib', ->
         element.bind 'mouseup', (event) -> scope.$apply ->
             controller.release_nib nib, event
 
-
 module.directive 'shrinkyInput', ->
-    (scope, element, attributes) ->
+    require:'^subroutine'
+    link:(scope, element, attributes, controller) ->
         doppelganger = $ """<span class="offscreen"></span>"""
         $element = $ element
         doppelganger.css
@@ -35,63 +38,30 @@ module.directive 'shrinkyInput', ->
             doppelganger.text text
             async ->
                 $(element).css width:doppelganger.width()+2
-                scope.draw_connections()
-
-
-async = setTimeout
-delay = (time, procedure) -> setTimeout procedure, time
-
-module.directive 'connections', ->
-    link:(scope, element, attributes) ->
-
-transform_position = (position, editor_size) ->
-    x:position.y + editor_size.x/2
-    y:position.x + editor_size.y/2
-
-###
-module.directive 'node', ->
-    link:(scope, element, attributes) ->
-        node = scope.$eval attributes.node
-###
+                controller.draw()
 
 module.directive 'subroutine', ->
     link:(scope, element, attributes) ->
     controller:($scope, $element, $attrs) ->
         $$element = $ $element
+        subroutine = $scope.$eval $attrs.subroutine
+        $scope.dragging = []
+        $scope.drawing = null # nib you're drawing a line from right now
+
+        $scope.evaluate_output = (output) ->
+            subroutine.run output
+
+        ### Node and nib interaction ###
         $scope.position = (node) ->
             position = transform_position node.position, $scope.editor_size
             left:position.x + 'px'
             top:position.y + 'px'
-        $scope.pairs = (node) ->
-            pairs = []
-            for index in [0...Math.max node.inputs.length, node.outputs.length]
-            #for input, output in _.zip(node.inputs, node.outputs)
-                pairs.push input:node.inputs[index], output:node.outputs[index]
-            pairs
 
-        $scope.mouse_position = V 0,0
-        $element.bind 'mousemove', (event) -> $scope.$apply ->
-            new_mouse_position = V event.clientX, event.clientY
-            mouse_delta = $scope.mouse_position.minus new_mouse_position
-            $scope.mouse_position = new_mouse_position
-            for node in $scope.dragging
-                node.position = node.position.plus V -mouse_delta.y, -mouse_delta.x
-
-            draw()
-        $element.bind 'mouseup', (event) -> $scope.$apply ->
-            $scope.dragging = []
-            $scope.drawing = null
-            draw()
-
-        $scope.dragging = []
         $scope.click_node = (node, $event) ->
-            console.log "click node"
             $event.preventDefault()
             $scope.dragging = [node]
 
-        $scope.drawing = null
         this.click_nib = $scope.click_nib = (nib, $event) ->
-            console.log "click nib"
             $event.preventDefault()
             $event.stopPropagation()
             $scope.drawing = nib
@@ -102,24 +72,27 @@ module.directive 'subroutine', ->
                 if from isnt to and not ((from instanceof Input and to instanceof Input) or (from instanceof Output and to instanceof Output))
                     from.connect to
 
-        $scope.evaluate_output = (output) ->
-            subroutine.run output
+        $element.bind 'mouseup', (event) -> $scope.$apply ->
+            $scope.dragging = []
+            $scope.drawing = null
+            draw()
 
+        $scope.mouse_position = V 0,0
+        $element.bind 'mousemove', (event) -> $scope.$apply ->
+            new_mouse_position = V event.clientX, event.clientY
+            mouse_delta = $scope.mouse_position.minus new_mouse_position
+            $scope.mouse_position = new_mouse_position
+            for node in $scope.dragging
+                node.position = node.position.plus V -mouse_delta.y, -mouse_delta.x
+            draw()
 
-
-
-
-        $scope.draw_connections = -> draw()
-
-        subroutine = $scope.$eval $attrs.subroutine
-
+        ### Drawing the Connection Field ###
         header_height = 30
         nib_center = V 5,5
         canvas_offset = V(0,header_height)
         nib_offset = canvas_offset.minus nib_center
-
         canvas = $element.find('canvas')[0]
-        draw = -> async ->
+        @draw = draw = -> async ->
             if subroutine
                 line_height = 16
                 c = canvas.getContext '2d'
@@ -143,8 +116,6 @@ module.directive 'subroutine', ->
                     c.moveTo nib_position.components()...
                     c.lineTo end_position.components()...
                     c.stroke()
-
-
 
         resize_canvas = ->
             $scope.editor_size = V $$element.width(), $$element.height()
@@ -186,46 +157,7 @@ module.controller 'library', ($scope, subroutines, $q) ->
             hide()
 
 
-###
-<ul class="inputs"><li ng-repeat="input in node.inputs">{{input.text}}</li></ul>
-<ul class="outputs"><li ng-repeat="output in node.outputs">{{output.text}}</li></ul>
-
-
-module.directive 'subroutine', ->
-    (scope, element, attributes) ->
-        graphics = Raphael element[0], editor_size.components()...
-        scope.$watch attributes.subroutine, (subroutine) ->
-            graphics.clear()
-            for id, node of subroutine.nodes
-                new NodeView graphics, node
-###
-
 blab = -> console.log arguments
-
-class NodeView
-    constructor: (@graphics, @node) ->
-        @set = graphics.set()
-
-        size = V(50,50)
-
-        # account for the fact that the origin is in the middle, and y
-        # has its sign reversed
-        editor_offset = editor_size.scale 0.5
-        position = V(node.position).plus editor_offset
-        position.y = editor_size.y - position.y
-
-        @text = graphics.text position.x, position.y+10, node.text
-        @text.attr 'text-anchor', 'middle'
-        @set.push @text
-        text_width = @text.getBBox().width
-
-        corner_position = position.minus V(text_width/2, 0)
-        @shape = graphics.rect corner_position.x-5, corner_position.y, text_width+10,size.y
-        @shape.attr 'fill', 'blue'
-        @set.push @shape
-
-        @shape.drag blab, blab, blab
-
 
 last = (list) -> list[list.length-1]
 obj_first = (obj) ->
@@ -246,53 +178,10 @@ eval_expression = (expression) -> eval "(#{expression})"
 
 ### FACTORIES ###
 
-make_connection = (source, target) ->
-    if source.model instanceof Input
-        input = source.model
-        output = target.model
-    else
-        input = target.model
-        output = source.model
-    return new Connection input, output
-
-make_arrow = (source, target, scoped=true) ->
-    arrow = new THREE.Object3D()
-    color = 0x888888
-
-    source = source.three() if 'three' of source
-    target = target.three() if 'three' of target
-
-    line_geometry = new THREE.Geometry()
-    line_material = new THREE.LineBasicMaterial color: color, linewidth: 3
-    line_geometry.vertices.push new THREE.Vertex source
-    line_geometry.vertices.push new THREE.Vertex target
-    line = new THREE.Line line_geometry, line_material
-    current_scope.view.add line if scoped
-    return line
-
-### CORE HELPERS ###
-
-ray_cast_mouse = ->
-    mouse = mouse_coords(event).three()
-    mouse.z = 1
-    forward = new THREE.Vector3 0,0,-1
-    ray = new THREE.Ray mouse, forward
-    intersections = ray.intersectScene scene
-    if intersections.length > 0
-        (last intersections).object.parent
 
 mouse_coords = (event) ->
     V event.offsetX, editor_size.y-event.offsetY
     #V ((event.clientX / window.innerWidth) * 2 - 1), (-(event.clientY / window.innerHeight) * 2 + 1)
-
-get_nib_position = (nib) ->
-    if nib.parent instanceof Node
-        Vector.from(nib.view.position).plus(nib.view.parent.position).three()
-    else Vector.from(nib.view.position).three()
-
-get_absolute_nib_position = (nib) ->
-    Vector.from(get_nib_position(nib)).plus(half_editor_size).three()
-
 
 ### INTERACTION ###
 

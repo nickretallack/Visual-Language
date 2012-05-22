@@ -1,17 +1,25 @@
-var NodeView, animate, animations_counter, async, blab, connecting_object, delay, dragging_object, dragging_offset, editor_size, eval_expression, get_absolute_nib_position, get_nib_position, highlight, highlighted_objects, last, make_arrow, make_connection, module, mouse_coords, obj_first, pretty_json, ray_cast_mouse, transform_position, unhighlight, unhighlight_all, update, valid_json, whitespace_split,
+var animate, animations_counter, async, blab, connecting_object, delay, dragging_object, dragging_offset, eval_expression, highlight, highlighted_objects, last, module, mouse_coords, obj_first, pretty_json, transform_position, unhighlight, unhighlight_all, update, valid_json, whitespace_split,
   __slice = Array.prototype.slice;
 
-editor_size = V(window.innerWidth, window.innerHeight);
-
-V(1, 1).plus(V(2, 2));
-
 module = angular.module('vislang', []);
+
+async = setTimeout;
+
+delay = function(time, procedure) {
+  return setTimeout(procedure, time);
+};
+
+transform_position = function(position, editor_size) {
+  return {
+    x: position.y + editor_size.x / 2,
+    y: position.x + editor_size.y / 2
+  };
+};
 
 module.directive('nib', function() {
   return {
     template: "<div class=\"nib\"></div>",
     replace: true,
-    transclude: true,
     require: '^subroutine',
     scope: {
       nib: 'accessor'
@@ -35,55 +43,33 @@ module.directive('nib', function() {
 });
 
 module.directive('shrinkyInput', function() {
-  return function(scope, element, attributes) {
-    var $element, doppelganger;
-    doppelganger = $("<span class=\"offscreen\"></span>");
-    $element = $(element);
-    doppelganger.css({
-      padding: $element.css('padding'),
-      border: $element.css('border'),
-      'min-width': '3ex',
-      position: 'absolute',
-      left: '-9999px',
-      top: '-9999px'
-    });
-    $(document.body).append(doppelganger);
-    return scope.$watch(attributes.shrinkyInput, function(text) {
-      doppelganger.text(text);
-      return async(function() {
-        $(element).css({
-          width: doppelganger.width() + 2
-        });
-        return scope.draw_connections();
+  return {
+    require: '^subroutine',
+    link: function(scope, element, attributes, controller) {
+      var $element, doppelganger;
+      doppelganger = $("<span class=\"offscreen\"></span>");
+      $element = $(element);
+      doppelganger.css({
+        padding: $element.css('padding'),
+        border: $element.css('border'),
+        'min-width': '3ex',
+        position: 'absolute',
+        left: '-9999px',
+        top: '-9999px'
       });
-    });
+      $(document.body).append(doppelganger);
+      return scope.$watch(attributes.shrinkyInput, function(text) {
+        doppelganger.text(text);
+        return async(function() {
+          $(element).css({
+            width: doppelganger.width() + 2
+          });
+          return controller.draw();
+        });
+      });
+    }
   };
 });
-
-async = setTimeout;
-
-delay = function(time, procedure) {
-  return setTimeout(procedure, time);
-};
-
-module.directive('connections', function() {
-  return {
-    link: function(scope, element, attributes) {}
-  };
-});
-
-transform_position = function(position, editor_size) {
-  return {
-    x: position.y + editor_size.x / 2,
-    y: position.x + editor_size.y / 2
-  };
-};
-
-/*
-module.directive 'node', ->
-    link:(scope, element, attributes) ->
-        node = scope.$eval attributes.node
-*/
 
 module.directive('subroutine', function() {
   return {
@@ -91,6 +77,14 @@ module.directive('subroutine', function() {
     controller: function($scope, $element, $attrs) {
       var $$element, canvas, canvas_offset, draw, header_height, nib_center, nib_offset, resize_canvas, subroutine;
       $$element = $($element);
+      subroutine = $scope.$eval($attrs.subroutine);
+      $scope.dragging = [];
+      $scope.drawing = null;
+      $scope.evaluate_output = function(output) {
+        return subroutine.run(output);
+      };
+      /* Node and nib interaction
+      */
       $scope.position = function(node) {
         var position;
         position = transform_position(node.position, $scope.editor_size);
@@ -99,17 +93,31 @@ module.directive('subroutine', function() {
           top: position.y + 'px'
         };
       };
-      $scope.pairs = function(node) {
-        var index, pairs, _ref;
-        pairs = [];
-        for (index = 0, _ref = Math.max(node.inputs.length, node.outputs.length); 0 <= _ref ? index < _ref : index > _ref; 0 <= _ref ? index++ : index--) {
-          pairs.push({
-            input: node.inputs[index],
-            output: node.outputs[index]
-          });
-        }
-        return pairs;
+      $scope.click_node = function(node, $event) {
+        $event.preventDefault();
+        return $scope.dragging = [node];
       };
+      this.click_nib = $scope.click_nib = function(nib, $event) {
+        $event.preventDefault();
+        $event.stopPropagation();
+        return $scope.drawing = nib;
+      };
+      this.release_nib = $scope.release_nib = function(nib) {
+        var from, to, _ref;
+        if ($scope.drawing) {
+          _ref = [nib, $scope.drawing], from = _ref[0], to = _ref[1];
+          if (from !== to && !((from instanceof Input && to instanceof Input) || (from instanceof Output && to instanceof Output))) {
+            return from.connect(to);
+          }
+        }
+      };
+      $element.bind('mouseup', function(event) {
+        return $scope.$apply(function() {
+          $scope.dragging = [];
+          $scope.drawing = null;
+          return draw();
+        });
+      });
       $scope.mouse_position = V(0, 0);
       $element.bind('mousemove', function(event) {
         return $scope.$apply(function() {
@@ -125,48 +133,14 @@ module.directive('subroutine', function() {
           return draw();
         });
       });
-      $element.bind('mouseup', function(event) {
-        return $scope.$apply(function() {
-          $scope.dragging = [];
-          $scope.drawing = null;
-          return draw();
-        });
-      });
-      $scope.dragging = [];
-      $scope.click_node = function(node, $event) {
-        console.log("click node");
-        $event.preventDefault();
-        return $scope.dragging = [node];
-      };
-      $scope.drawing = null;
-      this.click_nib = $scope.click_nib = function(nib, $event) {
-        console.log("click nib");
-        $event.preventDefault();
-        $event.stopPropagation();
-        return $scope.drawing = nib;
-      };
-      this.release_nib = $scope.release_nib = function(nib) {
-        var from, to, _ref;
-        if ($scope.drawing) {
-          _ref = [nib, $scope.drawing], from = _ref[0], to = _ref[1];
-          if (from !== to && !((from instanceof Input && to instanceof Input) || (from instanceof Output && to instanceof Output))) {
-            return from.connect(to);
-          }
-        }
-      };
-      $scope.evaluate_output = function(output) {
-        return subroutine.run(output);
-      };
-      $scope.draw_connections = function() {
-        return draw();
-      };
-      subroutine = $scope.$eval($attrs.subroutine);
+      /* Drawing the Connection Field
+      */
       header_height = 30;
       nib_center = V(5, 5);
       canvas_offset = V(0, header_height);
       nib_offset = canvas_offset.minus(nib_center);
       canvas = $element.find('canvas')[0];
-      draw = function() {
+      this.draw = draw = function() {
         return async(function() {
           var c, connection, end_position, id, input_element, input_position, line_height, nib_position, output_element, output_position, _ref;
           if (subroutine) {
@@ -257,49 +231,9 @@ module.controller('library', function($scope, subroutines, $q) {
   };
 });
 
-/*
-<ul class="inputs"><li ng-repeat="input in node.inputs">{{input.text}}</li></ul>
-<ul class="outputs"><li ng-repeat="output in node.outputs">{{output.text}}</li></ul>
-
-
-module.directive 'subroutine', ->
-    (scope, element, attributes) ->
-        graphics = Raphael element[0], editor_size.components()...
-        scope.$watch attributes.subroutine, (subroutine) ->
-            graphics.clear()
-            for id, node of subroutine.nodes
-                new NodeView graphics, node
-*/
-
 blab = function() {
   return console.log(arguments);
 };
-
-NodeView = (function() {
-
-  function NodeView(graphics, node) {
-    var corner_position, editor_offset, position, size, text_width;
-    this.graphics = graphics;
-    this.node = node;
-    this.set = graphics.set();
-    size = V(50, 50);
-    editor_offset = editor_size.scale(0.5);
-    position = V(node.position).plus(editor_offset);
-    position.y = editor_size.y - position.y;
-    this.text = graphics.text(position.x, position.y + 10, node.text);
-    this.text.attr('text-anchor', 'middle');
-    this.set.push(this.text);
-    text_width = this.text.getBBox().width;
-    corner_position = position.minus(V(text_width / 2, 0));
-    this.shape = graphics.rect(corner_position.x - 5, corner_position.y, text_width + 10, size.y);
-    this.shape.attr('fill', 'blue');
-    this.set.push(this.shape);
-    this.shape.drag(blab, blab, blab);
-  }
-
-  return NodeView;
-
-})();
 
 last = function(list) {
   return list[list.length - 1];
@@ -334,64 +268,8 @@ eval_expression = function(expression) {
 /* FACTORIES
 */
 
-make_connection = function(source, target) {
-  var input, output;
-  if (source.model instanceof Input) {
-    input = source.model;
-    output = target.model;
-  } else {
-    input = target.model;
-    output = source.model;
-  }
-  return new Connection(input, output);
-};
-
-make_arrow = function(source, target, scoped) {
-  var arrow, color, line, line_geometry, line_material;
-  if (scoped == null) scoped = true;
-  arrow = new THREE.Object3D();
-  color = 0x888888;
-  if ('three' in source) source = source.three();
-  if ('three' in target) target = target.three();
-  line_geometry = new THREE.Geometry();
-  line_material = new THREE.LineBasicMaterial({
-    color: color,
-    linewidth: 3
-  });
-  line_geometry.vertices.push(new THREE.Vertex(source));
-  line_geometry.vertices.push(new THREE.Vertex(target));
-  line = new THREE.Line(line_geometry, line_material);
-  if (scoped) current_scope.view.add(line);
-  return line;
-};
-
-/* CORE HELPERS
-*/
-
-ray_cast_mouse = function() {
-  var forward, intersections, mouse, ray;
-  mouse = mouse_coords(event).three();
-  mouse.z = 1;
-  forward = new THREE.Vector3(0, 0, -1);
-  ray = new THREE.Ray(mouse, forward);
-  intersections = ray.intersectScene(scene);
-  if (intersections.length > 0) return (last(intersections)).object.parent;
-};
-
 mouse_coords = function(event) {
   return V(event.offsetX, editor_size.y - event.offsetY);
-};
-
-get_nib_position = function(nib) {
-  if (nib.parent instanceof Node) {
-    return Vector.from(nib.view.position).plus(nib.view.parent.position).three();
-  } else {
-    return Vector.from(nib.view.position).three();
-  }
-};
-
-get_absolute_nib_position = function(nib) {
-  return Vector.from(get_nib_position(nib)).plus(half_editor_size).three();
 };
 
 /* INTERACTION
