@@ -106,11 +106,6 @@ module.directive 'subroutine', ->
             subroutine.run output
 
 
-        $scope.literal_text = ''
-        $scope.use_literal = =>
-            if valid_json $scope.literal_text
-                new Literal V(0,0), $scope.literal_text
-                $scope.literal_text = ''
 
 
 
@@ -170,15 +165,25 @@ module.controller 'subroutine', ($scope, $routeParams, subroutines, $q) ->
 module.controller 'library', ($scope, subroutines, $q) ->
     $scope.subroutines = subroutines
 
+    hide = -> $scope.$root.overlay = null
+
     $scope.use = (subroutine) =>
         if subroutine instanceof Subroutine
             new SubroutineApplication $scope.$root.current_object, V(0,0), subroutine
         else
             new BuiltinApplication $scope.$root.current_object, V(0,0), subroutine
+        hide()
 
     $scope.use_value = (subroutine) =>
         new Literal $scope.$root.current_object, V(0,0), subroutine
+        hide()
 
+    $scope.literal_text = ''
+    $scope.use_literal = =>
+        if valid_json $scope.literal_text
+            new Literal $scope.$root.current_object, V(0,0), $scope.literal_text
+            $scope.literal_text = ''
+            hide()
 
 
 ###
@@ -327,9 +332,8 @@ valid_json = (json) ->
 pretty_json = (obj) -> JSON.stringify obj, undefined, 2
 
 module.controller 'Controller', ($scope, $http, $location) ->
-    $scope.overlay = null
     $scope.tab_click = (tab) ->
-        $scope.overlay = if $scope.overlay is tab then null else tab
+        $scope.$root.overlay = if $scope.$root.overlay is tab then null else tab
 
     saving = false
     start_saving = -> #setInterval save_state, 500 if not saving

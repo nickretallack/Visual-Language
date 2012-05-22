@@ -89,8 +89,7 @@ module.directive('subroutine', function() {
   return {
     link: function(scope, element, attributes) {},
     controller: function($scope, $element, $attrs) {
-      var $$element, canvas, canvas_offset, draw, header_height, nib_center, nib_offset, resize_canvas, subroutine,
-        _this = this;
+      var $$element, canvas, canvas_offset, draw, header_height, nib_center, nib_offset, resize_canvas, subroutine;
       $$element = $($element);
       $scope.position = function(node) {
         var position;
@@ -157,13 +156,6 @@ module.directive('subroutine', function() {
       };
       $scope.evaluate_output = function(output) {
         return subroutine.run(output);
-      };
-      $scope.literal_text = '';
-      $scope.use_literal = function() {
-        if (valid_json($scope.literal_text)) {
-          new Literal(V(0, 0), $scope.literal_text);
-          return $scope.literal_text = '';
-        }
       };
       $scope.draw_connections = function() {
         return draw();
@@ -237,17 +229,31 @@ module.controller('subroutine', function($scope, $routeParams, subroutines, $q) 
 });
 
 module.controller('library', function($scope, subroutines, $q) {
-  var _this = this;
+  var hide,
+    _this = this;
   $scope.subroutines = subroutines;
+  hide = function() {
+    return $scope.$root.overlay = null;
+  };
   $scope.use = function(subroutine) {
     if (subroutine instanceof Subroutine) {
-      return new SubroutineApplication($scope.$root.current_object, V(0, 0), subroutine);
+      new SubroutineApplication($scope.$root.current_object, V(0, 0), subroutine);
     } else {
-      return new BuiltinApplication($scope.$root.current_object, V(0, 0), subroutine);
+      new BuiltinApplication($scope.$root.current_object, V(0, 0), subroutine);
     }
+    return hide();
   };
-  return $scope.use_value = function(subroutine) {
-    return new Literal($scope.$root.current_object, V(0, 0), subroutine);
+  $scope.use_value = function(subroutine) {
+    new Literal($scope.$root.current_object, V(0, 0), subroutine);
+    return hide();
+  };
+  $scope.literal_text = '';
+  return $scope.use_literal = function() {
+    if (valid_json($scope.literal_text)) {
+      new Literal($scope.$root.current_object, V(0, 0), $scope.literal_text);
+      $scope.literal_text = '';
+      return hide();
+    }
   };
 });
 
@@ -446,9 +452,8 @@ pretty_json = function(obj) {
 module.controller('Controller', function($scope, $http, $location) {
   var import_data, save_state, saving, start_saving,
     _this = this;
-  $scope.overlay = null;
   $scope.tab_click = function(tab) {
-    return $scope.overlay = $scope.overlay === tab ? null : tab;
+    return $scope.$root.overlay = $scope.$root.overlay === tab ? null : tab;
   };
   saving = false;
   start_saving = function() {};
