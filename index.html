@@ -8,8 +8,8 @@
 <script src="common/underscore.js"></script>
 <script src="common/minified/jquery-1.7.2.min.js"></script>
 <script src="common/uuid.js"></script>
-<script src="language.js"></script>
 <script src="stuff.js"></script>
+<script src="language.js"></script>
 <!--<script src="common/crypto/rollups/sha256.js"-->
 <link rel="stylesheet" href="common/reset.css">
 <link rel="stylesheet" href="style.css">
@@ -17,7 +17,8 @@
 
 <body ng:controller="Controller">
 <nav id="top-bar">
-    <a>New</a>
+    <a ng-click="new_graph()">New Graph</a>
+    <a ng-click="new_code()">New Code</a>
     <a ng-click="tab_click('library')">Library</a>
     <a>Tests</a>
     <a>Publish</a>

@@ -42,7 +42,7 @@ module.directive 'shrinkyInput', ->
 
 module.directive 'subroutine', ->
     link:(scope, element, attributes) ->
-    controller:($scope, $element, $attrs) ->
+    controller:($scope, $element, $attrs, interpreter) ->
         $$element = $ $element
         subroutine = $scope.$eval $attrs.subroutine
         $scope.dragging = []
@@ -69,7 +69,10 @@ module.directive 'subroutine', ->
         this.release_nib = $scope.release_nib = (nib) ->
             if $scope.drawing
                 [from, to] = [nib, $scope.drawing]
-                if from isnt to and not ((from instanceof Input and to instanceof Input) or (from instanceof Output and to instanceof Output))
+                if from isnt to and not (
+                    (from instanceof interpreter.Input and to instanceof interpreter.Input) or
+                    (from instanceof interpreter.Output and to instanceof interpreter.Output)
+                )
                     from.connect to
 
         $element.bind 'mouseup', (event) -> $scope.$apply ->
@@ -129,30 +132,30 @@ module.config ($routeProvider) ->
     $routeProvider.when '/:id', controller:'subroutine', template:"subroutine.html"
     $routeProvider.when '', template:"intro.html"
 
-module.controller 'subroutine', ($scope, $routeParams, subroutines, $q) ->
-    $q.when subroutines, (subroutines) ->
+module.controller 'subroutine', ($scope, $routeParams, interpreter, $q) ->
+    $q.when interpreter.subroutines, (subroutines) ->
         $scope.$root.current_object = subroutines[$routeParams.id]
 
-module.controller 'library', ($scope, subroutines, $q) ->
-    $scope.subroutines = subroutines
+module.controller 'library', ($scope, $q, interpreter) ->
+    $scope.subroutines = interpreter.subroutines
 
     hide = -> $scope.$root.overlay = null
 
     $scope.use = (subroutine) =>
-        if subroutine instanceof Subroutine
-            new SubroutineApplication $scope.$root.current_object, V(0,0), subroutine
+        if subroutine instanceof interpreter.Subroutine
+            new interpreter.SubroutineApplication $scope.$root.current_object, V(0,0), subroutine
         else
-            new BuiltinApplication $scope.$root.current_object, V(0,0), subroutine
+            new interpreter.BuiltinApplication $scope.$root.current_object, V(0,0), subroutine
         hide()
 
     $scope.use_value = (subroutine) =>
-        new Literal $scope.$root.current_object, V(0,0), subroutine
+        new interpreter.Literal $scope.$root.current_object, V(0,0), subroutine
         hide()
 
     $scope.literal_text = ''
     $scope.use_literal = =>
         if valid_json $scope.literal_text
-            new Literal $scope.$root.current_object, V(0,0), $scope.literal_text
+            new interpreter.Literal $scope.$root.current_object, V(0,0), $scope.literal_text
             $scope.literal_text = ''
             hide()
 
@@ -193,9 +196,15 @@ valid_json = (json) ->
 
 pretty_json = (obj) -> JSON.stringify obj, undefined, 2
 
-module.controller 'Controller', ($scope, $http, $location) ->
+module.controller 'Controller', ($scope, $http, $location, interpreter, $q) ->
     $scope.tab_click = (tab) ->
         $scope.$root.overlay = if $scope.$root.overlay is tab then null else tab
+
+    $scope.new_graph = ->
+        $q.when interpreter.subroutines, (subroutines) ->
+            subroutine = new interpreter.Subroutine
+            subroutines[subroutine.id] = subroutine
+            $location.path "#{subroutine.id}"
 
     ###
     saving = false
@@ -313,18 +322,4 @@ module.controller 'Controller', ($scope, $http, $location) ->
 
     #system_arrow = make_arrow V(0,0), V(1,0), false
     ###
-
-module.factory 'subroutines', ($q, $http) ->
-    if false #localStorage.state?
-        source_data = JSON.parse localStorage.state
-    else
-        source_data = $q.defer()
-        $http.get('examples.json').success (data) ->
-            source_data.resolve data
-
-    $q.when source_data.promise, (source_data) ->
-        data = load_state source_data
-        subroutines = $.extend data.builtins, data.subroutines
-        subroutines
-
 

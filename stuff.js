@@ -74,7 +74,7 @@ module.directive('shrinkyInput', function() {
 module.directive('subroutine', function() {
   return {
     link: function(scope, element, attributes) {},
-    controller: function($scope, $element, $attrs) {
+    controller: function($scope, $element, $attrs, interpreter) {
       var $$element, canvas, canvas_offset, draw, header_height, nib_center, nib_offset, resize_canvas, subroutine;
       $$element = $($element);
       subroutine = $scope.$eval($attrs.subroutine);
@@ -106,7 +106,7 @@ module.directive('subroutine', function() {
         var from, to, _ref;
         if ($scope.drawing) {
           _ref = [nib, $scope.drawing], from = _ref[0], to = _ref[1];
-          if (from !== to && !((from instanceof Input && to instanceof Input) || (from instanceof Output && to instanceof Output))) {
+          if (from !== to && !((from instanceof interpreter.Input && to instanceof interpreter.Input) || (from instanceof interpreter.Output && to instanceof interpreter.Output))) {
             return from.connect(to);
           }
         }
@@ -196,35 +196,35 @@ module.config(function($routeProvider) {
   });
 });
 
-module.controller('subroutine', function($scope, $routeParams, subroutines, $q) {
-  return $q.when(subroutines, function(subroutines) {
+module.controller('subroutine', function($scope, $routeParams, interpreter, $q) {
+  return $q.when(interpreter.subroutines, function(subroutines) {
     return $scope.$root.current_object = subroutines[$routeParams.id];
   });
 });
 
-module.controller('library', function($scope, subroutines, $q) {
+module.controller('library', function($scope, $q, interpreter) {
   var hide,
     _this = this;
-  $scope.subroutines = subroutines;
+  $scope.subroutines = interpreter.subroutines;
   hide = function() {
     return $scope.$root.overlay = null;
   };
   $scope.use = function(subroutine) {
-    if (subroutine instanceof Subroutine) {
-      new SubroutineApplication($scope.$root.current_object, V(0, 0), subroutine);
+    if (subroutine instanceof interpreter.Subroutine) {
+      new interpreter.SubroutineApplication($scope.$root.current_object, V(0, 0), subroutine);
     } else {
-      new BuiltinApplication($scope.$root.current_object, V(0, 0), subroutine);
+      new interpreter.BuiltinApplication($scope.$root.current_object, V(0, 0), subroutine);
     }
     return hide();
   };
   $scope.use_value = function(subroutine) {
-    new Literal($scope.$root.current_object, V(0, 0), subroutine);
+    new interpreter.Literal($scope.$root.current_object, V(0, 0), subroutine);
     return hide();
   };
   $scope.literal_text = '';
   return $scope.use_literal = function() {
     if (valid_json($scope.literal_text)) {
-      new Literal($scope.$root.current_object, V(0, 0), $scope.literal_text);
+      new interpreter.Literal($scope.$root.current_object, V(0, 0), $scope.literal_text);
       $scope.literal_text = '';
       return hide();
     }
@@ -286,9 +286,17 @@ pretty_json = function(obj) {
   return JSON.stringify(obj, void 0, 2);
 };
 
-module.controller('Controller', function($scope, $http, $location) {
-  return $scope.tab_click = function(tab) {
+module.controller('Controller', function($scope, $http, $location, interpreter, $q) {
+  $scope.tab_click = function(tab) {
     return $scope.$root.overlay = $scope.$root.overlay === tab ? null : tab;
+  };
+  return $scope.new_graph = function() {
+    return $q.when(interpreter.subroutines, function(subroutines) {
+      var subroutine;
+      subroutine = new interpreter.Subroutine;
+      subroutines[subroutine.id] = subroutine;
+      return $location.path("" + subroutine.id);
+    });
   };
   /*
       saving = false
@@ -406,22 +414,4 @@ module.controller('Controller', function($scope, $http, $location) {
   
       #system_arrow = make_arrow V(0,0), V(1,0), false
   */
-});
-
-module.factory('subroutines', function($q, $http) {
-  var source_data;
-  if (false) {
-    source_data = JSON.parse(localStorage.state);
-  } else {
-    source_data = $q.defer();
-    $http.get('examples.json').success(function(data) {
-      return source_data.resolve(data);
-    });
-  }
-  return $q.when(source_data.promise, function(source_data) {
-    var data, subroutines;
-    data = load_state(source_data);
-    subroutines = $.extend(data.builtins, data.subroutines);
-    return subroutines;
-  });
 });
