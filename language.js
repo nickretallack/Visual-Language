@@ -1,4 +1,4 @@
-var Builtin, BuiltinApplication, BuiltinSyntaxError, Connection, Exit, FunctionApplication, Input, InputError, Literal, LiteralValue, Nib, Node, NotConnected, NotImplemented, Output, RuntimeException, SubRoutine, SubroutineApplication, UnknownNode, all_builtins, all_subroutines, boxes, current_scope, execute, load_implementation, load_state, node_registry, schema_version, should_animate, system_arrow,
+var Builtin, BuiltinApplication, BuiltinSyntaxError, Connection, Exit, FunctionApplication, Input, InputError, Literal, LiteralValue, Nib, Node, NotConnected, NotImplemented, Output, RuntimeException, SubRoutine, SubroutineApplication, UnknownNode, all_builtins, all_subroutines, boxes, current_scope, dissociate_exception, execute, ignore_if_disconnected, load_implementation, load_state, node_registry, schema_version, should_animate, system_arrow,
   __hasProp = Object.prototype.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor; child.__super__ = parent.prototype; return child; };
 
@@ -892,4 +892,22 @@ load_implementation = function(subroutine, data) {
     }
   }
   return _results;
+};
+
+dissociate_exception = function(procedure) {
+  try {
+    return procedure();
+  } catch (exception) {
+    return setTimeout(function() {
+      throw exception;
+    });
+  }
+};
+
+ignore_if_disconnected = function(procedure) {
+  try {
+    return procedure();
+  } catch (exception) {
+    if (!(exception instanceof NotConnected)) throw exception;
+  }
 };

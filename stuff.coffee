@@ -11,7 +11,6 @@ module.directive 'nib', ->
     scope:
         nib:'accessor'
     link:(scope, element, attributes, controller) ->
-        console.log arguments
         nib = scope.nib()
         nib.view = $ element
         element.bind 'mousedown', (event) -> scope.$apply ->
@@ -113,14 +112,6 @@ module.directive 'subroutine', ->
                 new Literal V(0,0), $scope.literal_text
                 $scope.literal_text = ''
 
-        $scope.use = (subroutine) =>
-            if subroutine instanceof Subroutine
-                new SubroutineApplication V(0,0), subroutine
-            else
-                new BuiltinApplication V(0,0), builtin
-
-        $scope.use_value = (subroutine) =>
-            new Literal V(0,0), subroutine
 
 
         $scope.draw_connections = -> draw()
@@ -174,10 +165,21 @@ module.config ($routeProvider) ->
 
 module.controller 'subroutine', ($scope, $routeParams, subroutines, $q) ->
     $q.when subroutines, (subroutines) ->
-        $scope.current_object = subroutines[$routeParams.id]
+        $scope.$root.current_object = subroutines[$routeParams.id]
 
 module.controller 'library', ($scope, subroutines, $q) ->
     $scope.subroutines = subroutines
+
+    $scope.use = (subroutine) =>
+        if subroutine instanceof SubRoutine
+            new SubroutineApplication $scope.$root.current_object, V(0,0), subroutine
+        else
+            new BuiltinApplication $scope.$root.current_object, V(0,0), subroutine
+
+    $scope.use_value = (subroutine) =>
+        new Literal $scope.$root.current_object, V(0,0), subroutine
+
+
 
 ###
 <ul class="inputs"><li ng-repeat="input in node.inputs">{{input.text}}</li></ul>
@@ -458,17 +460,4 @@ module.factory 'subroutines', ($q, $http) ->
         subroutines = $.extend data.builtins, data.subroutines
         subroutines
 
-
-dissociate_exception = (procedure) ->
-    try
-        procedure()
-    catch exception
-        setTimeout -> throw exception # don't break this execution thread because of a loading exception
-
-
-ignore_if_disconnected = (procedure) ->
-   try
-      return procedure()
-   catch exception
-      throw exception unless exception instanceof NotConnected
 

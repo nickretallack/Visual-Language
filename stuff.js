@@ -1,4 +1,4 @@
-var NodeView, animate, animations_counter, async, blab, connecting_object, delay, dissociate_exception, dragging_object, dragging_offset, editor_size, eval_expression, get_absolute_nib_position, get_nib_position, highlight, highlighted_objects, ignore_if_disconnected, last, make_arrow, make_connection, module, mouse_coords, obj_first, pretty_json, ray_cast_mouse, transform_position, unhighlight, unhighlight_all, update, valid_json, whitespace_split,
+var NodeView, animate, animations_counter, async, blab, connecting_object, delay, dragging_object, dragging_offset, editor_size, eval_expression, get_absolute_nib_position, get_nib_position, highlight, highlighted_objects, last, make_arrow, make_connection, module, mouse_coords, obj_first, pretty_json, ray_cast_mouse, transform_position, unhighlight, unhighlight_all, update, valid_json, whitespace_split,
   __slice = Array.prototype.slice;
 
 editor_size = V(window.innerWidth, window.innerHeight);
@@ -18,7 +18,6 @@ module.directive('nib', function() {
     },
     link: function(scope, element, attributes, controller) {
       var nib;
-      console.log(arguments);
       nib = scope.nib();
       nib.view = $(element);
       element.bind('mousedown', function(event) {
@@ -166,16 +165,6 @@ module.directive('subroutine', function() {
           return $scope.literal_text = '';
         }
       };
-      $scope.use = function(subroutine) {
-        if (subroutine instanceof Subroutine) {
-          return new SubroutineApplication(V(0, 0), subroutine);
-        } else {
-          return new BuiltinApplication(V(0, 0), builtin);
-        }
-      };
-      $scope.use_value = function(subroutine) {
-        return new Literal(V(0, 0), subroutine);
-      };
       $scope.draw_connections = function() {
         return draw();
       };
@@ -243,12 +232,23 @@ module.config(function($routeProvider) {
 
 module.controller('subroutine', function($scope, $routeParams, subroutines, $q) {
   return $q.when(subroutines, function(subroutines) {
-    return $scope.current_object = subroutines[$routeParams.id];
+    return $scope.$root.current_object = subroutines[$routeParams.id];
   });
 });
 
 module.controller('library', function($scope, subroutines, $q) {
-  return $scope.subroutines = subroutines;
+  var _this = this;
+  $scope.subroutines = subroutines;
+  $scope.use = function(subroutine) {
+    if (subroutine instanceof SubRoutine) {
+      return new SubroutineApplication($scope.$root.current_object, V(0, 0), subroutine);
+    } else {
+      return new BuiltinApplication($scope.$root.current_object, V(0, 0), subroutine);
+    }
+  };
+  return $scope.use_value = function(subroutine) {
+    return new Literal($scope.$root.current_object, V(0, 0), subroutine);
+  };
 });
 
 /*
@@ -611,21 +611,3 @@ module.factory('subroutines', function($q, $http) {
     return subroutines;
   });
 });
-
-dissociate_exception = function(procedure) {
-  try {
-    return procedure();
-  } catch (exception) {
-    return setTimeout(function() {
-      throw exception;
-    });
-  }
-};
-
-ignore_if_disconnected = function(procedure) {
-  try {
-    return procedure();
-  } catch (exception) {
-    if (!(exception instanceof NotConnected)) throw exception;
-  }
-};

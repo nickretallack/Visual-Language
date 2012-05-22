@@ -227,7 +227,7 @@ class SubRoutine
     add_node: (node) ->
         @view.add node.view
         @nodes[node.id] = node
-        
+
     remove_connection: (connection) ->
         @view.remove connection.view
         delete @connections[connection.id]
@@ -235,7 +235,7 @@ class SubRoutine
     add_connection: (connection) ->
         @view.add connection.view
         @connections[connection.id] = connection
-    
+
 class Node # Abstract
     constructor: ->
         node_registry[@id] = @
@@ -287,7 +287,7 @@ class FunctionApplication extends Node # Abstract
                     else if output.parent instanceof Node
                         return output.parent.evaluation the_scope, output.index
         return input_values
-        
+
 class UnknownNode extends Node
     constructor:(@position, type, text, @id) ->
         @type = 'unknown'
@@ -316,12 +316,12 @@ class SubroutineApplication extends FunctionApplication
                 results.push parent.id if parent.type is 'function'
                 resuts = results.concat parent.subroutines_referenced()
         return results
-        
+
 class BuiltinApplication extends FunctionApplication
     constructor:(@scope, @position, @implementation, @id=UUID()) ->
         @type = 'builtin'
         super @implementation
-        
+
     evaluation: (the_scope, output_index) ->
         input_values = @virtual_inputs the_scope
         try
@@ -369,7 +369,7 @@ class Literal extends Node
         json
 
     subroutines_referenced: -> []
-    
+
 class Nib  # Abstract. Do not instantiate
     constructor: ->
         #@view = make_nib_view @, @parent instanceof Node
@@ -406,7 +406,7 @@ class Input extends Nib
 
     connect:(output) ->
         new Connection @get_scope(), @, output
-        
+
 class Output extends Nib
     constructor:(@parent, @text, @index=0, @siblings=0) ->
         super()
@@ -499,3 +499,18 @@ load_implementation = (subroutine, data) ->
             console.log "Oh no, trying to make an invalid connection"
         else
             source_connector[connection.output.index].connect sink_connector[connection.input.index]
+
+
+
+dissociate_exception = (procedure) ->
+    try
+        procedure()
+    catch exception
+        setTimeout -> throw exception # don't break this execution thread because of a loading exception
+
+
+ignore_if_disconnected = (procedure) ->
+   try
+      return procedure()
+   catch exception
+      throw exception unless exception instanceof NotConnected
