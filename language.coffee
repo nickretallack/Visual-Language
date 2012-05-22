@@ -1,12 +1,6 @@
-schema_version = 1
-boxes = {}
-system_arrow = null
-should_animate = false
-
-### MODELS ###
-
 module = angular.module 'vislang'
 module.factory 'interpreter', ($q, $http) ->
+    schema_version = 1
 
     class RuntimeException
         constructor: (@message) ->

@@ -1,22 +1,12 @@
-var boxes, module, schema_version, should_animate, system_arrow,
+var module,
   __hasProp = Object.prototype.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor; child.__super__ = parent.prototype; return child; };
-
-schema_version = 1;
-
-boxes = {};
-
-system_arrow = null;
-
-should_animate = false;
-
-/* MODELS
-*/
 
 module = angular.module('vislang');
 
 module.factory('interpreter', function($q, $http) {
-  var Builtin, BuiltinApplication, BuiltinSyntaxError, Connection, Exit, FunctionApplication, Input, InputError, Literal, LiteralValue, Nib, Node, NotConnected, NotImplemented, Output, RuntimeException, Subroutine, SubroutineApplication, UnknownNode, dissociate_exception, eval_expression, execute, ignore_if_disconnected, load_implementation, load_state, source_data, subroutines;
+  var Builtin, BuiltinApplication, BuiltinSyntaxError, Connection, Exit, FunctionApplication, Input, InputError, Literal, LiteralValue, Nib, Node, NotConnected, NotImplemented, Output, RuntimeException, Subroutine, SubroutineApplication, UnknownNode, dissociate_exception, eval_expression, execute, ignore_if_disconnected, load_implementation, load_state, schema_version, source_data, subroutines;
+  schema_version = 1;
   RuntimeException = (function() {
 
     function RuntimeException(message) {
