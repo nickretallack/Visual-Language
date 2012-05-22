@@ -27,35 +27,7 @@
 <ng-view></ng-view>
 
 
-<ng-switch on="overlay">
-
-<div id="tools" ng-switch-when="library" ng-controller="library">
-<h2>Import/Export</h2>
-<textarea ng:model="import_export_text"></textarea>
-<p>
-<button ng:click="import()">Import</button>
-<button ng:click="export_all()">Export All</button>
-<button ng:click="revert()">Revert to Default State</button>
-<button ng:click="load_example_programs()">Revert Example Functions</button>
-</p>
-
-<h2>Literals (JSON)</h2>
-<form ng:submit="use_literal()"> <input ng:model="literal_text"> <button>Use Literal</button> </form>
-
-<h2>Functions</h2>
-<ul><li ng:repeat="(id, subroutine) in subroutines">
-    <a class="name" href="#{{subroutine.id}}">{{subroutine.name}}</a>
-    <a ng:click="use(subroutine)">use</a>
-    <a ng:click="use_value(subroutine)">value</a>
-    (<span ng:repeat="input in subroutine.inputs">{{input.text || input}} </span> -&gt;
-    <span ng:repeat="output in subroutine.outputs">
-        <a ng:click="run_subroutine(subroutine, output.index)">{{output.text || output}}</a>
-    </span>)
-</li></ul>
-
-</div>
-</ng-switch>
-
+<ng-include src="'overlays.html'"></ng-include>
 
 </body>
 </html>

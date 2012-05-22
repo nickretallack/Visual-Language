@@ -1,4 +1,4 @@
-var Builtin, BuiltinApplication, BuiltinSyntaxError, Connection, Exit, FunctionApplication, Input, InputError, Literal, LiteralValue, Nib, Node, NotConnected, NotImplemented, Output, RuntimeException, SubRoutine, SubroutineApplication, UnknownNode, all_builtins, all_subroutines, boxes, current_scope, dissociate_exception, execute, ignore_if_disconnected, load_implementation, load_state, node_registry, schema_version, should_animate, system_arrow,
+var Builtin, BuiltinApplication, BuiltinSyntaxError, Connection, Exit, FunctionApplication, Input, InputError, Literal, LiteralValue, Nib, Node, NotConnected, NotImplemented, Output, RuntimeException, Subroutine, SubroutineApplication, UnknownNode, all_builtins, all_subroutines, boxes, current_scope, dissociate_exception, execute, ignore_if_disconnected, load_implementation, load_state, node_registry, schema_version, should_animate, system_arrow,
   __hasProp = Object.prototype.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor; child.__super__ = parent.prototype; return child; };
 
@@ -186,9 +186,9 @@ execute = function(routine) {
   }
 };
 
-SubRoutine = (function() {
+Subroutine = (function() {
 
-  function SubRoutine(name, inputs, outputs, id) {
+  function Subroutine(name, inputs, outputs, id) {
     var index, text;
     this.name = name != null ? name : '';
     if (inputs == null) inputs = [];
@@ -219,9 +219,9 @@ SubRoutine = (function() {
     all_subroutines[this.id] = this;
   }
 
-  SubRoutine.prototype.type = 'subroutine';
+  Subroutine.prototype.type = 'subroutine';
 
-  SubRoutine.prototype.toJSON = function() {
+  Subroutine.prototype.toJSON = function() {
     return {
       id: this.id,
       name: this.name,
@@ -232,7 +232,7 @@ SubRoutine = (function() {
     };
   };
 
-  SubRoutine.prototype.invoke = function(index, inputs) {
+  Subroutine.prototype.invoke = function(index, inputs) {
     var output, the_scope, _ref;
     the_scope = {
       subroutine: this,
@@ -241,14 +241,14 @@ SubRoutine = (function() {
     };
     output = (_ref = this.outputs[index].get_connection()) != null ? _ref.connection.output : void 0;
     if (!output) throw new NotConnected;
-    if (output.parent instanceof SubRoutine) {
+    if (output.parent instanceof Subroutine) {
       return inputs[output.index]();
     } else if (output.parent instanceof Node) {
       return output.parent.evaluation(the_scope, output.index);
     }
   };
 
-  SubRoutine.prototype.run = function(output_index) {
+  Subroutine.prototype.run = function(output_index) {
     var input, input_index, input_values, _fn, _len, _ref,
       _this = this;
     input_values = [];
@@ -290,7 +290,7 @@ SubRoutine = (function() {
     }
   };
 
-  SubRoutine.prototype.get_inputs = function() {
+  Subroutine.prototype.get_inputs = function() {
     var input, _i, _len, _ref, _results;
     _ref = this.inputs;
     _results = [];
@@ -301,7 +301,7 @@ SubRoutine = (function() {
     return _results;
   };
 
-  SubRoutine.prototype.get_outputs = function() {
+  Subroutine.prototype.get_outputs = function() {
     var output, _i, _len, _ref, _results;
     _ref = this.outputs;
     _results = [];
@@ -312,14 +312,14 @@ SubRoutine = (function() {
     return _results;
   };
 
-  SubRoutine.prototype["export"] = function() {
+  Subroutine.prototype["export"] = function() {
     var dependencies;
     dependencies = this.get_dependencies();
     dependencies.schema_version = schema_version;
     return dependencies;
   };
 
-  SubRoutine.prototype.get_dependencies = function(dependencies) {
+  Subroutine.prototype.get_dependencies = function(dependencies) {
     var child_dependencies, id, node, _ref;
     if (dependencies == null) {
       dependencies = {
@@ -344,7 +344,7 @@ SubRoutine = (function() {
     return dependencies;
   };
 
-  SubRoutine.prototype.subroutines_referenced = function() {
+  Subroutine.prototype.subroutines_referenced = function() {
     var output, parent, results, resuts, _i, _len, _ref, _ref2;
     results = [];
     _ref = this.outputs;
@@ -359,7 +359,7 @@ SubRoutine = (function() {
     return results;
   };
 
-  SubRoutine.prototype.build_adjacency_list = function() {
+  Subroutine.prototype.build_adjacency_list = function() {
     var adjacency_list, id, input, input_index, input_queue, item, item_count, nibs, node, _i, _len, _len2, _ref;
     _ref = this.nodes;
     for (id in _ref) {
@@ -397,27 +397,27 @@ SubRoutine = (function() {
     return adjacency_list;
   };
 
-  SubRoutine.prototype.remove_node = function(node) {
+  Subroutine.prototype.remove_node = function(node) {
     this.view.remove(node.view);
     return delete this.nodes[node.id];
   };
 
-  SubRoutine.prototype.add_node = function(node) {
+  Subroutine.prototype.add_node = function(node) {
     this.view.add(node.view);
     return this.nodes[node.id] = node;
   };
 
-  SubRoutine.prototype.remove_connection = function(connection) {
+  Subroutine.prototype.remove_connection = function(connection) {
     this.view.remove(connection.view);
     return delete this.connections[connection.id];
   };
 
-  SubRoutine.prototype.add_connection = function(connection) {
+  Subroutine.prototype.add_connection = function(connection) {
     this.view.add(connection.view);
     return this.connections[connection.id] = connection;
   };
 
-  return SubRoutine;
+  return Subroutine;
 
 })();
 
@@ -508,7 +508,7 @@ FunctionApplication = (function(_super) {
         var output, _ref2;
         output = (_ref2 = input.get_connection()) != null ? _ref2.connection.output : void 0;
         if (!output) throw new NotConnected;
-        if (output.parent instanceof SubRoutine) {
+        if (output.parent instanceof Subroutine) {
           return the_scope.inputs[output.index]();
         } else if (output.parent instanceof Node) {
           return output.parent.evaluation(the_scope, output.index);
@@ -653,7 +653,7 @@ Literal = (function(_super) {
     this.position = position;
     this.id = id != null ? id : UUID();
     this.type = 'literal';
-    if (value instanceof SubRoutine) {
+    if (value instanceof Subroutine) {
       this.implementation = value;
       this.text = value.name;
     } else {
@@ -672,7 +672,7 @@ Literal = (function(_super) {
   Literal.prototype.toJSON = function() {
     var json;
     json = Literal.__super__.toJSON.call(this);
-    if (this.implementation instanceof SubRoutine) {
+    if (this.implementation instanceof Subroutine) {
       json.implementation_id = this.implementation.id;
     }
     return json;
@@ -704,7 +704,7 @@ Nib = (function() {
   };
 
   Nib.prototype.get_scope = function() {
-    if (this.parent instanceof SubRoutine) {
+    if (this.parent instanceof Subroutine) {
       return this.parent;
     } else {
       return this.parent.scope;
@@ -833,7 +833,7 @@ load_state = function(data) {
   _ref2 = data.subroutines;
   for (id in _ref2) {
     subroutine_data = _ref2[id];
-    subroutine = new SubRoutine(subroutine_data.name, subroutine_data.inputs, subroutine_data.outputs, subroutine_data.id);
+    subroutine = new Subroutine(subroutine_data.name, subroutine_data.inputs, subroutine_data.outputs, subroutine_data.id);
     subroutines[subroutine.id] = subroutine;
   }
   for (id in subroutines) {

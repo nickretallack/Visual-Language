@@ -92,7 +92,7 @@ execute = (routine) ->
         else throw exception
 
 
-class SubRoutine
+class Subroutine
     constructor:(@name='', inputs=[], outputs=[], @id=UUID()) ->
         node_registry[@id] = @
         #@view = make_subroutine_view @
@@ -126,7 +126,7 @@ class SubRoutine
         output = @outputs[index].get_connection()?.connection.output
         throw new NotConnected unless output
 
-        if output.parent instanceof SubRoutine
+        if output.parent instanceof Subroutine
             return inputs[output.index]()
         else if output.parent instanceof Node
             return output.parent.evaluation the_scope, output.index
@@ -282,7 +282,7 @@ class FunctionApplication extends Node # Abstract
                 input_values.push _.memoize ->
                     output = input.get_connection()?.connection.output
                     throw new NotConnected unless output
-                    if output.parent instanceof SubRoutine
+                    if output.parent instanceof Subroutine
                         return the_scope.inputs[output.index]()
                     else if output.parent instanceof Node
                         return output.parent.evaluation the_scope, output.index
@@ -350,7 +350,7 @@ class Literal extends Node
         @type = 'literal'
 
         # TODO: sort this out later
-        if value instanceof SubRoutine
+        if value instanceof Subroutine
             @implementation = value
             @text = value.name
         else
@@ -364,7 +364,7 @@ class Literal extends Node
 
     toJSON: ->
         json = super()
-        if @implementation instanceof SubRoutine
+        if @implementation instanceof Subroutine
             json.implementation_id = @implementation.id
         json
 
@@ -380,7 +380,7 @@ class Nib  # Abstract. Do not instantiate
             connection.connection.delete()
 
     get_scope: ->
-        if this.parent instanceof SubRoutine
+        if this.parent instanceof Subroutine
             this.parent
         else
             this.parent.scope
@@ -453,7 +453,7 @@ load_state = (data) ->
 
     # load subroutine declarations
     for id, subroutine_data of data.subroutines
-        subroutine = new SubRoutine subroutine_data.name, subroutine_data.inputs, subroutine_data.outputs, subroutine_data.id
+        subroutine = new Subroutine subroutine_data.name, subroutine_data.inputs, subroutine_data.outputs, subroutine_data.id
         subroutines[subroutine.id] = subroutine
 
     # load subroutine implementations

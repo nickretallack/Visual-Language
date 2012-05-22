@@ -171,7 +171,7 @@ module.controller 'library', ($scope, subroutines, $q) ->
     $scope.subroutines = subroutines
 
     $scope.use = (subroutine) =>
-        if subroutine instanceof SubRoutine
+        if subroutine instanceof Subroutine
             new SubroutineApplication $scope.$root.current_object, V(0,0), subroutine
         else
             new BuiltinApplication $scope.$root.current_object, V(0,0), subroutine
@@ -384,7 +384,7 @@ module.controller 'Controller', ($scope, $http, $location) ->
         delete $scope.builtins[builtin.id]
 
     $scope.add_subroutine = =>
-        subroutine = new SubRoutine $scope.new_subroutine.name, $scope.new_subroutine.inputs, $scope.new_subroutine.outputs
+        subroutine = new Subroutine $scope.new_subroutine.name, $scope.new_subroutine.inputs, $scope.new_subroutine.outputs
 
         # first find all the connections
         in_connections = {}

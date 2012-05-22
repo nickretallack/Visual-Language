@@ -240,7 +240,7 @@ module.controller('library', function($scope, subroutines, $q) {
   var _this = this;
   $scope.subroutines = subroutines;
   $scope.use = function(subroutine) {
-    if (subroutine instanceof SubRoutine) {
+    if (subroutine instanceof Subroutine) {
       return new SubroutineApplication($scope.$root.current_object, V(0, 0), subroutine);
     } else {
       return new BuiltinApplication($scope.$root.current_object, V(0, 0), subroutine);
@@ -517,7 +517,7 @@ module.controller('Controller', function($scope, $http, $location) {
   };
   $scope.add_subroutine = function() {
     var connection, contained_connections, id, in_connections, nib, node, out_connections, subroutine, _ref, _ref2, _ref3, _ref4;
-    subroutine = new SubRoutine($scope.new_subroutine.name, $scope.new_subroutine.inputs, $scope.new_subroutine.outputs);
+    subroutine = new Subroutine($scope.new_subroutine.name, $scope.new_subroutine.inputs, $scope.new_subroutine.outputs);
     in_connections = {};
     out_connections = {};
     for (id in highlighted_objects) {
