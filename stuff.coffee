@@ -54,14 +54,12 @@ module.directive 'subroutine', ->
         $scope.new_input =  ->
             nib = new interpreter.Output
             subroutine.inputs.push nib
-            async ->
-                console.log $('.subroutine-input:last input').focus()
+            async -> $('.subroutine-input:last input').focus()
 
         $scope.new_output =  ->
             nib = new interpreter.Input
             subroutine.outputs.push nib
-            async ->
-                console.log $('.subroutine-output:last input').focus()
+            async -> $('.subroutine-output:last input').focus()
 
         $scope.delete_input = ($index) ->
             [nib] = subroutine.inputs.splice $index, 1

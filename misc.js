@@ -1,17 +1,20 @@
-var blab, last, obj_first;
+(function() {
+  var blab, last, obj_first;
 
-blab = function() {
-  return console.log(arguments);
-};
+  blab = function() {
+    return console.log(arguments);
+  };
 
-last = function(list) {
-  return list[list.length - 1];
-};
+  last = function(list) {
+    return list[list.length - 1];
+  };
 
-obj_first = function(obj) {
-  var item, key;
-  for (key in obj) {
-    item = obj[key];
-    return item;
-  }
-};
+  obj_first = function(obj) {
+    var item, key;
+    for (key in obj) {
+      item = obj[key];
+      return item;
+    }
+  };
+
+}).call(this);
