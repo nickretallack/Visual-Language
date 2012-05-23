@@ -83,6 +83,22 @@ module.directive('subroutine', function() {
       $scope.evaluate_output = function(output) {
         return subroutine.run(output);
       };
+      $scope.new_input = function() {
+        var nib;
+        nib = new interpreter.Output;
+        subroutine.inputs.push(nib);
+        return async(function() {
+          return console.log($('.subroutine-input:last input').focus());
+        });
+      };
+      $scope.new_output = function() {
+        var nib;
+        nib = new interpreter.Input;
+        subroutine.outputs.push(nib);
+        return async(function() {
+          return console.log($('.subroutine-output:last input').focus());
+        });
+      };
       /* Node and nib interaction
       */
       $scope.position = function(node) {

@@ -1,3 +1,17 @@
+- re-implement UI
+    - add/remove inputs
+    - rearrange inputs
+
+
+
+
+
+
+
+------- old priorities ----------
+
+
+
 - add a place to put documentation on implementations
 - don't allow connections from inputs to inputs or outputs to outputs
 - add a smart delete feature for subroutines

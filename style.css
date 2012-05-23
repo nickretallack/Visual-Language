@@ -22,6 +22,11 @@ textarea {display:block}
 .subroutine-input input, .subroutine-output input {border:0; padding:0;}
 .title {font-size:18pt; border:none; position:absolute; left:0; top:0;}
 
-input
+#new-input, #new-output {
+    position:absolute;
+    bottom:0;
+}
+#new-input {right:0;}
+#new-output {left:0;}
 
 /*.offescreen {position:absolute; left:-9999px; top:-9999px;}*/
