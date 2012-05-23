@@ -206,6 +206,13 @@ module.controller 'Controller', ($scope, $http, $location, interpreter, $q) ->
             subroutines[subroutine.id] = subroutine
             $location.path "#{subroutine.id}"
 
+    $scope.new_code = ->
+        $q.when interpreter.subroutines, (subroutines) ->
+            subroutine = new interpreter.Builtin
+            subroutines[subroutine.id] = subroutine
+            $location.path "#{subroutine.id}"
+
+
     ###
     saving = false
     start_saving = -> #setInterval save_state, 500 if not saving

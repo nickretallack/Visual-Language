@@ -37,12 +37,12 @@
 
 <div ng:switch-when="builtin" id="builtin_editor">
 <h2><input ng:model="current_object.name"></h2>
-<p>Inputs: <input type="list" ng:model="current_object.inputs"></p>
-<p>Outputs: <input type="list" ng:model="current_object.outputs"></p>
+<p>Inputs: <input ng-list ng-model="current_object.inputs"></p>
+<p>Outputs: <input ng-list ng-model="current_object.outputs"></p>
 Memo Implementation:
-<textarea rows="10" cols="50" ng:model="current_object.memo_implementation"></textarea>
+<textarea rows="10" cols="50" ng-model="current_object.memo_implementation"></textarea>
 Output Implementation:
-<textarea rows="10" cols="50" ng:model="current_object.output_implementation"></textarea>
+<textarea rows="10" cols="50" ng-model="current_object.output_implementation"></textarea>
 </div>
 
 </ng-switch>

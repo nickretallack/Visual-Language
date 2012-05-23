@@ -21,7 +21,7 @@ module.factory 'interpreter', ($q, $http) ->
         constructor: (@name, @exception) -> @message = "#{exception} in builtin \"#{@name}\": "
 
     class Builtin
-        constructor:({@name, @output_implementation, @memo_implementation, @inputs, @outputs, @id}) ->
+        constructor:({@name, @output_implementation, @memo_implementation, @inputs, @outputs, @id}={}) ->
             @memo_implementation ?= null
             @inputs ?= []
             @outputs ?= ['OUT']

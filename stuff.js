@@ -290,10 +290,18 @@ module.controller('Controller', function($scope, $http, $location, interpreter, 
   $scope.tab_click = function(tab) {
     return $scope.$root.overlay = $scope.$root.overlay === tab ? null : tab;
   };
-  return $scope.new_graph = function() {
+  $scope.new_graph = function() {
     return $q.when(interpreter.subroutines, function(subroutines) {
       var subroutine;
       subroutine = new interpreter.Subroutine;
+      subroutines[subroutine.id] = subroutine;
+      return $location.path("" + subroutine.id);
+    });
+  };
+  return $scope.new_code = function() {
+    return $q.when(interpreter.subroutines, function(subroutines) {
+      var subroutine;
+      subroutine = new interpreter.Builtin;
       subroutines[subroutine.id] = subroutine;
       return $location.path("" + subroutine.id);
     });

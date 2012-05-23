@@ -77,7 +77,8 @@ module.factory('interpreter', function($q, $http) {
   Builtin = (function() {
 
     function Builtin(_arg) {
-      this.name = _arg.name, this.output_implementation = _arg.output_implementation, this.memo_implementation = _arg.memo_implementation, this.inputs = _arg.inputs, this.outputs = _arg.outputs, this.id = _arg.id;
+      var _ref;
+      _ref = _arg != null ? _arg : {}, this.name = _ref.name, this.output_implementation = _ref.output_implementation, this.memo_implementation = _ref.memo_implementation, this.inputs = _ref.inputs, this.outputs = _ref.outputs, this.id = _ref.id;
       if (this.memo_implementation == null) this.memo_implementation = null;
       if (this.inputs == null) this.inputs = [];
       if (this.outputs == null) this.outputs = ['OUT'];
