@@ -7,10 +7,12 @@
 <div class="subroutine-input" ng-repeat="input in current_object.inputs" ng-style="{'top':(($index+1) * editor_size.y / (current_object.inputs.length+1)) + 'px'}">
     <div nib="input"></div>
     <input ng-model="input.text" shrinky-input="input.text">
+    <a ng-click="delete_input($index)">-</a>
 </div>
 <a id="new-input" ng-click="new_input(subroutine)">+Input</a>
 
 <div class="subroutine-output" ng-repeat="output in current_object.outputs" ng-style="{'top':(($index+1) * editor_size.y / (current_object.outputs.length+1)) + 'px'}">
+    <a ng-click="delete_output($index)">-</a>
     <input ng-model="output.text" shrinky-input="output.text">
     <div nib="output"></div>
     <div><a ng-click="evaluate_output($index)">evaluate</a></div>

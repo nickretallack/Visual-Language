@@ -99,6 +99,16 @@ module.directive('subroutine', function() {
           return console.log($('.subroutine-output:last input').focus());
         });
       };
+      $scope.delete_input = function($index) {
+        var nib;
+        nib = subroutine.inputs.splice($index, 1)[0];
+        return nib.delete_connections();
+      };
+      $scope.delete_output = function($index) {
+        var nib;
+        nib = subroutine.outputs.splice($index, 1)[0];
+        return nib.delete_connections();
+      };
       /* Node and nib interaction
       */
       $scope.position = function(node) {

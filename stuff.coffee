@@ -63,6 +63,13 @@ module.directive 'subroutine', ->
             async ->
                 console.log $('.subroutine-output:last input').focus()
 
+        $scope.delete_input = ($index) ->
+            [nib] = subroutine.inputs.splice $index, 1
+            nib.delete_connections()
+
+        $scope.delete_output = ($index) ->
+            [nib] = subroutine.outputs.splice $index, 1
+            nib.delete_connections()
 
         ### Node and nib interaction ###
         $scope.position = (node) ->
