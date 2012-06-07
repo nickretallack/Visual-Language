@@ -7,6 +7,9 @@ transform_position = (position, editor_size) ->
     x:position.y + editor_size.x/2
     y:position.x + editor_size.y/2
 
+module.run ($rootScope) ->
+    $rootScope.search = ''
+
 module.directive 'nib', ->
     template:"""<div class="nib"></div>"""
     replace:true
@@ -29,13 +32,14 @@ module.directive 'shrinkyInput', ->
         doppelganger.css
             padding:$element.css 'padding'
             border:$element.css 'border'
+            'font-size':$element.css 'font-size'
             'min-width':'3ex'
             position:'absolute'
             left:'-9999px'
             top:'-9999px'
         $(document.body).append doppelganger
         scope.$watch attributes.shrinkyInput, (text) ->
-            doppelganger.text text
+            doppelganger.text text + "M"
             async ->
                 $(element).css width:doppelganger.width()+2
                 controller.draw()
@@ -108,7 +112,7 @@ module.directive 'subroutine', ->
             draw()
 
         ### Drawing the Connection Field ###
-        header_height = 30
+        header_height = 40
         nib_center = V 5,5
         canvas_offset = V(0,header_height)
         nib_offset = canvas_offset.minus nib_center

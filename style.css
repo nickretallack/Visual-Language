@@ -1,12 +1,14 @@
-#tools {position:absolute; left:600px; top:0; bottom:0; background:white; overflow:auto;}
+#main, #tools {position:absolute; top:0; bottom:0; overflow:auto;}
+#tools {right:0; width:300px;}
+#main {left:0; right:300px;}
+
 h2 {margin-top:10px; font-weight:bold; font-family:helvetica}
 textarea {display:block}
 .name {font-weight:bold}
 
 #inputs_editor, #outputs_editor {display:inline-block; width:300px}
 
-#top-bar {position:relative; height:30px; line-height:30px; background:#eee;}
-#subroutine {position:absolute; top:30px; left:0; right:0; bottom:0;}
+#subroutine {position:absolute; top:40px; left:0; right:0; bottom:0;}
 
 .subroutine-input {position:absolute; right:0;}
 .subroutine-output {position:absolute; left:0;}
@@ -20,7 +22,7 @@ textarea {display:block}
 .nib {width:10px; height:10px; background:green; border-radius:10px; display:inline-block;}
 
 .subroutine-input input, .subroutine-output input {border:0; padding:0;}
-.title {font-size:18pt; border:none; position:absolute; left:0; top:0;}
+.title {font-size:18pt; border:none; position:absolute; left:5px; top:0;}
 
 #new-input, #new-output {
     position:absolute;
@@ -28,5 +30,8 @@ textarea {display:block}
 }
 #new-input {right:0;}
 #new-output {left:0;}
+
+ul.unstyled {margin:0; padding:0;}
+.search-query {margin-bottom:0 !important;}
 
 /*.offescreen {position:absolute; left:-9999px; top:-9999px;}*/

@@ -1,7 +1,15 @@
 <!doctype html>
-<html ng:app="vislang">
+<html lang="en" ng:app="vislang">
 <head>
 <title>Visual Language</title>
+<link rel="stylesheet" href="bootstrap/css/bootstrap.css">
+<link rel="stylesheet" href="bootstrap/css/bootstrap-responsive.css">
+
+<!-- Le HTML5 shim, for IE6-8 support of HTML5 elements -->
+<!--[if lt IE 9]>
+  <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+<![endif]-->
+
 <script src="common/raphael.js"></script>
 <script src="common/angular-1.0.0rc9.js"></script>
 <script src="vector2.js"></script>
@@ -12,22 +20,32 @@
 <script src="stuff.js"></script>
 <script src="language.js"></script>
 <!--<script src="common/crypto/rollups/sha256.js"-->
-<link rel="stylesheet" href="common/reset.css">
+<!--<link rel="stylesheet" href="common/reset.css">-->
 <link rel="stylesheet" href="style.css">
 </head>
 
 <body ng:controller="Controller">
-<nav id="top-bar">
-    <a ng-click="new_graph()">New Graph</a>
-    <a ng-click="new_code()">New Code</a>
-    <a ng-click="tab_click('library')">Library</a>
-    <a>Tests</a>
-    <a>Publish</a>
+
+<div id="main">
+<nav class="navbar navbar-fixed-top">
+    <div class="navbar-inner">
+        <div class="container-fluid">
+            <a class="brand">VisLang</a>
+            <div class="nav-collapse">
+                <ul class="nav">
+                    <li><a ng-click="new_graph()">New Graph</a>
+                    <li><a ng-click="new_code()">New Code</a>
+                    <li><a ng-click="tab_click('library')">Library</a>
+                    <li><a>Tests</a>
+                    <li><a>Publish</a>
+                </ul>
+            </div>
+        </div>
+    </div>
 </nav>
 
-
 <ng-view></ng-view>
-
+</div>
 
 <ng-include src="'overlays.html'"></ng-include>
 

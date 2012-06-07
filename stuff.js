@@ -18,6 +18,10 @@
     };
   };
 
+  module.run(function($rootScope) {
+    return $rootScope.search = '';
+  });
+
   module.directive('nib', function() {
     return {
       template: "<div class=\"nib\"></div>",
@@ -54,6 +58,7 @@
         doppelganger.css({
           padding: $element.css('padding'),
           border: $element.css('border'),
+          'font-size': $element.css('font-size'),
           'min-width': '3ex',
           position: 'absolute',
           left: '-9999px',
@@ -61,7 +66,7 @@
         });
         $(document.body).append(doppelganger);
         return scope.$watch(attributes.shrinkyInput, function(text) {
-          doppelganger.text(text);
+          doppelganger.text(text + "M");
           return async(function() {
             $(element).css({
               width: doppelganger.width() + 2
@@ -165,7 +170,7 @@
         /* Drawing the Connection Field
         */
 
-        header_height = 30;
+        header_height = 40;
         nib_center = V(5, 5);
         canvas_offset = V(0, header_height);
         nib_offset = canvas_offset.minus(nib_center);
