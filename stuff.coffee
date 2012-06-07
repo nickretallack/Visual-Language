@@ -151,11 +151,11 @@ module.config ($routeProvider) ->
     $routeProvider.when '', template:"intro.html"
 
 module.controller 'subroutine', ($scope, $routeParams, interpreter, $q) ->
-    $q.when interpreter.subroutines, (subroutines) ->
-        $scope.$root.current_object = subroutines[$routeParams.id]
+    $q.when interpreter.loaded, ->
+        $scope.$root.current_object = interpreter.subroutines[$routeParams.id]
 
 module.controller 'library', ($scope, $q, interpreter) ->
-    $scope.subroutines = interpreter.subroutines
+    $scope.subroutines = _.values interpreter.subroutines
 
     hide = -> $scope.$root.overlay = null
 
