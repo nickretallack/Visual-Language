@@ -235,7 +235,9 @@
   module.controller('library', function($scope, $q, interpreter) {
     var hide,
       _this = this;
-    $scope.subroutines = _.values(interpreter.subroutines);
+    $scope.get_subroutines = function() {
+      return _.values(interpreter.subroutines);
+    };
     hide = function() {
       return $scope.$root.overlay = null;
     };
@@ -320,24 +322,23 @@
   };
 
   module.controller('Controller', function($scope, $http, $location, interpreter, $q) {
+    var make_something;
     $scope.tab_click = function(tab) {
       return $scope.$root.overlay = $scope.$root.overlay === tab ? null : tab;
     };
-    $scope.new_graph = function() {
-      return $q.when(interpreter.subroutines, function(subroutines) {
+    make_something = function(type) {
+      return $q.when(interpreter.loaded, function() {
         var subroutine;
-        subroutine = new interpreter.Subroutine;
-        subroutines[subroutine.id] = subroutine;
+        subroutine = new type;
+        interpreter.subroutines[subroutine.id] = subroutine;
         return $location.path("" + subroutine.id);
       });
     };
+    $scope.new_graph = function() {
+      return make_something(interpreter.Subroutine);
+    };
     return $scope.new_code = function() {
-      return $q.when(interpreter.subroutines, function(subroutines) {
-        var subroutine;
-        subroutine = new interpreter.Builtin;
-        subroutines[subroutine.id] = subroutine;
-        return $location.path("" + subroutine.id);
-      });
+      return make_something(interpreter.Builtin);
     };
     /*
         saving = false

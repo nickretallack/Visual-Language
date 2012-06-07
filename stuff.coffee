@@ -155,7 +155,9 @@ module.controller 'subroutine', ($scope, $routeParams, interpreter, $q) ->
         $scope.$root.current_object = interpreter.subroutines[$routeParams.id]
 
 module.controller 'library', ($scope, $q, interpreter) ->
-    $scope.subroutines = _.values interpreter.subroutines
+
+    $scope.get_subroutines = ->
+        _.values interpreter.subroutines
 
     hide = -> $scope.$root.overlay = null
 
@@ -218,17 +220,17 @@ module.controller 'Controller', ($scope, $http, $location, interpreter, $q) ->
     $scope.tab_click = (tab) ->
         $scope.$root.overlay = if $scope.$root.overlay is tab then null else tab
 
-    $scope.new_graph = ->
-        $q.when interpreter.subroutines, (subroutines) ->
-            subroutine = new interpreter.Subroutine
-            subroutines[subroutine.id] = subroutine
+    make_something = (type) ->
+        $q.when interpreter.loaded, ->
+            subroutine = new type
+            interpreter.subroutines[subroutine.id] = subroutine
             $location.path "#{subroutine.id}"
 
+    $scope.new_graph = ->
+        make_something interpreter.Subroutine
+
     $scope.new_code = ->
-        $q.when interpreter.subroutines, (subroutines) ->
-            subroutine = new interpreter.Builtin
-            subroutines[subroutine.id] = subroutine
-            $location.path "#{subroutine.id}"
+        make_something interpreter.Builtin
 
 
     ###

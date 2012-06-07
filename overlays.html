@@ -4,16 +4,16 @@
 
 <h2>Functions</h2>
 <input type="search" ng-model="search">
-{{get_subroutines().length}}
-{{get_subroutines()|json}}
-<ul><li ng-repeat="subroutine in subroutines">
+<ul><li ng-repeat="subroutine in get_subroutines()">
     <a class="name" href="#{{subroutine.id}}">{{subroutine.name}}</a>
     <a ng-click="use(subroutine)">use</a>
     <a ng-click="use_value(subroutine)">value</a>
+    <!--
     (<span ng-repeat="input in subroutine.inputs">{{input.text || input}} </span> -&gt;
     <span ng-repeat="output in subroutine.outputs">
         <a ng-click="run_subroutine(subroutine, output.index)">{{output.text || output}}</a>
     </span>)
+-->
 </li></ul>
 
 <h2>Import/Export</h2>
