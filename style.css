@@ -22,7 +22,9 @@ textarea {display:block}
 .nib {width:10px; height:10px; background:green; border-radius:10px; display:inline-block;}
 
 .subroutine-input input, .subroutine-output input {border:0; padding:0;}
-.title {font-size:18pt; border:none; position:absolute; left:5px; top:0;}
+
+#subroutine .title { position:absolute; left:5px; top:0;}
+.title {font-size:18pt; border:none;}
 
 #new-input, #new-output {
     position:absolute;

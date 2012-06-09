@@ -23,27 +23,35 @@
   });
 
   module.directive('ace', function() {
-    return function(scope, element, attributes) {
-      var JavaScriptMode, changing, editor, expression, session;
-      expression = attributes.ace;
-      JavaScriptMode = require("ace/mode/javascript").Mode;
-      editor = ace.edit(element[0]);
-      session = editor.getSession();
-      session.setMode(new JavaScriptMode());
-      changing = false;
-      scope.$watch(expression, function(value) {
-        console.log("session.setValue:", value);
-        changing = true;
-        session.setValue(value);
-        return changing = false;
-      });
-      return session.on('change', function() {
-        if (!changing) {
-          return scope.$apply(function() {
-            return console.log("session.on('change'):", session.getValue());
-          });
-        }
-      });
+    return {
+      scope: {
+        ace: 'accessor'
+      },
+      link: function(scope, element, attributes) {
+        var JavaScriptMode, changing, editor, expression, session, set_value;
+        expression = attributes.ace;
+        JavaScriptMode = require("ace/mode/javascript").Mode;
+        editor = ace.edit(element[0]);
+        session = editor.getSession();
+        session.setMode(new JavaScriptMode());
+        changing = false;
+        set_value = null;
+        scope.$watch('ace()', function(value) {
+          if (value !== set_value) {
+            changing = true;
+            session.setValue(value);
+            return changing = false;
+          }
+        });
+        return session.on('change', function() {
+          if (!changing) {
+            return scope.$apply(function() {
+              set_value = session.getValue();
+              return scope.ace(set_value);
+            });
+          }
+        });
+      }
     };
   });
 
