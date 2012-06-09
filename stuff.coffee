@@ -51,7 +51,7 @@ module.directive 'nib', ->
             controller.release_nib nib, event
 
 module.directive 'shrinkyInput', ->
-    require:'^subroutine'
+    #require:'^subroutine'
     link:(scope, element, attributes, controller) ->
         doppelganger = $ """<span class="offscreen"></span>"""
         $element = $ element
@@ -68,7 +68,7 @@ module.directive 'shrinkyInput', ->
             doppelganger.text text + "M"
             async ->
                 $(element).css width:doppelganger.width()+2
-                controller.draw()
+                controller?.draw()
 
 module.directive 'subroutine', ->
     link:(scope, element, attributes) ->

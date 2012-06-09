@@ -83,7 +83,6 @@
 
   module.directive('shrinkyInput', function() {
     return {
-      require: '^subroutine',
       link: function(scope, element, attributes, controller) {
         var $element, doppelganger;
         doppelganger = $("<span class=\"offscreen\"></span>");
@@ -104,7 +103,7 @@
             $(element).css({
               width: doppelganger.width() + 2
             });
-            return controller.draw();
+            return controller != null ? controller.draw() : void 0;
           });
         });
       }
