@@ -19,6 +19,9 @@
 <script src="common/uuid.js"></script>
 <script src="stuff.js"></script>
 <script src="language.js"></script>
+
+<script src="common/ace/build/src/ace.js"></script>
+<script src="common/ace/build/src/mode-javascript.js"></script>
 <!--<script src="common/crypto/rollups/sha256.js"-->
 <!--<link rel="stylesheet" href="common/reset.css">-->
 <link rel="stylesheet" href="style.css">
@@ -31,12 +34,8 @@
     <div class="navbar-inner">
         <div class="container-fluid">
             <a class="brand">VisLang</a>
-            <div class="nav-collapse">
-                <ul class="nav">
-                    <li><a ng-click="new_graph()">New Graph</a>
-                    <li><a ng-click="new_code()">New Code</a>
-                </ul>
-            </div>
+                <a class="btn btn-success" ng-click="new_graph()">New Graph</a>
+                <a class="btn btn-primary" ng-click="new_code()">New Code</a>
         </div>
     </div>
 </nav>

@@ -10,6 +10,31 @@ transform_position = (position, editor_size) ->
 module.run ($rootScope) ->
     $rootScope.search = ''
 
+module.directive 'ace', ->
+    (scope, element, attributes) ->
+        expression = attributes.ace
+        JavaScriptMode = require("ace/mode/javascript").Mode;
+
+        editor = ace.edit element[0]
+        session = editor.getSession()
+        session.setMode new JavaScriptMode();
+
+        changing = false
+        scope.$watch expression, (value) ->
+            console.log "session.setValue:", value
+            changing = true
+            session.setValue value
+            changing = false
+
+        session.on 'change', ->
+            unless changing
+                scope.$apply ->
+                    console.log "session.on('change'):", session.getValue()
+                    # TODO: set the value in the scope somehow
+
+                    #scope[expression] = session.getValue()
+
+
 module.directive 'nib', ->
     template:"""<div class="nib"></div>"""
     replace:true

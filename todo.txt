@@ -1,8 +1,22 @@
+- visual style
+    - style the code page
+        - add ace editor
+    - lock library header to top?
+    - buttons instead of links on top
+
+- make a game with it
+    - setInterval primitive
+    - window primitive
+
+
+
 - re-implement UI
-    - add/remove inputs
+    + add/remove inputs
     - rearrange inputs
 
+- scale everything based on the size of the screen.  Gotta make everything accessible no matter what your screen size is.
 
+-
 
 
 
