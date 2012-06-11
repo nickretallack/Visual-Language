@@ -486,20 +486,18 @@ module.factory 'interpreter', ($q, $http) ->
             else
                 source_connector[connection.output.index].connect sink_connector[connection.input.index]
 
-    if false #localStorage.state?
+    if localStorage.state?
         source_data = JSON.parse localStorage.state
     else
         source_data = $q.defer()
         $http.get('examples.json').success (data) ->
             source_data.resolve data
 
-    subroutines = {} #new Backbone.Collection
+    subroutines = {}
     loaded = $q.defer()
     $q.when source_data.promise, (source_data) ->
         for id, obj of load_state source_data
             subroutines[id] = obj
-        #subroutines = load_state source_data
-        #subroutines.splice 0, subroutines.length, (_.values load_state source_data)...
         loaded.resolve true
 
     loaded:loaded.promise

@@ -904,7 +904,7 @@
       }
       return _results;
     };
-    if (false) {
+    if (localStorage.state != null) {
       source_data = JSON.parse(localStorage.state);
     } else {
       source_data = $q.defer();

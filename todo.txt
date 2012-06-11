@@ -8,6 +8,8 @@
     - setInterval primitive
     - window primitive
 
+- make a debugger
+    - highlight the lines, step through
 
 
 - re-implement UI

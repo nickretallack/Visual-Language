@@ -359,7 +359,7 @@
   };
 
   module.controller('Controller', function($scope, $http, $location, interpreter, $q) {
-    var make_something;
+    var make_something, saving, start_saving;
     $scope.tab_click = function(tab) {
       return $scope.$root.overlay = $scope.$root.overlay === tab ? null : tab;
     };
@@ -374,14 +374,16 @@
     $scope.new_graph = function() {
       return make_something(interpreter.Subroutine);
     };
-    return $scope.new_code = function() {
+    $scope.new_code = function() {
       return make_something(interpreter.Builtin);
     };
+    saving = false;
+    return start_saving = function() {
+      if (!saving) {
+        return setInterval(save_state, 500);
+      }
+    };
     /*
-        saving = false
-        start_saving = -> #setInterval save_state, 500 if not saving
-        $scope.log = (expression) -> console.log expression
-    
         $scope.import_export_text = ''
         $scope.subroutines = {}
         $scope.builtins = {}
