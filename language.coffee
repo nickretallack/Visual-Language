@@ -428,6 +428,24 @@ module.factory 'interpreter', ($q, $http) ->
 
     eval_expression = (expression) -> eval "(#{expression})"
 
+    start_saving = -> setInterval save_state, 500
+
+    save_state = ->
+        graphs = {}
+        codes = {}
+        for id, subroutine of subroutines
+            if subroutine instanceof Subroutine
+                graphs[subroutine.id] = subroutine
+            else
+                codes[subroutine.id] = subroutine
+
+        state =
+            subroutines:graphs
+            builtins:codes
+            schema_version:schema_version
+
+        localStorage.state = JSON.stringify state
+
     load_state = (data) ->
         subroutines = {}
         second_pass = []
@@ -489,16 +507,19 @@ module.factory 'interpreter', ($q, $http) ->
     if localStorage.state?
         source_data = JSON.parse localStorage.state
     else
-        source_data = $q.defer()
+        source_data_deferred = $q.defer()
+        source_data = source_data_deferred.promise
         $http.get('examples.json').success (data) ->
-            source_data.resolve data
+            source_data_deferred.resolve data
 
     subroutines = {}
     loaded = $q.defer()
-    $q.when source_data.promise, (source_data) ->
+    $q.when source_data, (source_data) ->
         for id, obj of load_state source_data
             subroutines[id] = obj
         loaded.resolve true
+        start_saving()
+
 
     loaded:loaded.promise
     RuntimeException:RuntimeException

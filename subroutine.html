@@ -34,19 +34,15 @@
     </li></ul>
 </div>
 
-
-
-
-
-
 </div>
 
 <div ng:switch-when="literal">
 <h2><input ng:model="current_object.text"></h2>
 </div>
 
-<div ng:switch-when="builtin" id="builtin_editor" class="container-fluid">
-    <h2><input ng-model="current_object.name" class="title" shrinky-input="current_object.name"></h2>
+<div ng:switch-when="builtin" id="builtin_editor">
+    <input ng-model="current_object.name" class="title" shrinky-input="current_object.name">
+    <div class="container-fluid">
     <div class="row-fluid form-horizontal">
         <div class="span6 control-group">
             <label for="inputs" class="control-label">Inputs:</label>
@@ -72,6 +68,7 @@
             <div ace="current_object.output_implementation" style="position:relative; width:100%; height:500px"></div>
         </div>
     </div>
+</div>
 </div>
 
 </div>

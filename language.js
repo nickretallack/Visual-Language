@@ -7,7 +7,7 @@
   module = angular.module('vislang');
 
   module.factory('interpreter', function($q, $http) {
-    var Builtin, BuiltinApplication, BuiltinSyntaxError, Connection, Exit, FunctionApplication, Input, InputError, Literal, LiteralValue, Nib, Node, NotConnected, NotImplemented, Output, RuntimeException, Subroutine, SubroutineApplication, UnknownNode, dissociate_exception, eval_expression, execute, ignore_if_disconnected, load_implementation, load_state, loaded, schema_version, source_data, subroutines;
+    var Builtin, BuiltinApplication, BuiltinSyntaxError, Connection, Exit, FunctionApplication, Input, InputError, Literal, LiteralValue, Nib, Node, NotConnected, NotImplemented, Output, RuntimeException, Subroutine, SubroutineApplication, UnknownNode, dissociate_exception, eval_expression, execute, ignore_if_disconnected, load_implementation, load_state, loaded, save_state, schema_version, source_data, source_data_deferred, start_saving, subroutines;
     schema_version = 1;
     RuntimeException = (function() {
 
@@ -832,6 +832,28 @@
     eval_expression = function(expression) {
       return eval("(" + expression + ")");
     };
+    start_saving = function() {
+      return setInterval(save_state, 500);
+    };
+    save_state = function() {
+      var codes, graphs, id, state, subroutine;
+      graphs = {};
+      codes = {};
+      for (id in subroutines) {
+        subroutine = subroutines[id];
+        if (subroutine instanceof Subroutine) {
+          graphs[subroutine.id] = subroutine;
+        } else {
+          codes[subroutine.id] = subroutine;
+        }
+      }
+      state = {
+        subroutines: graphs,
+        builtins: codes,
+        schema_version: schema_version
+      };
+      return localStorage.state = JSON.stringify(state);
+    };
     load_state = function(data) {
       var builtin, builtin_data, id, second_pass, subroutine, subroutine_data, subroutines, _i, _len, _ref, _ref1;
       subroutines = {};
@@ -907,21 +929,23 @@
     if (localStorage.state != null) {
       source_data = JSON.parse(localStorage.state);
     } else {
-      source_data = $q.defer();
+      source_data_deferred = $q.defer();
+      source_data = source_data_deferred.promise;
       $http.get('examples.json').success(function(data) {
-        return source_data.resolve(data);
+        return source_data_deferred.resolve(data);
       });
     }
     subroutines = {};
     loaded = $q.defer();
-    $q.when(source_data.promise, function(source_data) {
+    $q.when(source_data, function(source_data) {
       var id, obj, _ref;
       _ref = load_state(source_data);
       for (id in _ref) {
         obj = _ref[id];
         subroutines[id] = obj;
       }
-      return loaded.resolve(true);
+      loaded.resolve(true);
+      return start_saving();
     });
     return {
       loaded: loaded.promise,

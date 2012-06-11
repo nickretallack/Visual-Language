@@ -263,8 +263,6 @@ module.controller 'Controller', ($scope, $http, $location, interpreter, $q) ->
         make_something interpreter.Builtin
 
 
-    saving = false
-    start_saving = -> setInterval save_state, 500 if not saving
 
     ###
     $scope.import_export_text = ''
