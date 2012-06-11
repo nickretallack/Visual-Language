@@ -29,21 +29,35 @@
 
 <body ng:controller="Controller">
 
-<div id="main">
 <nav class="navbar navbar-fixed-top">
     <div class="navbar-inner">
-        <div class="container-fluid">
+        <div class="container main" style="position:absolute; left:20px; right:300px;">
             <a class="brand">VisLang</a>
-                <a class="btn btn-success" ng-click="new_graph()">New Graph</a>
-                <a class="btn btn-primary" ng-click="new_code()">New Code</a>
+            <a class="btn btn-success" ng-click="new_graph()">New Graph</a>
+            <a class="btn btn-primary" ng-click="new_code()">New Code</a>
         </div>
+        <div class="container side" style="position:absolute; right:0; width:280px;">
+        <a class="brand">Library</a>
+        <form class="navbar-search">
+            <input type="search" ng-model="search" class="search-query span2" placeholder="Search">
+        </form>
+    </div>
     </div>
 </nav>
 
+<div id="main">
 <ng-view></ng-view>
 </div>
 
-<ng-include src="'overlays.html'"></ng-include>
+<div id="tools" ng-controller="library" class="span4">
+<table class="table table-condensed table-striped">
+<tr ng-repeat="subroutine in get_subroutines() | filter:{name:search}">
+    <td><a class="name" href="#{{subroutine.id}}">{{subroutine.name}}</a>
+    <td><a ng-click="use(subroutine)">use</a>
+    <td><a ng-click="use_value(subroutine)">value</a>
+</tr></table>
+</div>
+
 
 </body>
 </html>
