@@ -109,6 +109,9 @@ module.directive 'subroutine', ->
             $event.preventDefault()
             $scope.dragging = [node]
 
+        $scope.name_node = (node) ->
+            node.text or node.implementation.id[0..5]
+
         this.click_nib = $scope.click_nib = (nib, $event) ->
             $event.preventDefault()
             $event.stopPropagation()
@@ -208,6 +211,9 @@ module.controller 'library', ($scope, $q, interpreter) ->
             new interpreter.Literal $scope.$root.current_object, V(0,0), $scope.literal_text
             $scope.literal_text = ''
             hide()
+
+    $scope.name_subroutine = (subroutine) ->
+        subroutine.name or subroutine.id[0..20]
 
 ### INTERACTION ###
 

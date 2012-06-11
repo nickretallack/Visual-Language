@@ -1,5 +1,6 @@
 #main, #tools {position:absolute; top:40px; bottom:0; overflow:auto;}
 #tools {right:0; width:300px;}
+#tools  table {width:100%;}
 #main {left:0; right:300px;}
 
 h2 {margin-top:10px; font-weight:bold; font-family:helvetica}

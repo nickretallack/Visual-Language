@@ -48,7 +48,7 @@
 <div id="tools" ng-controller="library" class="span4">
 <table class="table table-condensed table-striped">
 <tr ng-repeat="subroutine in get_subroutines() | filter:{name:search}">
-    <td><a class="name" href="#{{subroutine.id}}">{{subroutine.name}}</a>
+    <td><a class="name" href="#{{subroutine.id}}">{{name_subroutine(subroutine)}}</a>
     <td><a ng-click="use(subroutine)">use</a>
     <td><a ng-click="use_value(subroutine)">value</a>
 </tr></table>
