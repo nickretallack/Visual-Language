@@ -196,18 +196,16 @@ module.controller 'library', ($scope, $q, interpreter) ->
     $scope.get_subroutines = ->
         _.values interpreter.subroutines
 
-    hide = -> $scope.$root.overlay = null
-
-    $scope.use = (subroutine) =>
+    $scope.use = (subroutine) ->
         if subroutine instanceof interpreter.Subroutine
             new interpreter.SubroutineApplication $scope.$root.current_object, V(0,0), subroutine
         else
             new interpreter.BuiltinApplication $scope.$root.current_object, V(0,0), subroutine
-        hide()
 
-    $scope.use_value = (subroutine) =>
-        new interpreter.Literal $scope.$root.current_object, V(0,0), subroutine
-        hide()
+    $scope.use_value = (value) ->
+        new interpreter.Literal $scope.$root.current_object, V(0,0), value
+
+    $scope.is_valid_json = is_valid_json
 
     $scope.literal_text = ''
     $scope.use_literal = =>
@@ -243,6 +241,13 @@ whitespace_split = (input) ->
     results = input.split(/\s+/)
     results = results[1..] if results[0] is ''
     results
+
+is_valid_json = (json) ->
+    try
+        JSON.parse json
+        return true
+    catch exception
+        return false
 
 valid_json = (json) ->
     try

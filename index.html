@@ -47,11 +47,19 @@
 
 <div id="tools" ng-controller="library" class="span4">
 <table class="table table-condensed table-striped">
+
+<tr ng-show="is_valid_json(search) && current_object.type == 'subroutine'">
+    <td><a class="name">Literal</a>
+    <td>
+    <td><a ng-click="use_value(search)">value</a>
+</tr>
+
 <tr ng-repeat="subroutine in get_subroutines() | filter:{name:search} | orderBy:'name'">
     <td><a class="name" href="#/{{subroutine.id}}">{{name_subroutine(subroutine)}}</a>
     <td><a ng-click="use(subroutine)">use</a>
     <td><a ng-click="use_value(subroutine)">value</a>
-</tr></table>
+</tr>
+</table>
 </div>
 
 
