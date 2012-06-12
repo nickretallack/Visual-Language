@@ -78,19 +78,40 @@ module.directive 'subroutine', ($location) ->
                 )
                     from.connect to
 
+        $scope.boxing = false
+        $element.bind 'mousedown', (event) -> $scope.$apply ->
+            $scope.boxing = $scope.mouse_position
+
+        $scope.selection_style = ->
+            if $scope.boxing
+                left = Math.min $scope.boxing.x, $scope.mouse_position.x
+                top = Math.min $scope.boxing.y, $scope.mouse_position.y
+                width = (Math.max $scope.boxing.x, $scope.mouse_position.x) - left
+                height = (Math.max $scope.boxing.y, $scope.mouse_position.y) - top
+
+                left:"#{left}px"
+                top:"#{top}px"
+                width:"#{width}px"
+                height:"#{height}px"
+
         $element.bind 'mouseup', (event) -> $scope.$apply ->
             $scope.dragging = []
-            $scope.drawing = null
+            $scope.drawing = $scope.boxing = null
             draw()
 
         $scope.mouse_position = V 0,0
         $element.bind 'mousemove', (event) -> $scope.$apply ->
-            new_mouse_position = V event.clientX, event.clientY
+            new_mouse_position = (V event.clientX, event.clientY).minus canvas_offset
             mouse_delta = $scope.mouse_position.minus new_mouse_position
             $scope.mouse_position = new_mouse_position
-            for node in $scope.dragging
-                node.position = node.position.plus V -mouse_delta.y, -mouse_delta.x
-            draw()
+
+            if $scope.dragging or $scope.boxing
+                event.preventDefault()
+
+            if $scope.dragging
+                for node in $scope.dragging
+                    node.position = node.position.plus V -mouse_delta.y, -mouse_delta.x
+                draw()
 
         ### Drawing the Connection Field ###
         header_height = 40

@@ -114,10 +114,31 @@
             }
           }
         };
+        $scope.boxing = false;
+        $element.bind('mousedown', function(event) {
+          return $scope.$apply(function() {
+            return $scope.boxing = $scope.mouse_position;
+          });
+        });
+        $scope.selection_style = function() {
+          var height, left, top, width;
+          if ($scope.boxing) {
+            left = Math.min($scope.boxing.x, $scope.mouse_position.x);
+            top = Math.min($scope.boxing.y, $scope.mouse_position.y);
+            width = (Math.max($scope.boxing.x, $scope.mouse_position.x)) - left;
+            height = (Math.max($scope.boxing.y, $scope.mouse_position.y)) - top;
+            return {
+              left: "" + left + "px",
+              top: "" + top + "px",
+              width: "" + width + "px",
+              height: "" + height + "px"
+            };
+          }
+        };
         $element.bind('mouseup', function(event) {
           return $scope.$apply(function() {
             $scope.dragging = [];
-            $scope.drawing = null;
+            $scope.drawing = $scope.boxing = null;
             return draw();
           });
         });
@@ -125,15 +146,20 @@
         $element.bind('mousemove', function(event) {
           return $scope.$apply(function() {
             var mouse_delta, new_mouse_position, node, _i, _len, _ref;
-            new_mouse_position = V(event.clientX, event.clientY);
+            new_mouse_position = (V(event.clientX, event.clientY)).minus(canvas_offset);
             mouse_delta = $scope.mouse_position.minus(new_mouse_position);
             $scope.mouse_position = new_mouse_position;
-            _ref = $scope.dragging;
-            for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-              node = _ref[_i];
-              node.position = node.position.plus(V(-mouse_delta.y, -mouse_delta.x));
+            if ($scope.dragging || $scope.boxing) {
+              event.preventDefault();
             }
-            return draw();
+            if ($scope.dragging) {
+              _ref = $scope.dragging;
+              for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+                node = _ref[_i];
+                node.position = node.position.plus(V(-mouse_delta.y, -mouse_delta.x));
+              }
+              return draw();
+            }
           });
         });
         /* Drawing the Connection Field
