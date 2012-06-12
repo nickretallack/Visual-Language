@@ -110,7 +110,7 @@
     };
   });
 
-  module.directive('subroutine', function() {
+  module.directive('subroutine', function($location) {
     return {
       link: function(scope, element, attributes) {},
       controller: function($scope, $element, $attrs, interpreter) {
@@ -162,6 +162,12 @@
         $scope.click_node = function(node, $event) {
           $event.preventDefault();
           return $scope.dragging = [node];
+        };
+        $scope.edit_node = function(node, $event) {
+          $event.preventDefault();
+          if (!(node instanceof interpreter.Literal)) {
+            return $location.path("/" + node.implementation.id);
+          }
         };
         $scope.name_node = function(node) {
           return node.text || node.implementation.id.slice(0, 6);

@@ -70,7 +70,7 @@ module.directive 'shrinkyInput', ->
                 $(element).css width:doppelganger.width()+2
                 controller?.draw()
 
-module.directive 'subroutine', ->
+module.directive 'subroutine', ($location) ->
     link:(scope, element, attributes) ->
     controller:($scope, $element, $attrs, interpreter) ->
         $$element = $ $element
@@ -108,6 +108,10 @@ module.directive 'subroutine', ->
         $scope.click_node = (node, $event) ->
             $event.preventDefault()
             $scope.dragging = [node]
+
+        $scope.edit_node = (node, $event) ->
+            $event.preventDefault()
+            $location.path "/#{node.implementation.id}" unless node instanceof interpreter.Literal
 
         $scope.name_node = (node) ->
             node.text or node.implementation.id[0..5]
