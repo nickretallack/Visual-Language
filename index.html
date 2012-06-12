@@ -21,6 +21,7 @@
 <script src="vector2.js"></script>
 <script src="stuff.js"></script>
 <script src="language.js"></script>
+<script src="graph.js"></script>
 </head>
 
 <body ng:controller="Controller">
@@ -49,7 +50,7 @@
 <table class="table table-condensed table-striped">
 
 <tr ng-show="is_valid_json(search) && current_object.type == 'subroutine'">
-    <td><a class="name">Literal</a>
+    <td class="name">Literal
     <td>
     <td><a ng-click="use_value(search)">value</a>
 </tr>
