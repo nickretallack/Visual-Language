@@ -25,6 +25,7 @@ module.directive 'subroutine', ($location) ->
         subroutine = $scope.$eval $attrs.subroutine
         $scope.dragging = []
         $scope.drawing = null # nib you're drawing a line from right now
+        $scope.selection = []
 
         $scope.evaluate_output = (output) ->
             subroutine.run output
@@ -47,15 +48,22 @@ module.directive 'subroutine', ($location) ->
             [nib] = subroutine.outputs.splice $index, 1
             nib.delete_connections()
 
+        transform_the_position = (position) ->
+            position = transform_position position, $scope.editor_size
+
         ### Node and nib interaction ###
         $scope.position = (node) ->
-            position = transform_position node.position, $scope.editor_size
+            position = transform_the_position node.position
             left:position.x + 'px'
             top:position.y + 'px'
 
         $scope.click_node = (node, $event) ->
             $event.preventDefault()
-            $scope.dragging = [node]
+            $event.stopPropagation()
+            if node in $scope.selection
+                $scope.dragging = $scope.selection
+            else
+                $scope.dragging = [node]
 
         $scope.edit_node = (node, $event) ->
             $event.preventDefault()
@@ -63,6 +71,9 @@ module.directive 'subroutine', ($location) ->
 
         $scope.name_node = (node) ->
             node.text or node.implementation.id[0..5]
+
+        $scope.selected = (node) ->
+            node in $scope.selection
 
         this.click_nib = $scope.click_nib = (nib, $event) ->
             $event.preventDefault()
@@ -80,22 +91,40 @@ module.directive 'subroutine', ($location) ->
 
         $scope.boxing = false
         $element.bind 'mousedown', (event) -> $scope.$apply ->
+            console.log "BOXING"
             $scope.boxing = $scope.mouse_position
+
+        get_bounds = (point1, point2) ->
+            bounds =
+                left: Math.min point1.x, point2.x
+                top: Math.min point1.y, point2.y
+                right: Math.max point1.x, point2.x
+                bottom: Math.max point1.y, point2.y
+            bounds.width = bounds.right - bounds.left
+            bounds.height = bounds.bottom - bounds.top
+            bounds
 
         $scope.selection_style = ->
             if $scope.boxing
-                left = Math.min $scope.boxing.x, $scope.mouse_position.x
-                top = Math.min $scope.boxing.y, $scope.mouse_position.y
-                width = (Math.max $scope.boxing.x, $scope.mouse_position.x) - left
-                height = (Math.max $scope.boxing.y, $scope.mouse_position.y) - top
+                bounds = get_bounds $scope.boxing, $scope.mouse_position
 
-                left:"#{left}px"
-                top:"#{top}px"
-                width:"#{width}px"
-                height:"#{height}px"
+                left:"#{bounds.left}px"
+                top:"#{bounds.top}px"
+                width:"#{bounds.width}px"
+                height:"#{bounds.height}px"
+
+        in_box = (point, point1, point2) ->
+            point = transform_the_position point
+            bounds = get_bounds point1, point2
+            bounds.left < point.x < bounds.right and bounds.top < point.y < bounds.bottom
 
         $element.bind 'mouseup', (event) -> $scope.$apply ->
             $scope.dragging = []
+
+            if $scope.boxing
+                $scope.selection = _.filter subroutine.nodes, (node) -> in_box node.position, $scope.boxing, $scope.mouse_position
+                console.log $scope.selection
+
             $scope.drawing = $scope.boxing = null
             draw()
 
