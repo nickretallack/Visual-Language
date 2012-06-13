@@ -399,7 +399,7 @@
       };
 
       Subroutine.prototype.make_from = function(nodes) {
-        var connection, contained_connections, id, in_connections, new_node, nib, node, old_scope, out_connections, _i, _len, _ref, _ref1, _ref2, _ref3;
+        var connection, contained_connections, id, in_connections, new_node, nib, node, old_scope, out_connections, _i, _len, _ref, _ref1, _ref2, _ref3, _results;
         old_scope = nodes[0].scope;
         in_connections = {};
         out_connections = {};
@@ -438,20 +438,22 @@
           old_scope.remove_connection(connection);
           this.add_connection(connection);
         }
-        for (id in in_connections) {
-          connection = in_connections[id];
-          connection["delete"]();
-        }
-        for (id in out_connections) {
-          connection = out_connections[id];
-          connection["delete"]();
-        }
         for (id in nodes) {
           node = nodes[id];
           old_scope.remove_node(node);
           this.add_node(node);
         }
-        return new_node = new SubroutineApplication(old_scope, V(0, 0), this);
+        new_node = new SubroutineApplication(old_scope, V(0, 0), this);
+        for (id in in_connections) {
+          connection = in_connections[id];
+          connection["delete"]();
+        }
+        _results = [];
+        for (id in out_connections) {
+          connection = out_connections[id];
+          _results.push(connection["delete"]());
+        }
+        return _results;
       };
 
       return Subroutine;

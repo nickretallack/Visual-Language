@@ -231,13 +231,6 @@ module.factory 'interpreter', ($q, $http) ->
                 old_scope.remove_connection connection
                 @add_connection connection
 
-            # clip the others.  TODO: connect them
-            for id, connection of in_connections
-                connection.delete()
-
-            for id, connection of out_connections
-                connection.delete()
-
             # move the nodes
             for id, node of nodes
                 old_scope.remove_node node
@@ -245,6 +238,19 @@ module.factory 'interpreter', ($q, $http) ->
 
             # create a node for this in the old parent
             new_node = new SubroutineApplication old_scope, V(0,0), @
+
+            # connect the hanging connections.
+            # Each one becomes two: a connection on the inside and on the outside.
+
+            for id, connection of in_connections
+                #nib = new interpreter.Output
+                #subroutine.inputs.push nib
+                connection.delete()
+
+            for id, connection of out_connections
+                connection.delete()
+
+
 
 
 
