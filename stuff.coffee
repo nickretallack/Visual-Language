@@ -83,7 +83,7 @@ module.controller 'library', ($scope, $q, interpreter) ->
             hide()
 
     $scope.name_subroutine = (subroutine) ->
-        subroutine.name or subroutine.id[0..20]
+        subroutine.text or subroutine.id[0..20]
 
 ### INTERACTION ###
 

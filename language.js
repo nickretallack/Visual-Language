@@ -80,7 +80,7 @@
 
       function Builtin(_arg) {
         var _ref, _ref1, _ref2, _ref3, _ref4;
-        _ref = _arg != null ? _arg : {}, this.name = _ref.name, this.output_implementation = _ref.output_implementation, this.memo_implementation = _ref.memo_implementation, this.inputs = _ref.inputs, this.outputs = _ref.outputs, this.id = _ref.id;
+        _ref = _arg != null ? _arg : {}, this.text = _ref.name, this.output_implementation = _ref.output_implementation, this.memo_implementation = _ref.memo_implementation, this.inputs = _ref.inputs, this.outputs = _ref.outputs, this.id = _ref.id;
         if ((_ref1 = this.memo_implementation) == null) {
           this.memo_implementation = null;
         }
@@ -163,42 +163,55 @@
     })();
     Subroutine = (function() {
 
-      function Subroutine(name, inputs, outputs, id) {
-        var index, text;
-        this.name = name != null ? name : '';
-        if (inputs == null) {
-          inputs = [];
-        }
-        if (outputs == null) {
-          outputs = [];
-        }
-        this.id = id != null ? id : UUID();
-        if (!outputs.length) {
-          outputs = ['OUT'];
+      Subroutine.type = 'subroutine';
+
+      function Subroutine() {
+        this.type = 'subroutine';
+        this.nodes = {};
+        this.connections = {};
+        this.inputs = [];
+        this.outputs = [];
+      }
+
+      Subroutine.prototype.fromJSON = function(data) {
+        var index, nib_data, _ref;
+        this.text = data.name, this.id = data.id;
+        if ((_ref = this.id) == null) {
+          this.id = UUID();
         }
         this.inputs = (function() {
-          var _i, _len, _results;
+          var _i, _len, _ref1, _results;
+          _ref1 = data.inputs;
           _results = [];
-          for (index = _i = 0, _len = inputs.length; _i < _len; index = ++_i) {
-            text = inputs[index];
-            _results.push(new Output(this, text, index, inputs.length - 1));
+          for (index = _i = 0, _len = _ref1.length; _i < _len; index = ++_i) {
+            nib_data = _ref1[index];
+            _results.push((new Input).fromJSON({
+              name: nib_data,
+              index: index
+            }, this));
           }
           return _results;
         }).call(this);
         this.outputs = (function() {
-          var _i, _len, _results;
+          var _i, _len, _ref1, _results;
+          _ref1 = data.outputs;
           _results = [];
-          for (index = _i = 0, _len = outputs.length; _i < _len; index = ++_i) {
-            text = outputs[index];
-            _results.push(new Input(this, text, index, outputs.length - 1));
+          for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
+            nib_data = _ref1[_i];
+            _results.push((new Output).fromJSON({
+              name: nib_data,
+              index: index
+            }, this));
           }
           return _results;
         }).call(this);
-        this.nodes = {};
-        this.connections = {};
-      }
+        return subroutines[this.id] = this;
+      };
 
-      Subroutine.prototype.type = 'subroutine';
+      Subroutine.prototype.initialize = function() {
+        this.id = UUID();
+        return subroutines[this.id] = this;
+      };
 
       Subroutine.prototype.toJSON = function() {
         return {
@@ -274,25 +287,11 @@
       };
 
       Subroutine.prototype.get_inputs = function() {
-        var input, _i, _len, _ref, _results;
-        _ref = this.inputs;
-        _results = [];
-        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-          input = _ref[_i];
-          _results.push(input.text);
-        }
-        return _results;
+        return this.inputs;
       };
 
       Subroutine.prototype.get_outputs = function() {
-        var output, _i, _len, _ref, _results;
-        _ref = this.outputs;
-        _results = [];
-        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-          output = _ref[_i];
-          _results.push(output.text);
-        }
-        return _results;
+        return this.outputs;
       };
 
       Subroutine.prototype["export"] = function() {
@@ -469,6 +468,14 @@
         this.position = position;
       };
 
+      Node.prototype.get_inputs = function() {
+        return this.implementation.inputs;
+      };
+
+      Node.prototype.get_outputs = function() {
+        return this.implementation.outputs;
+      };
+
       Node.prototype.get_nibs = function() {
         return this.inputs.concat(this.outputs);
       };
@@ -501,29 +508,15 @@
 
       __extends(FunctionApplication, _super);
 
-      function FunctionApplication(_arg) {
-        var index, inputs, name, outputs, text;
-        name = _arg.name, inputs = _arg.inputs, outputs = _arg.outputs;
-        this.text = name;
+      function FunctionApplication() {
         FunctionApplication.__super__.constructor.call(this);
-        this.inputs = (function() {
-          var _i, _len, _results;
-          _results = [];
-          for (index = _i = 0, _len = inputs.length; _i < _len; index = ++_i) {
-            text = inputs[index];
-            _results.push(new Input(this, text, index, inputs.length - 1));
-          }
-          return _results;
-        }).call(this);
-        this.outputs = (function() {
-          var _i, _len, _results;
-          _results = [];
-          for (index = _i = 0, _len = outputs.length; _i < _len; index = ++_i) {
-            text = outputs[index];
-            _results.push(new Output(this, text, index, outputs.length - 1));
-          }
-          return _results;
-        }).call(this);
+        /*
+                    @text = name
+                    super()
+                    @inputs = (new Input @, text, index, inputs.length-1 for text, index in inputs)
+                    @outputs = (new Output @, text, index, outputs.length-1 for text, index in outputs)
+        */
+
       }
 
       FunctionApplication.prototype.evaluation = function(the_scope, output_index) {};
@@ -584,17 +577,14 @@
 
       __extends(SubroutineApplication, _super);
 
+      SubroutineApplication.type = 'function';
+
       function SubroutineApplication(scope, position, implementation, id) {
         this.scope = scope;
         this.position = position;
         this.implementation = implementation;
         this.id = id != null ? id : UUID();
-        this.type = 'function';
-        SubroutineApplication.__super__.constructor.call(this, {
-          name: this.implementation.name,
-          inputs: this.implementation.get_inputs(),
-          outputs: this.implementation.get_outputs()
-        });
+        SubroutineApplication.__super__.constructor.call(this);
       }
 
       SubroutineApplication.prototype.evaluation = function(the_scope, output_index) {
@@ -627,13 +617,14 @@
 
       __extends(BuiltinApplication, _super);
 
+      BuiltinApplication.type = 'builtin';
+
       function BuiltinApplication(scope, position, implementation, id) {
         this.scope = scope;
         this.position = position;
         this.implementation = implementation;
         this.id = id != null ? id : UUID();
-        this.type = 'builtin';
-        BuiltinApplication.__super__.constructor.call(this, this.implementation);
+        BuiltinApplication.__super__.constructor.call(this);
       }
 
       BuiltinApplication.prototype.evaluation = function(the_scope, output_index) {
@@ -664,8 +655,11 @@
     })(FunctionApplication);
     LiteralValue = (function() {
 
-      function LiteralValue(text) {
+      function LiteralValue(text, id) {
         this.text = text;
+        this.id = id != null ? id : UUID();
+        this.inputs = [];
+        this.outputs = [(new Output).initialize(this.id)];
       }
 
       LiteralValue.prototype.evaluation = function() {
@@ -694,12 +688,10 @@
           this.implementation = value;
           this.text = value.name;
         } else {
-          this.implementation = new LiteralValue(value);
+          this.implementation = new LiteralValue(value, this.id);
           this.text = value;
         }
         Literal.__super__.constructor.call(this);
-        this.inputs = [];
-        this.outputs = [new Output(this, '')];
       }
 
       Literal.prototype.evaluation = function() {
@@ -724,28 +716,39 @@
     })(Node);
     Nib = (function() {
 
-      function Nib() {
-        this.connections = {};
-      }
+      function Nib() {}
 
-      Nib.prototype.delete_connections = function() {
-        var connection, id, _ref, _results;
-        _ref = this.connections;
-        _results = [];
-        for (id in _ref) {
-          connection = _ref[id];
-          _results.push(connection.connection["delete"]());
+      Nib.prototype.fromJSON = function(data, parent) {
+        var _ref;
+        this.parent = parent;
+        this.text = data.text, this.index = data.index, this.id = data.id;
+        if ((_ref = this.id) == null) {
+          this.id = UUID();
         }
-        return _results;
+        return this;
       };
 
-      Nib.prototype.get_scope = function() {
-        if (this.parent instanceof Subroutine) {
-          return this.parent;
-        } else {
-          return this.parent.scope;
-        }
+      Nib.prototype.initialize = function(id) {
+        var _ref;
+        this.id = id != null ? id : UUID();
+        return (_ref = this.id) != null ? _ref : this.id = UUID();
       };
+
+      /*
+              constructor: ->
+                  @connections = {}
+      
+              delete_connections: ->
+                  for id, connection of @connections
+                      connection.connection.delete()
+      
+              get_scope: ->
+                  if this.parent instanceof Subroutine
+                      this.parent
+                  else
+                      this.parent.scope
+      */
+
 
       return Nib;
 
@@ -754,42 +757,29 @@
 
       __extends(Input, _super);
 
-      function Input(parent, text, index, siblings) {
-        this.parent = parent;
-        this.text = text;
-        this.index = index != null ? index : 0;
-        this.siblings = siblings != null ? siblings : 0;
-        Input.__super__.constructor.call(this);
+      /*
+              _add_connection: (connection) ->
+                  # delete previous connection
+                  @get_connection()?.connection.delete()
+                  @connections = {}
+                  @connections[connection.id] =
+                      connection:connection
+      
+              get_connection: ->
+                  for id, connection of @connections
+                      return connection
+      
+              get_node: ->
+                  @get_connection()?.connection.output.parent
+      
+              connect:(output) ->
+                  new Connection @get_scope(), @, output
+      */
+
+
+      function Input() {
+        return Input.__super__.constructor.apply(this, arguments);
       }
-
-      Input.prototype._add_connection = function(connection) {
-        var _ref;
-        if ((_ref = this.get_connection()) != null) {
-          _ref.connection["delete"]();
-        }
-        this.connections = {};
-        return this.connections[connection.id] = {
-          connection: connection
-        };
-      };
-
-      Input.prototype.get_connection = function() {
-        var connection, id, _ref;
-        _ref = this.connections;
-        for (id in _ref) {
-          connection = _ref[id];
-          return connection;
-        }
-      };
-
-      Input.prototype.get_node = function() {
-        var _ref;
-        return (_ref = this.get_connection()) != null ? _ref.connection.output.parent : void 0;
-      };
-
-      Input.prototype.connect = function(output) {
-        return new Connection(this.get_scope(), this, output);
-      };
 
       return Input;
 
@@ -798,58 +788,55 @@
 
       __extends(Output, _super);
 
-      function Output(parent, text, index, siblings) {
-        this.parent = parent;
+      function Output(subroutine, text, index, id) {
+        this.subroutine = subroutine;
         this.text = text;
         this.index = index != null ? index : 0;
-        this.siblings = siblings != null ? siblings : 0;
+        this.id = id != null ? id : UUID();
         Output.__super__.constructor.call(this);
       }
 
-      Output.prototype._add_connection = function(connection, vertex) {
-        return this.connections[connection.id] = {
-          connection: connection,
-          vertex: vertex
-        };
-      };
+      /*
+              _add_connection: (connection, vertex) ->
+                  @connections[connection.id] =
+                      connection:connection
+                      vertex:vertex
+      
+              connect:(input) ->
+                  new Connection @get_scope(), input, @
+      */
 
-      Output.prototype.connect = function(input) {
-        return new Connection(this.get_scope(), input, this);
-      };
 
       return Output;
 
     })(Nib);
     Connection = (function() {
 
-      function Connection(scope, input, output, id) {
+      function Connection(scope, input, output, from, to, id) {
         this.scope = scope;
         this.input = input;
         this.output = output;
+        this.from = from;
+        this.to = to;
         this.id = id != null ? id : UUID();
-        this.input._add_connection(this);
-        this.output._add_connection(this);
         this.scope.connections[this.id] = this;
       }
 
-      Connection.prototype.toJSON = function() {
-        return {
-          input: {
-            index: this.input.index,
-            parent_id: this.input.parent.id
-          },
-          output: {
-            index: this.output.index,
-            parent_id: this.output.parent.id
-          }
-        };
-      };
+      /*
+              toJSON: ->
+                  input:
+                      index:@input.index
+                      parent_id:@input.parent.id
+                  output:
+                      index:@output.index
+                      parent_id:@output.parent.id
+      
+              delete: ->
+                  delete @scope.connections[@id]
+                  delete @output.connections[@id]
+                  @input.connections = {}
+      */
 
-      Connection.prototype["delete"] = function() {
-        delete this.scope.connections[this.id];
-        delete this.output.connections[this.id];
-        return this.input.connections = {};
-      };
 
       return Connection;
 
@@ -921,7 +908,7 @@
       _ref1 = data.subroutines;
       for (id in _ref1) {
         subroutine_data = _ref1[id];
-        subroutine = new Subroutine(subroutine_data.name, subroutine_data.inputs, subroutine_data.outputs, subroutine_data.id);
+        subroutine = (new Subroutine).fromJSON(subroutine_data);
         subroutines[subroutine.id] = subroutine;
         second_pass.push(subroutine);
       }
@@ -932,7 +919,7 @@
       return subroutines;
     };
     load_implementation = function(subroutine, data, subroutines) {
-      var connection, get_connector, implementation, node, position, sink, sink_connector, source, source_connector, value, _i, _j, _len, _len1, _ref, _ref1, _results;
+      var connection, from, get_connector, get_nib, implementation, input, node, output, position, to, value, _i, _j, _len, _len1, _ref, _ref1, _results;
       _ref = data.nodes;
       for (_i = 0, _len = _ref.length; _i < _len; _i++) {
         node = _ref[_i];
@@ -961,6 +948,9 @@
       _results = [];
       for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
         connection = _ref1[_j];
+        /* legacy bullshit
+        */
+
         get_connector = function(nib) {
           if (nib.parent_id === subroutine.id) {
             return subroutine;
@@ -968,15 +958,34 @@
             return subroutine.nodes[nib.parent_id];
           }
         };
-        source = get_connector(connection.output);
-        sink = get_connector(connection.input);
-        source_connector = source instanceof Node ? source.outputs : source.inputs;
-        sink_connector = sink instanceof Node ? sink.inputs : sink.outputs;
-        if (connection.output.index >= source_connector.length || connection.input.index >= sink_connector.length) {
-          _results.push(console.log("Oh no, trying to make an invalid connection"));
-        } else {
-          _results.push(source_connector[connection.output.index].connect(sink_connector[connection.input.index]));
+        get_nib = function(node, data) {
+          return data.index;
+        };
+        from = get_connector(connection.input);
+        to = get_connector(connection.output);
+        input = from instanceof Subroutine ? from.outputs[connection.input.index] : from.implementation.inputs[connection.input.index];
+        output = to instanceof Subroutine ? to.inputs[connection.output.index] : to.implementation.outputs[connection.output.index];
+        if (!input) {
+          console.log(subroutine.text);
+          console.log(subroutine.text);
         }
+        if (!output) {
+          console.log(subroutine.text);
+          console.log(subroutine.text);
+        }
+        _results.push(new Connection(subroutine, input, output, from, to, connection.id));
+        /*
+        
+                    # input/output reversal.  TODO: clean up subroutine implementation to avoid this
+                    source_connector = if source instanceof Node then source.outputs else source.inputs
+                    sink_connector = if sink instanceof Node then sink.inputs else sink.outputs
+        
+                    if connection.output.index >= source_connector.length or connection.input.index >= sink_connector.length
+                        console.log "Oh no, trying to make an invalid connection"
+                    else
+                        source_connector[connection.output.index].connect sink_connector[connection.input.index]
+        */
+
       }
       return _results;
     };
@@ -998,8 +1007,7 @@
         obj = _ref[id];
         subroutines[id] = obj;
       }
-      loaded.resolve(true);
-      return start_saving();
+      return loaded.resolve(true);
     });
     return {
       loaded: loaded.promise,

@@ -1,3 +1,11 @@
+- serious problem
+Creating new inputs/outputs on a subroutine does not update that subroutines uses.  It needs to.  It would be nice if this information were linked somehow, but unfortunately an input object on one side is an output on the other.  But somehow all the implementations need to know if things are changing!  Ugh.  hm.
+
+It's really important to keep track of what nibs things are connected to with more than just their name or index.  Nibs need IDs.  Nibs should actually belong to functions, and just be referenced by applications.  That way they do double duty.  Gotta treat them differently whether you're connecting to a subroutine or not that way though.
+
+Connections should connect to nib objects, and they should be remembered by ID.  This way you can easily rearrange nibs by index without breaking connections anywhere in the program.  Also, there should be a big warning any time you delete a nib, since this can't be undone...unless we have some 'resurrect a deleted nib' feature, where subroutines remember nibs they used to own.  Yeah, that's probably best.  Creating a new nib will never substitute for an old one though.
+
+
 - needed features
     - create a subroutine from selected nodes
     - use shift button to add to / remove from selection

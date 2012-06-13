@@ -117,7 +117,7 @@
       }
     };
     return $scope.name_subroutine = function(subroutine) {
-      return subroutine.name || subroutine.id.slice(0, 21);
+      return subroutine.text || subroutine.id.slice(0, 21);
     };
   });
 

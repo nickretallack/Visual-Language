@@ -22,17 +22,17 @@
         nib: 'accessor'
       },
       link: function(scope, element, attributes, controller) {
-        var nib;
-        nib = scope.nib();
-        nib.view = $(element);
+        var nib, node, _ref;
+        _ref = scope.nib(), node = _ref[0], nib = _ref[1];
+        element.attr('id', "" + node.id + "-" + nib.id);
         element.bind('mousedown', function(event) {
           return scope.$apply(function() {
-            return controller.click_nib(nib, event);
+            return controller.click_nib(node, nib, event);
           });
         });
         return element.bind('mouseup', function(event) {
           return scope.$apply(function() {
-            return controller.release_nib(nib, event);
+            return controller.release_nib(node, nib, event);
           });
         });
       }
@@ -121,7 +121,7 @@
         this.click_nib = $scope.click_nib = function(nib, $event) {
           $event.preventDefault();
           $event.stopPropagation();
-          return $scope.drawing = nib;
+          return $scope.drawing = [node, nib];
         };
         this.release_nib = $scope.release_nib = function(nib) {
           var from, to, _ref;
@@ -220,9 +220,9 @@
               _ref = subroutine.connections;
               for (id in _ref) {
                 connection = _ref[id];
-                input_element = connection.input.view;
-                output_element = connection.output.view;
-                if (input_element && output_element) {
+                input_element = $element.find("#" + connection.from.id + "-" + connection.input.id);
+                output_element = $element.find("#" + connection.to.id + "-" + connection.output.id);
+                if (input_element.length && output_element.length) {
                   input_position = V(input_element.offset()).subtract(nib_offset);
                   output_position = V(output_element.offset()).subtract(nib_offset);
                   c.beginPath();

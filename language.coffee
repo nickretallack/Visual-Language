@@ -21,7 +21,7 @@ module.factory 'interpreter', ($q, $http) ->
         constructor: (@name, @exception) -> @message = "#{exception} in builtin \"#{@name}\": "
 
     class Builtin
-        constructor:({@name, @output_implementation, @memo_implementation, @inputs, @outputs, @id}={}) ->
+        constructor:({name:@text, @output_implementation, @memo_implementation, @inputs, @outputs, @id}={}) ->
             @memo_implementation ?= null
             @inputs ?= []
             @outputs ?= ['OUT']
@@ -69,17 +69,25 @@ module.factory 'interpreter', ($q, $http) ->
                 return output_function (args.concat [memo])...
 
     class Subroutine
-        constructor:(@name='', inputs=[], outputs=[], @id=UUID()) ->
-            # can't have a subroutine with no output
-            outputs = ['OUT'] unless outputs.length
-
-            # These are intentionally reversed.  The inputs to a subroutine show up as outputs inside it
-            @inputs = (new Output @, text, index, inputs.length-1 for text, index in inputs)
-            @outputs = (new Input @, text, index, outputs.length-1 for text, index in outputs)
+        @type = 'subroutine'
+        constructor: ->
+            @type = 'subroutine'
             @nodes = {}
             @connections = {}
+            @inputs = []
+            @outputs = []
 
-        type:'subroutine'
+        fromJSON: (data) ->
+            {name:@text, @id} = data
+            @id ?= UUID()
+            @inputs = ((new Input).fromJSON {name:nib_data, index:index}, @ for nib_data, index in data.inputs)
+            @outputs = ((new Output).fromJSON {name:nib_data, index:index}, @ for nib_data in data.outputs)
+            subroutines[@id] = @
+
+        initialize: ->
+            #@name = ''
+            @id = UUID()
+            subroutines[@id] = @
 
         toJSON: ->
             id:@id
@@ -126,9 +134,11 @@ module.factory 'interpreter', ($q, $http) ->
                 else
                     throw exception
 
+        get_inputs: -> @inputs
+        get_outputs: -> @outputs
 
-        get_inputs: -> (input.text for input in @inputs)
-        get_outputs: -> (output.text for output in @outputs)
+        #get_inputs: -> (input.text for input in @inputs)
+        #get_outputs: -> (output.text for output in @outputs)
 
         export: ->
             dependencies = @get_dependencies()
@@ -260,6 +270,9 @@ module.factory 'interpreter', ($q, $http) ->
 
         set_position:(@position) ->
 
+        get_inputs: -> @implementation.inputs
+        get_outputs: -> @implementation.outputs
+
         get_nibs: ->
             @inputs.concat @outputs
 
@@ -275,11 +288,15 @@ module.factory 'interpreter', ($q, $http) ->
             type:@type
 
     class FunctionApplication extends Node # Abstract
-        constructor:({name, inputs, outputs}) ->
+        constructor: ->
+            super()
+            #({name, inputs, outputs}) ->
+            ###
             @text = name
             super()
             @inputs = (new Input @, text, index, inputs.length-1 for text, index in inputs)
             @outputs = (new Output @, text, index, outputs.length-1 for text, index in outputs)
+            ###
 
         evaluation: (the_scope, output_index) ->
 
@@ -310,12 +327,9 @@ module.factory 'interpreter', ($q, $http) ->
             super()
 
     class SubroutineApplication extends FunctionApplication
-        constructor:(@scope, @position, @implementation, @id=UUID()) ->
-            @type = 'function'
-            super
-                name:@implementation.name
-                inputs:@implementation.get_inputs()
-                outputs:@implementation.get_outputs()
+        @type = 'function'
+        constructor: (@scope, @position, @implementation, @id=UUID()) -> super()
+            # TODO: just reference the name and inputs off the implementation
 
         evaluation: (the_scope, output_index) ->
             input_values = @virtual_inputs the_scope
@@ -331,9 +345,9 @@ module.factory 'interpreter', ($q, $http) ->
             return results
 
     class BuiltinApplication extends FunctionApplication
-        constructor:(@scope, @position, @implementation, @id=UUID()) ->
-            @type = 'builtin'
-            super @implementation
+        @type = 'builtin'
+        constructor: (@scope, @position, @implementation, @id=UUID()) -> super()
+            #super @implementation
 
         evaluation: (the_scope, output_index) ->
             input_values = @virtual_inputs the_scope
@@ -353,7 +367,10 @@ module.factory 'interpreter', ($q, $http) ->
             return output_function (args.concat [the_scope.memos[@id]])...
 
     class LiteralValue
-        constructor:(@text) ->
+        constructor:(@text, @id=UUID()) ->
+            @inputs = []
+            @outputs = [(new Output).initialize(@id)]
+
         evaluation: -> return eval_expression @text
         type:'literal'
         content_id: -> CryptoJS.SHA256(@text).toString(CryptoJS.enc.Base64)
@@ -367,11 +384,11 @@ module.factory 'interpreter', ($q, $http) ->
                 @implementation = value
                 @text = value.name
             else
-                @implementation = new LiteralValue value
+                @implementation = new LiteralValue value, @id
                 @text = value
             super()
-            @inputs = []
-            @outputs = [new Output(@, '')]
+            #@inputs = []
+            #@outputs = [new Output(@, '')]
 
         evaluation: -> @implementation.evaluation()
 
@@ -384,6 +401,15 @@ module.factory 'interpreter', ($q, $http) ->
         subroutines_referenced: -> []
 
     class Nib  # Abstract. Do not instantiate
+        fromJSON: (data, @parent) ->
+            {@text, @index, @id} = data
+            @id ?= UUID()
+            @
+
+        initialize: (@id=UUID()) ->
+            @id ?= UUID()
+
+        ###
         constructor: ->
             @connections = {}
 
@@ -396,12 +422,16 @@ module.factory 'interpreter', ($q, $http) ->
                 this.parent
             else
                 this.parent.scope
+        ###
 
     # TODO: change nib 'node' to parent since it might not be a node
     class Input extends Nib
-        constructor:(@parent, @text, @index=0, @siblings=0) ->
-            super()
+        #constructor:(@subroutine, @text, @index=0, @id=UUID()) ->
+        #    super()
 
+
+
+        ###
         _add_connection: (connection) ->
             # delete previous connection
             @get_connection()?.connection.delete()
@@ -418,11 +448,13 @@ module.factory 'interpreter', ($q, $http) ->
 
         connect:(output) ->
             new Connection @get_scope(), @, output
+        ###
 
     class Output extends Nib
-        constructor:(@parent, @text, @index=0, @siblings=0) ->
+        constructor:(@subroutine, @text, @index=0, @id=UUID()) ->
             super()
 
+        ###
         _add_connection: (connection, vertex) ->
             @connections[connection.id] =
                 connection:connection
@@ -430,13 +462,15 @@ module.factory 'interpreter', ($q, $http) ->
 
         connect:(input) ->
             new Connection @get_scope(), input, @
+        ###
 
     class Connection
-        constructor:(@scope, @input, @output, @id=UUID()) ->
-            @input._add_connection @
-            @output._add_connection @
+        constructor:(@scope, @input, @output, @from, @to, @id=UUID()) ->
             @scope.connections[@id] = @
+            #@input._add_connection @
+            #@output._add_connection @
 
+        ###
         toJSON: ->
             input:
                 index:@input.index
@@ -449,7 +483,7 @@ module.factory 'interpreter', ($q, $http) ->
             delete @scope.connections[@id]
             delete @output.connections[@id]
             @input.connections = {}
-
+        ###
 
 
     dissociate_exception = (procedure) ->
@@ -503,7 +537,7 @@ module.factory 'interpreter', ($q, $http) ->
 
         # load subroutine declarations
         for id, subroutine_data of data.subroutines
-            subroutine = new Subroutine subroutine_data.name, subroutine_data.inputs, subroutine_data.outputs, subroutine_data.id
+            subroutine = (new Subroutine).fromJSON subroutine_data
             subroutines[subroutine.id] = subroutine
             second_pass.push subroutine
 
@@ -535,11 +569,27 @@ module.factory 'interpreter', ($q, $http) ->
                     new UnknownNode position, node.type, node.text, node.id
 
         for connection in data.connections
+
+            ### legacy bullshit ###
             get_connector = (nib) ->
                 if nib.parent_id is subroutine.id then subroutine else subroutine.nodes[nib.parent_id]
 
-            source = get_connector connection.output
-            sink = get_connector connection.input
+            get_nib = (node, data) ->
+                data.index
+
+            from = get_connector connection.input
+            to = get_connector connection.output
+            input = if from instanceof Subroutine then from.outputs[connection.input.index] else from.implementation.inputs[connection.input.index]
+            output = if to instanceof Subroutine then to.inputs[connection.output.index] else to.implementation.outputs[connection.output.index]
+            unless input
+                console.log subroutine.text
+                console.log subroutine.text
+            unless output
+                console.log subroutine.text
+                console.log subroutine.text
+
+            new Connection subroutine, input, output, from, to, connection.id
+            ###
 
             # input/output reversal.  TODO: clean up subroutine implementation to avoid this
             source_connector = if source instanceof Node then source.outputs else source.inputs
@@ -549,6 +599,7 @@ module.factory 'interpreter', ($q, $http) ->
                 console.log "Oh no, trying to make an invalid connection"
             else
                 source_connector[connection.output.index].connect sink_connector[connection.input.index]
+            ###
 
     if localStorage.state?
         source_data = JSON.parse localStorage.state
@@ -564,7 +615,7 @@ module.factory 'interpreter', ($q, $http) ->
         for id, obj of load_state source_data
             subroutines[id] = obj
         loaded.resolve true
-        start_saving()
+        #start_saving()
 
 
     loaded:loaded.promise
