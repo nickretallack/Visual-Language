@@ -4,7 +4,7 @@ transform_position = (position, editor_size) ->
     x:position.y + editor_size.x/2
     y:position.x + editor_size.y/2
 
-module.directive 'nib', (nib_views) ->
+module.directive 'nib', ->
     template:"""<div class="nib"></div>"""
     replace:true
     require:'^subroutine'
@@ -13,16 +13,14 @@ module.directive 'nib', (nib_views) ->
     link:(scope, element, attributes, controller) ->
         [node, nib] = scope.nib()
         #element.attr 'id',
-        nib_views["#{node.id}-#{nib.id}"] = $ element
+        controller.nib_views["#{node.id}-#{nib.id}"] = $ element
         #nib.view = $ element
         element.bind 'mousedown', (event) -> scope.$apply ->
             controller.click_nib node, nib, event
         element.bind 'mouseup', (event) -> scope.$apply ->
             controller.release_nib node, nib, event
 
-module.value 'nib_views', {}
-
-module.directive 'subroutine', ($location, nib_views) ->
+module.directive 'subroutine', ($location) ->
     link:(scope, element, attributes) ->
     controller:($scope, $element, $attrs, interpreter) ->
         $$element = $ $element
@@ -30,6 +28,7 @@ module.directive 'subroutine', ($location, nib_views) ->
         $scope.dragging = []
         $scope.drawing = null # nib you're drawing a line from right now
         $scope.selection = []
+        @nib_views = {}
 
         $scope.$on 'new-graph-from-selection', ->
             subroutine = new interpreter.Subroutine
@@ -159,14 +158,14 @@ module.directive 'subroutine', ($location, nib_views) ->
         nib_offset = canvas_offset.minus nib_center
         canvas = $element.find('canvas')[0]
 
-        @draw = draw = -> delay 1000, ->
+        @draw = draw = => async =>
             if subroutine
                 line_height = 16
                 c = canvas.getContext '2d'
                 c.clearRect 0,0, $scope.editor_size.components()...
                 for id, connection of subroutine.connections
-                    input_element = nib_views["#{connection.from.id}-#{connection.input.id}"]
-                    output_element = nib_views["#{connection.to.id}-#{connection.output.id}"]
+                    input_element = @nib_views["#{connection.from.id}-#{connection.input.id}"]
+                    output_element = @nib_views["#{connection.to.id}-#{connection.output.id}"]
 
                     #input_element = $ ".nib##{connection.from.id}-#{connection.input.id}"# connection.input.view
                     #output_element = $ ".nib##{connection.to.id}-#{connection.output.id}" #connection.output.view

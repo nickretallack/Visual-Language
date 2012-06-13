@@ -13,7 +13,7 @@
     };
   };
 
-  module.directive('nib', function(nib_views) {
+  module.directive('nib', function() {
     return {
       template: "<div class=\"nib\"></div>",
       replace: true,
@@ -24,7 +24,7 @@
       link: function(scope, element, attributes, controller) {
         var nib, node, _ref;
         _ref = scope.nib(), node = _ref[0], nib = _ref[1];
-        nib_views["" + node.id + "-" + nib.id] = $(element);
+        controller.nib_views["" + node.id + "-" + nib.id] = $(element);
         element.bind('mousedown', function(event) {
           return scope.$apply(function() {
             return controller.click_nib(node, nib, event);
@@ -39,18 +39,18 @@
     };
   });
 
-  module.value('nib_views', {});
-
-  module.directive('subroutine', function($location, nib_views) {
+  module.directive('subroutine', function($location) {
     return {
       link: function(scope, element, attributes) {},
       controller: function($scope, $element, $attrs, interpreter) {
-        var $$element, canvas, canvas_offset, draw, get_bounds, header_height, in_box, nib_center, nib_offset, resize_canvas, subroutine, transform_the_position;
+        var $$element, canvas, canvas_offset, draw, get_bounds, header_height, in_box, nib_center, nib_offset, resize_canvas, subroutine, transform_the_position,
+          _this = this;
         $$element = $($element);
         subroutine = $scope.$eval($attrs.subroutine);
         $scope.dragging = [];
         $scope.drawing = null;
         $scope.selection = [];
+        this.nib_views = {};
         $scope.$on('new-graph-from-selection', function() {
           subroutine = new interpreter.Subroutine;
           interpreter.subroutines[subroutine.id] = subroutine;
@@ -213,7 +213,7 @@
         nib_offset = canvas_offset.minus(nib_center);
         canvas = $element.find('canvas')[0];
         this.draw = draw = function() {
-          return delay(1000, function() {
+          return async(function() {
             var c, connection, end_position, id, input_element, input_position, line_height, nib_position, output_element, output_position, _ref;
             if (subroutine) {
               line_height = 16;
@@ -222,8 +222,8 @@
               _ref = subroutine.connections;
               for (id in _ref) {
                 connection = _ref[id];
-                input_element = nib_views["" + connection.from.id + "-" + connection.input.id];
-                output_element = nib_views["" + connection.to.id + "-" + connection.output.id];
+                input_element = _this.nib_views["" + connection.from.id + "-" + connection.input.id];
+                output_element = _this.nib_views["" + connection.to.id + "-" + connection.output.id];
                 if (input_element.length && output_element.length) {
                   input_position = V(input_element.offset()).subtract(nib_offset);
                   output_position = V(output_element.offset()).subtract(nib_offset);
