@@ -1,3 +1,13 @@
+- needed features
+    - create a subroutine from selected nodes
+    - use shift button to add to / remove from selection
+    - allow creation of codes in coffeescript
+    - variable inputs and splatting
+    - idempotency
+    - radial menus when you click
+
+
+
 - visual style
     - style the code page
         - add ace editor
