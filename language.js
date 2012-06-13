@@ -93,7 +93,7 @@
           for (index = _i = 0, _len = inputs.length; _i < _len; index = ++_i) {
             nib_data = inputs[index];
             _results.push((new Input).fromJSON({
-              name: nib_data,
+              text: nib_data,
               index: index
             }, this));
           }
@@ -105,7 +105,7 @@
           for (_i = 0, _len = outputs.length; _i < _len; _i++) {
             nib_data = outputs[_i];
             _results.push((new Output).fromJSON({
-              name: nib_data,
+              text: nib_data,
               index: index
             }, this));
           }
@@ -204,7 +204,7 @@
           for (index = _i = 0, _len = _ref1.length; _i < _len; index = ++_i) {
             nib_data = _ref1[index];
             _results.push((new Input).fromJSON({
-              name: nib_data,
+              text: nib_data,
               index: index
             }, this));
           }
@@ -217,7 +217,7 @@
           for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
             nib_data = _ref1[_i];
             _results.push((new Output).fromJSON({
-              name: nib_data,
+              text: nib_data,
               index: index
             }, this));
           }

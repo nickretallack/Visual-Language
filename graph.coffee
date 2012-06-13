@@ -4,7 +4,7 @@ transform_position = (position, editor_size) ->
     x:position.y + editor_size.x/2
     y:position.x + editor_size.y/2
 
-module.directive 'nib', ->
+module.directive 'nib', (nib_views) ->
     template:"""<div class="nib"></div>"""
     replace:true
     require:'^subroutine'
@@ -12,14 +12,17 @@ module.directive 'nib', ->
         nib:'accessor'
     link:(scope, element, attributes, controller) ->
         [node, nib] = scope.nib()
-        element.attr 'id', "#{node.id}-#{nib.id}"
+        #element.attr 'id',
+        nib_views["#{node.id}-#{nib.id}"] = $ element
         #nib.view = $ element
         element.bind 'mousedown', (event) -> scope.$apply ->
             controller.click_nib node, nib, event
         element.bind 'mouseup', (event) -> scope.$apply ->
             controller.release_nib node, nib, event
 
-module.directive 'subroutine', ($location) ->
+module.value 'nib_views', {}
+
+module.directive 'subroutine', ($location, nib_views) ->
     link:(scope, element, attributes) ->
     controller:($scope, $element, $attrs, interpreter) ->
         $$element = $ $element
@@ -162,8 +165,11 @@ module.directive 'subroutine', ($location) ->
                 c = canvas.getContext '2d'
                 c.clearRect 0,0, $scope.editor_size.components()...
                 for id, connection of subroutine.connections
-                    input_element = $ ".nib##{connection.from.id}-#{connection.input.id}"# connection.input.view
-                    output_element = $ ".nib##{connection.to.id}-#{connection.output.id}" #connection.output.view
+                    input_element = nib_views["#{connection.from.id}-#{connection.input.id}"]
+                    output_element = nib_views["#{connection.to.id}-#{connection.output.id}"]
+
+                    #input_element = $ ".nib##{connection.from.id}-#{connection.input.id}"# connection.input.view
+                    #output_element = $ ".nib##{connection.to.id}-#{connection.output.id}" #connection.output.view
 
                     if input_element.length and output_element.length
                         input_position = V(input_element.offset()).subtract nib_offset

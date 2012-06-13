@@ -13,7 +13,7 @@
     };
   };
 
-  module.directive('nib', function() {
+  module.directive('nib', function(nib_views) {
     return {
       template: "<div class=\"nib\"></div>",
       replace: true,
@@ -24,7 +24,7 @@
       link: function(scope, element, attributes, controller) {
         var nib, node, _ref;
         _ref = scope.nib(), node = _ref[0], nib = _ref[1];
-        element.attr('id', "" + node.id + "-" + nib.id);
+        nib_views["" + node.id + "-" + nib.id] = $(element);
         element.bind('mousedown', function(event) {
           return scope.$apply(function() {
             return controller.click_nib(node, nib, event);
@@ -39,7 +39,9 @@
     };
   });
 
-  module.directive('subroutine', function($location) {
+  module.value('nib_views', {});
+
+  module.directive('subroutine', function($location, nib_views) {
     return {
       link: function(scope, element, attributes) {},
       controller: function($scope, $element, $attrs, interpreter) {
@@ -220,8 +222,8 @@
               _ref = subroutine.connections;
               for (id in _ref) {
                 connection = _ref[id];
-                input_element = $(".nib#" + connection.from.id + "-" + connection.input.id);
-                output_element = $(".nib#" + connection.to.id + "-" + connection.output.id);
+                input_element = nib_views["" + connection.from.id + "-" + connection.input.id];
+                output_element = nib_views["" + connection.to.id + "-" + connection.output.id];
                 if (input_element.length && output_element.length) {
                   input_position = V(input_element.offset()).subtract(nib_offset);
                   output_position = V(output_element.offset()).subtract(nib_offset);

@@ -27,8 +27,8 @@ module.factory 'interpreter', ($q, $http) ->
             #@outputs ?= ['OUT']
             @id ?= UUID()
 
-            @inputs = ((new Input).fromJSON {name:nib_data, index:index}, @ for nib_data, index in inputs)
-            @outputs = ((new Output).fromJSON {name:nib_data, index:index}, @ for nib_data in outputs)
+            @inputs = ((new Input).fromJSON {text:nib_data, index:index}, @ for nib_data, index in inputs)
+            @outputs = ((new Output).fromJSON {text:nib_data, index:index}, @ for nib_data in outputs)
 
         type:'builtin'
 
@@ -83,8 +83,8 @@ module.factory 'interpreter', ($q, $http) ->
         fromJSON: (data) ->
             {name:@text, @id} = data
             @id ?= UUID()
-            @inputs = ((new Input).fromJSON {name:nib_data, index:index}, @ for nib_data, index in data.inputs)
-            @outputs = ((new Output).fromJSON {name:nib_data, index:index}, @ for nib_data in data.outputs)
+            @inputs = ((new Input).fromJSON {text:nib_data, index:index}, @ for nib_data, index in data.inputs)
+            @outputs = ((new Output).fromJSON {text:nib_data, index:index}, @ for nib_data in data.outputs)
             subroutines[@id] = @
 
         initialize: ->
