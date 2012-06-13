@@ -167,7 +167,7 @@ module.directive 'subroutine', ($location) ->
 
                 if $scope.drawing
                     nib_position = V($scope.drawing.view.offset()).subtract nib_offset
-                    end_position = $scope.mouse_position.subtract canvas_offset
+                    end_position = $scope.mouse_position #.subtract canvas_offset
                     c.beginPath()
                     c.moveTo nib_position.components()...
                     c.lineTo end_position.components()...

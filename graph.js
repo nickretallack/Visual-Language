@@ -228,7 +228,7 @@
               }
               if ($scope.drawing) {
                 nib_position = V($scope.drawing.view.offset()).subtract(nib_offset);
-                end_position = $scope.mouse_position.subtract(canvas_offset);
+                end_position = $scope.mouse_position;
                 c.beginPath();
                 c.moveTo.apply(c, nib_position.components());
                 c.lineTo.apply(c, end_position.components());
