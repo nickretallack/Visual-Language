@@ -145,6 +145,8 @@ module.controller 'Controller', ($scope, $http, $location, interpreter, $q) ->
     $scope.new_code = ->
         make_something interpreter.Builtin
 
+    $scope.new_graph_from_selection = ->
+        $scope.$broadcast 'new-graph-from-selection'
 
 
     ###

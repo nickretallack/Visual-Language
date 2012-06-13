@@ -193,20 +193,60 @@ module.factory 'interpreter', ($q, $http) ->
 
 
         remove_node: (node) ->
-            @view.remove node.view
             delete @nodes[node.id]
 
         add_node: (node) ->
-            @view.add node.view
             @nodes[node.id] = node
 
         remove_connection: (connection) ->
-            @view.remove connection.view
             delete @connections[connection.id]
 
         add_connection: (connection) ->
-            @view.add connection.view
             @connections[connection.id] = connection
+
+        make_from: (nodes) ->
+            old_scope = nodes[0].scope
+
+            # first find all the connections
+            in_connections = {}
+            out_connections = {}
+            for node in nodes
+                for id, nib of node.inputs
+                    for id, connection of nib.connections
+                        in_connections[connection.connection.id] = connection.connection
+                for id, nib of node.outputs
+                    for id, connection of nib.connections
+                        out_connections[connection.connection.id] = connection.connection
+
+            # see which ones are contained in the system
+            contained_connections = {}
+            for id, connection of in_connections
+                if connection.id of out_connections
+                    contained_connections[connection.id] = connection
+                    delete in_connections[connection.id]
+                    delete out_connections[connection.id]
+
+            # move the contained ones
+            for id, connection of contained_connections
+                old_scope.remove_connection connection
+                @add_connection connection
+
+            # clip the others.  TODO: connect them
+            for id, connection of in_connections
+                connection.delete()
+
+            for id, connection of out_connections
+                connection.delete()
+
+            # move the nodes
+            for id, node of nodes
+                old_scope.remove_node node
+                @add_node node
+
+            # create a node for this in the old parent
+            new_node = new SubroutineApplication old_scope, V(0,0), @
+
+
 
     class Node # Abstract
         constructor: ->

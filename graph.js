@@ -49,6 +49,11 @@
         $scope.dragging = [];
         $scope.drawing = null;
         $scope.selection = [];
+        $scope.$on('new-graph-from-selection', function() {
+          subroutine = new interpreter.Subroutine;
+          interpreter.subroutines[subroutine.id] = subroutine;
+          return subroutine.make_from($scope.selection);
+        });
         $scope.evaluate_output = function(output) {
           return subroutine.run(output);
         };

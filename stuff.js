@@ -204,8 +204,11 @@
     $scope.new_graph = function() {
       return make_something(interpreter.Subroutine);
     };
-    return $scope.new_code = function() {
+    $scope.new_code = function() {
       return make_something(interpreter.Builtin);
+    };
+    return $scope.new_graph_from_selection = function() {
+      return $scope.$broadcast('new-graph-from-selection');
     };
     /*
         $scope.import_export_text = ''

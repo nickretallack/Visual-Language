@@ -27,6 +27,11 @@ module.directive 'subroutine', ($location) ->
         $scope.drawing = null # nib you're drawing a line from right now
         $scope.selection = []
 
+        $scope.$on 'new-graph-from-selection', ->
+            subroutine = new interpreter.Subroutine
+            interpreter.subroutines[subroutine.id] = subroutine # TODO: make this standard?
+            subroutine.make_from $scope.selection
+
         $scope.evaluate_output = (output) ->
             subroutine.run output
 
