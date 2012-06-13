@@ -79,20 +79,38 @@
     Builtin = (function() {
 
       function Builtin(_arg) {
-        var _ref, _ref1, _ref2, _ref3, _ref4;
-        _ref = _arg != null ? _arg : {}, this.text = _ref.name, this.output_implementation = _ref.output_implementation, this.memo_implementation = _ref.memo_implementation, this.inputs = _ref.inputs, this.outputs = _ref.outputs, this.id = _ref.id;
+        var index, inputs, nib_data, outputs, _ref, _ref1, _ref2;
+        _ref = _arg != null ? _arg : {}, this.text = _ref.name, this.output_implementation = _ref.output_implementation, this.memo_implementation = _ref.memo_implementation, inputs = _ref.inputs, outputs = _ref.outputs, this.id = _ref.id;
         if ((_ref1 = this.memo_implementation) == null) {
           this.memo_implementation = null;
         }
-        if ((_ref2 = this.inputs) == null) {
-          this.inputs = [];
-        }
-        if ((_ref3 = this.outputs) == null) {
-          this.outputs = ['OUT'];
-        }
-        if ((_ref4 = this.id) == null) {
+        if ((_ref2 = this.id) == null) {
           this.id = UUID();
         }
+        this.inputs = (function() {
+          var _i, _len, _results;
+          _results = [];
+          for (index = _i = 0, _len = inputs.length; _i < _len; index = ++_i) {
+            nib_data = inputs[index];
+            _results.push((new Input).fromJSON({
+              name: nib_data,
+              index: index
+            }, this));
+          }
+          return _results;
+        }).call(this);
+        this.outputs = (function() {
+          var _i, _len, _results;
+          _results = [];
+          for (_i = 0, _len = outputs.length; _i < _len; _i++) {
+            nib_data = outputs[_i];
+            _results.push((new Output).fromJSON({
+              name: nib_data,
+              index: index
+            }, this));
+          }
+          return _results;
+        }).call(this);
       }
 
       Builtin.prototype.type = 'builtin';
@@ -731,7 +749,10 @@
       Nib.prototype.initialize = function(id) {
         var _ref;
         this.id = id != null ? id : UUID();
-        return (_ref = this.id) != null ? _ref : this.id = UUID();
+        if ((_ref = this.id) == null) {
+          this.id = UUID();
+        }
+        return this;
       };
 
       /*

@@ -21,11 +21,14 @@ module.factory 'interpreter', ($q, $http) ->
         constructor: (@name, @exception) -> @message = "#{exception} in builtin \"#{@name}\": "
 
     class Builtin
-        constructor:({name:@text, @output_implementation, @memo_implementation, @inputs, @outputs, @id}={}) ->
+        constructor:({name:@text, @output_implementation, @memo_implementation, inputs, outputs, @id}={}) ->
             @memo_implementation ?= null
-            @inputs ?= []
-            @outputs ?= ['OUT']
+            #@inputs ?= []
+            #@outputs ?= ['OUT']
             @id ?= UUID()
+
+            @inputs = ((new Input).fromJSON {name:nib_data, index:index}, @ for nib_data, index in inputs)
+            @outputs = ((new Output).fromJSON {name:nib_data, index:index}, @ for nib_data in outputs)
 
         type:'builtin'
 
@@ -408,6 +411,7 @@ module.factory 'interpreter', ($q, $http) ->
 
         initialize: (@id=UUID()) ->
             @id ?= UUID()
+            @
 
         ###
         constructor: ->

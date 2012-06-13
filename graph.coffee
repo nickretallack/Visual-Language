@@ -155,14 +155,15 @@ module.directive 'subroutine', ($location) ->
         canvas_offset = V(0,header_height)
         nib_offset = canvas_offset.minus nib_center
         canvas = $element.find('canvas')[0]
-        @draw = draw = -> async ->
+
+        @draw = draw = -> delay 1000, ->
             if subroutine
                 line_height = 16
                 c = canvas.getContext '2d'
                 c.clearRect 0,0, $scope.editor_size.components()...
                 for id, connection of subroutine.connections
-                    input_element = $element.find "##{connection.from.id}-#{connection.input.id}"# connection.input.view
-                    output_element = $element.find "##{connection.to.id}-#{connection.output.id}" #connection.output.view
+                    input_element = $ ".nib##{connection.from.id}-#{connection.input.id}"# connection.input.view
+                    output_element = $ ".nib##{connection.to.id}-#{connection.output.id}" #connection.output.view
 
                     if input_element.length and output_element.length
                         input_position = V(input_element.offset()).subtract nib_offset

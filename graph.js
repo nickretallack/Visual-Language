@@ -211,7 +211,7 @@
         nib_offset = canvas_offset.minus(nib_center);
         canvas = $element.find('canvas')[0];
         this.draw = draw = function() {
-          return async(function() {
+          return delay(1000, function() {
             var c, connection, end_position, id, input_element, input_position, line_height, nib_position, output_element, output_position, _ref;
             if (subroutine) {
               line_height = 16;
@@ -220,8 +220,8 @@
               _ref = subroutine.connections;
               for (id in _ref) {
                 connection = _ref[id];
-                input_element = $element.find("#" + connection.from.id + "-" + connection.input.id);
-                output_element = $element.find("#" + connection.to.id + "-" + connection.output.id);
+                input_element = $(".nib#" + connection.from.id + "-" + connection.input.id);
+                output_element = $(".nib#" + connection.to.id + "-" + connection.output.id);
                 if (input_element.length && output_element.length) {
                   input_position = V(input_element.offset()).subtract(nib_offset);
                   output_position = V(output_element.offset()).subtract(nib_offset);
