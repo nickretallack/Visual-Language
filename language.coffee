@@ -90,7 +90,7 @@ module.factory 'interpreter', ($q, $http) ->
             {name:@text, @id} = data
             @id ?= UUID()
             @inputs = ((new Input).fromJSON {text:nib_data, index:index}, @ for nib_data, index in data.inputs)
-            @outputs = ((new Output).fromJSON {text:nib_data, index:index}, @ for nib_data in data.outputs)
+            @outputs = ((new Output).fromJSON {text:nib_data, index:index}, @ for nib_data, index in data.outputs)
             subroutines[@id] = @
 
         initialize: ->
@@ -125,7 +125,7 @@ module.factory 'interpreter', ($q, $http) ->
             if node instanceof Subroutine
                 return inputs[nib.index]()
             else
-                return node.evaluation the_scope, nib.index
+                return node.evaluate the_scope, nib.index
 
         run: (output_index) ->
             input_values = []
@@ -314,7 +314,7 @@ module.factory 'interpreter', ($q, $http) ->
             @outputs = (new Output @, text, index, outputs.length-1 for text, index in outputs)
             ###
 
-        evaluation: (the_scope, output_index) ->
+        evaluate: (the_scope, output_index) ->
 
         toJSON: ->
             json = super()
@@ -330,10 +330,10 @@ module.factory 'interpreter', ($q, $http) ->
                         throw new NotConnected unless connection
                         {node, nib} = connection.from
 
-                        if nib instanceof Subroutine
+                        if node instanceof Subroutine
                             return the_scope.inputs[nib.index]()
                         else
-                            return node.evaluation the_scope, nib.index
+                            return node.evaluate the_scope, nib.index
             return input_values
 
     class UnknownNode extends Node
@@ -349,7 +349,7 @@ module.factory 'interpreter', ($q, $http) ->
         constructor: (@scope, @position, @implementation, @id=UUID()) -> super()
             # TODO: just reference the name and inputs off the implementation
 
-        evaluation: (the_scope, output_index) ->
+        evaluate: (the_scope, output_index) ->
             input_values = @virtual_inputs the_scope
             return @implementation.invoke output_index, input_values
 
@@ -367,7 +367,7 @@ module.factory 'interpreter', ($q, $http) ->
         constructor: (@scope, @position, @implementation, @id=UUID()) -> super()
             #super @implementation
 
-        evaluation: (the_scope, output_index) ->
+        evaluate: (the_scope, output_index) ->
             input_values = @virtual_inputs the_scope
             try
                 memo_function = eval_expression @implementation.memo_implementation
@@ -389,7 +389,7 @@ module.factory 'interpreter', ($q, $http) ->
             @inputs = []
             @outputs = [(new Output).initialize(@id)]
 
-        evaluation: -> return eval_expression @text
+        evaluate: -> return eval_expression @text
         type:'literal'
         content_id: -> CryptoJS.SHA256(@text).toString(CryptoJS.enc.Base64)
 
@@ -408,7 +408,7 @@ module.factory 'interpreter', ($q, $http) ->
             #@inputs = []
             #@outputs = [new Output(@, '')]
 
-        evaluation: -> @implementation.evaluation()
+        evaluate: -> @implementation.evaluate()
 
         toJSON: ->
             json = super()

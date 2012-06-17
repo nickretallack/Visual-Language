@@ -222,8 +222,8 @@
           var _i, _len, _ref1, _results;
           _ref1 = data.outputs;
           _results = [];
-          for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
-            nib_data = _ref1[_i];
+          for (index = _i = 0, _len = _ref1.length; _i < _len; index = ++_i) {
+            nib_data = _ref1[index];
             _results.push((new Output).fromJSON({
               text: nib_data,
               index: index
@@ -276,7 +276,7 @@
         if (node instanceof Subroutine) {
           return inputs[nib.index]();
         } else {
-          return node.evaluation(the_scope, nib.index);
+          return node.evaluate(the_scope, nib.index);
         }
       };
 
@@ -557,7 +557,7 @@
 
       }
 
-      FunctionApplication.prototype.evaluation = function(the_scope, output_index) {};
+      FunctionApplication.prototype.evaluate = function(the_scope, output_index) {};
 
       FunctionApplication.prototype.toJSON = function() {
         var json;
@@ -579,10 +579,10 @@
               throw new NotConnected;
             }
             _ref1 = connection.from, node = _ref1.node, nib = _ref1.nib;
-            if (nib instanceof Subroutine) {
+            if (node instanceof Subroutine) {
               return the_scope.inputs[nib.index]();
             } else {
-              return node.evaluation(the_scope, nib.index);
+              return node.evaluate(the_scope, nib.index);
             }
           }));
         };
@@ -627,7 +627,7 @@
         SubroutineApplication.__super__.constructor.call(this);
       }
 
-      SubroutineApplication.prototype.evaluation = function(the_scope, output_index) {
+      SubroutineApplication.prototype.evaluate = function(the_scope, output_index) {
         var input_values;
         input_values = this.virtual_inputs(the_scope);
         return this.implementation.invoke(output_index, input_values);
@@ -667,7 +667,7 @@
         BuiltinApplication.__super__.constructor.call(this);
       }
 
-      BuiltinApplication.prototype.evaluation = function(the_scope, output_index) {
+      BuiltinApplication.prototype.evaluate = function(the_scope, output_index) {
         var args, input_values, memo_function, output_function;
         input_values = this.virtual_inputs(the_scope);
         try {
@@ -702,7 +702,7 @@
         this.outputs = [(new Output).initialize(this.id)];
       }
 
-      LiteralValue.prototype.evaluation = function() {
+      LiteralValue.prototype.evaluate = function() {
         return eval_expression(this.text);
       };
 
@@ -734,8 +734,8 @@
         Literal.__super__.constructor.call(this);
       }
 
-      Literal.prototype.evaluation = function() {
-        return this.implementation.evaluation();
+      Literal.prototype.evaluate = function() {
+        return this.implementation.evaluate();
       };
 
       Literal.prototype.toJSON = function() {
