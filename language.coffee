@@ -28,7 +28,7 @@ module.factory 'interpreter', ($q, $http) ->
             @id ?= UUID()
 
             @inputs = ((new Input).fromJSON {text:nib_data, index:index}, @ for nib_data, index in inputs)
-            @outputs = ((new Output).fromJSON {text:nib_data, index:index}, @ for nib_data in outputs)
+            @outputs = ((new Output).fromJSON {text:nib_data, index:index}, @ for nib_data, index in outputs)
 
         type:'builtin'
 
@@ -106,19 +106,26 @@ module.factory 'interpreter', ($q, $http) ->
             inputs:@get_inputs()
             outputs:@get_outputs()
 
+        find_connection: (direction, node, nib) ->
+            for id, connection of @connections
+                if connection[direction].node.id is node.id and connection[direction].nib.id is nib.id
+                    return connection
+
+
         invoke: (index, inputs) ->
             the_scope =
                 subroutine:@
                 inputs:inputs
                 memos:{}
 
-            output = @outputs[index].get_connection()?.connection.output
-            throw new NotConnected unless output
+            connection = @find_connection 'to', @, @outputs[index]
+            throw new NotConnected unless connection
+            {node, nib} = connection.from
 
-            if output.parent instanceof Subroutine
-                return inputs[output.index]()
-            else if output.parent instanceof Node
-                return output.parent.evaluation the_scope, output.index
+            if node instanceof Subroutine
+                return inputs[nib.index]()
+            else
+                return node.evaluation the_scope, nib.index
 
         run: (output_index) ->
             input_values = []
@@ -316,15 +323,17 @@ module.factory 'interpreter', ($q, $http) ->
 
         virtual_inputs: (the_scope) ->
             input_values = []
-            for input in @inputs
-                do (input) ->
-                    input_values.push _.memoize ->
-                        output = input.get_connection()?.connection.output
-                        throw new NotConnected unless output
-                        if output.parent instanceof Subroutine
-                            return the_scope.inputs[output.index]()
-                        else if output.parent instanceof Node
-                            return output.parent.evaluation the_scope, output.index
+            for input in @implementation.inputs
+                do (input) =>
+                    input_values.push _.memoize =>
+                        connection = the_scope.subroutine.find_connection 'to', @, input
+                        throw new NotConnected unless connection
+                        {node, nib} = connection.from
+
+                        if nib instanceof Subroutine
+                            return the_scope.inputs[nib.index]()
+                        else
+                            return node.evaluation the_scope, nib.index
             return input_values
 
     class UnknownNode extends Node

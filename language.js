@@ -102,8 +102,8 @@
         this.outputs = (function() {
           var _i, _len, _results;
           _results = [];
-          for (_i = 0, _len = outputs.length; _i < _len; _i++) {
-            nib_data = outputs[_i];
+          for (index = _i = 0, _len = outputs.length; _i < _len; index = ++_i) {
+            nib_data = outputs[index];
             _results.push((new Output).fromJSON({
               text: nib_data,
               index: index
@@ -250,21 +250,33 @@
         };
       };
 
+      Subroutine.prototype.find_connection = function(direction, node, nib) {
+        var connection, id, _ref;
+        _ref = this.connections;
+        for (id in _ref) {
+          connection = _ref[id];
+          if (connection[direction].node.id === node.id && connection[direction].nib.id === nib.id) {
+            return connection;
+          }
+        }
+      };
+
       Subroutine.prototype.invoke = function(index, inputs) {
-        var output, the_scope, _ref;
+        var connection, nib, node, the_scope, _ref;
         the_scope = {
           subroutine: this,
           inputs: inputs,
           memos: {}
         };
-        output = (_ref = this.outputs[index].get_connection()) != null ? _ref.connection.output : void 0;
-        if (!output) {
+        connection = this.find_connection('to', this, this.outputs[index]);
+        if (!connection) {
           throw new NotConnected;
         }
-        if (output.parent instanceof Subroutine) {
-          return inputs[output.index]();
-        } else if (output.parent instanceof Node) {
-          return output.parent.evaluation(the_scope, output.index);
+        _ref = connection.from, node = _ref.node, nib = _ref.nib;
+        if (node instanceof Subroutine) {
+          return inputs[nib.index]();
+        } else {
+          return node.evaluation(the_scope, nib.index);
         }
       };
 
@@ -555,20 +567,22 @@
       };
 
       FunctionApplication.prototype.virtual_inputs = function(the_scope) {
-        var input, input_values, _fn, _i, _len, _ref;
+        var input, input_values, _fn, _i, _len, _ref,
+          _this = this;
         input_values = [];
-        _ref = this.inputs;
+        _ref = this.implementation.inputs;
         _fn = function(input) {
           return input_values.push(_.memoize(function() {
-            var output, _ref1;
-            output = (_ref1 = input.get_connection()) != null ? _ref1.connection.output : void 0;
-            if (!output) {
+            var connection, nib, node, _ref1;
+            connection = the_scope.subroutine.find_connection('to', _this, input);
+            if (!connection) {
               throw new NotConnected;
             }
-            if (output.parent instanceof Subroutine) {
-              return the_scope.inputs[output.index]();
-            } else if (output.parent instanceof Node) {
-              return output.parent.evaluation(the_scope, output.index);
+            _ref1 = connection.from, node = _ref1.node, nib = _ref1.nib;
+            if (nib instanceof Subroutine) {
+              return the_scope.inputs[nib.index]();
+            } else {
+              return node.evaluation(the_scope, nib.index);
             }
           }));
         };
