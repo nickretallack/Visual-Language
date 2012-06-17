@@ -120,12 +120,15 @@
         $scope.selected = function(node) {
           return __indexOf.call($scope.selection, node) >= 0;
         };
-        this.click_nib = $scope.click_nib = function(nib, $event) {
+        this.click_nib = $scope.click_nib = function(node, nib, $event) {
           $event.preventDefault();
           $event.stopPropagation();
-          return $scope.drawing = [node, nib];
+          return $scope.drawing = {
+            node: node,
+            nib: nib
+          };
         };
-        this.release_nib = $scope.release_nib = function(nib) {
+        this.release_nib = $scope.release_nib = function(node, nib) {
           var from, to, _ref;
           if ($scope.drawing) {
             _ref = [nib, $scope.drawing], from = _ref[0], to = _ref[1];
@@ -214,7 +217,7 @@
         canvas = $element.find('canvas')[0];
         this.draw = draw = function() {
           return async(function() {
-            var c, connection, end_position, id, input_element, input_position, line_height, nib_position, output_element, output_position, _ref;
+            var c, connection, end_position, id, input_element, input_position, line_height, nib_position, output_element, output_position, view, _ref;
             if (subroutine) {
               line_height = 16;
               c = canvas.getContext('2d');
@@ -234,7 +237,8 @@
                 }
               }
               if ($scope.drawing) {
-                nib_position = V($scope.drawing.view.offset()).subtract(nib_offset);
+                view = _this.nib_views["" + $scope.drawing.node.id + "-" + $scope.drawing.nib.id];
+                nib_position = V(view.offset()).subtract(nib_offset);
                 end_position = $scope.mouse_position;
                 c.beginPath();
                 c.moveTo.apply(c, nib_position.components());

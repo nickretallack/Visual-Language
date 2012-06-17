@@ -83,12 +83,14 @@ module.directive 'subroutine', ($location) ->
         $scope.selected = (node) ->
             node in $scope.selection
 
-        this.click_nib = $scope.click_nib = (nib, $event) ->
+        this.click_nib = $scope.click_nib = (node, nib, $event) ->
             $event.preventDefault()
             $event.stopPropagation()
-            $scope.drawing = [node, nib]
+            $scope.drawing =
+                node:node
+                nib:nib
 
-        this.release_nib = $scope.release_nib = (nib) ->
+        this.release_nib = $scope.release_nib = (node, nib) ->
             if $scope.drawing
                 # TODO: FIX
                 [from, to] = [nib, $scope.drawing]
@@ -179,7 +181,8 @@ module.directive 'subroutine', ($location) ->
                         c.stroke()
 
                 if $scope.drawing
-                    nib_position = V($scope.drawing.view.offset()).subtract nib_offset
+                    view = @nib_views["#{$scope.drawing.node.id}-#{$scope.drawing.nib.id}"]
+                    nib_position = V(view.offset()).subtract nib_offset
                     end_position = $scope.mouse_position #.subtract canvas_offset
                     c.beginPath()
                     c.moveTo nib_position.components()...
