@@ -504,8 +504,8 @@ module.factory 'interpreter', ($q, $http) ->
 
         # delete other connections that are to this nib/node combination
         for id, connection of scope.connections
-            console.log connection
-            if connection.to is to.node and connection.input is to.nib
+            if connection.to.node.id is to.node.id and connection.to.nib.id is to.nib.id
+                console.log 'deleting'
                 delete scope.connections[id]
 
         new Connection scope,
@@ -615,10 +615,10 @@ module.factory 'interpreter', ($q, $http) ->
                 console.log subroutine.text
 
             new Connection subroutine,
-                to:
+                from:
                     node:to
                     nib:output
-                from:
+                to:
                     node:from
                     nib:input
             , connection.id

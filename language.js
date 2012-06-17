@@ -883,8 +883,8 @@
       _ref1 = scope.connections;
       for (id in _ref1) {
         connection = _ref1[id];
-        console.log(connection);
-        if (connection.to === to.node && connection.input === to.nib) {
+        if (connection.to.node.id === to.node.id && connection.to.nib.id === to.nib.id) {
+          console.log('deleting');
           delete scope.connections[id];
         }
       }
@@ -1026,11 +1026,11 @@
           console.log(subroutine.text);
         }
         _results.push(new Connection(subroutine, {
-          to: {
+          from: {
             node: to,
             nib: output
           },
-          from: {
+          to: {
             node: from,
             nib: input
           }
