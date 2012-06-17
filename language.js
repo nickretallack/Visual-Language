@@ -259,6 +259,22 @@
             return connection;
           }
         }
+        return void 0;
+      };
+
+      Subroutine.prototype.delete_connections = function(direction, node, nib) {
+        var connection, id, _ref, _results;
+        _ref = this.connections;
+        _results = [];
+        for (id in _ref) {
+          connection = _ref[id];
+          if (connection[direction].node.id === node.id && connection[direction].nib.id === nib.id) {
+            _results.push(delete scope.connections[id]);
+          } else {
+            _results.push(void 0);
+          }
+        }
+        return _results;
       };
 
       Subroutine.prototype.invoke = function(index, inputs) {
@@ -891,7 +907,7 @@
       }
     };
     make_connection = function(scope, _arg) {
-      var connection, from, from_input, id, to, to_input, _ref, _ref1;
+      var from, from_input, to, to_input, _ref;
       from = _arg.from, to = _arg.to;
       from_input = is_input(from);
       to_input = is_input(to);
@@ -901,13 +917,7 @@
       if (to_input) {
         _ref = [to, from], from = _ref[0], to = _ref[1];
       }
-      _ref1 = scope.connections;
-      for (id in _ref1) {
-        connection = _ref1[id];
-        if (connection.to.node.id === to.node.id && connection.to.nib.id === to.nib.id) {
-          delete scope.connections[id];
-        }
-      }
+      scope.delete_connections('to', node, nib);
       return new Connection(scope, {
         from: from,
         to: to
