@@ -469,7 +469,8 @@ module.factory 'interpreter', ($q, $http) ->
         ###
 
     class Connection
-        constructor:(@scope, @input, @output, @from, @to, @id=UUID()) ->
+        constructor:(@scope, {@from, @to}, @id=UUID()) ->
+            console.log @from, @to
             @scope.connections[@id] = @
             #@input._add_connection @
             #@output._add_connection @
@@ -489,6 +490,27 @@ module.factory 'interpreter', ($q, $http) ->
             @input.connections = {}
         ###
 
+    is_input = (it) ->
+        is_input_class = it.nib instanceof Input
+        if it.node instanceof Subroutine then is_input_class else not is_input_class
+
+    make_connection = (scope, {from, to}) ->
+        from_input = is_input from
+        to_input = is_input to
+        return unless (from_input and not to_input) or (to_input and not from_input)
+
+        if to_input
+            [from,to] = [to,from]
+
+        # delete other connections that are to this nib/node combination
+        for id, connection of scope.connections
+            console.log connection
+            if connection.to is to.node and connection.input is to.nib
+                delete scope.connections[id]
+
+        new Connection scope,
+            from:from
+            to:to
 
     dissociate_exception = (procedure) ->
         try
@@ -592,7 +614,14 @@ module.factory 'interpreter', ($q, $http) ->
                 console.log subroutine.text
                 console.log subroutine.text
 
-            new Connection subroutine, input, output, from, to, connection.id
+            new Connection subroutine,
+                to:
+                    node:to
+                    nib:output
+                from:
+                    node:from
+                    nib:input
+            , connection.id
             ###
 
             # input/output reversal.  TODO: clean up subroutine implementation to avoid this
@@ -622,6 +651,7 @@ module.factory 'interpreter', ($q, $http) ->
         #start_saving()
 
 
+    make_connection:make_connection
     loaded:loaded.promise
     RuntimeException:RuntimeException
     Exit:Exit

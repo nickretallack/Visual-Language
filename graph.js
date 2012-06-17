@@ -129,12 +129,14 @@
           };
         };
         this.release_nib = $scope.release_nib = function(node, nib) {
-          var from, to, _ref;
           if ($scope.drawing) {
-            _ref = [nib, $scope.drawing], from = _ref[0], to = _ref[1];
-            if (from !== to && !((from instanceof interpreter.Input && to instanceof interpreter.Input) || (from instanceof interpreter.Output && to instanceof interpreter.Output))) {
-              return from.connect(to);
-            }
+            return interpreter.make_connection(subroutine, {
+              from: $scope.drawing,
+              to: {
+                node: node,
+                nib: nib
+              }
+            });
           }
         };
         $scope.boxing = false;
@@ -225,8 +227,8 @@
               _ref = subroutine.connections;
               for (id in _ref) {
                 connection = _ref[id];
-                input_element = _this.nib_views["" + connection.from.id + "-" + connection.input.id];
-                output_element = _this.nib_views["" + connection.to.id + "-" + connection.output.id];
+                input_element = _this.nib_views["" + connection.from.node.id + "-" + connection.from.nib.id];
+                output_element = _this.nib_views["" + connection.to.node.id + "-" + connection.to.nib.id];
                 if (input_element.length && output_element.length) {
                   input_position = V(input_element.offset()).subtract(nib_offset);
                   output_position = V(output_element.offset()).subtract(nib_offset);

@@ -7,7 +7,7 @@
   module = angular.module('vislang');
 
   module.factory('interpreter', function($q, $http) {
-    var Builtin, BuiltinApplication, BuiltinSyntaxError, Connection, Exit, FunctionApplication, Input, InputError, Literal, LiteralValue, Nib, Node, NotConnected, NotImplemented, Output, RuntimeException, Subroutine, SubroutineApplication, UnknownNode, dissociate_exception, eval_expression, execute, ignore_if_disconnected, load_implementation, load_state, loaded, save_state, schema_version, source_data, source_data_deferred, start_saving, subroutines;
+    var Builtin, BuiltinApplication, BuiltinSyntaxError, Connection, Exit, FunctionApplication, Input, InputError, Literal, LiteralValue, Nib, Node, NotConnected, NotImplemented, Output, RuntimeException, Subroutine, SubroutineApplication, UnknownNode, dissociate_exception, eval_expression, execute, ignore_if_disconnected, is_input, load_implementation, load_state, loaded, make_connection, save_state, schema_version, source_data, source_data_deferred, start_saving, subroutines;
     schema_version = 1;
     RuntimeException = (function() {
 
@@ -833,13 +833,11 @@
     })(Nib);
     Connection = (function() {
 
-      function Connection(scope, input, output, from, to, id) {
+      function Connection(scope, _arg, id) {
         this.scope = scope;
-        this.input = input;
-        this.output = output;
-        this.from = from;
-        this.to = to;
+        this.from = _arg.from, this.to = _arg.to;
         this.id = id != null ? id : UUID();
+        console.log(this.from, this.to);
         this.scope.connections[this.id] = this;
       }
 
@@ -862,6 +860,39 @@
       return Connection;
 
     })();
+    is_input = function(it) {
+      var is_input_class;
+      is_input_class = it.nib instanceof Input;
+      if (it.node instanceof Subroutine) {
+        return is_input_class;
+      } else {
+        return !is_input_class;
+      }
+    };
+    make_connection = function(scope, _arg) {
+      var connection, from, from_input, id, to, to_input, _ref, _ref1;
+      from = _arg.from, to = _arg.to;
+      from_input = is_input(from);
+      to_input = is_input(to);
+      if (!((from_input && !to_input) || (to_input && !from_input))) {
+        return;
+      }
+      if (to_input) {
+        _ref = [to, from], from = _ref[0], to = _ref[1];
+      }
+      _ref1 = scope.connections;
+      for (id in _ref1) {
+        connection = _ref1[id];
+        console.log(connection);
+        if (connection.to === to.node && connection.input === to.nib) {
+          delete scope.connections[id];
+        }
+      }
+      return new Connection(scope, {
+        from: from,
+        to: to
+      });
+    };
     dissociate_exception = function(procedure) {
       try {
         return procedure();
@@ -994,7 +1025,16 @@
           console.log(subroutine.text);
           console.log(subroutine.text);
         }
-        _results.push(new Connection(subroutine, input, output, from, to, connection.id));
+        _results.push(new Connection(subroutine, {
+          to: {
+            node: to,
+            nib: output
+          },
+          from: {
+            node: from,
+            nib: input
+          }
+        }, connection.id));
         /*
         
                     # input/output reversal.  TODO: clean up subroutine implementation to avoid this
@@ -1031,6 +1071,7 @@
       return loaded.resolve(true);
     });
     return {
+      make_connection: make_connection,
       loaded: loaded.promise,
       RuntimeException: RuntimeException,
       Exit: Exit,

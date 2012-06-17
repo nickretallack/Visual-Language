@@ -92,13 +92,11 @@ module.directive 'subroutine', ($location) ->
 
         this.release_nib = $scope.release_nib = (node, nib) ->
             if $scope.drawing
-                # TODO: FIX
-                [from, to] = [nib, $scope.drawing]
-                if from isnt to and not (
-                    (from instanceof interpreter.Input and to instanceof interpreter.Input) or
-                    (from instanceof interpreter.Output and to instanceof interpreter.Output)
-                )
-                    from.connect to
+                interpreter.make_connection subroutine,
+                    from: $scope.drawing
+                    to:
+                        node:node
+                        nib:nib
 
         $scope.boxing = false
         $element.bind 'mousedown', (event) -> $scope.$apply ->
@@ -166,8 +164,8 @@ module.directive 'subroutine', ($location) ->
                 c = canvas.getContext '2d'
                 c.clearRect 0,0, $scope.editor_size.components()...
                 for id, connection of subroutine.connections
-                    input_element = @nib_views["#{connection.from.id}-#{connection.input.id}"]
-                    output_element = @nib_views["#{connection.to.id}-#{connection.output.id}"]
+                    input_element = @nib_views["#{connection.from.node.id}-#{connection.from.nib.id}"]
+                    output_element = @nib_views["#{connection.to.node.id}-#{connection.to.nib.id}"]
 
                     #input_element = $ ".nib##{connection.from.id}-#{connection.input.id}"# connection.input.view
                     #output_element = $ ".nib##{connection.to.id}-#{connection.output.id}" #connection.output.view
