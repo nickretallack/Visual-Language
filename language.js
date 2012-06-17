@@ -137,7 +137,7 @@
         };
       };
 
-      Builtin.prototype.run = function() {
+      Builtin.prototype.run = function(output_index) {
         var _this = this;
         return execute(function() {
           var args, input, input_index, input_values, memo, memo_function, output_function, the_scope, _fn, _i, _len, _ref;
@@ -277,14 +277,14 @@
         return _results;
       };
 
-      Subroutine.prototype.invoke = function(index, inputs) {
+      Subroutine.prototype.invoke = function(output_nib, inputs) {
         var connection, nib, node, the_scope, _ref;
         the_scope = {
           subroutine: this,
           inputs: inputs,
           memos: {}
         };
-        connection = this.find_connection('to', this, this.outputs[index]);
+        connection = this.find_connection('to', this, output_nib);
         if (!connection) {
           throw new NotConnected;
         }
@@ -292,20 +292,20 @@
         if (node instanceof Subroutine) {
           return inputs[nib.index]();
         } else {
-          return node.evaluate(the_scope, nib.index);
+          return node.evaluate(the_scope, nib);
         }
       };
 
-      Subroutine.prototype.run = function(output_index) {
-        var input, input_index, input_values, _fn, _i, _len, _ref,
+      Subroutine.prototype.run = function(nib) {
+        var input, input_values, _fn, _i, _len, _ref,
           _this = this;
         input_values = [];
         _ref = this.inputs;
-        _fn = function(input_index, input) {
+        _fn = function(input) {
           var value;
           value = _.memoize(function() {
             var result;
-            result = prompt("Provide a JSON value for input " + input_index + ": \"" + input.text + "\"");
+            result = prompt("Provide a JSON value for input " + input.index + ": \"" + input.text + "\"");
             if (result === null) {
               throw new Exit("cancelled execution");
             }
@@ -321,14 +321,14 @@
           });
           return input_values.push(value);
         };
-        for (input_index = _i = 0, _len = _ref.length; _i < _len; input_index = ++_i) {
-          input = _ref[input_index];
-          _fn(input_index, input);
+        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+          input = _ref[_i];
+          _fn(input);
         }
         try {
           return setTimeout(function() {
             return execute(function() {
-              return _this.invoke(output_index, input_values);
+              return _this.invoke(nib, input_values);
             });
           });
         } catch (exception) {
@@ -573,7 +573,7 @@
 
       }
 
-      FunctionApplication.prototype.evaluate = function(the_scope, output_index) {};
+      FunctionApplication.prototype.evaluate = function(the_scope, output_nib) {};
 
       FunctionApplication.prototype.toJSON = function() {
         var json;
@@ -598,7 +598,7 @@
             if (node instanceof Subroutine) {
               return the_scope.inputs[nib.index]();
             } else {
-              return node.evaluate(the_scope, nib.index);
+              return node.evaluate(the_scope, nib);
             }
           }));
         };
@@ -643,10 +643,10 @@
         SubroutineApplication.__super__.constructor.call(this);
       }
 
-      SubroutineApplication.prototype.evaluate = function(the_scope, output_index) {
+      SubroutineApplication.prototype.evaluate = function(the_scope, output_nib) {
         var input_values;
         input_values = this.virtual_inputs(the_scope);
-        return this.implementation.invoke(output_index, input_values);
+        return this.implementation.invoke(output_nib, input_values);
       };
 
       SubroutineApplication.prototype.subroutines_referenced = function() {
@@ -683,7 +683,7 @@
         BuiltinApplication.__super__.constructor.call(this);
       }
 
-      BuiltinApplication.prototype.evaluate = function(the_scope, output_index) {
+      BuiltinApplication.prototype.evaluate = function(the_scope, output_nib) {
         var args, input_values, memo_function, output_function;
         input_values = this.virtual_inputs(the_scope);
         try {
@@ -699,7 +699,7 @@
         if (!output_function) {
           throw new NotImplemented(this.text);
         }
-        args = input_values.concat([output_index]);
+        args = input_values.concat([output_nib.index]);
         if (memo_function && !(this.id in the_scope.memos)) {
           the_scope.memos[this.id] = memo_function.apply(null, args);
         }

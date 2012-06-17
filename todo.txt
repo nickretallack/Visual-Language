@@ -5,6 +5,13 @@ It's really important to keep track of what nibs things are connected to with mo
 
 Connections should connect to nib objects, and they should be remembered by ID.  This way you can easily rearrange nibs by index without breaking connections anywhere in the program.  Also, there should be a big warning any time you delete a nib, since this can't be undone...unless we have some 'resurrect a deleted nib' feature, where subroutines remember nibs they used to own.  Yeah, that's probably best.  Creating a new nib will never substitute for an old one though.
 
+- connection refactor
+    - editing
+    - execution
+    - saving
+
+
+
 
 - needed features
     - create a subroutine from selected nodes

@@ -47,7 +47,7 @@ module.factory 'interpreter', ($q, $http) ->
             builtins: builtins
             schema_version:schema_version
 
-        run: ->
+        run: (output_index) ->
             execute =>
                 input_values = []
                 for input, input_index in @inputs
@@ -117,27 +117,27 @@ module.factory 'interpreter', ($q, $http) ->
                 if connection[direction].node.id is node.id and connection[direction].nib.id is nib.id
                     delete scope.connections[id]
 
-        invoke: (index, inputs) ->
+        invoke: (output_nib, inputs) ->
             the_scope =
                 subroutine:@
                 inputs:inputs
                 memos:{}
 
-            connection = @find_connection 'to', @, @outputs[index]
+            connection = @find_connection 'to', @, output_nib
             throw new NotConnected unless connection
             {node, nib} = connection.from
 
             if node instanceof Subroutine
                 return inputs[nib.index]()
             else
-                return node.evaluate the_scope, nib.index
+                return node.evaluate the_scope, nib
 
-        run: (output_index) ->
+        run: (nib) ->
             input_values = []
-            for input, input_index in @inputs
-                do (input_index, input) ->
+            for input in @inputs
+                do (input) ->
                     value = _.memoize ->
-                        result = prompt "Provide a JSON value for input #{input_index}: \"#{input.text}\""
+                        result = prompt "Provide a JSON value for input #{input.index}: \"#{input.text}\""
                         throw new Exit "cancelled execution" if result is null
                         try
                             return JSON.parse result
@@ -148,7 +148,7 @@ module.factory 'interpreter', ($q, $http) ->
                                 throw exception
                     input_values.push value
             try
-                setTimeout => execute => @invoke output_index, input_values
+                setTimeout => execute => @invoke nib, input_values
             catch exception
                 if exception instanceof InputError
                     alert "Invalid JSON: #{exception.message}"
@@ -321,7 +321,7 @@ module.factory 'interpreter', ($q, $http) ->
             @outputs = (new Output @, text, index, outputs.length-1 for text, index in outputs)
             ###
 
-        evaluate: (the_scope, output_index) ->
+        evaluate: (the_scope, output_nib) ->
 
         toJSON: ->
             json = super()
@@ -340,7 +340,7 @@ module.factory 'interpreter', ($q, $http) ->
                         if node instanceof Subroutine
                             return the_scope.inputs[nib.index]()
                         else
-                            return node.evaluate the_scope, nib.index
+                            return node.evaluate the_scope, nib
             return input_values
 
     class UnknownNode extends Node
@@ -356,9 +356,9 @@ module.factory 'interpreter', ($q, $http) ->
         constructor: (@scope, @position, @implementation, @id=UUID()) -> super()
             # TODO: just reference the name and inputs off the implementation
 
-        evaluate: (the_scope, output_index) ->
+        evaluate: (the_scope, output_nib) ->
             input_values = @virtual_inputs the_scope
-            return @implementation.invoke output_index, input_values
+            return @implementation.invoke output_nib, input_values
 
         subroutines_referenced: ->
             results = []
@@ -374,7 +374,7 @@ module.factory 'interpreter', ($q, $http) ->
         constructor: (@scope, @position, @implementation, @id=UUID()) -> super()
             #super @implementation
 
-        evaluate: (the_scope, output_index) ->
+        evaluate: (the_scope, output_nib) ->
             input_values = @virtual_inputs the_scope
             try
                 memo_function = eval_expression @implementation.memo_implementation
@@ -386,7 +386,7 @@ module.factory 'interpreter', ($q, $http) ->
 
             throw new NotImplemented @text unless output_function
 
-            args = input_values.concat [output_index]
+            args = input_values.concat [output_nib.index]
             if memo_function and @id not of the_scope.memos
                 the_scope.memos[@id] = memo_function args...
             return output_function (args.concat [the_scope.memos[@id]])...

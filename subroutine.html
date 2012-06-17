@@ -16,7 +16,7 @@
     <a ng-click="delete_output($index)">-</a>
     <input ng-model="output.text" shrinky-input="output.text">
     <div nib="[current_object,output]"></div>
-    <div><a ng-click="evaluate_output($index)">evaluate</a></div>
+    <div><a ng-click="evaluate_output(output)">evaluate</a></div>
 </div>
 <a id="new-output" ng-click="new_output(subroutine)">+Output</a>
 
