@@ -191,6 +191,14 @@
         this.outputs = [];
       }
 
+      Subroutine.prototype.add_input = function() {
+        return this.inputs.push(new Input);
+      };
+
+      Subroutine.prototype.add_output = function() {
+        return this.outputs.push(new Output);
+      };
+
       Subroutine.prototype.fromJSON = function(data) {
         var index, nib_data, _ref;
         this.text = data.name, this.id = data.id;
@@ -837,7 +845,6 @@
         this.scope = scope;
         this.from = _arg.from, this.to = _arg.to;
         this.id = id != null ? id : UUID();
-        console.log(this.from, this.to);
         this.scope.connections[this.id] = this;
       }
 
@@ -884,7 +891,6 @@
       for (id in _ref1) {
         connection = _ref1[id];
         if (connection.to.node.id === to.node.id && connection.to.nib.id === to.nib.id) {
-          console.log('deleting');
           delete scope.connections[id];
         }
       }

@@ -39,13 +39,11 @@ module.directive 'subroutine', ($location) ->
             subroutine.run output
 
         $scope.new_input =  ->
-            nib = new interpreter.Output
-            subroutine.inputs.push nib
+            subroutine.add_input()
             async -> $('.subroutine-input:last input').focus()
 
         $scope.new_output =  ->
-            nib = new interpreter.Input
-            subroutine.outputs.push nib
+            subroutine.add_output()
             async -> $('.subroutine-output:last input').focus()
 
         $scope.delete_input = ($index) ->
@@ -100,7 +98,6 @@ module.directive 'subroutine', ($location) ->
 
         $scope.boxing = false
         $element.bind 'mousedown', (event) -> $scope.$apply ->
-            console.log "BOXING"
             $scope.boxing = $scope.mouse_position
 
         get_bounds = (point1, point2) ->
@@ -132,7 +129,6 @@ module.directive 'subroutine', ($location) ->
 
             if $scope.boxing
                 $scope.selection = _.filter subroutine.nodes, (node) -> in_box node.position, $scope.boxing, $scope.mouse_position
-                console.log $scope.selection
 
             $scope.drawing = $scope.boxing = null
             draw()

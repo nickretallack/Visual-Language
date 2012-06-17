@@ -60,17 +60,13 @@
           return subroutine.run(output);
         };
         $scope.new_input = function() {
-          var nib;
-          nib = new interpreter.Output;
-          subroutine.inputs.push(nib);
+          subroutine.add_input();
           return async(function() {
             return $('.subroutine-input:last input').focus();
           });
         };
         $scope.new_output = function() {
-          var nib;
-          nib = new interpreter.Input;
-          subroutine.outputs.push(nib);
+          subroutine.add_output();
           return async(function() {
             return $('.subroutine-output:last input').focus();
           });
@@ -142,7 +138,6 @@
         $scope.boxing = false;
         $element.bind('mousedown', function(event) {
           return $scope.$apply(function() {
-            console.log("BOXING");
             return $scope.boxing = $scope.mouse_position;
           });
         });
@@ -183,7 +178,6 @@
               $scope.selection = _.filter(subroutine.nodes, function(node) {
                 return in_box(node.position, $scope.boxing, $scope.mouse_position);
               });
-              console.log($scope.selection);
             }
             $scope.drawing = $scope.boxing = null;
             return draw();

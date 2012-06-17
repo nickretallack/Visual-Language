@@ -80,6 +80,12 @@ module.factory 'interpreter', ($q, $http) ->
             @inputs = []
             @outputs = []
 
+        add_input: ->
+            @inputs.push new Input
+
+        add_output: ->
+            @outputs.push new Output
+
         fromJSON: (data) ->
             {name:@text, @id} = data
             @id ?= UUID()
@@ -470,7 +476,6 @@ module.factory 'interpreter', ($q, $http) ->
 
     class Connection
         constructor:(@scope, {@from, @to}, @id=UUID()) ->
-            console.log @from, @to
             @scope.connections[@id] = @
             #@input._add_connection @
             #@output._add_connection @
@@ -505,7 +510,6 @@ module.factory 'interpreter', ($q, $http) ->
         # delete other connections that are to this nib/node combination
         for id, connection of scope.connections
             if connection.to.node.id is to.node.id and connection.to.nib.id is to.nib.id
-                console.log 'deleting'
                 delete scope.connections[id]
 
         new Connection scope,
