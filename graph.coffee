@@ -10,11 +10,10 @@ module.directive 'nib', ->
     require:'^subroutine'
     scope:
         nib:'='
+        node:'='
     link:(scope, element, attributes, controller) ->
-        [node, nib] = scope.nib
-        #element.attr 'id',
+        {nib, node} = scope
         controller.nib_views["#{node.id}-#{nib.id}"] = $ element
-        #nib.view = $ element
         element.bind 'mousedown', (event) -> scope.$apply ->
             controller.click_nib node, nib, event
         element.bind 'mouseup', (event) -> scope.$apply ->

@@ -6,7 +6,7 @@
 <div id="selection" ng-style="selection_style()"></div>
 <input ng-model="current_object.name" shrinky-input="current_object | text_or_id" class="title" placeholder="{{current_object.id}}">
 <div class="subroutine-input" ng-repeat="input in current_object.inputs" ng-style="{'top':(($index+1) * editor_size.y / (current_object.inputs.length+1)) + 'px'}">
-    <div nib="[current_object,input]"></div>
+    <div nib="input" node="current_object"></div>
     <input ng-model="input.text" shrinky-input="input.text">
     <a ng-click="delete_input(input)">-</a>
 </div>
@@ -15,7 +15,7 @@
 <div class="subroutine-output" ng-repeat="output in current_object.outputs" ng-style="{'top':(($index+1) * editor_size.y / (current_object.outputs.length+1)) + 'px'}">
     <a ng-click="delete_output(output)">-</a>
     <input ng-model="output.text" shrinky-input="output.text">
-    <div nib="[current_object,output]"></div>
+    <div nib="output" node="current_object"></div>
     <div><a ng-click="evaluate_output(output)">evaluate</a></div>
 </div>
 <a id="new-output" ng-click="new_output(subroutine)">+Output</a>
@@ -23,7 +23,7 @@
 
 <div class="node" ng-repeat="node in current_object.nodes" node="node" ng-style="position(node)" ng-mousedown="click_node(node, $event)" ng-dblclick="edit_node(node, $event)" ng-class="{selected:selected(node)}">
     <ul class="unstyled"><li ng-repeat="output in node.implementation.outputs" class="output">
-    	<div nib="[node, output]"></div>
+    	<div nib="output" node="node"></div>
     	{{output.text}}
     </li></ul>
 
@@ -31,7 +31,7 @@
 
     <ul class="unstyled"><li ng-repeat="input in node.implementation.inputs" class="input">
     	{{input.text}}
-    	<div nib="[node, input]"></div>
+    	<div nib="input" node="node"></div>
     </li></ul>
 </div>
 
