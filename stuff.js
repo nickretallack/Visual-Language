@@ -196,8 +196,7 @@
     make_something = function(type) {
       return $q.when(interpreter.loaded, function() {
         var subroutine;
-        subroutine = new type;
-        interpreter.subroutines[subroutine.id] = subroutine;
+        subroutine = (new type).initialize();
         return $location.path("" + subroutine.id);
       });
     };

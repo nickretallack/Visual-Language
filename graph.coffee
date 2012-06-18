@@ -32,7 +32,6 @@ module.directive 'subroutine', ($location) ->
 
         $scope.$on 'new-graph-from-selection', ->
             subroutine = (new interpreter.Subroutine).initialize()
-            interpreter.subroutines[subroutine.id] = subroutine # TODO: make this standard?
             subroutine.make_from $scope.selection
 
         $scope.evaluate_output = (output) ->

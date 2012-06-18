@@ -7,7 +7,7 @@
   module = angular.module('vislang');
 
   module.factory('interpreter', function($q, $http) {
-    var Builtin, BuiltinApplication, BuiltinSyntaxError, Connection, Exit, FunctionApplication, Input, InputError, Literal, LiteralValue, Nib, Node, NotConnected, NotImplemented, Output, RuntimeException, Subroutine, SubroutineApplication, UnknownNode, dissociate_exception, eval_expression, execute, ignore_if_disconnected, is_input, load_implementation, load_state, loaded, make_connection, save_state, schema_version, source_data, source_data_deferred, start_saving, subroutines;
+    var Builtin, BuiltinApplication, BuiltinSyntaxError, Connection, Exit, FunctionApplication, Input, InputError, Literal, LiteralValue, Nib, Node, NotConnected, NotImplemented, Output, RuntimeException, Subroutine, SubroutineApplication, UnknownNode, all_subroutines, dissociate_exception, eval_expression, execute, ignore_if_disconnected, is_input, load_implementation, load_state, loaded, make_connection, save_state, schema_version, source_data, source_data_deferred, start_saving;
     schema_version = 1;
     RuntimeException = (function() {
 
@@ -78,20 +78,28 @@
     })(RuntimeException);
     Builtin = (function() {
 
-      function Builtin(_arg) {
-        var index, inputs, nib_data, outputs, _ref, _ref1, _ref2;
-        _ref = _arg != null ? _arg : {}, this.text = _ref.name, this.output_implementation = _ref.output_implementation, this.memo_implementation = _ref.memo_implementation, inputs = _ref.inputs, outputs = _ref.outputs, this.id = _ref.id;
-        if ((_ref1 = this.memo_implementation) == null) {
-          this.memo_implementation = null;
-        }
-        if ((_ref2 = this.id) == null) {
-          this.id = UUID();
-        }
+      function Builtin() {}
+
+      Builtin.prototype.type = 'builtin';
+
+      Builtin.prototype.initialize = function() {
+        this.id = UUID();
+        all_subroutines[this.id] = this;
+        this.inputs = [];
+        this.outputs = [];
+        return this;
+      };
+
+      Builtin.prototype.fromJSON = function(data) {
+        var index, nib_data;
+        this.text = data.name, this.id = data.id, this.memo_implementation = data.memo_implementation, this.output_implementation = data.output_implementation;
+        all_subroutines[this.id] = this;
         this.inputs = (function() {
-          var _i, _len, _results;
+          var _i, _len, _ref, _results;
+          _ref = data.inputs;
           _results = [];
-          for (index = _i = 0, _len = inputs.length; _i < _len; index = ++_i) {
-            nib_data = inputs[index];
+          for (index = _i = 0, _len = _ref.length; _i < _len; index = ++_i) {
+            nib_data = _ref[index];
             _results.push((new Input).fromJSON({
               text: nib_data,
               index: index
@@ -100,10 +108,11 @@
           return _results;
         }).call(this);
         this.outputs = (function() {
-          var _i, _len, _results;
+          var _i, _len, _ref, _results;
+          _ref = data.outputs;
           _results = [];
-          for (index = _i = 0, _len = outputs.length; _i < _len; index = ++_i) {
-            nib_data = outputs[index];
+          for (index = _i = 0, _len = _ref.length; _i < _len; index = ++_i) {
+            nib_data = _ref[index];
             _results.push((new Output).fromJSON({
               text: nib_data,
               index: index
@@ -111,9 +120,8 @@
           }
           return _results;
         }).call(this);
-      }
-
-      Builtin.prototype.type = 'builtin';
+        return this;
+      };
 
       Builtin.prototype.toJSON = function() {
         return {
@@ -131,7 +139,7 @@
         builtins = {};
         builtins[this.id] = this;
         return {
-          subroutines: {},
+          all_subroutines: {},
           builtins: builtins,
           schema_version: schema_version
         };
@@ -180,42 +188,40 @@
 
     })();
     Subroutine = (function() {
-      /* DATA
-      */
+
+      Subroutine.prototype.type = 'subroutine';
 
       function Subroutine() {
         /* Initialize the bare minimum bits.
         Be sure to call fromJSON or initialize next.
         */
-        this.type = 'subroutine';
         this.nodes = {};
         this.connections = {};
-        this.inputs = [];
-        this.outputs = [];
       }
 
       Subroutine.prototype.initialize = function() {
         /* Populate fields for a brand new instance.
         */
         this.id = UUID();
-        return subroutines[this.id] = this;
+        all_subroutines[this.id] = this;
+        this.inputs = [];
+        this.outputs = [];
+        return this;
       };
 
       Subroutine.prototype.fromJSON = function(data) {
         /* Populate from the persistence format
         */
 
-        var index, nib_data, _ref;
+        var index, nib_data;
         this.text = data.name, this.id = data.id;
-        if ((_ref = this.id) == null) {
-          this.id = UUID();
-        }
+        all_subroutines[this.id] = this;
         this.inputs = (function() {
-          var _i, _len, _ref1, _results;
-          _ref1 = data.inputs;
+          var _i, _len, _ref, _results;
+          _ref = data.inputs;
           _results = [];
-          for (index = _i = 0, _len = _ref1.length; _i < _len; index = ++_i) {
-            nib_data = _ref1[index];
+          for (index = _i = 0, _len = _ref.length; _i < _len; index = ++_i) {
+            nib_data = _ref[index];
             _results.push((new Input).fromJSON({
               text: nib_data,
               index: index
@@ -224,11 +230,11 @@
           return _results;
         }).call(this);
         this.outputs = (function() {
-          var _i, _len, _ref1, _results;
-          _ref1 = data.outputs;
+          var _i, _len, _ref, _results;
+          _ref = data.outputs;
           _results = [];
-          for (index = _i = 0, _len = _ref1.length; _i < _len; index = ++_i) {
-            nib_data = _ref1[index];
+          for (index = _i = 0, _len = _ref.length; _i < _len; index = ++_i) {
+            nib_data = _ref[index];
             _results.push((new Output).fromJSON({
               text: nib_data,
               index: index
@@ -236,7 +242,7 @@
           }
           return _results;
         }).call(this);
-        return subroutines[this.id] = this;
+        return this;
       };
 
       Subroutine.prototype.toJSON = function() {
@@ -599,13 +605,6 @@
 
       function FunctionApplication() {
         FunctionApplication.__super__.constructor.call(this);
-        /*
-                    @text = name
-                    super()
-                    @inputs = (new Input @, text, index, inputs.length-1 for text, index in inputs)
-                    @outputs = (new Output @, text, index, outputs.length-1 for text, index in outputs)
-        */
-
       }
 
       FunctionApplication.prototype.evaluate = function(the_scope, output_nib) {};
@@ -658,7 +657,7 @@
 
       __extends(SubroutineApplication, _super);
 
-      SubroutineApplication.type = 'function';
+      SubroutineApplication.prototype.type = 'function';
 
       function SubroutineApplication(scope, position, implementation, id) {
         this.scope = scope;
@@ -760,11 +759,12 @@
 
       __extends(Literal, _super);
 
+      Literal.prototype.type = 'literal';
+
       function Literal(scope, position, value, id) {
         this.scope = scope;
         this.position = position;
         this.id = id != null ? id : UUID();
-        this.type = 'literal';
         if (value instanceof Subroutine) {
           this.implementation = value;
           this.text = value.name;
@@ -940,8 +940,8 @@
       var codes, graphs, id, state, subroutine;
       graphs = {};
       codes = {};
-      for (id in subroutines) {
-        subroutine = subroutines[id];
+      for (id in all_subroutines) {
+        subroutine = all_subroutines[id];
         if (subroutine instanceof Subroutine) {
           graphs[subroutine.id] = subroutine;
         } else {
@@ -962,7 +962,7 @@
       _ref = data.builtins;
       for (id in _ref) {
         builtin_data = _ref[id];
-        builtin = new Builtin(builtin_data);
+        builtin = (new Builtin).fromJSON(builtin_data);
         subroutines[builtin.id] = builtin;
       }
       _ref1 = data.subroutines;
@@ -1067,14 +1067,14 @@
         return source_data_deferred.resolve(data);
       });
     }
-    subroutines = {};
+    all_subroutines = {};
     loaded = $q.defer();
     $q.when(source_data, function(source_data) {
       var id, obj, _ref;
       _ref = load_state(source_data);
       for (id in _ref) {
         obj = _ref[id];
-        subroutines[id] = obj;
+        all_subroutines[id] = obj;
       }
       return loaded.resolve(true);
     });
@@ -1095,7 +1095,7 @@
       Literal: Literal,
       Input: Input,
       Output: Output,
-      subroutines: subroutines
+      subroutines: all_subroutines
     };
   });
 

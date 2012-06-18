@@ -21,16 +21,20 @@ module.factory 'interpreter', ($q, $http) ->
         constructor: (@name, @exception) -> @message = "#{exception} in builtin \"#{@name}\": "
 
     class Builtin
-        constructor:({name:@text, @output_implementation, @memo_implementation, inputs, outputs, @id}={}) ->
-            @memo_implementation ?= null
-            #@inputs ?= []
-            #@outputs ?= ['OUT']
-            @id ?= UUID()
-
-            @inputs = ((new Input).fromJSON {text:nib_data, index:index}, @ for nib_data, index in inputs)
-            @outputs = ((new Output).fromJSON {text:nib_data, index:index}, @ for nib_data, index in outputs)
-
         type:'builtin'
+        initialize: ->
+            @id = UUID()
+            all_subroutines[@id] = @
+            @inputs = []
+            @outputs = []
+            @
+
+        fromJSON: (data) ->
+            {name:@text, @id, @memo_implementation, @output_implementation} = data
+            all_subroutines[@id] = @
+            @inputs = ((new Input).fromJSON {text:nib_data, index:index}, @ for nib_data, index in data.inputs)
+            @outputs = ((new Output).fromJSON {text:nib_data, index:index}, @ for nib_data, index in data.outputs)
+            @
 
         toJSON: ->
             id:@id
@@ -43,7 +47,7 @@ module.factory 'interpreter', ($q, $http) ->
         export: ->
             builtins = {}
             builtins[@id] = @
-            subroutines:{}
+            all_subroutines:{}
             builtins: builtins
             schema_version:schema_version
 
@@ -72,28 +76,28 @@ module.factory 'interpreter', ($q, $http) ->
                 return output_function (args.concat [memo])...
 
     class Subroutine
-        ### DATA ###
+        type:'subroutine'
         constructor: ->
             ### Initialize the bare minimum bits.
             Be sure to call fromJSON or initialize next. ###
-            @type = 'subroutine'
             @nodes = {}
             @connections = {}
-            @inputs = []
-            @outputs = []
 
         initialize: ->
             ### Populate fields for a brand new instance. ###
             @id = UUID()
-            subroutines[@id] = @
+            all_subroutines[@id] = @
+            @inputs = []
+            @outputs = []
+            @
 
         fromJSON: (data) ->
             ### Populate from the persistence format ###
             {name:@text, @id} = data
-            @id ?= UUID()
+            all_subroutines[@id] = @
             @inputs = ((new Input).fromJSON {text:nib_data, index:index}, @ for nib_data, index in data.inputs)
             @outputs = ((new Output).fromJSON {text:nib_data, index:index}, @ for nib_data, index in data.outputs)
-            subroutines[@id] = @
+            @
 
         toJSON: ->
             # Defines the persistence format
@@ -323,13 +327,6 @@ module.factory 'interpreter', ($q, $http) ->
     class FunctionApplication extends Node # Abstract
         constructor: ->
             super()
-            #({name, inputs, outputs}) ->
-            ###
-            @text = name
-            super()
-            @inputs = (new Input @, text, index, inputs.length-1 for text, index in inputs)
-            @outputs = (new Output @, text, index, outputs.length-1 for text, index in outputs)
-            ###
 
         evaluate: (the_scope, output_nib) ->
 
@@ -355,7 +352,7 @@ module.factory 'interpreter', ($q, $http) ->
             super()
 
     class SubroutineApplication extends FunctionApplication
-        @type = 'function'
+        type: 'function'
         constructor: (@scope, @position, @implementation, @id=UUID()) -> super()
             # TODO: just reference the name and inputs off the implementation
 
@@ -404,9 +401,8 @@ module.factory 'interpreter', ($q, $http) ->
         content_id: -> CryptoJS.SHA256(@text).toString(CryptoJS.enc.Base64)
 
     class Literal extends Node
+        type:'literal'
         constructor:(@scope, @position, value, @id=UUID()) ->
-            @type = 'literal'
-
             # TODO: sort this out later
             if value instanceof Subroutine
                 @implementation = value
@@ -415,8 +411,6 @@ module.factory 'interpreter', ($q, $http) ->
                 @implementation = new LiteralValue value, @id
                 @text = value
             super()
-            #@inputs = []
-            #@outputs = [new Output(@, '')]
 
         evaluate: -> @implementation.evaluate()
 
@@ -503,7 +497,7 @@ module.factory 'interpreter', ($q, $http) ->
     save_state = ->
         graphs = {}
         codes = {}
-        for id, subroutine of subroutines
+        for id, subroutine of all_subroutines
             if subroutine instanceof Subroutine
                 graphs[subroutine.id] = subroutine
             else
@@ -522,7 +516,7 @@ module.factory 'interpreter', ($q, $http) ->
 
         # load builtins
         for id, builtin_data of data.builtins
-            builtin = new Builtin builtin_data
+            builtin = (new Builtin).fromJSON builtin_data
             subroutines[builtin.id] = builtin
 
         # load subroutine declarations
@@ -606,14 +600,13 @@ module.factory 'interpreter', ($q, $http) ->
         $http.get('examples.json').success (data) ->
             source_data_deferred.resolve data
 
-    subroutines = {}
+    all_subroutines = {}
     loaded = $q.defer()
     $q.when source_data, (source_data) ->
         for id, obj of load_state source_data
-            subroutines[id] = obj
+            all_subroutines[id] = obj
         loaded.resolve true
         #start_saving()
-
 
     make_connection:make_connection
     loaded:loaded.promise
@@ -631,4 +624,4 @@ module.factory 'interpreter', ($q, $http) ->
     Literal:Literal
     Input:Input
     Output:Output
-    subroutines:subroutines
+    subroutines:all_subroutines

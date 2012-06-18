@@ -135,8 +135,7 @@ module.controller 'Controller', ($scope, $http, $location, interpreter, $q) ->
 
     make_something = (type) ->
         $q.when interpreter.loaded, ->
-            subroutine = new type
-            interpreter.subroutines[subroutine.id] = subroutine
+            subroutine = (new type).initialize()
             $location.path "#{subroutine.id}"
 
     $scope.new_graph = ->
