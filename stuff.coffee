@@ -71,8 +71,13 @@ module.controller 'library', ($scope, $q, interpreter) ->
     $scope.use = (subroutine) ->
         new interpreter.Call $scope.$root.current_object, V(0,0), subroutine
 
-    $scope.use_value = (value) ->
-        new interpreter.Value $scope.$root.current_object, V(0,0), value
+    $scope.use_value = (user_input) ->
+        interpreter.make_value $scope.$root.current_object, V(0,0), user_input
+
+    $scope.use_string_literal = (text) ->
+        interpreter.make_value $scope.$root.current_object, V(0,0), text, true
+
+    $scope.is_literal = (thing) -> thing instanceof interpreter.Literal
 
     $scope.is_valid_json = is_valid_json
 

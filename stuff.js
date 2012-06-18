@@ -109,8 +109,14 @@
     $scope.use = function(subroutine) {
       return new interpreter.Call($scope.$root.current_object, V(0, 0), subroutine);
     };
-    $scope.use_value = function(value) {
-      return new interpreter.Value($scope.$root.current_object, V(0, 0), value);
+    $scope.use_value = function(user_input) {
+      return interpreter.make_value($scope.$root.current_object, V(0, 0), user_input);
+    };
+    $scope.use_string_literal = function(text) {
+      return interpreter.make_value($scope.$root.current_object, V(0, 0), text, true);
+    };
+    $scope.is_literal = function(thing) {
+      return thing instanceof interpreter.Literal;
     };
     $scope.is_valid_json = is_valid_json;
     $scope.literal_text = '';

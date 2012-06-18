@@ -7,7 +7,7 @@
   module = angular.module('vislang');
 
   module.factory('interpreter', function($q, $http) {
-    var BuiltinSyntaxError, Call, Connection, Exit, Graph, Input, InputError, JavaScript, Literal, Nib, Node, NotConnected, NotImplemented, Output, RuntimeException, Subroutine, UnknownNode, Value, all_subroutines, dissociate_exception, eval_expression, execute, ignore_if_disconnected, is_input, load_implementation, load_state, loaded, make_connection, save_state, schema_version, source_data, source_data_deferred, start_saving;
+    var BuiltinSyntaxError, Call, Connection, Definition, Exit, Graph, Input, InputError, JSONLiteral, JavaScript, Literal, Nib, Node, NotConnected, NotImplemented, Output, RuntimeException, StringLiteral, Subroutine, UnknownNode, Value, all_subroutines, dissociate_exception, eval_expression, execute, ignore_if_disconnected, is_input, load_implementation, load_state, loaded, make_connection, make_value, save_state, schema_version, source_data, source_data_deferred, start_saving;
     schema_version = 1;
     /* EXCEPTION TYPES
     */
@@ -82,9 +82,20 @@
     /* DEFINITION TYPES
     */
 
-    Subroutine = (function() {
+    Definition = (function() {
 
-      function Subroutine() {}
+      function Definition() {}
+
+      return Definition;
+
+    })();
+    Subroutine = (function(_super) {
+
+      __extends(Subroutine, _super);
+
+      function Subroutine() {
+        return Subroutine.__super__.constructor.apply(this, arguments);
+      }
 
       Subroutine.prototype.fromJSON = function(data) {
         var index, nib_data;
@@ -196,7 +207,7 @@
 
       return Subroutine;
 
-    })();
+    })(Definition);
     JavaScript = (function(_super) {
 
       __extends(JavaScript, _super);
@@ -509,28 +520,65 @@
       return Graph;
 
     })(Subroutine);
-    Literal = (function() {
+    make_value = function(scope, position, user_input, force_string) {
+      var implementation, value;
+      if (force_string == null) {
+        force_string = false;
+      }
+      implementation = user_input instanceof Definition ? user_input : force_string ? new StringLiteral(user_input) : (value = eval_expression(user_input), value instanceof String ? new StringLiteral(value) : new JSONLiteral(value));
+      return new Value(scope, position, implementation);
+    };
+    Literal = (function(_super) {
 
-      Literal.prototype.type = 'literal';
+      __extends(Literal, _super);
 
-      function Literal(text, id) {
-        this.text = text;
-        this.id = id != null ? id : UUID();
+      function Literal() {
+        all_subroutines[this.id] = this;
         this.inputs = [];
         this.outputs = [(new Output).initialize(this.id)];
       }
 
-      Literal.prototype.evaluate = function() {
+      return Literal;
+
+    })(Definition);
+    JSONLiteral = (function(_super) {
+
+      __extends(JSONLiteral, _super);
+
+      JSONLiteral.prototype.type = 'json_literal';
+
+      function JSONLiteral(text, id) {
+        this.text = text;
+        this.id = id != null ? id : UUID();
+        JSONLiteral.__super__.constructor.call(this);
+      }
+
+      JSONLiteral.prototype.evaluate = function() {
         return eval_expression(this.text);
       };
 
-      Literal.prototype.content_id = function() {
-        return CryptoJS.SHA256(this.text).toString(CryptoJS.enc.Base64);
+      return JSONLiteral;
+
+    })(Literal);
+    StringLiteral = (function(_super) {
+
+      __extends(StringLiteral, _super);
+
+      StringLiteral.prototype.type = 'string_literal';
+
+      function StringLiteral(text, id) {
+        this.text = text;
+        this.id = id != null ? id : UUID();
+        StringLiteral.__super__.constructor.call(this);
+      }
+
+      StringLiteral.prototype.evaluate = function() {
+        return this.text;
       };
 
-      return Literal;
+      return StringLiteral;
 
-    })();
+    })(Literal);
     /* NODE TYPES
     */
 
@@ -639,17 +687,11 @@
 
       Value.prototype.type = 'value';
 
-      function Value(scope, position, value, id) {
+      function Value(scope, position, implementation, id) {
         this.scope = scope;
         this.position = position;
+        this.implementation = implementation;
         this.id = id != null ? id : UUID();
-        if (value instanceof Graph) {
-          this.implementation = value;
-          this.text = value.name;
-        } else {
-          this.implementation = new Literal(value, this.id);
-          this.text = value;
-        }
         Value.__super__.constructor.call(this);
       }
 
@@ -660,9 +702,7 @@
       Value.prototype.toJSON = function() {
         var json;
         json = Value.__super__.toJSON.call(this);
-        if (this.implementation instanceof Graph) {
-          json.implementation_id = this.implementation.id;
-        }
+        json.implementation_id = this.implementation.id;
         return json;
       };
 
@@ -877,18 +917,14 @@
       return subroutines;
     };
     load_implementation = function(subroutine, data, subroutines) {
-      var connection, from, get_connector, get_nib, implementation, input, node, output, position, to, value, _i, _j, _len, _len1, _ref, _ref1, _results;
+      var connection, from, get_connector, get_nib, implementation, input, node, output, position, to, _i, _j, _len, _len1, _ref, _ref1, _results;
       _ref = data.nodes;
       for (_i = 0, _len = _ref.length; _i < _len; _i++) {
         node = _ref[_i];
         position = V(node.position);
         if (node.type === 'literal') {
-          if ('implementation_id' in node) {
-            value = subroutines[node.implementation_id];
-          } else {
-            value = node.text;
-          }
-          new Value(subroutine, position, value, node.id);
+          implementation = 'implementation_id' in node ? subroutines[node.implementation_id] : new JSONLiteral(node.text);
+          new Value(subroutine, position, implementation, node.id);
         } else {
           implementation = subroutines[node.implementation_id];
           if (implementation) {
@@ -917,8 +953,8 @@
         };
         from = get_connector(connection.input);
         to = get_connector(connection.output);
-        input = from instanceof Graph ? from.outputs[connection.input.index] : from.implementation.inputs[connection.input.index];
-        output = to instanceof Graph ? to.inputs[connection.output.index] : to.implementation.outputs[connection.output.index];
+        input = from instanceof Definition ? from.outputs[connection.input.index] : from.implementation.inputs[connection.input.index];
+        output = to instanceof Definition ? to.inputs[connection.output.index] : to.implementation.outputs[connection.output.index];
         if (!input) {
           console.log(subroutine.text);
           console.log(subroutine.text);
@@ -974,6 +1010,7 @@
     });
     return {
       make_connection: make_connection,
+      make_value: make_value,
       loaded: loaded.promise,
       RuntimeException: RuntimeException,
       Exit: Exit,

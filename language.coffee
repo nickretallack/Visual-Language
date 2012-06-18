@@ -24,7 +24,9 @@ module.factory 'interpreter', ($q, $http) ->
 
     ### DEFINITION TYPES ###
 
-    class Subroutine
+    class Definition
+
+    class Subroutine extends Definition
         fromJSON: (data) ->
             all_subroutines[@id] = @
             @inputs = ((new Input).fromJSON {text:nib_data, index:index}, @ for nib_data, index in data.inputs)
@@ -303,14 +305,37 @@ module.factory 'interpreter', ($q, $http) ->
             for id, connection of out_connections
                 connection.delete()
 
-    class Literal
-        type:'literal'
-        constructor:(@text, @id=UUID()) ->
+    make_value = (scope, position, user_input, force_string=false) ->
+        implementation = if user_input instanceof Definition
+            user_input
+        else
+            if force_string
+                new StringLiteral user_input
+            else
+                value = eval_expression user_input
+                if value instanceof String
+                    new StringLiteral value
+                else
+                    new JSONLiteral value
+
+        new Value scope, position, implementation
+
+    class Literal extends Definition # Abstract
+        constructor: ->
+            all_subroutines[@id] = @
             @inputs = []
             @outputs = [(new Output).initialize(@id)]
+        #content_id: -> CryptoJS.SHA256(@text).toString(CryptoJS.enc.Base64)
 
-        evaluate: -> return eval_expression @text
-        content_id: -> CryptoJS.SHA256(@text).toString(CryptoJS.enc.Base64)
+    class JSONLiteral extends Literal
+        type:'json_literal'
+        constructor:(@text, @id=UUID()) -> super()
+        evaluate: -> eval_expression @text
+
+    class StringLiteral extends Literal
+        type:'string_literal'
+        constructor:(@text, @id=UUID()) -> super()
+        evaluate: -> @text
 
     ### NODE TYPES ###
 
@@ -369,22 +394,11 @@ module.factory 'interpreter', ($q, $http) ->
 
     class Value extends Node
         type:'value'
-        constructor:(@scope, @position, value, @id=UUID()) ->
-            # TODO: sort this out later
-            if value instanceof Graph
-                @implementation = value
-                @text = value.name
-            else
-                @implementation = new Literal value, @id
-                @text = value
-            super()
-
+        constructor:(@scope, @position, @implementation, @id=UUID()) -> super()
         evaluate: -> @implementation.evaluate()
-
         toJSON: ->
             json = super()
-            if @implementation instanceof Graph
-                json.implementation_id = @implementation.id
+            json.implementation_id = @implementation.id
             json
 
         subroutines_referenced: -> []
@@ -514,12 +528,12 @@ module.factory 'interpreter', ($q, $http) ->
             position = V node.position
 
             if node.type is 'literal'
-                if 'implementation_id' of node
-                    value = subroutines[node.implementation_id]
+                implementation = if 'implementation_id' of node
+                    subroutines[node.implementation_id]
                     # TODO: what if this subroutine isn't found?
                 else
-                    value = node.text
-                new Value subroutine, position, value, node.id
+                    new JSONLiteral node.text
+                new Value subroutine, position, implementation, node.id
             else
                 implementation = subroutines[node.implementation_id]
                 if implementation
@@ -538,8 +552,8 @@ module.factory 'interpreter', ($q, $http) ->
 
             from = get_connector connection.input
             to = get_connector connection.output
-            input = if from instanceof Graph then from.outputs[connection.input.index] else from.implementation.inputs[connection.input.index]
-            output = if to instanceof Graph then to.inputs[connection.output.index] else to.implementation.outputs[connection.output.index]
+            input = if from instanceof Definition then from.outputs[connection.input.index] else from.implementation.inputs[connection.input.index]
+            output = if to instanceof Definition then to.inputs[connection.output.index] else to.implementation.outputs[connection.output.index]
             unless input
                 console.log subroutine.text
                 console.log subroutine.text
@@ -584,6 +598,7 @@ module.factory 'interpreter', ($q, $http) ->
         #start_saving()
 
     make_connection:make_connection
+    make_value:make_value
     loaded:loaded.promise
     RuntimeException:RuntimeException
     Exit:Exit
