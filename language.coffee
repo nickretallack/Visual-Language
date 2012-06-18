@@ -165,7 +165,7 @@ module.factory 'interpreter', ($q, $http) ->
         delete_connections: (direction, node, nib) ->
             for id, connection of @connections
                 if connection[direction].node.id is node.id and connection[direction].nib.id is nib.id
-                    delete scope.connections[id]
+                    delete @connections[id]
 
         export: ->
             dependencies = @get_dependencies()
@@ -453,7 +453,7 @@ module.factory 'interpreter', ($q, $http) ->
             [from,to] = [to,from]
 
         # delete other connections that are to this nib/node combination
-        scope.delete_connections 'to', node, nib
+        scope.delete_connections 'to', to.node, to.nib
 
         new Connection scope,
             from:from

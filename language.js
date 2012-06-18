@@ -341,7 +341,7 @@
         for (id in _ref) {
           connection = _ref[id];
           if (connection[direction].node.id === node.id && connection[direction].nib.id === nib.id) {
-            _results.push(delete scope.connections[id]);
+            _results.push(delete this.connections[id]);
           } else {
             _results.push(void 0);
           }
@@ -828,7 +828,7 @@
       if (to_input) {
         _ref = [to, from], from = _ref[0], to = _ref[1];
       }
-      scope.delete_connections('to', node, nib);
+      scope.delete_connections('to', to.node, to.nib);
       return new Connection(scope, {
         from: from,
         to: to
