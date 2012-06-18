@@ -122,6 +122,72 @@
         return this;
       };
 
+      Subroutine.prototype.user_inputs = function() {
+        var input, input_values, _fn, _i, _len, _ref;
+        input_values = [];
+        _ref = this.inputs;
+        _fn = function(input) {
+          var value;
+          value = _.memoize(function() {
+            var result;
+            result = prompt("Provide a JSON value for input " + input.index + ": \"" + input.text + "\"");
+            if (result === null) {
+              throw new Exit("cancelled execution");
+            }
+            try {
+              return JSON.parse(result);
+            } catch (exception) {
+              if (exception instanceof SyntaxError) {
+                throw new InputError(result);
+              } else {
+                throw exception;
+              }
+            }
+          });
+          return input_values.push(value);
+        };
+        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+          input = _ref[_i];
+          _fn(input);
+        }
+        return input_values;
+      };
+
+      Subroutine.prototype.run = function(nib) {
+        var input_values,
+          _this = this;
+        input_values = this.user_inputs();
+        try {
+          return setTimeout(function() {
+            return execute(function() {
+              return _this.invoke(nib, input_values);
+            });
+          });
+        } catch (exception) {
+          if (exception instanceof InputError) {
+            return alert("Invalid JSON: " + exception.message);
+          } else {
+            throw exception;
+          }
+        }
+      };
+
+      Subroutine.prototype.add_input = function() {
+        return this.inputs.push((new Input).initialize());
+      };
+
+      Subroutine.prototype.add_output = function() {
+        return this.outputs.push((new Output).initialize());
+      };
+
+      Subroutine.prototype.delete_input = function(nib) {
+        return this.inputs.splice(nib.index, 1);
+      };
+
+      Subroutine.prototype.delete_output = function(nib) {
+        return this.outputs.splice(nib.index, 1);
+      };
+
       return Subroutine;
 
     })();
@@ -162,45 +228,6 @@
         };
       };
 
-      JavaScript.prototype.run = function(output_index) {
-        var _this = this;
-        return execute(function() {
-          var args, input, input_index, input_values, memo, memo_function, output_function, the_scope, _fn, _i, _len, _ref;
-          input_values = [];
-          _ref = _this.inputs;
-          _fn = function(input_index, input) {
-            return input_values.push(function() {
-              return valid_json(prompt("Provide a JSON value for input " + input_index + ": \"" + input + "\""));
-            });
-          };
-          for (input_index = _i = 0, _len = _ref.length; _i < _len; input_index = ++_i) {
-            input = _ref[input_index];
-            _fn(input_index, input);
-          }
-          the_scope = {
-            memos: {}
-          };
-          try {
-            memo_function = eval_expression(_this.memo_implementation);
-            output_function = eval_expression(_this.output_implementation);
-          } catch (exception) {
-            if (exception instanceof SyntaxError) {
-              throw new BuiltinSyntaxError(_this.text, exception);
-            } else {
-              throw exception;
-            }
-          }
-          if (!output_function) {
-            throw new NotImplemented(_this.text);
-          }
-          args = input_values.concat([output_index]);
-          if (memo_function) {
-            memo = memo_function.apply(null, args);
-          }
-          return output_function.apply(null, args.concat([memo]));
-        });
-      };
-
       JavaScript.prototype.invoke = function(output_nib, inputs, scope, node) {
         var args, memo_function, output_function;
         try {
@@ -217,10 +244,10 @@
           throw new NotImplemented(this.text);
         }
         args = inputs.concat([output_nib.index]);
-        if (memo_function && !(node.id in scope.memos)) {
+        if (scope && memo_function && !(node.id in scope.memos)) {
           scope.memos[node.id] = memo_function.apply(null, args);
         }
-        return output_function.apply(null, args.concat([scope.memos[node.id]]));
+        return output_function.apply(null, args.concat([scope != null ? scope.memos[node.id] : void 0]));
       };
 
       return JavaScript;
@@ -292,53 +319,6 @@
         }
       };
 
-      Graph.prototype.run = function(nib) {
-        /* Set up user input collection for unknown inputs and evaluate this output.
-        */
-
-        var input, input_values, _fn, _i, _len, _ref,
-          _this = this;
-        input_values = [];
-        _ref = this.inputs;
-        _fn = function(input) {
-          var value;
-          value = _.memoize(function() {
-            var result;
-            result = prompt("Provide a JSON value for input " + input.index + ": \"" + input.text + "\"");
-            if (result === null) {
-              throw new Exit("cancelled execution");
-            }
-            try {
-              return JSON.parse(result);
-            } catch (exception) {
-              if (exception instanceof SyntaxError) {
-                throw new InputError(result);
-              } else {
-                throw exception;
-              }
-            }
-          });
-          return input_values.push(value);
-        };
-        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-          input = _ref[_i];
-          _fn(input);
-        }
-        try {
-          return setTimeout(function() {
-            return execute(function() {
-              return _this.invoke(nib, input_values);
-            });
-          });
-        } catch (exception) {
-          if (exception instanceof InputError) {
-            return alert("Invalid JSON: " + exception.message);
-          } else {
-            throw exception;
-          }
-        }
-      };
-
       Graph.prototype.find_connection = function(direction, node, nib) {
         /* Use this to determine how nodes are connected
         */
@@ -369,14 +349,6 @@
         return _results;
       };
 
-      Graph.prototype.get_inputs = function() {
-        return this.inputs;
-      };
-
-      Graph.prototype.get_outputs = function() {
-        return this.outputs;
-      };
-
       Graph.prototype["export"] = function() {
         var dependencies;
         dependencies = this.get_dependencies();
@@ -384,112 +356,88 @@
         return dependencies;
       };
 
-      Graph.prototype.add_input = function() {
-        return this.inputs.push((new Input).initialize());
+      Graph.prototype.delete_input = function(nib) {
+        this.delete_connections('to', this, nib);
+        return Graph.__super__.delete_input.call(this, nib);
       };
 
-      Graph.prototype.add_output = function() {
-        return this.outputs.push((new Output).initialize());
+      Graph.prototype.delete_output = function(nib) {
+        this.delete_connections('from', this, nib);
+        return Graph.__super__.delete_output.call(this, nib);
       };
 
-      Graph.prototype.remove_node = function(node) {
-        return delete this.nodes[node.id];
-      };
+      /* probably outdated
+      remove_node: (node) ->
+          delete @nodes[node.id]
+      
+      add_node: (node) ->
+          @nodes[node.id] = node
+      
+      remove_connection: (connection) ->
+          delete @connections[connection.id]
+      
+      add_connection: (connection) ->
+          @connections[connection.id] = connection
+      
+      get_dependencies: (dependencies={subroutines:{},builtins:{}}) ->
+          # TODO: UPDATE
+          dependencies.subroutines[@id] = @ if @id not of dependencies.subroutines
+          for id, node of @nodes
+              if node instanceof SubroutineApplication
+                  child_dependencies = node.implementation.get_dependencies dependencies
+                  _.extend dependencies.subroutines, child_dependencies.subroutines
+                  _.extend dependencies.builtins, child_dependencies.builtins
+              else if node instanceof BuiltinApplication
+                  dependencies.builtins[@id] = node.implementation
+          dependencies
+      
+      subroutines_referenced: ->
+          # TODO: UPDATE
+          # TODO: turn this into a cleanup function
+          results = []
+          for output in @outputs
+              parent = output.get_connection()?.connection.output.parent
+              if parent
+                  results.push parent.id if parent.type is 'function'
+                  resuts = results.concat parent.subroutines_referenced()
+          return results
+      
+      build_adjacency_list: ->
+          # clear prior data
+          for id, node of @nodes
+              node.adjacency_id = null
+      
+          adjacency_list = []
+      
+          # number and add self first
+          adjacency_list.push
+              node:@
+              connections:[]
+          @adjacency_id = 0
+      
+          # number all the connected nodes in a predictable way, and add them to the list
+          input_queue = [].concat @outputs
+          while input_queue.length > 0
+              input = input_queue.shift()
+              node = input.get_node()
+              # NOTE: if node is a subroutine then we've reached ourselves again
+              if node instanceof Node and node.adjacency_id is null
+                  item_count = adjacency_list.push
+                      node:node
+                      connections:[]
+                  node.adjacency_id = item_count - 1 # length is offset by 1 from index
+                  input_queue = input_queue.concat node.inputs
+      
+          # record all the connections based on the consistent numbering scheme
+          for item in adjacency_list
+              nibs = if item.node instanceof Node then item.node.inputs else item.node.outputs
+              for input, input_index in nibs
+                  node = input.parent
+                  item.connections[input_index] = node.adjacency_id
+      
+          adjacency_list
+      */
 
-      Graph.prototype.add_node = function(node) {
-        return this.nodes[node.id] = node;
-      };
-
-      Graph.prototype.remove_connection = function(connection) {
-        return delete this.connections[connection.id];
-      };
-
-      Graph.prototype.add_connection = function(connection) {
-        return this.connections[connection.id] = connection;
-      };
-
-      Graph.prototype.get_dependencies = function(dependencies) {
-        var child_dependencies, id, node, _ref;
-        if (dependencies == null) {
-          dependencies = {
-            subroutines: {},
-            builtins: {}
-          };
-        }
-        if (!(this.id in dependencies.subroutines)) {
-          dependencies.subroutines[this.id] = this;
-        }
-        _ref = this.nodes;
-        for (id in _ref) {
-          node = _ref[id];
-          if (node instanceof SubroutineApplication) {
-            child_dependencies = node.implementation.get_dependencies(dependencies);
-            _.extend(dependencies.subroutines, child_dependencies.subroutines);
-            _.extend(dependencies.builtins, child_dependencies.builtins);
-          } else if (node instanceof BuiltinApplication) {
-            dependencies.builtins[this.id] = node.implementation;
-          }
-        }
-        return dependencies;
-      };
-
-      Graph.prototype.subroutines_referenced = function() {
-        var output, parent, results, resuts, _i, _len, _ref, _ref1;
-        results = [];
-        _ref = this.outputs;
-        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-          output = _ref[_i];
-          parent = (_ref1 = output.get_connection()) != null ? _ref1.connection.output.parent : void 0;
-          if (parent) {
-            if (parent.type === 'function') {
-              results.push(parent.id);
-            }
-            resuts = results.concat(parent.subroutines_referenced());
-          }
-        }
-        return results;
-      };
-
-      Graph.prototype.build_adjacency_list = function() {
-        /* TODO: UPDATE FOR NEW SCHEMA
-        */
-
-        var adjacency_list, id, input, input_index, input_queue, item, item_count, nibs, node, _i, _j, _len, _len1, _ref;
-        _ref = this.nodes;
-        for (id in _ref) {
-          node = _ref[id];
-          node.adjacency_id = null;
-        }
-        adjacency_list = [];
-        adjacency_list.push({
-          node: this,
-          connections: []
-        });
-        this.adjacency_id = 0;
-        input_queue = [].concat(this.outputs);
-        while (input_queue.length > 0) {
-          input = input_queue.shift();
-          node = input.get_node();
-          if (node instanceof Node && node.adjacency_id === null) {
-            item_count = adjacency_list.push({
-              node: node,
-              connections: []
-            });
-            node.adjacency_id = item_count - 1;
-            input_queue = input_queue.concat(node.inputs);
-          }
-        }
-        for (_i = 0, _len = adjacency_list.length; _i < _len; _i++) {
-          item = adjacency_list[_i];
-          nibs = item.node instanceof Node ? item.node.inputs : item.node.outputs;
-          for (input_index = _j = 0, _len1 = nibs.length; _j < _len1; input_index = ++_j) {
-            input = nibs[input_index];
-            node = input.parent;
-            item.connections[input_index] = node.adjacency_id;
-          }
-        }
-        return adjacency_list;
-      };
 
       Graph.prototype.make_from = function(nodes) {
         /* Build a subroutine out of nodes in another subroutine.

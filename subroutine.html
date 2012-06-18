@@ -1,19 +1,19 @@
-<div ng-switch="current_object.type">
+<div ng-switch="current_object.type" any-subroutine="current_object">
 
 <div ng:switch-when="subroutine" id="subroutine" subroutine="current_object">
 <canvas id="connections" connections="current_object"></canvas>
 <div id="selection" ng-style="selection_style()"></div>
-<input ng-model="current_object.name" shrinky-input="current_object.name" class="title">
+<input ng-model="current_object.name" shrinky-input="current_object.text" class="title">
 
 <div class="subroutine-input" ng-repeat="input in current_object.inputs" ng-style="{'top':(($index+1) * editor_size.y / (current_object.inputs.length+1)) + 'px'}">
     <div nib="[current_object,input]"></div>
     <input ng-model="input.text" shrinky-input="input.text">
-    <a ng-click="delete_input($index)">-</a>
+    <a ng-click="delete_input(input)">-</a>
 </div>
 <a id="new-input" ng-click="new_input(subroutine)">+Input</a>
 
 <div class="subroutine-output" ng-repeat="output in current_object.outputs" ng-style="{'top':(($index+1) * editor_size.y / (current_object.outputs.length+1)) + 'px'}">
-    <a ng-click="delete_output($index)">-</a>
+    <a ng-click="delete_output(output)">-</a>
     <input ng-model="output.text" shrinky-input="output.text">
     <div nib="[current_object,output]"></div>
     <div><a ng-click="evaluate_output(output)">evaluate</a></div>
@@ -42,7 +42,7 @@
 </div>
 
 <div ng:switch-when="builtin" id="builtin_editor">
-    <input ng-model="current_object.name" class="title" shrinky-input="current_object.name">
+    <input ng-model="current_object.text" class="title" shrinky-input="current_object.name">
     <div class="container-fluid">
         <div class="row-fluid">
             <div class="span6">
@@ -50,7 +50,7 @@
                 <h3>Outputs</h3>
                 <div ng-repeat="output in current_object.outputs">
                     <input ng-model="output.text">
-                    <a ng-click="delete_output($index)">-</a>
+                    <a ng-click="delete_output(output)">-</a>
                     <a ng-click="evaluate_output(output)">evaluate</a>
                 </div>
                 <a ng-click="new_output(current_object)">+Output</a>
@@ -60,7 +60,7 @@
                 <h3>Inputs</h3>
                 <div ng-repeat="input in current_object.inputs">
                     <input ng-model="input.text">
-                    <a ng-click="delete_input($index)">-</a>
+                    <a ng-click="delete_input(input)">-</a>
                 </div>
                 <a ng-click="new_input(current_object)">+Input</a>
             </div>

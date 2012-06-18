@@ -20,6 +20,31 @@ module.directive 'nib', ->
         element.bind 'mouseup', (event) -> scope.$apply ->
             controller.release_nib node, nib, event
 
+module.directive 'anySubroutine', ->
+    link:(scope, element, attributes) ->
+    controller:($scope, $element, $attrs, interpreter) ->
+        subroutine = undefined
+        $scope.$watch $attrs.anySubroutine, (the_subroutine) ->
+            $scope.subroutine = subroutine = the_subroutine
+
+        $scope.evaluate_output = (output) ->
+            subroutine.run output
+
+        $scope.new_input =  ->
+            subroutine.add_input()
+            async -> $('.subroutine-input:last input').focus()
+
+        $scope.new_output =  ->
+            subroutine.add_output()
+            async -> $('.subroutine-output:last input').focus()
+
+        $scope.delete_input = (nib) ->
+            subroutine.delete_input nib
+
+        $scope.delete_output = (nib) ->
+            subroutine.delete_output nib
+
+
 module.directive 'subroutine', ($location) ->
     link:(scope, element, attributes) ->
     controller:($scope, $element, $attrs, interpreter) ->
@@ -33,25 +58,6 @@ module.directive 'subroutine', ($location) ->
         $scope.$on 'new-graph-from-selection', ->
             subroutine = (new interpreter.Subroutine).initialize()
             subroutine.make_from $scope.selection
-
-        $scope.evaluate_output = (output) ->
-            subroutine.run output
-
-        $scope.new_input =  ->
-            subroutine.add_input()
-            async -> $('.subroutine-input:last input').focus()
-
-        $scope.new_output =  ->
-            subroutine.add_output()
-            async -> $('.subroutine-output:last input').focus()
-
-        $scope.delete_input = ($index) ->
-            [nib] = subroutine.inputs.splice $index, 1
-            nib.delete_connections()
-
-        $scope.delete_output = ($index) ->
-            [nib] = subroutine.outputs.splice $index, 1
-            nib.delete_connections()
 
         transform_the_position = (position) ->
             position = transform_position position, $scope.editor_size

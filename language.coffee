@@ -35,6 +35,45 @@ module.factory 'interpreter', ($q, $http) ->
             @outputs = []
             @
 
+        user_inputs: ->
+            input_values = []
+            for input in @inputs
+                do (input) ->
+                    value = _.memoize ->
+                        result = prompt "Provide a JSON value for input #{input.index}: \"#{input.text}\""
+                        throw new Exit "cancelled execution" if result is null
+                        try
+                            return JSON.parse result
+                        catch exception
+                            if exception instanceof SyntaxError
+                                throw new InputError result
+                            else
+                                throw exception
+                    input_values.push value
+            input_values
+
+        run: (nib) ->
+            input_values = @user_inputs()
+            try
+                setTimeout => execute => @invoke nib, input_values,
+            catch exception
+                if exception instanceof InputError
+                    alert "Invalid JSON: #{exception.message}"
+                else
+                    throw exception
+
+        add_input: ->
+            @inputs.push (new Input).initialize()
+
+        add_output: ->
+            @outputs.push (new Output).initialize()
+
+        delete_input: (nib) ->
+            @inputs.splice nib.index, 1
+
+        delete_output: (nib) ->
+            @outputs.splice nib.index, 1
+
 
     class JavaScript extends Subroutine
         type:'builtin'
@@ -57,30 +96,6 @@ module.factory 'interpreter', ($q, $http) ->
             builtins: builtins
             schema_version:schema_version
 
-        run: (output_index) ->
-            execute =>
-                input_values = []
-                for input, input_index in @inputs
-                    do (input_index, input) ->
-                        input_values.push ->
-                            valid_json prompt "Provide a JSON value for input #{input_index}: \"#{input}\""
-
-                the_scope = memos:{}
-
-                try
-                    memo_function = eval_expression @memo_implementation
-                    output_function = eval_expression @output_implementation
-                catch exception
-                    if exception instanceof SyntaxError
-                        throw new BuiltinSyntaxError @text, exception
-                    else throw exception
-
-                throw new NotImplemented @text unless output_function
-
-                args = input_values.concat [output_index]
-                memo = memo_function args... if memo_function
-                return output_function (args.concat [memo])...
-
         invoke: (output_nib, inputs, scope, node) ->
             try
                 memo_function = eval_expression @memo_implementation
@@ -93,9 +108,9 @@ module.factory 'interpreter', ($q, $http) ->
             throw new NotImplemented @text unless output_function
 
             args = inputs.concat [output_nib.index]
-            if memo_function and node.id not of scope.memos
+            if scope and memo_function and node.id not of scope.memos
                 scope.memos[node.id] = memo_function args...
-            return output_function (args.concat [scope.memos[node.id]])...
+            return output_function (args.concat [scope?.memos[node.id]])...
 
 
     class Graph extends Subroutine
@@ -140,30 +155,6 @@ module.factory 'interpreter', ($q, $http) ->
             else
                 return node.evaluate scope, nib
 
-        run: (nib) ->
-            ### Set up user input collection for unknown inputs and evaluate this output. ###
-            input_values = []
-            for input in @inputs
-                do (input) ->
-                    value = _.memoize ->
-                        result = prompt "Provide a JSON value for input #{input.index}: \"#{input.text}\""
-                        throw new Exit "cancelled execution" if result is null
-                        try
-                            return JSON.parse result
-                        catch exception
-                            if exception instanceof SyntaxError
-                                throw new InputError result
-                            else
-                                throw exception
-                    input_values.push value
-            try
-                setTimeout => execute => @invoke nib, input_values
-            catch exception
-                if exception instanceof InputError
-                    alert "Invalid JSON: #{exception.message}"
-                else
-                    throw exception
-
         find_connection: (direction, node, nib) ->
             ### Use this to determine how nodes are connected ###
             for id, connection of @connections
@@ -176,21 +167,20 @@ module.factory 'interpreter', ($q, $http) ->
                 if connection[direction].node.id is node.id and connection[direction].nib.id is nib.id
                     delete scope.connections[id]
 
-
-        get_inputs: -> @inputs
-        get_outputs: -> @outputs
-
         export: ->
             dependencies = @get_dependencies()
             dependencies.schema_version = schema_version
             dependencies
 
-        add_input: ->
-            @inputs.push (new Input).initialize()
+        delete_input: (nib) ->
+            @delete_connections 'to', @, nib
+            super nib
 
-        add_output: ->
-            @outputs.push (new Output).initialize()
+        delete_output: (nib) ->
+            @delete_connections 'from', @, nib
+            super nib
 
+        ### probably outdated
         remove_node: (node) ->
             delete @nodes[node.id]
 
@@ -227,7 +217,6 @@ module.factory 'interpreter', ($q, $http) ->
             return results
 
         build_adjacency_list: ->
-            ### TODO: UPDATE FOR NEW SCHEMA ###
             # clear prior data
             for id, node of @nodes
                 node.adjacency_id = null
@@ -261,6 +250,7 @@ module.factory 'interpreter', ($q, $http) ->
                     item.connections[input_index] = node.adjacency_id
 
             adjacency_list
+        ###
 
         make_from: (nodes) ->
             ### Build a subroutine out of nodes in another subroutine. ###

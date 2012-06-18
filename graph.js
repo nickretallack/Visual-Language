@@ -39,21 +39,14 @@
     };
   });
 
-  module.directive('subroutine', function($location) {
+  module.directive('anySubroutine', function() {
     return {
       link: function(scope, element, attributes) {},
       controller: function($scope, $element, $attrs, interpreter) {
-        var $$element, canvas, canvas_offset, draw, get_bounds, header_height, in_box, nib_center, nib_offset, resize_canvas, subroutine, transform_the_position,
-          _this = this;
-        $$element = $($element);
-        subroutine = $scope.$eval($attrs.subroutine);
-        $scope.dragging = [];
-        $scope.drawing = null;
-        $scope.selection = [];
-        this.nib_views = {};
-        $scope.$on('new-graph-from-selection', function() {
-          subroutine = (new interpreter.Subroutine).initialize();
-          return subroutine.make_from($scope.selection);
+        var subroutine;
+        subroutine = void 0;
+        $scope.$watch($attrs.anySubroutine, function(the_subroutine) {
+          return $scope.subroutine = subroutine = the_subroutine;
         });
         $scope.evaluate_output = function(output) {
           return subroutine.run(output);
@@ -70,16 +63,32 @@
             return $('.subroutine-output:last input').focus();
           });
         };
-        $scope.delete_input = function($index) {
-          var nib;
-          nib = subroutine.inputs.splice($index, 1)[0];
-          return nib.delete_connections();
+        $scope.delete_input = function(nib) {
+          return subroutine.delete_input(nib);
         };
-        $scope.delete_output = function($index) {
-          var nib;
-          nib = subroutine.outputs.splice($index, 1)[0];
-          return nib.delete_connections();
+        return $scope.delete_output = function(nib) {
+          return subroutine.delete_output(nib);
         };
+      }
+    };
+  });
+
+  module.directive('subroutine', function($location) {
+    return {
+      link: function(scope, element, attributes) {},
+      controller: function($scope, $element, $attrs, interpreter) {
+        var $$element, canvas, canvas_offset, draw, get_bounds, header_height, in_box, nib_center, nib_offset, resize_canvas, subroutine, transform_the_position,
+          _this = this;
+        $$element = $($element);
+        subroutine = $scope.$eval($attrs.subroutine);
+        $scope.dragging = [];
+        $scope.drawing = null;
+        $scope.selection = [];
+        this.nib_views = {};
+        $scope.$on('new-graph-from-selection', function() {
+          subroutine = (new interpreter.Subroutine).initialize();
+          return subroutine.make_from($scope.selection);
+        });
         transform_the_position = function(position) {
           return position = transform_position(position, $scope.editor_size);
         };
