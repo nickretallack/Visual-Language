@@ -34,7 +34,7 @@ module.factory 'interpreter', ($q, $http) ->
 
         toJSON: ->
             id:@id
-            name:@name
+            text:@text
             inputs:@inputs
             outputs:@outputs
             memo_implementation:@memo_implementation
@@ -82,6 +82,11 @@ module.factory 'interpreter', ($q, $http) ->
             @inputs = []
             @outputs = []
 
+        initialize: ->
+            ### Populate fields for a brand new instance. ###
+            @id = UUID()
+            subroutines[@id] = @
+
         fromJSON: (data) ->
             ### Populate from the persistence format ###
             {name:@text, @id} = data
@@ -90,19 +95,14 @@ module.factory 'interpreter', ($q, $http) ->
             @outputs = ((new Output).fromJSON {text:nib_data, index:index}, @ for nib_data, index in data.outputs)
             subroutines[@id] = @
 
-        initialize: ->
-            ### Populate fields for a brand new instance. ###
-            @id = UUID()
-            subroutines[@id] = @
-
         toJSON: ->
             # Defines the persistence format
             id:@id
-            name:@name
+            text:@text
             nodes:_.values @nodes
             connections:_.values @connections
-            inputs:@get_inputs()
-            outputs:@get_outputs()
+            inputs:@inputs
+            outputs:@outputs
 
         ### RUNNING ###
 
@@ -438,81 +438,24 @@ module.factory 'interpreter', ($q, $http) ->
             @id ?= UUID()
             @
 
-        ###
-        constructor: ->
-            @connections = {}
+        toJSON: ->
+            text:@text
+            id:@id
 
-        delete_connections: ->
-            for id, connection of @connections
-                connection.connection.delete()
-
-        get_scope: ->
-            if this.parent instanceof Subroutine
-                this.parent
-            else
-                this.parent.scope
-        ###
-
-    # TODO: change nib 'node' to parent since it might not be a node
     class Input extends Nib
-        #constructor:(@subroutine, @text, @index=0, @id=UUID()) ->
-        #    super()
-
-
-
-        ###
-        _add_connection: (connection) ->
-            # delete previous connection
-            @get_connection()?.connection.delete()
-            @connections = {}
-            @connections[connection.id] =
-                connection:connection
-
-        get_connection: ->
-            for id, connection of @connections
-                return connection
-
-        get_node: ->
-            @get_connection()?.connection.output.parent
-
-        connect:(output) ->
-            new Connection @get_scope(), @, output
-        ###
-
     class Output extends Nib
-        constructor:(@subroutine, @text, @index=0, @id=UUID()) ->
-            super()
-
-        ###
-        _add_connection: (connection, vertex) ->
-            @connections[connection.id] =
-                connection:connection
-                vertex:vertex
-
-        connect:(input) ->
-            new Connection @get_scope(), input, @
-        ###
 
     class Connection
         constructor:(@scope, {@from, @to}, @id=UUID()) ->
             @scope.connections[@id] = @
-            #@input._add_connection @
-            #@output._add_connection @
 
-        ###
         toJSON: ->
-            input:
-                index:@input.index
-                parent_id:@input.parent.id
-            output:
-                index:@output.index
-                parent_id:@output.parent.id
-
-        delete: ->
-            delete @scope.connections[@id]
-            delete @output.connections[@id]
-            @input.connections = {}
-        ###
+            from:
+                nib:@from.nib.id
+                node:@from.node.id
+            to:
+                nib:@to.nib.id
+                node:@to.node.id
 
     is_input = (it) ->
         is_input_class = it.nib instanceof Input

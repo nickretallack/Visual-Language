@@ -52,7 +52,7 @@
         $scope.selection = [];
         this.nib_views = {};
         $scope.$on('new-graph-from-selection', function() {
-          subroutine = new interpreter.Subroutine;
+          subroutine = (new interpreter.Subroutine).initialize();
           interpreter.subroutines[subroutine.id] = subroutine;
           return subroutine.make_from($scope.selection);
         });

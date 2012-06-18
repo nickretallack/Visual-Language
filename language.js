@@ -118,7 +118,7 @@
       Builtin.prototype.toJSON = function() {
         return {
           id: this.id,
-          name: this.name,
+          text: this.text,
           inputs: this.inputs,
           outputs: this.outputs,
           memo_implementation: this.memo_implementation,
@@ -194,6 +194,13 @@
         this.outputs = [];
       }
 
+      Subroutine.prototype.initialize = function() {
+        /* Populate fields for a brand new instance.
+        */
+        this.id = UUID();
+        return subroutines[this.id] = this;
+      };
+
       Subroutine.prototype.fromJSON = function(data) {
         /* Populate from the persistence format
         */
@@ -232,21 +239,14 @@
         return subroutines[this.id] = this;
       };
 
-      Subroutine.prototype.initialize = function() {
-        /* Populate fields for a brand new instance.
-        */
-        this.id = UUID();
-        return subroutines[this.id] = this;
-      };
-
       Subroutine.prototype.toJSON = function() {
         return {
           id: this.id,
-          name: this.name,
+          text: this.text,
           nodes: _.values(this.nodes),
           connections: _.values(this.connections),
-          inputs: this.get_inputs(),
-          outputs: this.get_outputs()
+          inputs: this.inputs,
+          outputs: this.outputs
         };
       };
 
@@ -818,21 +818,12 @@
         return this;
       };
 
-      /*
-              constructor: ->
-                  @connections = {}
-      
-              delete_connections: ->
-                  for id, connection of @connections
-                      connection.connection.delete()
-      
-              get_scope: ->
-                  if this.parent instanceof Subroutine
-                      this.parent
-                  else
-                      this.parent.scope
-      */
-
+      Nib.prototype.toJSON = function() {
+        return {
+          text: this.text,
+          id: this.id
+        };
+      };
 
       return Nib;
 
@@ -840,26 +831,6 @@
     Input = (function(_super) {
 
       __extends(Input, _super);
-
-      /*
-              _add_connection: (connection) ->
-                  # delete previous connection
-                  @get_connection()?.connection.delete()
-                  @connections = {}
-                  @connections[connection.id] =
-                      connection:connection
-      
-              get_connection: ->
-                  for id, connection of @connections
-                      return connection
-      
-              get_node: ->
-                  @get_connection()?.connection.output.parent
-      
-              connect:(output) ->
-                  new Connection @get_scope(), @, output
-      */
-
 
       function Input() {
         return Input.__super__.constructor.apply(this, arguments);
@@ -872,24 +843,9 @@
 
       __extends(Output, _super);
 
-      function Output(subroutine, text, index, id) {
-        this.subroutine = subroutine;
-        this.text = text;
-        this.index = index != null ? index : 0;
-        this.id = id != null ? id : UUID();
-        Output.__super__.constructor.call(this);
+      function Output() {
+        return Output.__super__.constructor.apply(this, arguments);
       }
-
-      /*
-              _add_connection: (connection, vertex) ->
-                  @connections[connection.id] =
-                      connection:connection
-                      vertex:vertex
-      
-              connect:(input) ->
-                  new Connection @get_scope(), input, @
-      */
-
 
       return Output;
 
@@ -903,21 +859,18 @@
         this.scope.connections[this.id] = this;
       }
 
-      /*
-              toJSON: ->
-                  input:
-                      index:@input.index
-                      parent_id:@input.parent.id
-                  output:
-                      index:@output.index
-                      parent_id:@output.parent.id
-      
-              delete: ->
-                  delete @scope.connections[@id]
-                  delete @output.connections[@id]
-                  @input.connections = {}
-      */
-
+      Connection.prototype.toJSON = function() {
+        return {
+          from: {
+            nib: this.from.nib.id,
+            node: this.from.node.id
+          },
+          to: {
+            nib: this.to.nib.id,
+            node: this.to.node.id
+          }
+        };
+      };
 
       return Connection;
 

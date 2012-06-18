@@ -31,7 +31,7 @@ module.directive 'subroutine', ($location) ->
         @nib_views = {}
 
         $scope.$on 'new-graph-from-selection', ->
-            subroutine = new interpreter.Subroutine
+            subroutine = (new interpreter.Subroutine).initialize()
             interpreter.subroutines[subroutine.id] = subroutine # TODO: make this standard?
             subroutine.make_from $scope.selection
 
