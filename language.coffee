@@ -15,12 +15,14 @@ module.factory 'interpreter', ($q, $http) ->
         constructor: -> @message = "Something in the program is disconnected"
 
     class NotImplemented extends RuntimeException
-        constructor: (@name) -> @message = "Builtin \"#{@name}\" is not implemented"
+        constructor: (@name) -> @message = "JavaScript \"#{@name}\" is not implemented"
 
     class BuiltinSyntaxError extends RuntimeException
         constructor: (@name, @exception) -> @message = "#{exception} in builtin \"#{@name}\": "
 
-    class Builtin
+    class Subroutine
+
+    class JavaScript extends Subroutine
         type:'builtin'
         initialize: ->
             @id = UUID()
@@ -75,7 +77,7 @@ module.factory 'interpreter', ($q, $http) ->
                 memo = memo_function args... if memo_function
                 return output_function (args.concat [memo])...
 
-    class Subroutine
+    class Graph extends Subroutine
         type:'subroutine'
         constructor: ->
             ### Initialize the bare minimum bits.
@@ -123,7 +125,7 @@ module.factory 'interpreter', ($q, $http) ->
             connection = @find_connection 'to', to_node, to_nib
             throw new NotConnected unless connection
             {node, nib} = connection.from
-            if node instanceof Subroutine
+            if node instanceof Graph
                 return scope.inputs[nib.index]()
             else
                 return node.evaluate scope, nib
@@ -404,7 +406,7 @@ module.factory 'interpreter', ($q, $http) ->
         type:'literal'
         constructor:(@scope, @position, value, @id=UUID()) ->
             # TODO: sort this out later
-            if value instanceof Subroutine
+            if value instanceof Graph
                 @implementation = value
                 @text = value.name
             else
@@ -416,7 +418,7 @@ module.factory 'interpreter', ($q, $http) ->
 
         toJSON: ->
             json = super()
-            if @implementation instanceof Subroutine
+            if @implementation instanceof Graph
                 json.implementation_id = @implementation.id
             json
 
@@ -453,7 +455,7 @@ module.factory 'interpreter', ($q, $http) ->
 
     is_input = (it) ->
         is_input_class = it.nib instanceof Input
-        if it.node instanceof Subroutine then is_input_class else not is_input_class
+        if it.node instanceof Graph then is_input_class else not is_input_class
 
     make_connection = (scope, {from, to}) ->
         from_input = is_input from
@@ -498,7 +500,7 @@ module.factory 'interpreter', ($q, $http) ->
         graphs = {}
         codes = {}
         for id, subroutine of all_subroutines
-            if subroutine instanceof Subroutine
+            if subroutine instanceof Graph
                 graphs[subroutine.id] = subroutine
             else
                 codes[subroutine.id] = subroutine
@@ -516,12 +518,12 @@ module.factory 'interpreter', ($q, $http) ->
 
         # load builtins
         for id, builtin_data of data.builtins
-            builtin = (new Builtin).fromJSON builtin_data
+            builtin = (new JavaScript).fromJSON builtin_data
             subroutines[builtin.id] = builtin
 
         # load subroutine declarations
         for id, subroutine_data of data.subroutines
-            subroutine = (new Subroutine).fromJSON subroutine_data
+            subroutine = (new Graph).fromJSON subroutine_data
             subroutines[subroutine.id] = subroutine
             second_pass.push subroutine
 
@@ -563,8 +565,8 @@ module.factory 'interpreter', ($q, $http) ->
 
             from = get_connector connection.input
             to = get_connector connection.output
-            input = if from instanceof Subroutine then from.outputs[connection.input.index] else from.implementation.inputs[connection.input.index]
-            output = if to instanceof Subroutine then to.inputs[connection.output.index] else to.implementation.outputs[connection.output.index]
+            input = if from instanceof Graph then from.outputs[connection.input.index] else from.implementation.inputs[connection.input.index]
+            output = if to instanceof Graph then to.inputs[connection.output.index] else to.implementation.outputs[connection.output.index]
             unless input
                 console.log subroutine.text
                 console.log subroutine.text
@@ -616,8 +618,8 @@ module.factory 'interpreter', ($q, $http) ->
     NotConnected:NotConnected
     NotImplemented:NotImplemented
     BuiltinSyntaxError:BuiltinSyntaxError
-    Builtin:Builtin
-    Subroutine:Subroutine
+    Builtin:JavaScript
+    Subroutine:Graph
     UnknownNode:UnknownNode
     SubroutineApplication:SubroutineApplication
     BuiltinApplication:BuiltinApplication

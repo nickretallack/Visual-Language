@@ -7,7 +7,7 @@
   module = angular.module('vislang');
 
   module.factory('interpreter', function($q, $http) {
-    var Builtin, BuiltinApplication, BuiltinSyntaxError, Connection, Exit, FunctionApplication, Input, InputError, Literal, LiteralValue, Nib, Node, NotConnected, NotImplemented, Output, RuntimeException, Subroutine, SubroutineApplication, UnknownNode, all_subroutines, dissociate_exception, eval_expression, execute, ignore_if_disconnected, is_input, load_implementation, load_state, loaded, make_connection, save_state, schema_version, source_data, source_data_deferred, start_saving;
+    var BuiltinApplication, BuiltinSyntaxError, Connection, Exit, FunctionApplication, Graph, Input, InputError, JavaScript, Literal, LiteralValue, Nib, Node, NotConnected, NotImplemented, Output, RuntimeException, Subroutine, SubroutineApplication, UnknownNode, all_subroutines, dissociate_exception, eval_expression, execute, ignore_if_disconnected, is_input, load_implementation, load_state, loaded, make_connection, save_state, schema_version, source_data, source_data_deferred, start_saving;
     schema_version = 1;
     RuntimeException = (function() {
 
@@ -57,7 +57,7 @@
 
       function NotImplemented(name) {
         this.name = name;
-        this.message = "Builtin \"" + this.name + "\" is not implemented";
+        this.message = "JavaScript \"" + this.name + "\" is not implemented";
       }
 
       return NotImplemented;
@@ -76,13 +76,24 @@
       return BuiltinSyntaxError;
 
     })(RuntimeException);
-    Builtin = (function() {
+    Subroutine = (function() {
 
-      function Builtin() {}
+      function Subroutine() {}
 
-      Builtin.prototype.type = 'builtin';
+      return Subroutine;
 
-      Builtin.prototype.initialize = function() {
+    })();
+    JavaScript = (function(_super) {
+
+      __extends(JavaScript, _super);
+
+      function JavaScript() {
+        return JavaScript.__super__.constructor.apply(this, arguments);
+      }
+
+      JavaScript.prototype.type = 'builtin';
+
+      JavaScript.prototype.initialize = function() {
         this.id = UUID();
         all_subroutines[this.id] = this;
         this.inputs = [];
@@ -90,7 +101,7 @@
         return this;
       };
 
-      Builtin.prototype.fromJSON = function(data) {
+      JavaScript.prototype.fromJSON = function(data) {
         var index, nib_data;
         this.text = data.name, this.id = data.id, this.memo_implementation = data.memo_implementation, this.output_implementation = data.output_implementation;
         all_subroutines[this.id] = this;
@@ -123,7 +134,7 @@
         return this;
       };
 
-      Builtin.prototype.toJSON = function() {
+      JavaScript.prototype.toJSON = function() {
         return {
           id: this.id,
           text: this.text,
@@ -134,7 +145,7 @@
         };
       };
 
-      Builtin.prototype["export"] = function() {
+      JavaScript.prototype["export"] = function() {
         var builtins;
         builtins = {};
         builtins[this.id] = this;
@@ -145,7 +156,7 @@
         };
       };
 
-      Builtin.prototype.run = function(output_index) {
+      JavaScript.prototype.run = function(output_index) {
         var _this = this;
         return execute(function() {
           var args, input, input_index, input_values, memo, memo_function, output_function, the_scope, _fn, _i, _len, _ref;
@@ -184,14 +195,16 @@
         });
       };
 
-      return Builtin;
+      return JavaScript;
 
-    })();
-    Subroutine = (function() {
+    })(Subroutine);
+    Graph = (function(_super) {
 
-      Subroutine.prototype.type = 'subroutine';
+      __extends(Graph, _super);
 
-      function Subroutine() {
+      Graph.prototype.type = 'subroutine';
+
+      function Graph() {
         /* Initialize the bare minimum bits.
         Be sure to call fromJSON or initialize next.
         */
@@ -199,7 +212,7 @@
         this.connections = {};
       }
 
-      Subroutine.prototype.initialize = function() {
+      Graph.prototype.initialize = function() {
         /* Populate fields for a brand new instance.
         */
         this.id = UUID();
@@ -209,7 +222,7 @@
         return this;
       };
 
-      Subroutine.prototype.fromJSON = function(data) {
+      Graph.prototype.fromJSON = function(data) {
         /* Populate from the persistence format
         */
 
@@ -245,7 +258,7 @@
         return this;
       };
 
-      Subroutine.prototype.toJSON = function() {
+      Graph.prototype.toJSON = function() {
         return {
           id: this.id,
           text: this.text,
@@ -260,7 +273,7 @@
       */
 
 
-      Subroutine.prototype.invoke = function(output_nib, inputs) {
+      Graph.prototype.invoke = function(output_nib, inputs) {
         /* Evaluates an output in a fresh scope
         */
 
@@ -273,7 +286,7 @@
         return this.evaluate_connection(scope, this, output_nib);
       };
 
-      Subroutine.prototype.evaluate_connection = function(scope, to_node, to_nib) {
+      Graph.prototype.evaluate_connection = function(scope, to_node, to_nib) {
         /* This helper will follow a connection and evaluate whatever it finds
         */
 
@@ -283,14 +296,14 @@
           throw new NotConnected;
         }
         _ref = connection.from, node = _ref.node, nib = _ref.nib;
-        if (node instanceof Subroutine) {
+        if (node instanceof Graph) {
           return scope.inputs[nib.index]();
         } else {
           return node.evaluate(scope, nib);
         }
       };
 
-      Subroutine.prototype.run = function(nib) {
+      Graph.prototype.run = function(nib) {
         /* Set up user input collection for unknown inputs and evaluate this output.
         */
 
@@ -337,7 +350,7 @@
         }
       };
 
-      Subroutine.prototype.find_connection = function(direction, node, nib) {
+      Graph.prototype.find_connection = function(direction, node, nib) {
         /* Use this to determine how nodes are connected
         */
 
@@ -352,7 +365,7 @@
         return void 0;
       };
 
-      Subroutine.prototype.delete_connections = function(direction, node, nib) {
+      Graph.prototype.delete_connections = function(direction, node, nib) {
         var connection, id, _ref, _results;
         _ref = this.connections;
         _results = [];
@@ -367,46 +380,46 @@
         return _results;
       };
 
-      Subroutine.prototype.get_inputs = function() {
+      Graph.prototype.get_inputs = function() {
         return this.inputs;
       };
 
-      Subroutine.prototype.get_outputs = function() {
+      Graph.prototype.get_outputs = function() {
         return this.outputs;
       };
 
-      Subroutine.prototype["export"] = function() {
+      Graph.prototype["export"] = function() {
         var dependencies;
         dependencies = this.get_dependencies();
         dependencies.schema_version = schema_version;
         return dependencies;
       };
 
-      Subroutine.prototype.add_input = function() {
+      Graph.prototype.add_input = function() {
         return this.inputs.push((new Input).initialize());
       };
 
-      Subroutine.prototype.add_output = function() {
+      Graph.prototype.add_output = function() {
         return this.outputs.push((new Output).initialize());
       };
 
-      Subroutine.prototype.remove_node = function(node) {
+      Graph.prototype.remove_node = function(node) {
         return delete this.nodes[node.id];
       };
 
-      Subroutine.prototype.add_node = function(node) {
+      Graph.prototype.add_node = function(node) {
         return this.nodes[node.id] = node;
       };
 
-      Subroutine.prototype.remove_connection = function(connection) {
+      Graph.prototype.remove_connection = function(connection) {
         return delete this.connections[connection.id];
       };
 
-      Subroutine.prototype.add_connection = function(connection) {
+      Graph.prototype.add_connection = function(connection) {
         return this.connections[connection.id] = connection;
       };
 
-      Subroutine.prototype.get_dependencies = function(dependencies) {
+      Graph.prototype.get_dependencies = function(dependencies) {
         var child_dependencies, id, node, _ref;
         if (dependencies == null) {
           dependencies = {
@@ -431,7 +444,7 @@
         return dependencies;
       };
 
-      Subroutine.prototype.subroutines_referenced = function() {
+      Graph.prototype.subroutines_referenced = function() {
         var output, parent, results, resuts, _i, _len, _ref, _ref1;
         results = [];
         _ref = this.outputs;
@@ -448,7 +461,7 @@
         return results;
       };
 
-      Subroutine.prototype.build_adjacency_list = function() {
+      Graph.prototype.build_adjacency_list = function() {
         /* TODO: UPDATE FOR NEW SCHEMA
         */
 
@@ -489,7 +502,7 @@
         return adjacency_list;
       };
 
-      Subroutine.prototype.make_from = function(nodes) {
+      Graph.prototype.make_from = function(nodes) {
         /* Build a subroutine out of nodes in another subroutine.
         */
 
@@ -550,9 +563,9 @@
         return _results;
       };
 
-      return Subroutine;
+      return Graph;
 
-    })();
+    })(Subroutine);
     Node = (function() {
 
       function Node() {
@@ -765,7 +778,7 @@
         this.scope = scope;
         this.position = position;
         this.id = id != null ? id : UUID();
-        if (value instanceof Subroutine) {
+        if (value instanceof Graph) {
           this.implementation = value;
           this.text = value.name;
         } else {
@@ -782,7 +795,7 @@
       Literal.prototype.toJSON = function() {
         var json;
         json = Literal.__super__.toJSON.call(this);
-        if (this.implementation instanceof Subroutine) {
+        if (this.implementation instanceof Graph) {
           json.implementation_id = this.implementation.id;
         }
         return json;
@@ -878,7 +891,7 @@
     is_input = function(it) {
       var is_input_class;
       is_input_class = it.nib instanceof Input;
-      if (it.node instanceof Subroutine) {
+      if (it.node instanceof Graph) {
         return is_input_class;
       } else {
         return !is_input_class;
@@ -942,7 +955,7 @@
       codes = {};
       for (id in all_subroutines) {
         subroutine = all_subroutines[id];
-        if (subroutine instanceof Subroutine) {
+        if (subroutine instanceof Graph) {
           graphs[subroutine.id] = subroutine;
         } else {
           codes[subroutine.id] = subroutine;
@@ -962,13 +975,13 @@
       _ref = data.builtins;
       for (id in _ref) {
         builtin_data = _ref[id];
-        builtin = (new Builtin).fromJSON(builtin_data);
+        builtin = (new JavaScript).fromJSON(builtin_data);
         subroutines[builtin.id] = builtin;
       }
       _ref1 = data.subroutines;
       for (id in _ref1) {
         subroutine_data = _ref1[id];
-        subroutine = (new Subroutine).fromJSON(subroutine_data);
+        subroutine = (new Graph).fromJSON(subroutine_data);
         subroutines[subroutine.id] = subroutine;
         second_pass.push(subroutine);
       }
@@ -1023,8 +1036,8 @@
         };
         from = get_connector(connection.input);
         to = get_connector(connection.output);
-        input = from instanceof Subroutine ? from.outputs[connection.input.index] : from.implementation.inputs[connection.input.index];
-        output = to instanceof Subroutine ? to.inputs[connection.output.index] : to.implementation.outputs[connection.output.index];
+        input = from instanceof Graph ? from.outputs[connection.input.index] : from.implementation.inputs[connection.input.index];
+        output = to instanceof Graph ? to.inputs[connection.output.index] : to.implementation.outputs[connection.output.index];
         if (!input) {
           console.log(subroutine.text);
           console.log(subroutine.text);
@@ -1087,8 +1100,8 @@
       NotConnected: NotConnected,
       NotImplemented: NotImplemented,
       BuiltinSyntaxError: BuiltinSyntaxError,
-      Builtin: Builtin,
-      Subroutine: Subroutine,
+      Builtin: JavaScript,
+      Subroutine: Graph,
       UnknownNode: UnknownNode,
       SubroutineApplication: SubroutineApplication,
       BuiltinApplication: BuiltinApplication,
