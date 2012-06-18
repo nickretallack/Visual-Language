@@ -57,7 +57,7 @@
 </tr>
 
 <tr ng-repeat="subroutine in get_subroutines() | filter:{text:search} | orderBy:'name'">
-    <td><a class="name" href="#/{{subroutine.id}}">{{name_subroutine(subroutine)}}</a>
+    <td><a class="name" href="#/{{subroutine.id}}">{{subroutine | text_or_id}}</a>
     <td><a ng-click="use(subroutine)">use</a>
     <td><a ng-click="use_value(subroutine)">value</a>
 </tr>

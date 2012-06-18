@@ -44,6 +44,9 @@ module.directive 'anySubroutine', ->
         $scope.delete_output = (nib) ->
             subroutine.delete_output nib
 
+module.filter 'text_or_id', ->
+    (obj, length) ->
+        obj.text or obj.id[0..5]
 
 module.directive 'subroutine', ($location) ->
     link:(scope, element, attributes) ->
@@ -79,9 +82,6 @@ module.directive 'subroutine', ($location) ->
         $scope.edit_node = (node, $event) ->
             $event.preventDefault()
             $location.path "/#{node.implementation.id}" unless node.implementation instanceof interpreter.LiteralValue
-
-        $scope.name_node = (node) ->
-            node.text or node.implementation.id[0..5]
 
         $scope.selected = (node) ->
             node in $scope.selection

@@ -64,6 +64,7 @@
         });
         $(document.body).append(doppelganger);
         return scope.$watch(attributes.shrinkyInput, function(text) {
+          console.log(text);
           doppelganger.text(text + "M");
           return async(function() {
             return scope.$apply(function() {

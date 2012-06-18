@@ -73,6 +73,12 @@
     };
   });
 
+  module.filter('text_or_id', function() {
+    return function(obj, length) {
+      return obj.text || obj.id.slice(0, 6);
+    };
+  });
+
   module.directive('subroutine', function($location) {
     return {
       link: function(scope, element, attributes) {},
@@ -117,9 +123,6 @@
           if (!(node.implementation instanceof interpreter.LiteralValue)) {
             return $location.path("/" + node.implementation.id);
           }
-        };
-        $scope.name_node = function(node) {
-          return node.text || node.implementation.id.slice(0, 6);
         };
         $scope.selected = function(node) {
           return __indexOf.call($scope.selection, node) >= 0;

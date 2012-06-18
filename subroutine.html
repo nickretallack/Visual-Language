@@ -1,10 +1,10 @@
+{{name_node(current_object)}}
 <div ng-switch="current_object.type" any-subroutine="current_object">
 
 <div ng:switch-when="subroutine" id="subroutine" subroutine="current_object">
 <canvas id="connections" connections="current_object"></canvas>
 <div id="selection" ng-style="selection_style()"></div>
-<input ng-model="current_object.name" shrinky-input="current_object.text" class="title" placeholder="{{current_object.id}}">
-
+<input ng-model="current_object.name" shrinky-input="current_object | text_or_id" class="title" placeholder="{{current_object.id}}">
 <div class="subroutine-input" ng-repeat="input in current_object.inputs" ng-style="{'top':(($index+1) * editor_size.y / (current_object.inputs.length+1)) + 'px'}">
     <div nib="[current_object,input]"></div>
     <input ng-model="input.text" shrinky-input="input.text">
@@ -27,7 +27,7 @@
     	{{output.text}}
     </li></ul>
 
-    <div class="node-title">{{name_node(node.implementation)}}</div>
+    <div class="node-title">{{node.implementation | text_or_id}}</div>
 
     <ul class="unstyled"><li ng-repeat="input in node.implementation.inputs" class="input">
     	{{input.text}}

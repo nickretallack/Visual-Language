@@ -45,6 +45,7 @@ module.directive 'shrinkyInput', ->
             top:'-9999px'
         $(document.body).append doppelganger
         scope.$watch attributes.shrinkyInput, (text) ->
+            console.log text
             doppelganger.text text + "M"
             async -> scope.$apply ->
                 $(element).css width:doppelganger.width()+2
