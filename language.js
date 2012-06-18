@@ -80,30 +80,8 @@
 
       function Subroutine() {}
 
-      return Subroutine;
-
-    })();
-    JavaScript = (function(_super) {
-
-      __extends(JavaScript, _super);
-
-      function JavaScript() {
-        return JavaScript.__super__.constructor.apply(this, arguments);
-      }
-
-      JavaScript.prototype.type = 'builtin';
-
-      JavaScript.prototype.initialize = function() {
-        this.id = UUID();
-        all_subroutines[this.id] = this;
-        this.inputs = [];
-        this.outputs = [];
-        return this;
-      };
-
-      JavaScript.prototype.fromJSON = function(data) {
+      Subroutine.prototype.fromJSON = function(data) {
         var index, nib_data;
-        this.text = data.name, this.id = data.id, this.memo_implementation = data.memo_implementation, this.output_implementation = data.output_implementation;
         all_subroutines[this.id] = this;
         this.inputs = (function() {
           var _i, _len, _ref, _results;
@@ -132,6 +110,34 @@
           return _results;
         }).call(this);
         return this;
+      };
+
+      Subroutine.prototype.initialize = function() {
+        /* Populate fields for a brand new instance.
+        */
+        this.id = UUID();
+        all_subroutines[this.id] = this;
+        this.inputs = [];
+        this.outputs = [];
+        return this;
+      };
+
+      return Subroutine;
+
+    })();
+    JavaScript = (function(_super) {
+
+      __extends(JavaScript, _super);
+
+      function JavaScript() {
+        return JavaScript.__super__.constructor.apply(this, arguments);
+      }
+
+      JavaScript.prototype.type = 'builtin';
+
+      JavaScript.prototype.fromJSON = function(data) {
+        this.text = data.name, this.id = data.id, this.memo_implementation = data.memo_implementation, this.output_implementation = data.output_implementation;
+        return JavaScript.__super__.fromJSON.call(this, data);
       };
 
       JavaScript.prototype.toJSON = function() {
@@ -195,6 +201,28 @@
         });
       };
 
+      JavaScript.prototype.invoke = function(output_nib, inputs, scope, node) {
+        var args, memo_function, output_function;
+        try {
+          memo_function = eval_expression(this.memo_implementation);
+          output_function = eval_expression(this.output_implementation);
+        } catch (exception) {
+          if (exception instanceof SyntaxError) {
+            throw new BuiltinSyntaxError(this.text, exception);
+          } else {
+            throw exception;
+          }
+        }
+        if (!output_function) {
+          throw new NotImplemented(this.text);
+        }
+        args = inputs.concat([output_nib.index]);
+        if (memo_function && !(node.id in scope.memos)) {
+          scope.memos[node.id] = memo_function.apply(null, args);
+        }
+        return output_function.apply(null, args.concat([scope.memos[node.id]]));
+      };
+
       return JavaScript;
 
     })(Subroutine);
@@ -212,50 +240,11 @@
         this.connections = {};
       }
 
-      Graph.prototype.initialize = function() {
-        /* Populate fields for a brand new instance.
-        */
-        this.id = UUID();
-        all_subroutines[this.id] = this;
-        this.inputs = [];
-        this.outputs = [];
-        return this;
-      };
-
       Graph.prototype.fromJSON = function(data) {
         /* Populate from the persistence format
         */
-
-        var index, nib_data;
         this.text = data.name, this.id = data.id;
-        all_subroutines[this.id] = this;
-        this.inputs = (function() {
-          var _i, _len, _ref, _results;
-          _ref = data.inputs;
-          _results = [];
-          for (index = _i = 0, _len = _ref.length; _i < _len; index = ++_i) {
-            nib_data = _ref[index];
-            _results.push((new Input).fromJSON({
-              text: nib_data,
-              index: index
-            }, this));
-          }
-          return _results;
-        }).call(this);
-        this.outputs = (function() {
-          var _i, _len, _ref, _results;
-          _ref = data.outputs;
-          _results = [];
-          for (index = _i = 0, _len = _ref.length; _i < _len; index = ++_i) {
-            nib_data = _ref[index];
-            _results.push((new Output).fromJSON({
-              text: nib_data,
-              index: index
-            }, this));
-          }
-          return _results;
-        }).call(this);
-        return this;
+        return Graph.__super__.fromJSON.call(this, data);
       };
 
       Graph.prototype.toJSON = function() {
@@ -683,7 +672,7 @@
       SubroutineApplication.prototype.evaluate = function(the_scope, output_nib) {
         var input_values;
         input_values = this.virtual_inputs(the_scope);
-        return this.implementation.invoke(output_nib, input_values);
+        return this.implementation.invoke(output_nib, input_values, the_scope, this);
       };
 
       SubroutineApplication.prototype.subroutines_referenced = function() {
@@ -721,26 +710,9 @@
       }
 
       BuiltinApplication.prototype.evaluate = function(the_scope, output_nib) {
-        var args, input_values, memo_function, output_function;
+        var input_values;
         input_values = this.virtual_inputs(the_scope);
-        try {
-          memo_function = eval_expression(this.implementation.memo_implementation);
-          output_function = eval_expression(this.implementation.output_implementation);
-        } catch (exception) {
-          if (exception instanceof SyntaxError) {
-            throw new BuiltinSyntaxError(this.text, exception);
-          } else {
-            throw exception;
-          }
-        }
-        if (!output_function) {
-          throw new NotImplemented(this.text);
-        }
-        args = input_values.concat([output_nib.index]);
-        if (memo_function && !(this.id in the_scope.memos)) {
-          the_scope.memos[this.id] = memo_function.apply(null, args);
-        }
-        return output_function.apply(null, args.concat([the_scope.memos[this.id]]));
+        return this.implementation.invoke(output_nib, input_values, the_scope, this);
       };
 
       return BuiltinApplication;

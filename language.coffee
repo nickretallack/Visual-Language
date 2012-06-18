@@ -21,22 +21,26 @@ module.factory 'interpreter', ($q, $http) ->
         constructor: (@name, @exception) -> @message = "#{exception} in builtin \"#{@name}\": "
 
     class Subroutine
+        fromJSON: (data) ->
+            all_subroutines[@id] = @
+            @inputs = ((new Input).fromJSON {text:nib_data, index:index}, @ for nib_data, index in data.inputs)
+            @outputs = ((new Output).fromJSON {text:nib_data, index:index}, @ for nib_data, index in data.outputs)
+            @
 
-    class JavaScript extends Subroutine
-        type:'builtin'
         initialize: ->
+            ### Populate fields for a brand new instance. ###
             @id = UUID()
             all_subroutines[@id] = @
             @inputs = []
             @outputs = []
             @
 
+
+    class JavaScript extends Subroutine
+        type:'builtin'
         fromJSON: (data) ->
             {name:@text, @id, @memo_implementation, @output_implementation} = data
-            all_subroutines[@id] = @
-            @inputs = ((new Input).fromJSON {text:nib_data, index:index}, @ for nib_data, index in data.inputs)
-            @outputs = ((new Output).fromJSON {text:nib_data, index:index}, @ for nib_data, index in data.outputs)
-            @
+            super data
 
         toJSON: ->
             id:@id
@@ -77,6 +81,23 @@ module.factory 'interpreter', ($q, $http) ->
                 memo = memo_function args... if memo_function
                 return output_function (args.concat [memo])...
 
+        invoke: (output_nib, inputs, scope, node) ->
+            try
+                memo_function = eval_expression @memo_implementation
+                output_function = eval_expression @output_implementation
+            catch exception
+                if exception instanceof SyntaxError
+                    throw new BuiltinSyntaxError @text, exception
+                else throw exception
+
+            throw new NotImplemented @text unless output_function
+
+            args = inputs.concat [output_nib.index]
+            if memo_function and node.id not of scope.memos
+                scope.memos[node.id] = memo_function args...
+            return output_function (args.concat [scope.memos[node.id]])...
+
+
     class Graph extends Subroutine
         type:'subroutine'
         constructor: ->
@@ -85,21 +106,10 @@ module.factory 'interpreter', ($q, $http) ->
             @nodes = {}
             @connections = {}
 
-        initialize: ->
-            ### Populate fields for a brand new instance. ###
-            @id = UUID()
-            all_subroutines[@id] = @
-            @inputs = []
-            @outputs = []
-            @
-
         fromJSON: (data) ->
             ### Populate from the persistence format ###
             {name:@text, @id} = data
-            all_subroutines[@id] = @
-            @inputs = ((new Input).fromJSON {text:nib_data, index:index}, @ for nib_data, index in data.inputs)
-            @outputs = ((new Output).fromJSON {text:nib_data, index:index}, @ for nib_data, index in data.outputs)
-            @
+            super data
 
         toJSON: ->
             # Defines the persistence format
@@ -360,7 +370,7 @@ module.factory 'interpreter', ($q, $http) ->
 
         evaluate: (the_scope, output_nib) ->
             input_values = @virtual_inputs the_scope
-            return @implementation.invoke output_nib, input_values
+            return @implementation.invoke output_nib, input_values, the_scope, @
 
         subroutines_referenced: ->
             results = []
@@ -378,20 +388,7 @@ module.factory 'interpreter', ($q, $http) ->
 
         evaluate: (the_scope, output_nib) ->
             input_values = @virtual_inputs the_scope
-            try
-                memo_function = eval_expression @implementation.memo_implementation
-                output_function = eval_expression @implementation.output_implementation
-            catch exception
-                if exception instanceof SyntaxError
-                    throw new BuiltinSyntaxError @text, exception
-                else throw exception
-
-            throw new NotImplemented @text unless output_function
-
-            args = input_values.concat [output_nib.index]
-            if memo_function and @id not of the_scope.memos
-                the_scope.memos[@id] = memo_function args...
-            return output_function (args.concat [the_scope.memos[@id]])...
+            return @implementation.invoke output_nib, input_values, the_scope, @
 
     class LiteralValue
         constructor:(@text, @id=UUID()) ->
