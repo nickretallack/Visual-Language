@@ -19,11 +19,11 @@
       replace: true,
       require: '^subroutine',
       scope: {
-        nib: 'accessor'
+        nib: '='
       },
       link: function(scope, element, attributes, controller) {
         var nib, node, _ref;
-        _ref = scope.nib(), node = _ref[0], nib = _ref[1];
+        _ref = scope.nib, node = _ref[0], nib = _ref[1];
         controller.nib_views["" + node.id + "-" + nib.id] = $(element);
         element.bind('mousedown', function(event) {
           return scope.$apply(function() {

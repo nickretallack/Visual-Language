@@ -8,7 +8,7 @@ module.run ($rootScope) ->
 
 module.directive 'ace', ->
     scope:
-        ace:'accessor'
+        ace:'='
     link:(scope, element, attributes) ->
         expression = attributes.ace
         JavaScriptMode = require("ace/mode/javascript").Mode
@@ -19,7 +19,7 @@ module.directive 'ace', ->
 
         changing = false
         set_value = null
-        scope.$watch 'ace()', (value) ->
+        scope.$watch 'ace', (value) ->
             if value isnt set_value
                 changing = true
                 session.setValue value
@@ -29,7 +29,7 @@ module.directive 'ace', ->
             unless changing
                 scope.$apply ->
                     set_value = session.getValue()
-                    scope.ace set_value
+                    scope.ace = set_value
 
 module.directive 'shrinkyInput', ->
     link:(scope, element, attributes, controller) ->
@@ -52,8 +52,8 @@ module.directive 'shrinkyInput', ->
                 scope.$emit 'redraw-graph'
 
 module.config ($routeProvider) ->
-    $routeProvider.when '/:id', controller:'subroutine', template:"subroutine.html"
-    $routeProvider.when '', template:"intro.html"
+    $routeProvider.when '/:id', controller:'subroutine', templateUrl:"subroutine.html"
+    $routeProvider.when '', templateUrl:"intro.html"
 
 module.controller 'subroutine', ($scope, $routeParams, interpreter, $q) ->
     $q.when interpreter.loaded, ->

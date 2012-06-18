@@ -17,7 +17,7 @@
   module.directive('ace', function() {
     return {
       scope: {
-        ace: 'accessor'
+        ace: '='
       },
       link: function(scope, element, attributes) {
         var JavaScriptMode, changing, editor, expression, session, set_value;
@@ -28,7 +28,7 @@
         session.setMode(new JavaScriptMode());
         changing = false;
         set_value = null;
-        scope.$watch('ace()', function(value) {
+        scope.$watch('ace', function(value) {
           if (value !== set_value) {
             changing = true;
             session.setValue(value);
@@ -39,7 +39,7 @@
           if (!changing) {
             return scope.$apply(function() {
               set_value = session.getValue();
-              return scope.ace(set_value);
+              return scope.ace = set_value;
             });
           }
         });
@@ -82,10 +82,10 @@
   module.config(function($routeProvider) {
     $routeProvider.when('/:id', {
       controller: 'subroutine',
-      template: "subroutine.html"
+      templateUrl: "subroutine.html"
     });
     return $routeProvider.when('', {
-      template: "intro.html"
+      templateUrl: "intro.html"
     });
   });
 

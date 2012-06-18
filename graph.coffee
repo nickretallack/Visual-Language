@@ -9,9 +9,9 @@ module.directive 'nib', ->
     replace:true
     require:'^subroutine'
     scope:
-        nib:'accessor'
+        nib:'='
     link:(scope, element, attributes, controller) ->
-        [node, nib] = scope.nib()
+        [node, nib] = scope.nib
         #element.attr 'id',
         controller.nib_views["#{node.id}-#{nib.id}"] = $ element
         #nib.view = $ element
