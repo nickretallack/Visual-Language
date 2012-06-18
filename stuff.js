@@ -14,6 +14,12 @@
     return $rootScope.search = '';
   });
 
+  module.filter('text_or_id', function() {
+    return function(obj, length) {
+      return obj.text || obj.id;
+    };
+  });
+
   module.directive('ace', function() {
     return {
       scope: {

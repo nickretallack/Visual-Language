@@ -6,6 +6,10 @@ window.delay = (time, procedure) -> setTimeout procedure, time
 module.run ($rootScope) ->
     $rootScope.search = ''
 
+module.filter 'text_or_id', ->
+    (obj, length) ->
+        obj.text or obj.id
+
 module.directive 'ace', ->
     scope:
         ace:'='

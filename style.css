@@ -1,6 +1,13 @@
 #main, #tools {position:absolute; top:40px; bottom:0; overflow:auto;}
 #tools {right:0; width:300px;}
-#tools  table {width:100%;}
+#tools  table {
+    width:100%;
+    margin-bottom:0;
+}
+#tools .name {
+    max-width:200px;
+    overflow:hidden;
+}
 #main {left:0; right:300px;}
 
 h2 {margin-top:10px; font-weight:bold; font-family:helvetica}

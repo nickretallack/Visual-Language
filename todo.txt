@@ -10,10 +10,13 @@ Connections should connect to nib objects, and they should be remembered by ID. 
     - execution - done
     - inputs for builtins - done
     - rename things - done
-    - placeholder names
-    - proper events for inputs
     - saving
     - loading new and legacy stuff
+
+- other important stuff
+    - placeholder names - done
+    - proper events for inputs - done
+
 
 
 

@@ -43,10 +43,6 @@ module.directive 'anySubroutine', ->
         $scope.delete_output = (nib) ->
             subroutine.delete_output nib
 
-module.filter 'text_or_id', ->
-    (obj, length) ->
-        obj.text or obj.id[0..5]
-
 module.directive 'subroutine', ($location) ->
     link:(scope, element, attributes) ->
     controller:($scope, $element, $attrs, interpreter) ->

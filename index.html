@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" ng:app="vislang">
+<html lang="en" ng-app="vislang">
 <head>
 <title>Visual Language</title>
 <link rel="stylesheet" href="bootstrap/css/bootstrap.css">
@@ -57,7 +57,7 @@
 </tr>
 
 <tr ng-repeat="subroutine in get_subroutines() | filter:{text:search} | orderBy:'name'">
-    <td><a class="name" href="#/{{subroutine.id}}">{{subroutine | text_or_id}}</a>
+    <td class="name"><a href="#/{{subroutine.id}}">{{subroutine | text_or_id}}</a>
     <td><a ng-click="use(subroutine)">use</a>
     <td><a ng-click="use_value(subroutine)">value</a>
 </tr>

@@ -74,12 +74,6 @@
     };
   });
 
-  module.filter('text_or_id', function() {
-    return function(obj, length) {
-      return obj.text || obj.id.slice(0, 6);
-    };
-  });
-
   module.directive('subroutine', function($location) {
     return {
       link: function(scope, element, attributes) {},

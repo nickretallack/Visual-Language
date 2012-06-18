@@ -4,7 +4,7 @@
 <div ng:switch-when="subroutine" id="subroutine" subroutine="current_object">
 <canvas id="connections" connections="current_object"></canvas>
 <div id="selection" ng-style="selection_style()"></div>
-<input ng-model="current_object.name" shrinky-input="current_object | text_or_id" class="title" placeholder="{{current_object.id}}">
+<input ng-model="current_object.text" shrinky-input="current_object | text_or_id" class="title" placeholder="{{current_object.id}}">
 <div class="subroutine-input" ng-repeat="input in current_object.inputs" ng-style="{'top':(($index+1) * editor_size.y / (current_object.inputs.length+1)) + 'px'}">
     <div nib="input" node="current_object"></div>
     <input ng-model="input.text" shrinky-input="input.text">
@@ -42,7 +42,7 @@
 </div>
 
 <div ng:switch-when="builtin" id="builtin_editor">
-    <input ng-model="current_object.text" class="title" shrinky-input="current_object.name" placeholder="{{current_object.id}}">
+    <input ng-model="current_object.text" class="title" shrinky-input="current_object | text_or_id" placeholder="{{current_object.id}}">
     <div class="container-fluid">
         <div class="row-fluid">
             <div class="span6">
