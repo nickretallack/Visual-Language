@@ -170,10 +170,10 @@ module.factory 'interpreter', ($q, $http) ->
             dependencies
 
         add_input: ->
-            @inputs.push new Input
+            @inputs.push (new Input).initialize()
 
         add_output: ->
-            @outputs.push new Output
+            @outputs.push (new Output).initialize()
 
         remove_node: (node) ->
             delete @nodes[node.id]

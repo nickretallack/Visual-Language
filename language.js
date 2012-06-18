@@ -377,11 +377,11 @@
       };
 
       Subroutine.prototype.add_input = function() {
-        return this.inputs.push(new Input);
+        return this.inputs.push((new Input).initialize());
       };
 
       Subroutine.prototype.add_output = function() {
-        return this.outputs.push(new Output);
+        return this.outputs.push((new Output).initialize());
       };
 
       Subroutine.prototype.remove_node = function(node) {
