@@ -8,10 +8,12 @@ Connections should connect to nib objects, and they should be remembered by ID. 
 - connection refactor
     - editing - done
     - execution - done
+    - inputs for builtins - done
+    - rename things - done
+    - placeholder names
+    - proper events for inputs
     - saving
-    - inputs for builtins
-    - rename things
-
+    - loading new and legacy stuff
 
 
 

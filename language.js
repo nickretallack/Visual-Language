@@ -7,8 +7,11 @@
   module = angular.module('vislang');
 
   module.factory('interpreter', function($q, $http) {
-    var BuiltinApplication, BuiltinSyntaxError, Connection, Exit, FunctionApplication, Graph, Input, InputError, JavaScript, Literal, LiteralValue, Nib, Node, NotConnected, NotImplemented, Output, RuntimeException, Subroutine, SubroutineApplication, UnknownNode, all_subroutines, dissociate_exception, eval_expression, execute, ignore_if_disconnected, is_input, load_implementation, load_state, loaded, make_connection, save_state, schema_version, source_data, source_data_deferred, start_saving;
+    var BuiltinSyntaxError, Call, Connection, Exit, Graph, Input, InputError, JavaScript, LiteralValue, Nib, Node, NotConnected, NotImplemented, Output, RuntimeException, Subroutine, UnknownNode, Value, all_subroutines, dissociate_exception, eval_expression, execute, ignore_if_disconnected, is_input, load_implementation, load_state, loaded, make_connection, save_state, schema_version, source_data, source_data_deferred, start_saving;
     schema_version = 1;
+    /* EXCEPTION TYPES
+    */
+
     RuntimeException = (function() {
 
       function RuntimeException(message) {
@@ -76,6 +79,9 @@
       return BuiltinSyntaxError;
 
     })(RuntimeException);
+    /* DEFINITION TYPES
+    */
+
     Subroutine = (function() {
 
       function Subroutine() {}
@@ -503,15 +509,36 @@
       return Graph;
 
     })(Subroutine);
+    LiteralValue = (function() {
+
+      LiteralValue.prototype.type = 'literal';
+
+      function LiteralValue(text, id) {
+        this.text = text;
+        this.id = id != null ? id : UUID();
+        this.inputs = [];
+        this.outputs = [(new Output).initialize(this.id)];
+      }
+
+      LiteralValue.prototype.evaluate = function() {
+        return eval_expression(this.text);
+      };
+
+      LiteralValue.prototype.content_id = function() {
+        return CryptoJS.SHA256(this.text).toString(CryptoJS.enc.Base64);
+      };
+
+      return LiteralValue;
+
+    })();
+    /* NODE TYPES
+    */
+
     Node = (function() {
 
       function Node() {
         this.scope.nodes[this.id] = this;
       }
-
-      Node.prototype.set_position = function(position) {
-        this.position = position;
-      };
 
       Node.prototype.get_inputs = function() {
         return this.implementation.inputs;
@@ -519,10 +546,6 @@
 
       Node.prototype.get_outputs = function() {
         return this.implementation.outputs;
-      };
-
-      Node.prototype.get_nibs = function() {
-        return this.inputs.concat(this.outputs);
       };
 
       Node.prototype["delete"] = function() {
@@ -549,24 +572,28 @@
       return Node;
 
     })();
-    FunctionApplication = (function(_super) {
+    Call = (function(_super) {
 
-      __extends(FunctionApplication, _super);
+      __extends(Call, _super);
 
-      function FunctionApplication() {
-        FunctionApplication.__super__.constructor.call(this);
+      Call.prototype.type = 'call';
+
+      function Call(scope, position, implementation, id) {
+        this.scope = scope;
+        this.position = position;
+        this.implementation = implementation;
+        this.id = id != null ? id : UUID();
+        Call.__super__.constructor.call(this);
       }
 
-      FunctionApplication.prototype.evaluate = function(the_scope, output_nib) {};
-
-      FunctionApplication.prototype.toJSON = function() {
+      Call.prototype.toJSON = function() {
         var json;
-        json = FunctionApplication.__super__.toJSON.call(this);
+        json = Call.__super__.toJSON.call(this);
         json.implementation_id = this.implementation.id;
         return json;
       };
 
-      FunctionApplication.prototype.virtual_inputs = function(the_scope) {
+      Call.prototype.virtual_inputs = function(the_scope) {
         var input, input_values, _fn, _i, _len, _ref,
           _this = this;
         input_values = [];
@@ -583,7 +610,67 @@
         return input_values;
       };
 
-      return FunctionApplication;
+      Call.prototype.evaluate = function(the_scope, output_nib) {
+        var input_values;
+        input_values = this.virtual_inputs(the_scope);
+        return this.implementation.invoke(output_nib, input_values, the_scope, this);
+      };
+
+      /*
+              subroutines_referenced: ->
+                  # TODO: UPDATE
+                  return [] unless @implementation instanceof Graph
+                  results = []
+                  for input in @inputs
+                      parent = input.get_connection()?.connection.output.parent
+                      if parent
+                          results.push parent.id if parent.type is 'function'
+                          resuts = results.concat parent.subroutines_referenced()
+                  return results
+      */
+
+
+      return Call;
+
+    })(Node);
+    Value = (function(_super) {
+
+      __extends(Value, _super);
+
+      Value.prototype.type = 'value';
+
+      function Value(scope, position, value, id) {
+        this.scope = scope;
+        this.position = position;
+        this.id = id != null ? id : UUID();
+        if (value instanceof Graph) {
+          this.implementation = value;
+          this.text = value.name;
+        } else {
+          this.implementation = new LiteralValue(value, this.id);
+          this.text = value;
+        }
+        Value.__super__.constructor.call(this);
+      }
+
+      Value.prototype.evaluate = function() {
+        return this.implementation.evaluate();
+      };
+
+      Value.prototype.toJSON = function() {
+        var json;
+        json = Value.__super__.toJSON.call(this);
+        if (this.implementation instanceof Graph) {
+          json.implementation_id = this.implementation.id;
+        }
+        return json;
+      };
+
+      Value.prototype.subroutines_referenced = function() {
+        return [];
+      };
+
+      return Value;
 
     })(Node);
     UnknownNode = (function(_super) {
@@ -603,131 +690,9 @@
       return UnknownNode;
 
     })(Node);
-    SubroutineApplication = (function(_super) {
+    /* OTHER TYPES
+    */
 
-      __extends(SubroutineApplication, _super);
-
-      SubroutineApplication.prototype.type = 'function';
-
-      function SubroutineApplication(scope, position, implementation, id) {
-        this.scope = scope;
-        this.position = position;
-        this.implementation = implementation;
-        this.id = id != null ? id : UUID();
-        SubroutineApplication.__super__.constructor.call(this);
-      }
-
-      SubroutineApplication.prototype.evaluate = function(the_scope, output_nib) {
-        var input_values;
-        input_values = this.virtual_inputs(the_scope);
-        return this.implementation.invoke(output_nib, input_values, the_scope, this);
-      };
-
-      SubroutineApplication.prototype.subroutines_referenced = function() {
-        var input, parent, results, resuts, _i, _len, _ref, _ref1;
-        results = [];
-        _ref = this.inputs;
-        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-          input = _ref[_i];
-          parent = (_ref1 = input.get_connection()) != null ? _ref1.connection.output.parent : void 0;
-          if (parent) {
-            if (parent.type === 'function') {
-              results.push(parent.id);
-            }
-            resuts = results.concat(parent.subroutines_referenced());
-          }
-        }
-        return results;
-      };
-
-      return SubroutineApplication;
-
-    })(FunctionApplication);
-    BuiltinApplication = (function(_super) {
-
-      __extends(BuiltinApplication, _super);
-
-      BuiltinApplication.type = 'builtin';
-
-      function BuiltinApplication(scope, position, implementation, id) {
-        this.scope = scope;
-        this.position = position;
-        this.implementation = implementation;
-        this.id = id != null ? id : UUID();
-        BuiltinApplication.__super__.constructor.call(this);
-      }
-
-      BuiltinApplication.prototype.evaluate = function(the_scope, output_nib) {
-        var input_values;
-        input_values = this.virtual_inputs(the_scope);
-        return this.implementation.invoke(output_nib, input_values, the_scope, this);
-      };
-
-      return BuiltinApplication;
-
-    })(FunctionApplication);
-    LiteralValue = (function() {
-
-      function LiteralValue(text, id) {
-        this.text = text;
-        this.id = id != null ? id : UUID();
-        this.inputs = [];
-        this.outputs = [(new Output).initialize(this.id)];
-      }
-
-      LiteralValue.prototype.evaluate = function() {
-        return eval_expression(this.text);
-      };
-
-      LiteralValue.prototype.type = 'literal';
-
-      LiteralValue.prototype.content_id = function() {
-        return CryptoJS.SHA256(this.text).toString(CryptoJS.enc.Base64);
-      };
-
-      return LiteralValue;
-
-    })();
-    Literal = (function(_super) {
-
-      __extends(Literal, _super);
-
-      Literal.prototype.type = 'literal';
-
-      function Literal(scope, position, value, id) {
-        this.scope = scope;
-        this.position = position;
-        this.id = id != null ? id : UUID();
-        if (value instanceof Graph) {
-          this.implementation = value;
-          this.text = value.name;
-        } else {
-          this.implementation = new LiteralValue(value, this.id);
-          this.text = value;
-        }
-        Literal.__super__.constructor.call(this);
-      }
-
-      Literal.prototype.evaluate = function() {
-        return this.implementation.evaluate();
-      };
-
-      Literal.prototype.toJSON = function() {
-        var json;
-        json = Literal.__super__.toJSON.call(this);
-        if (this.implementation instanceof Graph) {
-          json.implementation_id = this.implementation.id;
-        }
-        return json;
-      };
-
-      Literal.prototype.subroutines_referenced = function() {
-        return [];
-      };
-
-      return Literal;
-
-    })(Node);
     Nib = (function() {
 
       function Nib() {}
@@ -923,15 +888,11 @@
           } else {
             value = node.text;
           }
-          new Literal(subroutine, position, value, node.id);
+          new Value(subroutine, position, value, node.id);
         } else {
           implementation = subroutines[node.implementation_id];
           if (implementation) {
-            if (node.type === 'function') {
-              new SubroutineApplication(subroutine, position, implementation, node.id);
-            } else if (node.type === 'builtin') {
-              new BuiltinApplication(subroutine, position, implementation, node.id);
-            }
+            new Call(subroutine, position, implementation, node.id);
           } else {
             new UnknownNode(position, node.type, node.text, node.id);
           }
@@ -1020,12 +981,12 @@
       NotConnected: NotConnected,
       NotImplemented: NotImplemented,
       BuiltinSyntaxError: BuiltinSyntaxError,
-      Builtin: JavaScript,
-      Subroutine: Graph,
+      JavaScript: JavaScript,
+      Graph: Graph,
       UnknownNode: UnknownNode,
-      SubroutineApplication: SubroutineApplication,
-      BuiltinApplication: BuiltinApplication,
-      Literal: Literal,
+      Call: Call,
+      Value: Value,
+      LiteralValue: LiteralValue,
       Input: Input,
       Output: Output,
       subroutines: all_subroutines

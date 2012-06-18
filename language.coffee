@@ -2,6 +2,8 @@ module = angular.module 'vislang'
 module.factory 'interpreter', ($q, $http) ->
     schema_version = 1
 
+    ### EXCEPTION TYPES ###
+
     class RuntimeException
         constructor: (@message) ->
 
@@ -19,6 +21,8 @@ module.factory 'interpreter', ($q, $http) ->
 
     class BuiltinSyntaxError extends RuntimeException
         constructor: (@name, @exception) -> @message = "#{exception} in builtin \"#{@name}\": "
+
+    ### DEFINITION TYPES ###
 
     class Subroutine
         fromJSON: (data) ->
@@ -299,21 +303,23 @@ module.factory 'interpreter', ($q, $http) ->
             for id, connection of out_connections
                 connection.delete()
 
+    class LiteralValue
+        type:'literal'
+        constructor:(@text, @id=UUID()) ->
+            @inputs = []
+            @outputs = [(new Output).initialize(@id)]
 
+        evaluate: -> return eval_expression @text
+        content_id: -> CryptoJS.SHA256(@text).toString(CryptoJS.enc.Base64)
 
-
+    ### NODE TYPES ###
 
     class Node # Abstract
         constructor: ->
             @scope.nodes[@id] = @
 
-        set_position:(@position) ->
-
         get_inputs: -> @implementation.inputs
         get_outputs: -> @implementation.outputs
-
-        get_nibs: ->
-            @inputs.concat @outputs
 
         delete: ->
             delete @scope.nodes[@id]
@@ -326,11 +332,10 @@ module.factory 'interpreter', ($q, $http) ->
             id:@id
             type:@type
 
-    class FunctionApplication extends Node # Abstract
-        constructor: ->
-            super()
-
-        evaluate: (the_scope, output_nib) ->
+    class Call extends Node
+        type:'call'
+        constructor: (@scope, @position, @implementation, @id=UUID()) -> super()
+            # TODO: just reference the name and inputs off the implementation
 
         toJSON: ->
             json = super()
@@ -345,24 +350,14 @@ module.factory 'interpreter', ($q, $http) ->
                         the_scope.subroutine.evaluate_connection the_scope, @, input
             return input_values
 
-    class UnknownNode extends Node
-        constructor:(@position, type, text, @id) ->
-            @type = 'unknown'
-            @text = "Unknown #{type}: #{text}"
-            @inputs = []
-            @outputs = []
-            super()
-
-    class SubroutineApplication extends FunctionApplication
-        type: 'function'
-        constructor: (@scope, @position, @implementation, @id=UUID()) -> super()
-            # TODO: just reference the name and inputs off the implementation
-
         evaluate: (the_scope, output_nib) ->
             input_values = @virtual_inputs the_scope
             return @implementation.invoke output_nib, input_values, the_scope, @
 
+        ###
         subroutines_referenced: ->
+            # TODO: UPDATE
+            return [] unless @implementation instanceof Graph
             results = []
             for input in @inputs
                 parent = input.get_connection()?.connection.output.parent
@@ -370,27 +365,10 @@ module.factory 'interpreter', ($q, $http) ->
                     results.push parent.id if parent.type is 'function'
                     resuts = results.concat parent.subroutines_referenced()
             return results
+        ###
 
-    class BuiltinApplication extends FunctionApplication
-        @type = 'builtin'
-        constructor: (@scope, @position, @implementation, @id=UUID()) -> super()
-            #super @implementation
-
-        evaluate: (the_scope, output_nib) ->
-            input_values = @virtual_inputs the_scope
-            return @implementation.invoke output_nib, input_values, the_scope, @
-
-    class LiteralValue
-        constructor:(@text, @id=UUID()) ->
-            @inputs = []
-            @outputs = [(new Output).initialize(@id)]
-
-        evaluate: -> return eval_expression @text
-        type:'literal'
-        content_id: -> CryptoJS.SHA256(@text).toString(CryptoJS.enc.Base64)
-
-    class Literal extends Node
-        type:'literal'
+    class Value extends Node
+        type:'value'
         constructor:(@scope, @position, value, @id=UUID()) ->
             # TODO: sort this out later
             if value instanceof Graph
@@ -410,6 +388,17 @@ module.factory 'interpreter', ($q, $http) ->
             json
 
         subroutines_referenced: -> []
+
+    class UnknownNode extends Node
+        constructor:(@position, type, text, @id) ->
+            @type = 'unknown'
+            @text = "Unknown #{type}: #{text}"
+            @inputs = []
+            @outputs = []
+            super()
+
+
+    ### OTHER TYPES ###
 
     class Nib  # Abstract. Do not instantiate
         fromJSON: (data, @parent) ->
@@ -530,14 +519,11 @@ module.factory 'interpreter', ($q, $http) ->
                     # TODO: what if this subroutine isn't found?
                 else
                     value = node.text
-                new Literal subroutine, position, value, node.id
+                new Value subroutine, position, value, node.id
             else
                 implementation = subroutines[node.implementation_id]
                 if implementation
-                    if node.type is 'function'
-                        new SubroutineApplication subroutine, position, implementation, node.id
-                    else if node.type is 'builtin'
-                        new BuiltinApplication subroutine, position, implementation, node.id
+                    new Call subroutine, position, implementation, node.id
                 else
                     new UnknownNode position, node.type, node.text, node.id
 
@@ -605,12 +591,12 @@ module.factory 'interpreter', ($q, $http) ->
     NotConnected:NotConnected
     NotImplemented:NotImplemented
     BuiltinSyntaxError:BuiltinSyntaxError
-    Builtin:JavaScript
-    Subroutine:Graph
+    JavaScript:JavaScript
+    Graph:Graph
     UnknownNode:UnknownNode
-    SubroutineApplication:SubroutineApplication
-    BuiltinApplication:BuiltinApplication
-    Literal:Literal
+    Call:Call
+    Value:Value
+    LiteralValue:LiteralValue
     Input:Input
     Output:Output
     subroutines:all_subroutines

@@ -32,7 +32,6 @@ module.directive 'ace', ->
                     scope.ace set_value
 
 module.directive 'shrinkyInput', ->
-    #require:'^subroutine'
     link:(scope, element, attributes, controller) ->
         doppelganger = $ """<span class="offscreen"></span>"""
         $element = $ element
@@ -47,9 +46,9 @@ module.directive 'shrinkyInput', ->
         $(document.body).append doppelganger
         scope.$watch attributes.shrinkyInput, (text) ->
             doppelganger.text text + "M"
-            async ->
+            async -> scope.$apply ->
                 $(element).css width:doppelganger.width()+2
-                controller?.draw()
+                scope.$emit 'redraw-graph'
 
 module.config ($routeProvider) ->
     $routeProvider.when '/:id', controller:'subroutine', template:"subroutine.html"
@@ -65,20 +64,17 @@ module.controller 'library', ($scope, $q, interpreter) ->
         _.values interpreter.subroutines
 
     $scope.use = (subroutine) ->
-        if subroutine instanceof interpreter.Subroutine
-            new interpreter.SubroutineApplication $scope.$root.current_object, V(0,0), subroutine
-        else
-            new interpreter.BuiltinApplication $scope.$root.current_object, V(0,0), subroutine
+        new interpreter.Call $scope.$root.current_object, V(0,0), subroutine
 
     $scope.use_value = (value) ->
-        new interpreter.Literal $scope.$root.current_object, V(0,0), value
+        new interpreter.Value $scope.$root.current_object, V(0,0), value
 
     $scope.is_valid_json = is_valid_json
 
     $scope.literal_text = ''
     $scope.use_literal = =>
         if valid_json $scope.literal_text
-            new interpreter.Literal $scope.$root.current_object, V(0,0), $scope.literal_text
+            new interpreter.Value $scope.$root.current_object, V(0,0), $scope.literal_text
             $scope.literal_text = ''
             hide()
 
@@ -139,19 +135,16 @@ module.controller 'Controller', ($scope, $http, $location, interpreter, $q) ->
             $location.path "#{subroutine.id}"
 
     $scope.new_graph = ->
-        make_something interpreter.Subroutine
+        make_something interpreter.Graph
 
     $scope.new_code = ->
-        make_something interpreter.Builtin
+        make_something interpreter.JavaScript
 
     $scope.new_graph_from_selection = ->
         $scope.$broadcast 'new-graph-from-selection'
 
 
     ###
-    $scope.import_export_text = ''
-    $scope.subroutines = {}
-    $scope.builtins = {}
     $scope.import = ->
         import_data valid_source $scope.import_export_text
         $scope.edit current_scope if current_scope
@@ -181,83 +174,4 @@ module.controller 'Controller', ($scope, $http, $location, interpreter, $q) ->
         $scope.subroutines = {}
         $scope.builtins = {}
         $scope.load_example_programs()
-
-    $scope.initial_subroutine =
-        name:''
-        inputs:[]
-        outputs:[]
-    $scope.new_subroutine = angular.copy $scope.initial_subroutine
-
-    $scope.delete_subroutine = (subroutine) =>
-        if subroutine.id is current_scope.id
-            $scope.current_object = null
-            teardown_field()
-        delete $scope.subroutines[subroutine.id]
-
-    $scope.delete_builtin = (builtin) =>
-        delete $scope.builtins[builtin.id]
-
-    $scope.add_subroutine = =>
-        subroutine = new Subroutine $scope.new_subroutine.name, $scope.new_subroutine.inputs, $scope.new_subroutine.outputs
-
-        # first find all the connections
-        in_connections = {}
-        out_connections = {}
-        for id, node of highlighted_objects
-            for id, nib of node.inputs
-                for id, connection of nib.connections
-                    in_connections[connection.connection.id] = connection.connection
-            for id, nib of node.outputs
-                for id, connection of nib.connections
-                    out_connections[connection.connection.id] = connection.connection
-
-        # see which ones are contained in the system
-        contained_connections = {}
-        for id, connection of in_connections
-            if connection.id of out_connections
-                contained_connections[connection.id] = connection
-                delete in_connections[connection.id]
-                delete out_connections[connection.id]
-
-        # move the contained ones
-        for id, connection of contained_connections
-            current_scope.remove_connection connection
-            subroutine.add_connection connection
-
-        # clip the others
-        for id, connection of in_connections
-            connection.delete()
-
-        for id, connection of out_connections
-            connection.delete()
-
-        # move the nodes
-        for id, node of highlighted_objects
-            current_scope.remove_node node
-            subroutine.add_node node
-
-        $scope.subroutines[subroutine.id] = subroutine
-        $scope.new_subroutine = angular.copy $scope.initial_subroutine
-        $scope.new_subroutine.inputs = []
-        $scope.new_subroutine.outputs = []
-        $scope.edit subroutine
-
-    $scope.add_builtin = =>
-        builtin = new Builtin {}
-        $scope.builtins[builtin.id] = builtin
-        $scope.edit builtin
-
-    $scope.run_subroutine = (subroutine, output_index) ->
-        subroutine.run output_index
-
-    save_state = =>
-        state =
-            subroutines:$scope.subroutines
-            builtins:$scope.builtins
-            schema_version:schema_version
-
-        localStorage.state = JSON.stringify state
-
-    #system_arrow = make_arrow V(0,0), V(1,0), false
     ###
-

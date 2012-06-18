@@ -56,7 +56,7 @@ module.directive 'subroutine', ($location) ->
         @nib_views = {}
 
         $scope.$on 'new-graph-from-selection', ->
-            subroutine = (new interpreter.Subroutine).initialize()
+            subroutine = (new interpreter.Graph).initialize()
             subroutine.make_from $scope.selection
 
         transform_the_position = (position) ->
@@ -78,7 +78,7 @@ module.directive 'subroutine', ($location) ->
 
         $scope.edit_node = (node, $event) ->
             $event.preventDefault()
-            $location.path "/#{node.implementation.id}" unless node instanceof interpreter.Literal
+            $location.path "/#{node.implementation.id}" unless node.implementation instanceof interpreter.LiteralValue
 
         $scope.name_node = (node) ->
             node.text or node.implementation.id[0..5]
@@ -194,3 +194,4 @@ module.directive 'subroutine', ($location) ->
             draw()
         $(window).on 'resize', -> $scope.$apply resize_canvas
         resize_canvas()
+        $scope.$on 'redraw-graph', draw

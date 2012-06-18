@@ -66,10 +66,12 @@
         return scope.$watch(attributes.shrinkyInput, function(text) {
           doppelganger.text(text + "M");
           return async(function() {
-            $(element).css({
-              width: doppelganger.width() + 2
+            return scope.$apply(function() {
+              $(element).css({
+                width: doppelganger.width() + 2
+              });
+              return scope.$emit('redraw-graph');
             });
-            return controller != null ? controller.draw() : void 0;
           });
         });
       }
@@ -98,20 +100,16 @@
       return _.values(interpreter.subroutines);
     };
     $scope.use = function(subroutine) {
-      if (subroutine instanceof interpreter.Subroutine) {
-        return new interpreter.SubroutineApplication($scope.$root.current_object, V(0, 0), subroutine);
-      } else {
-        return new interpreter.BuiltinApplication($scope.$root.current_object, V(0, 0), subroutine);
-      }
+      return new interpreter.Call($scope.$root.current_object, V(0, 0), subroutine);
     };
     $scope.use_value = function(value) {
-      return new interpreter.Literal($scope.$root.current_object, V(0, 0), value);
+      return new interpreter.Value($scope.$root.current_object, V(0, 0), value);
     };
     $scope.is_valid_json = is_valid_json;
     $scope.literal_text = '';
     $scope.use_literal = function() {
       if (valid_json($scope.literal_text)) {
-        new interpreter.Literal($scope.$root.current_object, V(0, 0), $scope.literal_text);
+        new interpreter.Value($scope.$root.current_object, V(0, 0), $scope.literal_text);
         $scope.literal_text = '';
         return hide();
       }
@@ -201,18 +199,15 @@
       });
     };
     $scope.new_graph = function() {
-      return make_something(interpreter.Subroutine);
+      return make_something(interpreter.Graph);
     };
     $scope.new_code = function() {
-      return make_something(interpreter.Builtin);
+      return make_something(interpreter.JavaScript);
     };
     return $scope.new_graph_from_selection = function() {
       return $scope.$broadcast('new-graph-from-selection');
     };
     /*
-        $scope.import_export_text = ''
-        $scope.subroutines = {}
-        $scope.builtins = {}
         $scope.import = ->
             import_data valid_source $scope.import_export_text
             $scope.edit current_scope if current_scope
@@ -242,84 +237,6 @@
             $scope.subroutines = {}
             $scope.builtins = {}
             $scope.load_example_programs()
-    
-        $scope.initial_subroutine =
-            name:''
-            inputs:[]
-            outputs:[]
-        $scope.new_subroutine = angular.copy $scope.initial_subroutine
-    
-        $scope.delete_subroutine = (subroutine) =>
-            if subroutine.id is current_scope.id
-                $scope.current_object = null
-                teardown_field()
-            delete $scope.subroutines[subroutine.id]
-    
-        $scope.delete_builtin = (builtin) =>
-            delete $scope.builtins[builtin.id]
-    
-        $scope.add_subroutine = =>
-            subroutine = new Subroutine $scope.new_subroutine.name, $scope.new_subroutine.inputs, $scope.new_subroutine.outputs
-    
-            # first find all the connections
-            in_connections = {}
-            out_connections = {}
-            for id, node of highlighted_objects
-                for id, nib of node.inputs
-                    for id, connection of nib.connections
-                        in_connections[connection.connection.id] = connection.connection
-                for id, nib of node.outputs
-                    for id, connection of nib.connections
-                        out_connections[connection.connection.id] = connection.connection
-    
-            # see which ones are contained in the system
-            contained_connections = {}
-            for id, connection of in_connections
-                if connection.id of out_connections
-                    contained_connections[connection.id] = connection
-                    delete in_connections[connection.id]
-                    delete out_connections[connection.id]
-    
-            # move the contained ones
-            for id, connection of contained_connections
-                current_scope.remove_connection connection
-                subroutine.add_connection connection
-    
-            # clip the others
-            for id, connection of in_connections
-                connection.delete()
-    
-            for id, connection of out_connections
-                connection.delete()
-    
-            # move the nodes
-            for id, node of highlighted_objects
-                current_scope.remove_node node
-                subroutine.add_node node
-    
-            $scope.subroutines[subroutine.id] = subroutine
-            $scope.new_subroutine = angular.copy $scope.initial_subroutine
-            $scope.new_subroutine.inputs = []
-            $scope.new_subroutine.outputs = []
-            $scope.edit subroutine
-    
-        $scope.add_builtin = =>
-            builtin = new Builtin {}
-            $scope.builtins[builtin.id] = builtin
-            $scope.edit builtin
-    
-        $scope.run_subroutine = (subroutine, output_index) ->
-            subroutine.run output_index
-    
-        save_state = =>
-            state =
-                subroutines:$scope.subroutines
-                builtins:$scope.builtins
-                schema_version:schema_version
-    
-            localStorage.state = JSON.stringify state
-    
-        #system_arrow = make_arrow V(0,0), V(1,0), false
     */
 
   });

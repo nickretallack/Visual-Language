@@ -86,7 +86,7 @@
         $scope.selection = [];
         this.nib_views = {};
         $scope.$on('new-graph-from-selection', function() {
-          subroutine = (new interpreter.Subroutine).initialize();
+          subroutine = (new interpreter.Graph).initialize();
           return subroutine.make_from($scope.selection);
         });
         transform_the_position = function(position) {
@@ -114,7 +114,7 @@
         };
         $scope.edit_node = function(node, $event) {
           $event.preventDefault();
-          if (!(node instanceof interpreter.Literal)) {
+          if (!(node.implementation instanceof interpreter.LiteralValue)) {
             return $location.path("/" + node.implementation.id);
           }
         };
@@ -261,7 +261,8 @@
         $(window).on('resize', function() {
           return $scope.$apply(resize_canvas);
         });
-        return resize_canvas();
+        resize_canvas();
+        return $scope.$on('redraw-graph', draw);
       }
     };
   });
