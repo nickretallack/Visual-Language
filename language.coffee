@@ -72,21 +72,18 @@ module.factory 'interpreter', ($q, $http) ->
                 return output_function (args.concat [memo])...
 
     class Subroutine
-        @type = 'subroutine'
+        ### DATA ###
         constructor: ->
+            ### Initialize the bare minimum bits.
+            Be sure to call fromJSON or initialize next. ###
             @type = 'subroutine'
             @nodes = {}
             @connections = {}
             @inputs = []
             @outputs = []
 
-        add_input: ->
-            @inputs.push new Input
-
-        add_output: ->
-            @outputs.push new Output
-
         fromJSON: (data) ->
+            ### Populate from the persistence format ###
             {name:@text, @id} = data
             @id ?= UUID()
             @inputs = ((new Input).fromJSON {text:nib_data, index:index}, @ for nib_data, index in data.inputs)
@@ -94,11 +91,12 @@ module.factory 'interpreter', ($q, $http) ->
             subroutines[@id] = @
 
         initialize: ->
-            #@name = ''
+            ### Populate fields for a brand new instance. ###
             @id = UUID()
             subroutines[@id] = @
 
         toJSON: ->
+            # Defines the persistence format
             id:@id
             name:@name
             nodes:_.values @nodes
@@ -106,18 +104,10 @@ module.factory 'interpreter', ($q, $http) ->
             inputs:@get_inputs()
             outputs:@get_outputs()
 
-        find_connection: (direction, node, nib) ->
-            for id, connection of @connections
-                if connection[direction].node.id is node.id and connection[direction].nib.id is nib.id
-                    return connection
-            undefined
-
-        delete_connections: (direction, node, nib) ->
-            for id, connection of @connections
-                if connection[direction].node.id is node.id and connection[direction].nib.id is nib.id
-                    delete scope.connections[id]
+        ### RUNNING ###
 
         invoke: (output_nib, inputs) ->
+            ### Evaluates an output in a fresh scope ###
             scope =
                 subroutine:@
                 inputs:inputs
@@ -125,6 +115,7 @@ module.factory 'interpreter', ($q, $http) ->
             @evaluate_connection scope, @, output_nib
 
         evaluate_connection: (scope, to_node, to_nib) ->
+            ### This helper will follow a connection and evaluate whatever it finds ###
             connection = @find_connection 'to', to_node, to_nib
             throw new NotConnected unless connection
             {node, nib} = connection.from
@@ -134,6 +125,7 @@ module.factory 'interpreter', ($q, $http) ->
                 return node.evaluate scope, nib
 
         run: (nib) ->
+            ### Set up user input collection for unknown inputs and evaluate this output. ###
             input_values = []
             for input in @inputs
                 do (input) ->
@@ -156,18 +148,47 @@ module.factory 'interpreter', ($q, $http) ->
                 else
                     throw exception
 
+        find_connection: (direction, node, nib) ->
+            ### Use this to determine how nodes are connected ###
+            for id, connection of @connections
+                if connection[direction].node.id is node.id and connection[direction].nib.id is nib.id
+                    return connection
+            undefined
+
+        delete_connections: (direction, node, nib) ->
+            for id, connection of @connections
+                if connection[direction].node.id is node.id and connection[direction].nib.id is nib.id
+                    delete scope.connections[id]
+
+
         get_inputs: -> @inputs
         get_outputs: -> @outputs
-
-        #get_inputs: -> (input.text for input in @inputs)
-        #get_outputs: -> (output.text for output in @outputs)
 
         export: ->
             dependencies = @get_dependencies()
             dependencies.schema_version = schema_version
             dependencies
 
+        add_input: ->
+            @inputs.push new Input
+
+        add_output: ->
+            @outputs.push new Output
+
+        remove_node: (node) ->
+            delete @nodes[node.id]
+
+        add_node: (node) ->
+            @nodes[node.id] = node
+
+        remove_connection: (connection) ->
+            delete @connections[connection.id]
+
+        add_connection: (connection) ->
+            @connections[connection.id] = connection
+
         get_dependencies: (dependencies={subroutines:{},builtins:{}}) ->
+            # TODO: UPDATE
             dependencies.subroutines[@id] = @ if @id not of dependencies.subroutines
             for id, node of @nodes
                 if node instanceof SubroutineApplication
@@ -179,6 +200,7 @@ module.factory 'interpreter', ($q, $http) ->
             dependencies
 
         subroutines_referenced: ->
+            # TODO: UPDATE
             # TODO: turn this into a cleanup function
             results = []
             for output in @outputs
@@ -189,6 +211,7 @@ module.factory 'interpreter', ($q, $http) ->
             return results
 
         build_adjacency_list: ->
+            ### TODO: UPDATE FOR NEW SCHEMA ###
             # clear prior data
             for id, node of @nodes
                 node.adjacency_id = null
@@ -223,22 +246,8 @@ module.factory 'interpreter', ($q, $http) ->
 
             adjacency_list
 
-
-        remove_node: (node) ->
-            delete @nodes[node.id]
-
-        add_node: (node) ->
-            @nodes[node.id] = node
-
-
-
-        remove_connection: (connection) ->
-            delete @connections[connection.id]
-
-        add_connection: (connection) ->
-            @connections[connection.id] = connection
-
         make_from: (nodes) ->
+            ### Build a subroutine out of nodes in another subroutine. ###
             old_scope = nodes[0].scope
 
             # first find all the connections

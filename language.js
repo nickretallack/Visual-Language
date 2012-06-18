@@ -180,10 +180,13 @@
 
     })();
     Subroutine = (function() {
-
-      Subroutine.type = 'subroutine';
+      /* DATA
+      */
 
       function Subroutine() {
+        /* Initialize the bare minimum bits.
+        Be sure to call fromJSON or initialize next.
+        */
         this.type = 'subroutine';
         this.nodes = {};
         this.connections = {};
@@ -191,15 +194,10 @@
         this.outputs = [];
       }
 
-      Subroutine.prototype.add_input = function() {
-        return this.inputs.push(new Input);
-      };
-
-      Subroutine.prototype.add_output = function() {
-        return this.outputs.push(new Output);
-      };
-
       Subroutine.prototype.fromJSON = function(data) {
+        /* Populate from the persistence format
+        */
+
         var index, nib_data, _ref;
         this.text = data.name, this.id = data.id;
         if ((_ref = this.id) == null) {
@@ -235,6 +233,8 @@
       };
 
       Subroutine.prototype.initialize = function() {
+        /* Populate fields for a brand new instance.
+        */
         this.id = UUID();
         return subroutines[this.id] = this;
       };
@@ -250,34 +250,14 @@
         };
       };
 
-      Subroutine.prototype.find_connection = function(direction, node, nib) {
-        var connection, id, _ref;
-        _ref = this.connections;
-        for (id in _ref) {
-          connection = _ref[id];
-          if (connection[direction].node.id === node.id && connection[direction].nib.id === nib.id) {
-            return connection;
-          }
-        }
-        return void 0;
-      };
+      /* RUNNING
+      */
 
-      Subroutine.prototype.delete_connections = function(direction, node, nib) {
-        var connection, id, _ref, _results;
-        _ref = this.connections;
-        _results = [];
-        for (id in _ref) {
-          connection = _ref[id];
-          if (connection[direction].node.id === node.id && connection[direction].nib.id === nib.id) {
-            _results.push(delete scope.connections[id]);
-          } else {
-            _results.push(void 0);
-          }
-        }
-        return _results;
-      };
 
       Subroutine.prototype.invoke = function(output_nib, inputs) {
+        /* Evaluates an output in a fresh scope
+        */
+
         var scope;
         scope = {
           subroutine: this,
@@ -288,6 +268,9 @@
       };
 
       Subroutine.prototype.evaluate_connection = function(scope, to_node, to_nib) {
+        /* This helper will follow a connection and evaluate whatever it finds
+        */
+
         var connection, nib, node, _ref;
         connection = this.find_connection('to', to_node, to_nib);
         if (!connection) {
@@ -302,6 +285,9 @@
       };
 
       Subroutine.prototype.run = function(nib) {
+        /* Set up user input collection for unknown inputs and evaluate this output.
+        */
+
         var input, input_values, _fn, _i, _len, _ref,
           _this = this;
         input_values = [];
@@ -345,6 +331,36 @@
         }
       };
 
+      Subroutine.prototype.find_connection = function(direction, node, nib) {
+        /* Use this to determine how nodes are connected
+        */
+
+        var connection, id, _ref;
+        _ref = this.connections;
+        for (id in _ref) {
+          connection = _ref[id];
+          if (connection[direction].node.id === node.id && connection[direction].nib.id === nib.id) {
+            return connection;
+          }
+        }
+        return void 0;
+      };
+
+      Subroutine.prototype.delete_connections = function(direction, node, nib) {
+        var connection, id, _ref, _results;
+        _ref = this.connections;
+        _results = [];
+        for (id in _ref) {
+          connection = _ref[id];
+          if (connection[direction].node.id === node.id && connection[direction].nib.id === nib.id) {
+            _results.push(delete scope.connections[id]);
+          } else {
+            _results.push(void 0);
+          }
+        }
+        return _results;
+      };
+
       Subroutine.prototype.get_inputs = function() {
         return this.inputs;
       };
@@ -358,6 +374,30 @@
         dependencies = this.get_dependencies();
         dependencies.schema_version = schema_version;
         return dependencies;
+      };
+
+      Subroutine.prototype.add_input = function() {
+        return this.inputs.push(new Input);
+      };
+
+      Subroutine.prototype.add_output = function() {
+        return this.outputs.push(new Output);
+      };
+
+      Subroutine.prototype.remove_node = function(node) {
+        return delete this.nodes[node.id];
+      };
+
+      Subroutine.prototype.add_node = function(node) {
+        return this.nodes[node.id] = node;
+      };
+
+      Subroutine.prototype.remove_connection = function(connection) {
+        return delete this.connections[connection.id];
+      };
+
+      Subroutine.prototype.add_connection = function(connection) {
+        return this.connections[connection.id] = connection;
       };
 
       Subroutine.prototype.get_dependencies = function(dependencies) {
@@ -403,6 +443,9 @@
       };
 
       Subroutine.prototype.build_adjacency_list = function() {
+        /* TODO: UPDATE FOR NEW SCHEMA
+        */
+
         var adjacency_list, id, input, input_index, input_queue, item, item_count, nibs, node, _i, _j, _len, _len1, _ref;
         _ref = this.nodes;
         for (id in _ref) {
@@ -440,23 +483,10 @@
         return adjacency_list;
       };
 
-      Subroutine.prototype.remove_node = function(node) {
-        return delete this.nodes[node.id];
-      };
-
-      Subroutine.prototype.add_node = function(node) {
-        return this.nodes[node.id] = node;
-      };
-
-      Subroutine.prototype.remove_connection = function(connection) {
-        return delete this.connections[connection.id];
-      };
-
-      Subroutine.prototype.add_connection = function(connection) {
-        return this.connections[connection.id] = connection;
-      };
-
       Subroutine.prototype.make_from = function(nodes) {
+        /* Build a subroutine out of nodes in another subroutine.
+        */
+
         var connection, contained_connections, id, in_connections, new_node, nib, node, old_scope, out_connections, _i, _len, _ref, _ref1, _ref2, _ref3, _results;
         old_scope = nodes[0].scope;
         in_connections = {};
