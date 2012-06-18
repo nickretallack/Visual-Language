@@ -44,7 +44,7 @@
     return {
       link: function(scope, element, attributes) {},
       controller: function($scope, $element, $attrs, interpreter) {
-        var subroutine;
+        var delete_nib, subroutine;
         subroutine = void 0;
         $scope.$watch($attrs.anySubroutine, function(the_subroutine) {
           return $scope.subroutine = subroutine = the_subroutine;
@@ -64,11 +64,30 @@
             return $('.subroutine-output:last input').focus();
           });
         };
+        delete_nib = function(nib, direction, commit, message) {
+          var definition, id, names, uses;
+          uses = interpreter.find_nib_uses(nib, direction);
+          names = (function() {
+            var _results;
+            _results = [];
+            for (id in uses) {
+              definition = uses[id];
+              _results.push(definition.text);
+            }
+            return _results;
+          })();
+          if (names.length) {
+            message = "Can't delete this " + message + ".  It is used in " + (names.join(', '));
+            return alert(message);
+          } else {
+            return commit(nib);
+          }
+        };
         $scope.delete_input = function(nib) {
-          return subroutine.delete_input(nib);
+          return delete_nib(nib, 'to', subroutine.delete_input, 'input');
         };
         return $scope.delete_output = function(nib) {
-          return subroutine.delete_output(nib);
+          return delete_nib(nib, 'from', subroutine.delete_output, 'output');
         };
       }
     };

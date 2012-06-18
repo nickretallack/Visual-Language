@@ -80,7 +80,6 @@ module.factory 'interpreter', ($q, $http) ->
         delete_output: (nib) ->
             @outputs.splice nib.index, 1
 
-
     class JavaScript extends Subroutine
         type:'builtin'
         fromJSON: (data) ->
@@ -469,6 +468,14 @@ module.factory 'interpreter', ($q, $http) ->
             from:from
             to:to
 
+    find_nib_uses = (nib, direction='to') ->
+        uses = {}
+        for id, subroutine of all_subroutines
+            for id, connection of subroutine.connections
+                if connection[direction].nib is nib
+                    uses[subroutine.id] = subroutine
+        uses
+
     dissociate_exception = (procedure) ->
         try
             procedure()
@@ -612,6 +619,7 @@ module.factory 'interpreter', ($q, $http) ->
         #start_saving()
 
     make_connection:make_connection
+    find_nib_uses:find_nib_uses
     make_value:make_value
     loaded:loaded.promise
     RuntimeException:RuntimeException

@@ -7,7 +7,7 @@
   module = angular.module('vislang');
 
   module.factory('interpreter', function($q, $http) {
-    var BuiltinSyntaxError, Call, Connection, Definition, Exit, Graph, Input, InputError, JSONLiteral, JavaScript, Literal, Nib, Node, NotConnected, NotImplemented, Output, RuntimeException, StringLiteral, Subroutine, UnknownNode, Value, all_subroutines, dissociate_exception, eval_expression, execute, find_value, ignore_if_disconnected, is_input, load_implementation, load_state, loaded, make_connection, make_value, save_state, schema_version, source_data, source_data_deferred, start_saving;
+    var BuiltinSyntaxError, Call, Connection, Definition, Exit, Graph, Input, InputError, JSONLiteral, JavaScript, Literal, Nib, Node, NotConnected, NotImplemented, Output, RuntimeException, StringLiteral, Subroutine, UnknownNode, Value, all_subroutines, dissociate_exception, eval_expression, execute, find_nib_uses, find_value, ignore_if_disconnected, is_input, load_implementation, load_state, loaded, make_connection, make_value, save_state, schema_version, source_data, source_data_deferred, start_saving;
     schema_version = 1;
     /* EXCEPTION TYPES
     */
@@ -853,6 +853,24 @@
         to: to
       });
     };
+    find_nib_uses = function(nib, direction) {
+      var connection, id, subroutine, uses, _ref;
+      if (direction == null) {
+        direction = 'to';
+      }
+      uses = {};
+      for (id in all_subroutines) {
+        subroutine = all_subroutines[id];
+        _ref = subroutine.connections;
+        for (id in _ref) {
+          connection = _ref[id];
+          if (connection[direction].nib === nib) {
+            uses[subroutine.id] = subroutine;
+          }
+        }
+      }
+      return uses;
+    };
     dissociate_exception = function(procedure) {
       try {
         return procedure();
@@ -1024,6 +1042,7 @@
     });
     return {
       make_connection: make_connection,
+      find_nib_uses: find_nib_uses,
       make_value: make_value,
       loaded: loaded.promise,
       RuntimeException: RuntimeException,
