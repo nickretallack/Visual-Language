@@ -7,7 +7,7 @@
   module = angular.module('vislang');
 
   module.factory('interpreter', function($q, $http) {
-    var BuiltinSyntaxError, Call, Connection, Definition, Exit, Graph, Input, InputError, JSONLiteral, JavaScript, Literal, Nib, Node, NotConnected, NotImplemented, Output, RuntimeException, StringLiteral, Subroutine, UnknownNode, Value, all_subroutines, dissociate_exception, eval_expression, execute, ignore_if_disconnected, is_input, load_implementation, load_state, loaded, make_connection, make_value, save_state, schema_version, source_data, source_data_deferred, start_saving;
+    var BuiltinSyntaxError, Call, Connection, Definition, Exit, Graph, Input, InputError, JSONLiteral, JavaScript, Literal, Nib, Node, NotConnected, NotImplemented, Output, RuntimeException, StringLiteral, Subroutine, UnknownNode, Value, all_subroutines, dissociate_exception, eval_expression, execute, find_value, ignore_if_disconnected, is_input, load_implementation, load_state, loaded, make_connection, make_value, save_state, schema_version, source_data, source_data_deferred, start_saving;
     schema_version = 1;
     /* EXCEPTION TYPES
     */
@@ -520,12 +520,26 @@
       return Graph;
 
     })(Subroutine);
+    find_value = function(text, type, collection) {
+      var id, thing;
+      if (collection == null) {
+        collection = all_subroutines;
+      }
+      for (id in collection) {
+        thing = collection[id];
+        if (thing instanceof type) {
+          if (thing.text === text) {
+            return thing;
+          }
+        }
+      }
+    };
     make_value = function(scope, position, user_input, force_string) {
       var implementation, value;
       if (force_string == null) {
         force_string = false;
       }
-      implementation = user_input instanceof Definition ? user_input : force_string ? new StringLiteral(user_input) : (value = eval_expression(user_input), value instanceof String ? new StringLiteral(value) : new JSONLiteral(value));
+      implementation = user_input instanceof Definition ? user_input : force_string ? (find_value(user_input, StringLiteral)) || new StringLiteral(user_input) : (value = eval_expression(user_input), value instanceof String ? (find_value(value, StringLiteral)) || new StringLiteral(value) : (find_value(user_input, JSONLiteral)) || new JSONLiteral(value));
       return new Value(scope, position, implementation);
     };
     Literal = (function(_super) {
@@ -917,13 +931,13 @@
       return subroutines;
     };
     load_implementation = function(subroutine, data, subroutines) {
-      var connection, from, get_connector, get_nib, implementation, input, node, output, position, to, _i, _j, _len, _len1, _ref, _ref1, _results;
+      var connection, found_value, from, get_connector, get_nib, implementation, input, node, output, position, to, value, _i, _j, _len, _len1, _ref, _ref1, _results;
       _ref = data.nodes;
       for (_i = 0, _len = _ref.length; _i < _len; _i++) {
         node = _ref[_i];
         position = V(node.position);
         if (node.type === 'literal') {
-          implementation = 'implementation_id' in node ? subroutines[node.implementation_id] : new JSONLiteral(node.text);
+          implementation = 'implementation_id' in node ? subroutines[node.implementation_id] : (found_value = find_value(node.text, JSONLiteral, subroutines), found_value ? found_value : (value = new JSONLiteral(node.text), subroutines[value.id] = value, value));
           new Value(subroutine, position, implementation, node.id);
         } else {
           implementation = subroutines[node.implementation_id];

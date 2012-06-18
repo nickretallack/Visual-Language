@@ -17,6 +17,7 @@ Connections should connect to nib objects, and they should be remembered by ID. 
     - placeholder names - done
     - proper events for inputs - done
 
+- reduce uses of literal by uniquifying them on creation?  But what if you want to edit them?  How do you edit literals?
 
 
 

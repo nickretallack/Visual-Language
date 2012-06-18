@@ -305,18 +305,25 @@ module.factory 'interpreter', ($q, $http) ->
             for id, connection of out_connections
                 connection.delete()
 
+    find_value = (text, type, collection=all_subroutines) ->
+        for id, thing of collection
+            if thing instanceof type
+                if thing.text is text
+                    return thing
+
+
     make_value = (scope, position, user_input, force_string=false) ->
         implementation = if user_input instanceof Definition
             user_input
         else
             if force_string
-                new StringLiteral user_input
+                (find_value user_input, StringLiteral) or new StringLiteral user_input
             else
                 value = eval_expression user_input
                 if value instanceof String
-                    new StringLiteral value
+                    (find_value value, StringLiteral) or new StringLiteral value
                 else
-                    new JSONLiteral value
+                    (find_value user_input, JSONLiteral) or new JSONLiteral value
 
         new Value scope, position, implementation
 
@@ -532,7 +539,14 @@ module.factory 'interpreter', ($q, $http) ->
                     subroutines[node.implementation_id]
                     # TODO: what if this subroutine isn't found?
                 else
-                    new JSONLiteral node.text
+                    found_value = find_value node.text, JSONLiteral, subroutines
+                    if found_value
+                        found_value
+                    else
+                        value = new JSONLiteral node.text
+                        subroutines[value.id] = value
+                        value
+
                 new Value subroutine, position, implementation, node.id
             else
                 implementation = subroutines[node.implementation_id]
