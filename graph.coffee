@@ -76,7 +76,7 @@ module.directive 'subroutine', ($location) ->
 
         $scope.edit_node = (node, $event) ->
             $event.preventDefault()
-            $location.path "/#{node.implementation.id}" unless node.implementation instanceof interpreter.LiteralValue
+            $location.path "/#{node.implementation.id}" unless node.implementation instanceof interpreter.Literal
 
         $scope.selected = (node) ->
             node in $scope.selection

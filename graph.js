@@ -115,7 +115,7 @@
         };
         $scope.edit_node = function(node, $event) {
           $event.preventDefault();
-          if (!(node.implementation instanceof interpreter.LiteralValue)) {
+          if (!(node.implementation instanceof interpreter.Literal)) {
             return $location.path("/" + node.implementation.id);
           }
         };

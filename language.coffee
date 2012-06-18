@@ -303,7 +303,7 @@ module.factory 'interpreter', ($q, $http) ->
             for id, connection of out_connections
                 connection.delete()
 
-    class LiteralValue
+    class Literal
         type:'literal'
         constructor:(@text, @id=UUID()) ->
             @inputs = []
@@ -375,7 +375,7 @@ module.factory 'interpreter', ($q, $http) ->
                 @implementation = value
                 @text = value.name
             else
-                @implementation = new LiteralValue value, @id
+                @implementation = new Literal value, @id
                 @text = value
             super()
 
@@ -596,7 +596,7 @@ module.factory 'interpreter', ($q, $http) ->
     UnknownNode:UnknownNode
     Call:Call
     Value:Value
-    LiteralValue:LiteralValue
+    Literal:Literal
     Input:Input
     Output:Output
     subroutines:all_subroutines

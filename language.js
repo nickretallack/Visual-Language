@@ -7,7 +7,7 @@
   module = angular.module('vislang');
 
   module.factory('interpreter', function($q, $http) {
-    var BuiltinSyntaxError, Call, Connection, Exit, Graph, Input, InputError, JavaScript, LiteralValue, Nib, Node, NotConnected, NotImplemented, Output, RuntimeException, Subroutine, UnknownNode, Value, all_subroutines, dissociate_exception, eval_expression, execute, ignore_if_disconnected, is_input, load_implementation, load_state, loaded, make_connection, save_state, schema_version, source_data, source_data_deferred, start_saving;
+    var BuiltinSyntaxError, Call, Connection, Exit, Graph, Input, InputError, JavaScript, Literal, Nib, Node, NotConnected, NotImplemented, Output, RuntimeException, Subroutine, UnknownNode, Value, all_subroutines, dissociate_exception, eval_expression, execute, ignore_if_disconnected, is_input, load_implementation, load_state, loaded, make_connection, save_state, schema_version, source_data, source_data_deferred, start_saving;
     schema_version = 1;
     /* EXCEPTION TYPES
     */
@@ -509,26 +509,26 @@
       return Graph;
 
     })(Subroutine);
-    LiteralValue = (function() {
+    Literal = (function() {
 
-      LiteralValue.prototype.type = 'literal';
+      Literal.prototype.type = 'literal';
 
-      function LiteralValue(text, id) {
+      function Literal(text, id) {
         this.text = text;
         this.id = id != null ? id : UUID();
         this.inputs = [];
         this.outputs = [(new Output).initialize(this.id)];
       }
 
-      LiteralValue.prototype.evaluate = function() {
+      Literal.prototype.evaluate = function() {
         return eval_expression(this.text);
       };
 
-      LiteralValue.prototype.content_id = function() {
+      Literal.prototype.content_id = function() {
         return CryptoJS.SHA256(this.text).toString(CryptoJS.enc.Base64);
       };
 
-      return LiteralValue;
+      return Literal;
 
     })();
     /* NODE TYPES
@@ -647,7 +647,7 @@
           this.implementation = value;
           this.text = value.name;
         } else {
-          this.implementation = new LiteralValue(value, this.id);
+          this.implementation = new Literal(value, this.id);
           this.text = value;
         }
         Value.__super__.constructor.call(this);
@@ -986,7 +986,7 @@
       UnknownNode: UnknownNode,
       Call: Call,
       Value: Value,
-      LiteralValue: LiteralValue,
+      Literal: Literal,
       Input: Input,
       Output: Output,
       subroutines: all_subroutines
