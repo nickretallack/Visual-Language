@@ -278,21 +278,26 @@
       };
 
       Subroutine.prototype.invoke = function(output_nib, inputs) {
-        var connection, nib, node, the_scope, _ref;
-        the_scope = {
+        var scope;
+        scope = {
           subroutine: this,
           inputs: inputs,
           memos: {}
         };
-        connection = this.find_connection('to', this, output_nib);
+        return this.evaluate_connection(scope, this, output_nib);
+      };
+
+      Subroutine.prototype.evaluate_connection = function(scope, to_node, to_nib) {
+        var connection, nib, node, _ref;
+        connection = this.find_connection('to', to_node, to_nib);
         if (!connection) {
           throw new NotConnected;
         }
         _ref = connection.from, node = _ref.node, nib = _ref.nib;
         if (node instanceof Subroutine) {
-          return inputs[nib.index]();
+          return scope.inputs[nib.index]();
         } else {
-          return node.evaluate(the_scope, nib);
+          return node.evaluate(scope, nib);
         }
       };
 
@@ -589,17 +594,7 @@
         _ref = this.implementation.inputs;
         _fn = function(input) {
           return input_values.push(_.memoize(function() {
-            var connection, nib, node, _ref1;
-            connection = the_scope.subroutine.find_connection('to', _this, input);
-            if (!connection) {
-              throw new NotConnected;
-            }
-            _ref1 = connection.from, node = _ref1.node, nib = _ref1.nib;
-            if (node instanceof Subroutine) {
-              return the_scope.inputs[nib.index]();
-            } else {
-              return node.evaluate(the_scope, nib);
-            }
+            return the_scope.subroutine.evaluate_connection(the_scope, _this, input);
           }));
         };
         for (_i = 0, _len = _ref.length; _i < _len; _i++) {

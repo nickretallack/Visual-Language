@@ -118,19 +118,20 @@ module.factory 'interpreter', ($q, $http) ->
                     delete scope.connections[id]
 
         invoke: (output_nib, inputs) ->
-            the_scope =
+            scope =
                 subroutine:@
                 inputs:inputs
                 memos:{}
+            @evaluate_connection scope, @, output_nib
 
-            connection = @find_connection 'to', @, output_nib
+        evaluate_connection: (scope, to_node, to_nib) ->
+            connection = @find_connection 'to', to_node, to_nib
             throw new NotConnected unless connection
             {node, nib} = connection.from
-
             if node instanceof Subroutine
-                return inputs[nib.index]()
+                return scope.inputs[nib.index]()
             else
-                return node.evaluate the_scope, nib
+                return node.evaluate scope, nib
 
         run: (nib) ->
             input_values = []
@@ -333,14 +334,7 @@ module.factory 'interpreter', ($q, $http) ->
             for input in @implementation.inputs
                 do (input) =>
                     input_values.push _.memoize =>
-                        connection = the_scope.subroutine.find_connection 'to', @, input
-                        throw new NotConnected unless connection
-                        {node, nib} = connection.from
-
-                        if node instanceof Subroutine
-                            return the_scope.inputs[nib.index]()
-                        else
-                            return node.evaluate the_scope, nib
+                        the_scope.subroutine.evaluate_connection the_scope, @, input
             return input_values
 
     class UnknownNode extends Node
