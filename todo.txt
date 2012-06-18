@@ -1,4 +1,19 @@
-- serious problem
+- networking / publishing / collaboration
+This is a serious component.  What should I do for it?  Hm.
+Currently it is in a 100% local form.  Will you always be able to download the whole library?  Probably not, but perhaps I can solve that problem when I come to it.
+
+Will need a system to fetch newly published functions.  Should they show up in a different area from the normal functions?
+
+
+
+
+
+
+
+
+
+
+- serious problem -- averted
 Creating new inputs/outputs on a subroutine does not update that subroutines uses.  It needs to.  It would be nice if this information were linked somehow, but unfortunately an input object on one side is an output on the other.  But somehow all the implementations need to know if things are changing!  Ugh.  hm.
 
 It's really important to keep track of what nibs things are connected to with more than just their name or index.  Nibs need IDs.  Nibs should actually belong to functions, and just be referenced by applications.  That way they do double duty.  Gotta treat them differently whether you're connecting to a subroutine or not that way though.
@@ -16,6 +31,14 @@ Connections should connect to nib objects, and they should be remembered by ID. 
 - other important stuff
     - placeholder names - done
     - proper events for inputs - done
+    - finish the 'make subroutine from' call
+    - contextual warning when deleting nibs from definitions
+    - rearrange nib ordering with drag and drop (should be easy now)
+
+
+- networking
+
+
 
 - reduce uses of literal by uniquifying them on creation?  But what if you want to edit them?  How do you edit literals?
 

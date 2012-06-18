@@ -22,31 +22,29 @@
 
   module.directive('ace', function() {
     return {
-      scope: {
-        ace: '='
-      },
-      link: function(scope, element, attributes) {
-        var JavaScriptMode, changing, editor, expression, session, set_value;
-        expression = attributes.ace;
+      restrict: 'A',
+      require: '?ngModel',
+      link: function(scope, element, attributes, ngModel) {
+        var JavaScriptMode, changing, editor, read, session;
         JavaScriptMode = require("ace/mode/javascript").Mode;
         editor = ace.edit(element[0]);
         session = editor.getSession();
         session.setMode(new JavaScriptMode());
+        if (!ngModel) {
+          return;
+        }
         changing = false;
-        set_value = null;
-        scope.$watch('ace', function(value) {
-          if (value !== set_value) {
-            changing = true;
-            session.setValue(value);
-            return changing = false;
-          }
-        });
+        ngModel.$render = function() {
+          changing = true;
+          session.setValue(ngModel.$viewValue || '');
+          return changing = false;
+        };
+        read = function() {
+          return ngModel.$setViewValue(session.getValue());
+        };
         return session.on('change', function() {
           if (!changing) {
-            return scope.$apply(function() {
-              set_value = session.getValue();
-              return scope.ace = set_value;
-            });
+            return scope.$apply(read);
           }
         });
       }

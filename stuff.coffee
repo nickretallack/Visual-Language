@@ -11,29 +11,29 @@ module.filter 'text_or_id', ->
         obj.text or obj.id
 
 module.directive 'ace', ->
-    scope:
-        ace:'='
-    link:(scope, element, attributes) ->
-        expression = attributes.ace
+    restrict: 'A'
+    require: '?ngModel'
+    #scope:
+    #    ace:'='
+    link:(scope, element, attributes, ngModel) ->
+        # set up ace
         JavaScriptMode = require("ace/mode/javascript").Mode
-
         editor = ace.edit element[0]
         session = editor.getSession()
         session.setMode new JavaScriptMode()
 
-        changing = false
-        set_value = null
-        scope.$watch 'ace', (value) ->
-            if value isnt set_value
-                changing = true
-                session.setValue value
-                changing = false
+        # set up data binding
+        return unless ngModel
 
-        session.on 'change', ->
-            unless changing
-                scope.$apply ->
-                    set_value = session.getValue()
-                    scope.ace = set_value
+        changing = false
+        ngModel.$render = ->
+            changing = true
+            session.setValue ngModel.$viewValue or ''
+            changing = false
+
+        read = -> ngModel.$setViewValue session.getValue()
+        session.on 'change', -> scope.$apply read unless changing
+
 
 module.directive 'shrinkyInput', ->
     link:(scope, element, attributes, controller) ->
