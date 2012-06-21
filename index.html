@@ -50,8 +50,8 @@
 <div id="tools" ng-controller="library" class="span4">
 <table class="table table-condensed table-striped">
 
-<tr ng-show="is_valid_json(search) && current_object.type == 'subroutine'">
-    <td class="name">Literal
+<tr ng-show="is_valid_json(search)">
+    <td class="name">JSON Literal
     <td>
     <td><a ng-click="use_value(search)">value</a>
 </tr>

@@ -13,8 +13,6 @@ module.filter 'text_or_id', ->
 module.directive 'ace', ->
     restrict: 'A'
     require: '?ngModel'
-    #scope:
-    #    ace:'='
     link:(scope, element, attributes, ngModel) ->
         # set up ace
         JavaScriptMode = require("ace/mode/javascript").Mode
