@@ -1,6 +1,12 @@
 module = angular.module 'vislang'
 module.factory 'interpreter', ($q, $http) ->
-    schema_version = 1
+    schema_version = 2
+
+    make_index_map = (objects, attribute) ->
+        result = {}
+        for obj in objects
+            result[obj[attribute]] = obj
+        result
 
     ### EXCEPTION TYPES ###
 
@@ -24,17 +30,27 @@ module.factory 'interpreter', ($q, $http) ->
 
     ### DEFINITION TYPES ###
 
-    class Definition
+    class Type
         toJSON: ->
-            id:@id
-            text:@text
-            type:@type
+            type:@constructor.name
+
+    class Definition extends Type
+        toJSON: ->
+            _.extend super(),
+                id:@id
+                text:@text
+
+        find_nib: (id) ->
+            for nib in @inputs.concat @outputs
+                return nib if nib.id is id
 
     class Subroutine extends Definition
         fromJSON: (data) ->
             all_definitions[@id] = @
-            @inputs = ((new Input).fromJSON {text:nib_data, index:index}, @ for nib_data, index in data.inputs)
-            @outputs = ((new Output).fromJSON {text:nib_data, index:index}, @ for nib_data, index in data.outputs)
+            @inputs = ((new Input).fromJSON nib_data, @ for nib_data in data.inputs)
+            @outputs = ((new Output).fromJSON nib_data, @ for nib_data in data.outputs)
+            #@inputs = ((new Input).fromJSON {text:nib_data, index:index}, @ for nib_data, index in data.inputs)
+            #@outputs = ((new Output).fromJSON {text:nib_data, index:index}, @ for nib_data, index in data.outputs)
             @
 
         initialize: ->
@@ -85,7 +101,7 @@ module.factory 'interpreter', ($q, $http) ->
             @outputs.splice nib.index, 1
 
         toJSON: ->
-            _.extend super()
+            _.extend super(),
                 inputs:@inputs
                 outputs:@outputs
 
@@ -93,7 +109,7 @@ module.factory 'interpreter', ($q, $http) ->
     class JavaScript extends Subroutine
         type:'javascript'
         fromJSON: (data) ->
-            {name:@text, @id, @memo_implementation, @output_implementation} = data
+            {text:@text, @id, @memo_implementation, @output_implementation} = data
             super data
 
         toJSON: ->
@@ -135,11 +151,11 @@ module.factory 'interpreter', ($q, $http) ->
 
         fromJSON: (data) ->
             ### Populate from the persistence format ###
-            {name:@text, @id} = data
+            {text:@text, @id} = data
             super data
 
         toJSON: ->
-            _.extend super()
+            _.extend super(),
                 nodes:_.values @nodes
                 connections:_.values @connections
 
@@ -331,24 +347,36 @@ module.factory 'interpreter', ($q, $http) ->
 
     class Literal extends Definition # Abstract
         constructor: ->
+            #all_definitions[@id] = @
+
+        fromJSON: ({@text, @id}) ->
+            @id ?= UUID()
             all_definitions[@id] = @
             @inputs = []
             @outputs = [(new Output).initialize(@id)]
+            @
         #content_id: -> CryptoJS.SHA256(@text).toString(CryptoJS.enc.Base64)
 
     class JSONLiteral extends Literal
         type:'json_literal'
-        constructor:(@text, @id=UUID()) -> super()
         evaluate: -> eval_expression @text
 
     class StringLiteral extends Literal
         type:'string_literal'
-        constructor:(@text, @id=UUID()) -> super()
         evaluate: -> @text
+
+    definition_classes = [
+        Graph
+        JavaScript
+        JSONLiteral
+        StringLiteral
+    ]
+
+    definition_class_map = make_index_map definition_classes, 'name'
 
     ### NODE TYPES ###
 
-    class Node # Abstract
+    class Node extends Type# Abstract
         constructor: ->
             @scope.nodes[@id] = @
 
@@ -361,10 +389,10 @@ module.factory 'interpreter', ($q, $http) ->
                 nib.delete_connections()
 
         toJSON: ->
-            id:@id
-            type:@type
-            implementation_id:@implementation.id
-            position:@position
+            _.extend super(),
+                id:@id
+                implementation_id:@implementation.id
+                position:@position
 
     class Call extends Node
         type:'call'
@@ -409,6 +437,12 @@ module.factory 'interpreter', ($q, $http) ->
             @outputs = []
             super()
 
+    node_classes = [
+        Call
+        Value
+    ]
+
+    node_class_map = make_index_map node_classes, 'name'
 
     ### OTHER TYPES ###
 
@@ -493,41 +527,91 @@ module.factory 'interpreter', ($q, $http) ->
     start_saving = -> setInterval save_state, 500
 
     save_state = ->
-        graphs = {}
-        codes = {}
-        for id, subroutine of all_definitions
-            if subroutine instanceof Graph
-                graphs[subroutine.id] = subroutine
-            else
-                codes[subroutine.id] = subroutine
-
         state =
-            subroutines:graphs
-            builtins:codes
+            definitions:_.values all_definitions
             schema_version:schema_version
 
         localStorage.state = JSON.stringify state
 
     load_state = (data) ->
-        subroutines = {}
-        second_pass = []
+        switch data.schema_version
+            when 1
+                subroutines = {}
+                second_pass = []
 
-        # load builtins
-        for id, builtin_data of data.builtins
-            builtin = (new JavaScript).fromJSON builtin_data
-            subroutines[builtin.id] = builtin
+                # load builtins
+                for id, builtin_data of data.builtins
+                    builtin_data.text = builtin_data.name
+                    builtin = (new JavaScript).fromJSON builtin_data
+                    subroutines[builtin.id] = builtin
 
-        # load subroutine declarations
-        for id, subroutine_data of data.subroutines
-            subroutine = (new Graph).fromJSON subroutine_data
-            subroutines[subroutine.id] = subroutine
-            second_pass.push subroutine
+                # load subroutine declarations
+                for id, subroutine_data of data.subroutines
+                    subroutine_data.text = subroutine_data.name
+                    subroutine = (new Graph).fromJSON subroutine_data
+                    subroutines[subroutine.id] = subroutine
+                    second_pass.push subroutine
 
-        # load subroutine implementations
-        for subroutine in second_pass
-            load_implementation subroutine, data.subroutines[subroutine.id], subroutines
+                # load subroutine implementations
+                for subroutine in second_pass
+                    load_implementation subroutine, data.subroutines[subroutine.id], subroutines
 
-        subroutines
+                all_definitions
+
+            when 2
+                implementation_pass = []
+                for id, definition_data of data.definitions
+                    the_class = definition_class_map[definition_data.type]
+                    instance = (new the_class).fromJSON definition_data
+                    if instance instanceof Graph
+                        implementation_pass.push
+                            graph:instance
+                            data:definition_data
+
+                for {graph, data} in implementation_pass
+                    load_implementation_v2 graph, data
+
+                all_definitions
+
+    load_implementation_v2 = (graph, data) ->
+        for node_data in data.nodes
+            node_class = node_class_map[node_data.type]
+            position = V node_data.position
+            implementation = all_definitions[node_data.implementation_id]
+            # TODO: in case no implementation is found, create an unknown node
+            node = new node_class graph, position, implementation, node_data.id
+            unless implementation?
+                console.log 'what'
+                console.log 'what'
+            # Automatically populates graph.nodes
+
+        for connection_data in data.connections
+            get_node = (direction) ->
+                id = connection_data[direction].node
+                if id is graph.id then graph else graph.nodes[id]
+
+            from_node = get_node 'from'
+            to_node = get_node 'to'
+
+            get_nib = (node, direction) ->
+                implementation = if node instanceof Definition then node else node.implementation
+                nib = implementation.find_nib connection_data[direction].nib
+                unless nib?
+                    console.log 'what'
+                    console.log 'what'
+                nib
+
+            from_nib = get_nib from_node, 'from'
+            to_nib = get_nib to_node, 'to'
+
+            new Connection graph,
+                from:
+                    node:from_node
+                    nib:from_nib
+                to:
+                    node:to_node
+                    nib:to_nib
+            , connection_data.id
 
     load_implementation = (subroutine, data, subroutines) ->
         for node in data.nodes
@@ -542,7 +626,7 @@ module.factory 'interpreter', ($q, $http) ->
                     if found_value
                         found_value
                     else
-                        value = new JSONLiteral node.text
+                        value = (new JSONLiteral).fromJSON text:node.text
                         subroutines[value.id] = value
                         value
 
@@ -559,9 +643,6 @@ module.factory 'interpreter', ($q, $http) ->
             ### legacy bullshit ###
             get_connector = (nib) ->
                 if nib.parent_id is subroutine.id then subroutine else subroutine.nodes[nib.parent_id]
-
-            get_nib = (node, data) ->
-                data.index
 
             from = get_connector connection.input
             to = get_connector connection.output
@@ -608,7 +689,7 @@ module.factory 'interpreter', ($q, $http) ->
         for id, obj of load_state source_data
             all_definitions[id] = obj
         loaded.resolve true
-        #start_saving()
+        start_saving()
 
     make_connection:make_connection
     find_nib_uses:find_nib_uses

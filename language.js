@@ -7,8 +7,17 @@
   module = angular.module('vislang');
 
   module.factory('interpreter', function($q, $http) {
-    var Call, CodeSyntaxError, Connection, Definition, Exit, Graph, Input, InputError, JSONLiteral, JavaScript, Literal, Nib, Node, NotConnected, NotImplemented, Output, RuntimeException, StringLiteral, Subroutine, UnknownNode, Value, all_definitions, dissociate_exception, eval_expression, execute, find_nib_uses, find_value, ignore_if_disconnected, is_input, load_implementation, load_state, loaded, make_connection, make_value, save_state, schema_version, source_data, source_data_deferred, start_saving;
-    schema_version = 1;
+    var Call, CodeSyntaxError, Connection, Definition, Exit, Graph, Input, InputError, JSONLiteral, JavaScript, Literal, Nib, Node, NotConnected, NotImplemented, Output, RuntimeException, StringLiteral, Subroutine, Type, UnknownNode, Value, all_definitions, definition_class_map, definition_classes, dissociate_exception, eval_expression, execute, find_nib_uses, find_value, ignore_if_disconnected, is_input, load_implementation, load_implementation_v2, load_state, loaded, make_connection, make_index_map, make_value, node_class_map, node_classes, save_state, schema_version, source_data, source_data_deferred, start_saving;
+    schema_version = 2;
+    make_index_map = function(objects, attribute) {
+      var obj, result, _i, _len;
+      result = {};
+      for (_i = 0, _len = objects.length; _i < _len; _i++) {
+        obj = objects[_i];
+        result[obj[attribute]] = obj;
+      }
+      return result;
+    };
     /* EXCEPTION TYPES
     */
 
@@ -82,21 +91,48 @@
     /* DEFINITION TYPES
     */
 
-    Definition = (function() {
+    Type = (function() {
 
-      function Definition() {}
+      function Type() {}
+
+      Type.prototype.toJSON = function() {
+        return {
+          type: this.constructor.name
+        };
+      };
+
+      return Type;
+
+    })();
+    Definition = (function(_super) {
+
+      __extends(Definition, _super);
+
+      function Definition() {
+        return Definition.__super__.constructor.apply(this, arguments);
+      }
 
       Definition.prototype.toJSON = function() {
-        return {
+        return _.extend(Definition.__super__.toJSON.call(this), {
           id: this.id,
-          text: this.text,
-          type: this.type
-        };
+          text: this.text
+        });
+      };
+
+      Definition.prototype.find_nib = function(id) {
+        var nib, _i, _len, _ref;
+        _ref = this.inputs.concat(this.outputs);
+        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+          nib = _ref[_i];
+          if (nib.id === id) {
+            return nib;
+          }
+        }
       };
 
       return Definition;
 
-    })();
+    })(Type);
     Subroutine = (function(_super) {
 
       __extends(Subroutine, _super);
@@ -106,18 +142,15 @@
       }
 
       Subroutine.prototype.fromJSON = function(data) {
-        var index, nib_data;
+        var nib_data;
         all_definitions[this.id] = this;
         this.inputs = (function() {
           var _i, _len, _ref, _results;
           _ref = data.inputs;
           _results = [];
-          for (index = _i = 0, _len = _ref.length; _i < _len; index = ++_i) {
-            nib_data = _ref[index];
-            _results.push((new Input).fromJSON({
-              text: nib_data,
-              index: index
-            }, this));
+          for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+            nib_data = _ref[_i];
+            _results.push((new Input).fromJSON(nib_data, this));
           }
           return _results;
         }).call(this);
@@ -125,12 +158,9 @@
           var _i, _len, _ref, _results;
           _ref = data.outputs;
           _results = [];
-          for (index = _i = 0, _len = _ref.length; _i < _len; index = ++_i) {
-            nib_data = _ref[index];
-            _results.push((new Output).fromJSON({
-              text: nib_data,
-              index: index
-            }, this));
+          for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+            nib_data = _ref[_i];
+            _results.push((new Output).fromJSON(nib_data, this));
           }
           return _results;
         }).call(this);
@@ -214,10 +244,10 @@
       };
 
       Subroutine.prototype.toJSON = function() {
-        return _.extend(Subroutine.__super__.toJSON.call(this)({
+        return _.extend(Subroutine.__super__.toJSON.call(this), {
           inputs: this.inputs,
           outputs: this.outputs
-        }));
+        });
       };
 
       return Subroutine;
@@ -234,7 +264,7 @@
       JavaScript.prototype.type = 'javascript';
 
       JavaScript.prototype.fromJSON = function(data) {
-        this.text = data.name, this.id = data.id, this.memo_implementation = data.memo_implementation, this.output_implementation = data.output_implementation;
+        this.text = data.text, this.id = data.id, this.memo_implementation = data.memo_implementation, this.output_implementation = data.output_implementation;
         return JavaScript.__super__.fromJSON.call(this, data);
       };
 
@@ -298,15 +328,15 @@
       Graph.prototype.fromJSON = function(data) {
         /* Populate from the persistence format
         */
-        this.text = data.name, this.id = data.id;
+        this.text = data.text, this.id = data.id;
         return Graph.__super__.fromJSON.call(this, data);
       };
 
       Graph.prototype.toJSON = function() {
-        return _.extend(Graph.__super__.toJSON.call(this)({
+        return _.extend(Graph.__super__.toJSON.call(this), {
           nodes: _.values(this.nodes),
           connections: _.values(this.connections)
-        }));
+        });
       };
 
       /* RUNNING
@@ -553,11 +583,19 @@
 
       __extends(Literal, _super);
 
-      function Literal() {
+      function Literal() {}
+
+      Literal.prototype.fromJSON = function(_arg) {
+        var _ref;
+        this.text = _arg.text, this.id = _arg.id;
+        if ((_ref = this.id) == null) {
+          this.id = UUID();
+        }
         all_definitions[this.id] = this;
         this.inputs = [];
         this.outputs = [(new Output).initialize(this.id)];
-      }
+        return this;
+      };
 
       return Literal;
 
@@ -566,13 +604,11 @@
 
       __extends(JSONLiteral, _super);
 
-      JSONLiteral.prototype.type = 'json_literal';
-
-      function JSONLiteral(text, id) {
-        this.text = text;
-        this.id = id != null ? id : UUID();
-        JSONLiteral.__super__.constructor.call(this);
+      function JSONLiteral() {
+        return JSONLiteral.__super__.constructor.apply(this, arguments);
       }
+
+      JSONLiteral.prototype.type = 'json_literal';
 
       JSONLiteral.prototype.evaluate = function() {
         return eval_expression(this.text);
@@ -585,13 +621,11 @@
 
       __extends(StringLiteral, _super);
 
-      StringLiteral.prototype.type = 'string_literal';
-
-      function StringLiteral(text, id) {
-        this.text = text;
-        this.id = id != null ? id : UUID();
-        StringLiteral.__super__.constructor.call(this);
+      function StringLiteral() {
+        return StringLiteral.__super__.constructor.apply(this, arguments);
       }
+
+      StringLiteral.prototype.type = 'string_literal';
 
       StringLiteral.prototype.evaluate = function() {
         return this.text;
@@ -600,10 +634,14 @@
       return StringLiteral;
 
     })(Literal);
+    definition_classes = [Graph, JavaScript, JSONLiteral, StringLiteral];
+    definition_class_map = make_index_map(definition_classes, 'name');
     /* NODE TYPES
     */
 
-    Node = (function() {
+    Node = (function(_super) {
+
+      __extends(Node, _super);
 
       function Node() {
         this.scope.nodes[this.id] = this;
@@ -630,17 +668,16 @@
       };
 
       Node.prototype.toJSON = function() {
-        return {
+        return _.extend(Node.__super__.toJSON.call(this), {
           id: this.id,
-          type: this.type,
           implementation_id: this.implementation.id,
           position: this.position
-        };
+        });
       };
 
       return Node;
 
-    })();
+    })(Type);
     Call = (function(_super) {
 
       __extends(Call, _super);
@@ -737,6 +774,8 @@
       return UnknownNode;
 
     })(Node);
+    node_classes = [Call, Value];
+    node_class_map = make_index_map(node_classes, 'name');
     /* OTHER TYPES
     */
 
@@ -900,55 +939,124 @@
       return setInterval(save_state, 500);
     };
     save_state = function() {
-      var codes, graphs, id, state, subroutine;
-      graphs = {};
-      codes = {};
-      for (id in all_definitions) {
-        subroutine = all_definitions[id];
-        if (subroutine instanceof Graph) {
-          graphs[subroutine.id] = subroutine;
-        } else {
-          codes[subroutine.id] = subroutine;
-        }
-      }
+      var state;
       state = {
-        subroutines: graphs,
-        builtins: codes,
+        definitions: _.values(all_definitions),
         schema_version: schema_version
       };
       return localStorage.state = JSON.stringify(state);
     };
     load_state = function(data) {
-      var builtin, builtin_data, id, second_pass, subroutine, subroutine_data, subroutines, _i, _len, _ref, _ref1;
-      subroutines = {};
-      second_pass = [];
-      _ref = data.builtins;
-      for (id in _ref) {
-        builtin_data = _ref[id];
-        builtin = (new JavaScript).fromJSON(builtin_data);
-        subroutines[builtin.id] = builtin;
+      var builtin, builtin_data, definition_data, graph, id, implementation_pass, instance, second_pass, subroutine, subroutine_data, subroutines, the_class, _i, _j, _len, _len1, _ref, _ref1, _ref2, _ref3;
+      switch (data.schema_version) {
+        case 1:
+          subroutines = {};
+          second_pass = [];
+          _ref = data.builtins;
+          for (id in _ref) {
+            builtin_data = _ref[id];
+            builtin_data.text = builtin_data.name;
+            builtin = (new JavaScript).fromJSON(builtin_data);
+            subroutines[builtin.id] = builtin;
+          }
+          _ref1 = data.subroutines;
+          for (id in _ref1) {
+            subroutine_data = _ref1[id];
+            subroutine_data.text = subroutine_data.name;
+            subroutine = (new Graph).fromJSON(subroutine_data);
+            subroutines[subroutine.id] = subroutine;
+            second_pass.push(subroutine);
+          }
+          for (_i = 0, _len = second_pass.length; _i < _len; _i++) {
+            subroutine = second_pass[_i];
+            load_implementation(subroutine, data.subroutines[subroutine.id], subroutines);
+          }
+          return all_definitions;
+        case 2:
+          implementation_pass = [];
+          _ref2 = data.definitions;
+          for (id in _ref2) {
+            definition_data = _ref2[id];
+            the_class = definition_class_map[definition_data.type];
+            instance = (new the_class).fromJSON(definition_data);
+            if (instance instanceof Graph) {
+              implementation_pass.push({
+                graph: instance,
+                data: definition_data
+              });
+            }
+          }
+          for (_j = 0, _len1 = implementation_pass.length; _j < _len1; _j++) {
+            _ref3 = implementation_pass[_j], graph = _ref3.graph, data = _ref3.data;
+            load_implementation_v2(graph, data);
+          }
+          return all_definitions;
       }
-      _ref1 = data.subroutines;
-      for (id in _ref1) {
-        subroutine_data = _ref1[id];
-        subroutine = (new Graph).fromJSON(subroutine_data);
-        subroutines[subroutine.id] = subroutine;
-        second_pass.push(subroutine);
+    };
+    load_implementation_v2 = function(graph, data) {
+      var connection_data, from_nib, from_node, get_nib, get_node, implementation, node, node_class, node_data, position, to_nib, to_node, _i, _j, _len, _len1, _ref, _ref1, _results;
+      _ref = data.nodes;
+      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+        node_data = _ref[_i];
+        node_class = node_class_map[node_data.type];
+        position = V(node_data.position);
+        implementation = all_definitions[node_data.implementation_id];
+        node = new node_class(graph, position, implementation, node_data.id);
+        if (implementation == null) {
+          console.log('what');
+          console.log('what');
+        }
       }
-      for (_i = 0, _len = second_pass.length; _i < _len; _i++) {
-        subroutine = second_pass[_i];
-        load_implementation(subroutine, data.subroutines[subroutine.id], subroutines);
+      _ref1 = data.connections;
+      _results = [];
+      for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
+        connection_data = _ref1[_j];
+        get_node = function(direction) {
+          var id;
+          id = connection_data[direction].node;
+          if (id === graph.id) {
+            return graph;
+          } else {
+            return graph.nodes[id];
+          }
+        };
+        from_node = get_node('from');
+        to_node = get_node('to');
+        get_nib = function(node, direction) {
+          var nib;
+          implementation = node instanceof Definition ? node : node.implementation;
+          nib = implementation.find_nib(connection_data[direction].nib);
+          if (nib == null) {
+            console.log('what');
+            console.log('what');
+          }
+          return nib;
+        };
+        from_nib = get_nib(from_node, 'from');
+        to_nib = get_nib(to_node, 'to');
+        _results.push(new Connection(graph, {
+          from: {
+            node: from_node,
+            nib: from_nib
+          },
+          to: {
+            node: to_node,
+            nib: to_nib
+          }
+        }, connection_data.id));
       }
-      return subroutines;
+      return _results;
     };
     load_implementation = function(subroutine, data, subroutines) {
-      var connection, found_value, from, get_connector, get_nib, implementation, input, node, output, position, to, value, _i, _j, _len, _len1, _ref, _ref1, _results;
+      var connection, found_value, from, get_connector, implementation, input, node, output, position, to, value, _i, _j, _len, _len1, _ref, _ref1, _results;
       _ref = data.nodes;
       for (_i = 0, _len = _ref.length; _i < _len; _i++) {
         node = _ref[_i];
         position = V(node.position);
         if (node.type === 'literal') {
-          implementation = 'implementation_id' in node ? subroutines[node.implementation_id] : (found_value = find_value(node.text, JSONLiteral, subroutines), found_value ? found_value : (value = new JSONLiteral(node.text), subroutines[value.id] = value, value));
+          implementation = 'implementation_id' in node ? subroutines[node.implementation_id] : (found_value = find_value(node.text, JSONLiteral, subroutines), found_value ? found_value : (value = (new JSONLiteral).fromJSON({
+            text: node.text
+          }), subroutines[value.id] = value, value));
           new Value(subroutine, position, implementation, node.id);
         } else {
           implementation = subroutines[node.implementation_id];
@@ -972,9 +1080,6 @@
           } else {
             return subroutine.nodes[nib.parent_id];
           }
-        };
-        get_nib = function(node, data) {
-          return data.index;
         };
         from = get_connector(connection.input);
         to = get_connector(connection.output);
@@ -1031,7 +1136,8 @@
         obj = _ref[id];
         all_definitions[id] = obj;
       }
-      return loaded.resolve(true);
+      loaded.resolve(true);
+      return start_saving();
     });
     return {
       make_connection: make_connection,
