@@ -106,7 +106,7 @@
         $scope.selection = [];
         this.nib_views = {};
         $scope.$on('new-graph-from-selection', function() {
-          subroutine = (new interpreter.Graph).initialize();
+          subroutine = new interpreter.Graph;
           return subroutine.make_from($scope.selection);
         });
         transform_the_position = function(position) {

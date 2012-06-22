@@ -108,9 +108,22 @@
 
       __extends(Definition, _super);
 
-      function Definition() {
-        return Definition.__super__.constructor.apply(this, arguments);
+      function Definition(_arg) {
+        var _ref, _ref1;
+        _ref = _arg != null ? _arg : {}, this.id = _ref.id, this.text = _ref.text;
+        if ((_ref1 = this.id) == null) {
+          this.id = UUID();
+        }
+        all_definitions[this.id] = this;
       }
+
+      Definition.prototype.fromJSON = function() {
+        return this;
+      };
+
+      Definition.prototype.initialize = function() {
+        return this;
+      };
 
       Definition.prototype.toJSON = function() {
         return _.extend(Definition.__super__.toJSON.call(this), {
@@ -137,45 +150,35 @@
 
       __extends(Subroutine, _super);
 
-      function Subroutine() {
-        return Subroutine.__super__.constructor.apply(this, arguments);
-      }
-
-      Subroutine.prototype.fromJSON = function(data) {
-        var nib_data;
-        all_definitions[this.id] = this;
+      function Subroutine(_arg) {
+        var inputs, nib_data, outputs, _ref;
+        _ref = _arg != null ? _arg : {}, inputs = _ref.inputs, outputs = _ref.outputs;
+        Subroutine.__super__.constructor.apply(this, arguments);
         this.inputs = (function() {
-          var _i, _len, _ref, _results;
-          _ref = data.inputs;
+          var _i, _len, _ref1, _results;
+          _ref1 = inputs || [];
           _results = [];
-          for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-            nib_data = _ref[_i];
-            _results.push((new Input).fromJSON(nib_data, this));
+          for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
+            nib_data = _ref1[_i];
+            _results.push(new Input(_.extend({
+              scope: this
+            }, nib_data)));
           }
           return _results;
         }).call(this);
         this.outputs = (function() {
-          var _i, _len, _ref, _results;
-          _ref = data.outputs;
+          var _i, _len, _ref1, _results;
+          _ref1 = outputs || [];
           _results = [];
-          for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-            nib_data = _ref[_i];
-            _results.push((new Output).fromJSON(nib_data, this));
+          for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
+            nib_data = _ref1[_i];
+            _results.push(new Output(_.extend({
+              scope: this
+            }, nib_data)));
           }
           return _results;
         }).call(this);
-        return this;
-      };
-
-      Subroutine.prototype.initialize = function() {
-        /* Populate fields for a brand new instance.
-        */
-        this.id = UUID();
-        all_definitions[this.id] = this;
-        this.inputs = [];
-        this.outputs = [];
-        return this;
-      };
+      }
 
       Subroutine.prototype.user_inputs = function() {
         var input, input_values, _fn, _i, _len, _ref;
@@ -228,11 +231,15 @@
       };
 
       Subroutine.prototype.add_input = function() {
-        return this.inputs.push((new Input).initialize());
+        return this.inputs.push(new Input({
+          scope: this
+        }));
       };
 
       Subroutine.prototype.add_output = function() {
-        return this.outputs.push((new Output).initialize());
+        return this.outputs.push(new Output({
+          scope: this
+        }));
       };
 
       Subroutine.prototype.delete_input = function(nib) {
@@ -257,16 +264,13 @@
 
       __extends(JavaScript, _super);
 
-      function JavaScript() {
-        return JavaScript.__super__.constructor.apply(this, arguments);
-      }
-
       JavaScript.prototype.type = 'javascript';
 
-      JavaScript.prototype.fromJSON = function(data) {
-        this.text = data.text, this.id = data.id, this.memo_implementation = data.memo_implementation, this.output_implementation = data.output_implementation;
-        return JavaScript.__super__.fromJSON.call(this, data);
-      };
+      function JavaScript(_arg) {
+        var _ref;
+        _ref = _arg != null ? _arg : {}, this.memo_implementation = _ref.memo_implementation, this.output_implementation = _ref.output_implementation;
+        JavaScript.__super__.constructor.apply(this, arguments);
+      }
 
       JavaScript.prototype.toJSON = function() {
         return _.extend(JavaScript.__super__.toJSON.call(this), {
@@ -318,19 +322,10 @@
       Graph.prototype.type = 'graph';
 
       function Graph() {
-        /* Initialize the bare minimum bits.
-        Be sure to call fromJSON or initialize next.
-        */
+        Graph.__super__.constructor.apply(this, arguments);
         this.nodes = {};
         this.connections = {};
       }
-
-      Graph.prototype.fromJSON = function(data) {
-        /* Populate from the persistence format
-        */
-        this.text = data.text, this.id = data.id;
-        return Graph.__super__.fromJSON.call(this, data);
-      };
 
       Graph.prototype.toJSON = function() {
         return _.extend(Graph.__super__.toJSON.call(this), {
@@ -576,26 +571,33 @@
       if (force_string == null) {
         force_string = false;
       }
-      implementation = user_input instanceof Definition ? user_input : force_string ? (find_value(user_input, StringLiteral)) || new StringLiteral(user_input) : (value = eval_expression(user_input), value instanceof String ? (find_value(value, StringLiteral)) || new StringLiteral(value) : (find_value(user_input, JSONLiteral)) || new JSONLiteral(value));
-      return new Value(scope, position, implementation);
+      implementation = user_input instanceof Definition ? user_input : force_string ? (find_value(user_input, StringLiteral)) || new StringLiteral({
+        text: user_input
+      }) : (value = eval_expression(user_input), value instanceof String ? (find_value(value, StringLiteral)) || new StringLiteral({
+        text: value
+      }) : (find_value(user_input, JSONLiteral)) || new JSONLiteral({
+        text: value
+      }));
+      return new Value({
+        scope: scope,
+        position: position,
+        implementation: implementation
+      });
     };
     Literal = (function(_super) {
 
       __extends(Literal, _super);
 
-      function Literal() {}
-
-      Literal.prototype.fromJSON = function(_arg) {
-        var _ref;
-        this.text = _arg.text, this.id = _arg.id;
-        if ((_ref = this.id) == null) {
-          this.id = UUID();
-        }
-        all_definitions[this.id] = this;
+      function Literal() {
+        Literal.__super__.constructor.apply(this, arguments);
         this.inputs = [];
-        this.outputs = [(new Output).initialize(this.id)];
-        return this;
-      };
+        this.outputs = [
+          new Output({
+            scope: this,
+            id: this.id
+          })
+        ];
+      }
 
       return Literal;
 
@@ -643,7 +645,9 @@
 
       __extends(Node, _super);
 
-      function Node() {
+      function Node(_arg) {
+        var _ref;
+        _ref = _arg != null ? _arg : {}, this.scope = _ref.scope, this.id = _ref.id, this.position = _ref.position, this.implementation = _ref.implementation;
         this.scope.nodes[this.id] = this;
       }
 
@@ -682,15 +686,11 @@
 
       __extends(Call, _super);
 
-      Call.prototype.type = 'call';
-
-      function Call(scope, position, implementation, id) {
-        this.scope = scope;
-        this.position = position;
-        this.implementation = implementation;
-        this.id = id != null ? id : UUID();
-        Call.__super__.constructor.call(this);
+      function Call() {
+        return Call.__super__.constructor.apply(this, arguments);
       }
+
+      Call.prototype.type = 'call';
 
       Call.prototype.virtual_inputs = function(the_scope) {
         var input, input_values, _fn, _i, _len, _ref,
@@ -736,15 +736,11 @@
 
       __extends(Value, _super);
 
-      Value.prototype.type = 'value';
-
-      function Value(scope, position, implementation, id) {
-        this.scope = scope;
-        this.position = position;
-        this.implementation = implementation;
-        this.id = id != null ? id : UUID();
-        Value.__super__.constructor.call(this);
+      function Value() {
+        return Value.__super__.constructor.apply(this, arguments);
       }
+
+      Value.prototype.type = 'value';
 
       Value.prototype.evaluate = function() {
         return this.implementation.evaluate();
@@ -781,24 +777,15 @@
 
     Nib = (function() {
 
-      function Nib() {}
-
-      Nib.prototype.fromJSON = function(data, parent) {
-        var _ref;
-        this.parent = parent;
-        this.text = data.text, this.index = data.index, this.id = data.id;
-        if ((_ref = this.id) == null) {
+      function Nib(_arg) {
+        var _ref, _ref1;
+        _ref = _arg != null ? _arg : {}, this.parent = _ref.parent, this.text = _ref.text, this.id = _ref.id;
+        if ((_ref1 = this.id) == null) {
           this.id = UUID();
         }
-        return this;
-      };
+      }
 
-      Nib.prototype.initialize = function(id) {
-        var _ref;
-        this.id = id != null ? id : UUID();
-        if ((_ref = this.id) == null) {
-          this.id = UUID();
-        }
+      Nib.prototype.initialize = function() {
         return this;
       };
 
@@ -836,11 +823,16 @@
     })(Nib);
     Connection = (function() {
 
-      function Connection(scope, _arg, id) {
-        this.scope = scope;
-        this.from = _arg.from, this.to = _arg.to;
-        this.id = id != null ? id : UUID();
+      function Connection(_arg) {
+        var _ref, _ref1;
+        _ref = _arg != null ? _arg : {}, this.scope = _ref.scope, this.from = _ref.from, this.to = _ref.to, this.id = _ref.id;
+        if ((_ref1 = this.id) == null) {
+          this.id = UUID();
+        }
         this.scope.connections[this.id] = this;
+        if (!(this.from instanceof Object && this.to instanceof Object)) {
+          throw "WTF";
+        }
       }
 
       Connection.prototype.toJSON = function() {
@@ -880,7 +872,8 @@
         _ref = [to, from], from = _ref[0], to = _ref[1];
       }
       scope.delete_connections('to', to.node, to.nib);
-      return new Connection(scope, {
+      return new Connection({
+        scope: scope,
         from: from,
         to: to
       });
@@ -973,7 +966,7 @@
           for (id in _ref) {
             builtin_data = _ref[id];
             transform_definition_data(builtin_data);
-            builtin = (new JavaScript).fromJSON(builtin_data);
+            builtin = new JavaScript(builtin_data);
             subroutines[builtin.id] = builtin;
           }
           _ref1 = data.subroutines;
@@ -981,7 +974,7 @@
             subroutine_data = _ref1[id];
             transform_definition_data(subroutine_data);
             subroutine_data.text = subroutine_data.name;
-            subroutine = (new Graph).fromJSON(subroutine_data);
+            subroutine = new Graph(subroutine_data);
             subroutines[subroutine.id] = subroutine;
             second_pass.push(subroutine);
           }
@@ -996,7 +989,7 @@
           for (id in _ref2) {
             definition_data = _ref2[id];
             the_class = definition_class_map[definition_data.type];
-            instance = (new the_class).fromJSON(definition_data);
+            instance = new the_class(definition_data);
             if (instance instanceof Graph) {
               implementation_pass.push({
                 graph: instance,
@@ -1019,11 +1012,12 @@
         node_class = node_class_map[node_data.type];
         position = V(node_data.position);
         implementation = all_definitions[node_data.implementation_id];
-        node = new node_class(graph, position, implementation, node_data.id);
-        if (implementation == null) {
-          console.log('what');
-          console.log('what');
-        }
+        node = new node_class({
+          scope: graph,
+          position: position,
+          implementation: implementation,
+          id: node_data.id
+        });
       }
       _ref1 = data.connections;
       _results = [];
@@ -1044,15 +1038,16 @@
           var nib;
           implementation = node instanceof Definition ? node : node.implementation;
           nib = implementation.find_nib(connection_data[direction].nib);
-          if (nib == null) {
-            console.log('what');
-            console.log('what');
+          if (!nib) {
+            throw "Broken connection!";
           }
           return nib;
         };
         from_nib = get_nib(from_node, 'from');
         to_nib = get_nib(to_node, 'to');
-        _results.push(new Connection(graph, {
+        _results.push(new Connection({
+          id: connection_data.id,
+          scope: graph,
           from: {
             node: from_node,
             nib: from_nib
@@ -1061,25 +1056,35 @@
             node: to_node,
             nib: to_nib
           }
-        }, connection_data.id));
+        }));
       }
       return _results;
     };
     load_implementation = function(subroutine, data, subroutines) {
-      var connection, found_value, from, get_connector, implementation, input, node, output, position, to, value, _i, _j, _len, _len1, _ref, _ref1, _results;
+      var connection, found_value, from_nib, from_node, get_nib, get_node, implementation, node, position, to_nib, to_node, value, _i, _j, _len, _len1, _ref, _ref1, _results;
       _ref = data.nodes;
       for (_i = 0, _len = _ref.length; _i < _len; _i++) {
         node = _ref[_i];
         position = V(node.position);
         if (node.type === 'literal') {
-          implementation = 'implementation_id' in node ? subroutines[node.implementation_id] : (found_value = find_value(node.text, JSONLiteral, subroutines), found_value ? found_value : (value = (new JSONLiteral).fromJSON({
+          implementation = 'implementation_id' in node ? subroutines[node.implementation_id] : (found_value = find_value(node.text, JSONLiteral, subroutines), found_value ? found_value : (value = new JSONLiteral({
             text: node.text
           }), subroutines[value.id] = value, value));
-          new Value(subroutine, position, implementation, node.id);
+          new Value({
+            scope: subroutine,
+            position: position,
+            implementation: implementation,
+            id: node.id
+          });
         } else {
           implementation = subroutines[node.implementation_id];
           if (implementation) {
-            new Call(subroutine, position, implementation, node.id);
+            new Call({
+              scope: subroutine,
+              position: position,
+              implementation: implementation,
+              id: node.id
+            });
           } else {
             new UnknownNode(position, node.type, node.text, node.id);
           }
@@ -1089,38 +1094,34 @@
       _results = [];
       for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
         connection = _ref1[_j];
-        /* legacy bullshit
-        */
-
-        get_connector = function(nib) {
+        get_node = function(nib) {
           if (nib.parent_id === subroutine.id) {
             return subroutine;
           } else {
             return subroutine.nodes[nib.parent_id];
           }
         };
-        from = get_connector(connection.input);
-        to = get_connector(connection.output);
-        input = from instanceof Definition ? from.outputs[connection.input.index] : from.implementation.inputs[connection.input.index];
-        output = to instanceof Definition ? to.inputs[connection.output.index] : to.implementation.outputs[connection.output.index];
-        if (!input) {
-          console.log(subroutine.text);
-          console.log(subroutine.text);
-        }
-        if (!output) {
-          console.log(subroutine.text);
-          console.log(subroutine.text);
-        }
-        _results.push(new Connection(subroutine, {
+        get_nib = function(node, direction1, direction2) {
+          var collection;
+          collection = node instanceof Definition ? node[direction2] : node.implementation[direction1];
+          return collection[connection[direction1.slice(0, -1)].index];
+        };
+        from_node = get_node(connection.input);
+        to_node = get_node(connection.output);
+        from_nib = get_nib(from_node, 'inputs', 'outputs');
+        to_nib = get_nib(to_node, 'outputs', 'inputs');
+        _results.push(new Connection({
+          id: connection.id,
+          scope: subroutine,
           from: {
-            node: to,
-            nib: output
+            node: to_node,
+            nib: to_nib
           },
           to: {
-            node: from,
-            nib: input
+            node: from_node,
+            nib: from_nib
           }
-        }, connection.id));
+        }));
         /*
         
                     # input/output reversal.  TODO: clean up subroutine implementation to avoid this

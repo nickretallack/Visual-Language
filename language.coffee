@@ -35,6 +35,13 @@ module.factory 'interpreter', ($q, $http) ->
             type:@constructor.name
 
     class Definition extends Type
+        constructor: ({@id, @text}={}) ->
+            @id ?= UUID()
+            all_definitions[@id] = @
+
+        fromJSON: -> @
+        initialize: -> @
+
         toJSON: ->
             _.extend super(),
                 id:@id
@@ -45,21 +52,10 @@ module.factory 'interpreter', ($q, $http) ->
                 return nib if nib.id is id
 
     class Subroutine extends Definition
-        fromJSON: (data) ->
-            all_definitions[@id] = @
-            @inputs = ((new Input).fromJSON nib_data, @ for nib_data in data.inputs)
-            @outputs = ((new Output).fromJSON nib_data, @ for nib_data in data.outputs)
-            #@inputs = ((new Input).fromJSON {text:nib_data, index:index}, @ for nib_data, index in data.inputs)
-            #@outputs = ((new Output).fromJSON {text:nib_data, index:index}, @ for nib_data, index in data.outputs)
-            @
-
-        initialize: ->
-            ### Populate fields for a brand new instance. ###
-            @id = UUID()
-            all_definitions[@id] = @
-            @inputs = []
-            @outputs = []
-            @
+        constructor: ({inputs, outputs}={}) ->
+            super
+            @inputs = (new Input _.extend({scope:@}, nib_data) for nib_data in inputs or [])
+            @outputs = (new Output _.extend({scope:@}, nib_data) for nib_data in outputs or [])
 
         user_inputs: ->
             input_values = []
@@ -89,10 +85,10 @@ module.factory 'interpreter', ($q, $http) ->
                     throw exception
 
         add_input: ->
-            @inputs.push (new Input).initialize()
+            @inputs.push new Input scope:@
 
         add_output: ->
-            @outputs.push (new Output).initialize()
+            @outputs.push new Output scope:@
 
         delete_input: (nib) ->
             @inputs.splice nib.index, 1
@@ -108,9 +104,7 @@ module.factory 'interpreter', ($q, $http) ->
 
     class JavaScript extends Subroutine
         type:'javascript'
-        fromJSON: (data) ->
-            {text:@text, @id, @memo_implementation, @output_implementation} = data
-            super data
+        constructor: ({@memo_implementation, @output_implementation}={}) -> super
 
         toJSON: ->
             _.extend super(),
@@ -144,15 +138,9 @@ module.factory 'interpreter', ($q, $http) ->
     class Graph extends Subroutine
         type:'graph'
         constructor: ->
-            ### Initialize the bare minimum bits.
-            Be sure to call fromJSON or initialize next. ###
+            super
             @nodes = {}
             @connections = {}
-
-        fromJSON: (data) ->
-            ### Populate from the persistence format ###
-            {text:@text, @id} = data
-            super data
 
         toJSON: ->
             _.extend super(),
@@ -335,26 +323,25 @@ module.factory 'interpreter', ($q, $http) ->
             user_input
         else
             if force_string
-                (find_value user_input, StringLiteral) or new StringLiteral user_input
+                (find_value user_input, StringLiteral) or new StringLiteral text:user_input
             else
                 value = eval_expression user_input
                 if value instanceof String
-                    (find_value value, StringLiteral) or new StringLiteral value
+                    (find_value value, StringLiteral) or new StringLiteral text:value
                 else
-                    (find_value user_input, JSONLiteral) or new JSONLiteral value
+                    (find_value user_input, JSONLiteral) or new JSONLiteral text:value
 
-        new Value scope, position, implementation
+        new Value
+            scope:scope
+            position: position
+            implementation: implementation
 
     class Literal extends Definition # Abstract
         constructor: ->
-            #all_definitions[@id] = @
-
-        fromJSON: ({@text, @id}) ->
-            @id ?= UUID()
-            all_definitions[@id] = @
+            super
             @inputs = []
-            @outputs = [(new Output).initialize(@id)]
-            @
+            @outputs = [new Output scope:@, id:@id]
+
         #content_id: -> CryptoJS.SHA256(@text).toString(CryptoJS.enc.Base64)
 
     class JSONLiteral extends Literal
@@ -377,7 +364,7 @@ module.factory 'interpreter', ($q, $http) ->
     ### NODE TYPES ###
 
     class Node extends Type# Abstract
-        constructor: ->
+        constructor: ({@scope, @id, @position, @implementation}={})->
             @scope.nodes[@id] = @
 
         get_inputs: -> @implementation.inputs
@@ -396,8 +383,6 @@ module.factory 'interpreter', ($q, $http) ->
 
     class Call extends Node
         type:'call'
-        constructor: (@scope, @position, @implementation, @id=UUID()) -> super()
-
         virtual_inputs: (the_scope) ->
             input_values = []
             for input in @implementation.inputs
@@ -425,7 +410,6 @@ module.factory 'interpreter', ($q, $http) ->
 
     class Value extends Node
         type:'value'
-        constructor:(@scope, @position, @implementation, @id=UUID()) -> super()
         evaluate: -> @implementation.evaluate()
         subroutines_referenced: -> []
 
@@ -447,14 +431,10 @@ module.factory 'interpreter', ($q, $http) ->
     ### OTHER TYPES ###
 
     class Nib  # Abstract. Do not instantiate
-        fromJSON: (data, @parent) ->
-            {@text, @index, @id} = data
+        constructor: ({@parent, @text, @id}={}) ->
             @id ?= UUID()
-            @
 
-        initialize: (@id=UUID()) ->
-            @id ?= UUID()
-            @
+        initialize: -> @
 
         toJSON: ->
             text:@text
@@ -464,8 +444,10 @@ module.factory 'interpreter', ($q, $http) ->
     class Output extends Nib
 
     class Connection
-        constructor:(@scope, {@from, @to}, @id=UUID()) ->
+        constructor:({@scope, @from, @to, @id}={}) ->
+            @id ?= UUID()
             @scope.connections[@id] = @
+            throw "WTF" unless @from instanceof Object and @to instanceof Object
 
         toJSON: ->
             from:
@@ -490,9 +472,10 @@ module.factory 'interpreter', ($q, $http) ->
         # delete other connections that are to this nib/node combination
         scope.delete_connections 'to', to.node, to.nib
 
-        new Connection scope,
-            from:from
-            to:to
+        new Connection
+            scope: scope
+            from: from
+            to: to
 
     find_nib_uses = (nib, direction='to') ->
         uses = {}
@@ -550,14 +533,14 @@ module.factory 'interpreter', ($q, $http) ->
                 # load builtins
                 for id, builtin_data of data.builtins
                     transform_definition_data builtin_data
-                    builtin = (new JavaScript).fromJSON builtin_data
+                    builtin = new JavaScript builtin_data
                     subroutines[builtin.id] = builtin
 
                 # load subroutine declarations
                 for id, subroutine_data of data.subroutines
                     transform_definition_data subroutine_data
                     subroutine_data.text = subroutine_data.name
-                    subroutine = (new Graph).fromJSON subroutine_data
+                    subroutine = new Graph subroutine_data
                     subroutines[subroutine.id] = subroutine
                     second_pass.push subroutine
 
@@ -571,7 +554,7 @@ module.factory 'interpreter', ($q, $http) ->
                 implementation_pass = []
                 for id, definition_data of data.definitions
                     the_class = definition_class_map[definition_data.type]
-                    instance = (new the_class).fromJSON definition_data
+                    instance = new the_class definition_data
                     if instance instanceof Graph
                         implementation_pass.push
                             graph:instance
@@ -588,10 +571,11 @@ module.factory 'interpreter', ($q, $http) ->
             position = V node_data.position
             implementation = all_definitions[node_data.implementation_id]
             # TODO: in case no implementation is found, create an unknown node
-            node = new node_class graph, position, implementation, node_data.id
-            unless implementation?
-                console.log 'what'
-                console.log 'what'
+            node = new node_class
+                scope:graph
+                position:position
+                implementation:implementation
+                id:node_data.id
             # Automatically populates graph.nodes
 
         for connection_data in data.connections
@@ -605,22 +589,21 @@ module.factory 'interpreter', ($q, $http) ->
             get_nib = (node, direction) ->
                 implementation = if node instanceof Definition then node else node.implementation
                 nib = implementation.find_nib connection_data[direction].nib
-                unless nib?
-                    console.log 'what'
-                    console.log 'what'
+                throw "Broken connection!" unless nib
                 nib
 
             from_nib = get_nib from_node, 'from'
             to_nib = get_nib to_node, 'to'
 
-            new Connection graph,
+            new Connection
+                id: connection_data.id
+                scope: graph
                 from:
-                    node:from_node
-                    nib:from_nib
+                    node: from_node
+                    nib: from_nib
                 to:
-                    node:to_node
-                    nib:to_nib
-            , connection_data.id
+                    node: to_node
+                    nib: to_nib
 
     load_implementation = (subroutine, data, subroutines) ->
         for node in data.nodes
@@ -635,43 +618,48 @@ module.factory 'interpreter', ($q, $http) ->
                     if found_value
                         found_value
                     else
-                        value = (new JSONLiteral).fromJSON text:node.text
+                        value = new JSONLiteral text:node.text
                         subroutines[value.id] = value
                         value
 
-                new Value subroutine, position, implementation, node.id
+                new Value
+                    scope: subroutine
+                    position: position
+                    implementation: implementation
+                    id: node.id
             else
                 implementation = subroutines[node.implementation_id]
                 if implementation
-                    new Call subroutine, position, implementation, node.id
+                    new Call
+                        scope: subroutine
+                        position: position
+                        implementation: implementation
+                        id: node.id
                 else
                     new UnknownNode position, node.type, node.text, node.id
 
         for connection in data.connections
-
-            ### legacy bullshit ###
-            get_connector = (nib) ->
+            get_node = (nib) ->
                 if nib.parent_id is subroutine.id then subroutine else subroutine.nodes[nib.parent_id]
 
-            from = get_connector connection.input
-            to = get_connector connection.output
-            input = if from instanceof Definition then from.outputs[connection.input.index] else from.implementation.inputs[connection.input.index]
-            output = if to instanceof Definition then to.inputs[connection.output.index] else to.implementation.outputs[connection.output.index]
-            unless input
-                console.log subroutine.text
-                console.log subroutine.text
-            unless output
-                console.log subroutine.text
-                console.log subroutine.text
+            get_nib = (node, direction1, direction2) ->
+                collection = if node instanceof Definition then node[direction2] else node.implementation[direction1]
+                collection[connection[direction1[...-1]].index]
 
-            new Connection subroutine,
+            from_node = get_node connection.input
+            to_node = get_node connection.output
+            from_nib = get_nib from_node, 'inputs', 'outputs'
+            to_nib = get_nib to_node, 'outputs', 'inputs'
+
+            new Connection
+                id: connection.id
+                scope: subroutine
                 from:
-                    node:to
-                    nib:output
+                    node: to_node
+                    nib: to_nib
                 to:
-                    node:from
-                    nib:input
-            , connection.id
+                    node: from_node
+                    nib: from_nib
             ###
 
             # input/output reversal.  TODO: clean up subroutine implementation to avoid this

@@ -63,7 +63,7 @@ module.directive 'subroutine', ($location) ->
         @nib_views = {}
 
         $scope.$on 'new-graph-from-selection', ->
-            subroutine = (new interpreter.Graph).initialize()
+            subroutine = new interpreter.Graph
             subroutine.make_from $scope.selection
 
         transform_the_position = (position) ->

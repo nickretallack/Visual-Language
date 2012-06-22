@@ -47,7 +47,6 @@ module.directive 'shrinkyInput', ->
             top:'-9999px'
         $(document.body).append doppelganger
         scope.$watch attributes.shrinkyInput, (text) ->
-            console.log text
             doppelganger.text text + "M"
             async -> scope.$apply ->
                 $(element).css width:doppelganger.width()+2
@@ -67,7 +66,10 @@ module.controller 'library', ($scope, $q, interpreter) ->
         _.values interpreter.subroutines
 
     $scope.use = (subroutine) ->
-        new interpreter.Call $scope.$root.current_object, V(0,0), subroutine
+        new interpreter.Call
+            scope: $scope.$root.current_object
+            position: V(0,0)
+            implementation: subroutine
 
     $scope.use_value = (user_input) ->
         interpreter.make_value $scope.$root.current_object, V(0,0), user_input
@@ -82,7 +84,10 @@ module.controller 'library', ($scope, $q, interpreter) ->
     $scope.literal_text = ''
     $scope.use_literal = =>
         if valid_json $scope.literal_text
-            new interpreter.Value $scope.$root.current_object, V(0,0), $scope.literal_text
+            new interpreter.Value
+                scope: $scope.$root.current_object
+                position: V(0,0)
+                implementation: $scope.literal_text
             $scope.literal_text = ''
             hide()
 
@@ -139,7 +144,7 @@ module.controller 'Controller', ($scope, $http, $location, interpreter, $q) ->
 
     make_something = (type) ->
         $q.when interpreter.loaded, ->
-            subroutine = (new type).initialize()
+            subroutine = new type
             $location.path "#{subroutine.id}"
 
     $scope.new_graph = ->

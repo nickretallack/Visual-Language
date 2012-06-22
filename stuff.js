@@ -68,7 +68,6 @@
         });
         $(document.body).append(doppelganger);
         return scope.$watch(attributes.shrinkyInput, function(text) {
-          console.log(text);
           doppelganger.text(text + "M");
           return async(function() {
             return scope.$apply(function() {
@@ -105,7 +104,11 @@
       return _.values(interpreter.subroutines);
     };
     $scope.use = function(subroutine) {
-      return new interpreter.Call($scope.$root.current_object, V(0, 0), subroutine);
+      return new interpreter.Call({
+        scope: $scope.$root.current_object,
+        position: V(0, 0),
+        implementation: subroutine
+      });
     };
     $scope.use_value = function(user_input) {
       return interpreter.make_value($scope.$root.current_object, V(0, 0), user_input);
@@ -120,7 +123,11 @@
     $scope.literal_text = '';
     $scope.use_literal = function() {
       if (valid_json($scope.literal_text)) {
-        new interpreter.Value($scope.$root.current_object, V(0, 0), $scope.literal_text);
+        new interpreter.Value({
+          scope: $scope.$root.current_object,
+          position: V(0, 0),
+          implementation: $scope.literal_text
+        });
         $scope.literal_text = '';
         return hide();
       }
@@ -205,7 +212,7 @@
     make_something = function(type) {
       return $q.when(interpreter.loaded, function() {
         var subroutine;
-        subroutine = (new type).initialize();
+        subroutine = new type;
         return $location.path("" + subroutine.id);
       });
     };
