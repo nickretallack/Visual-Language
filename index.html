@@ -61,7 +61,7 @@
     <td><a ng-click="use_string_literal(search)">value</a>
 </tr>
 
-<tr ng-repeat="subroutine in get_subroutines() | filter:{text:search} | orderBy:'name'">
+<tr ng-repeat="subroutine in get_subroutines() | filter:{text:search} | orderBy:'text'">
     <td class="name">
         <a ng-hide="is_literal(subroutine)" href="#/{{subroutine.id}}">{{subroutine | text_or_id}}</a>
         <span ng-show="is_literal(subroutine)">{{subroutine | text_or_id}}</span>
