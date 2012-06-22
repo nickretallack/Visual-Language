@@ -37,20 +37,20 @@ module.directive 'anySubroutine', ->
             subroutine.add_output()
             async -> $('.subroutine-output:last input').focus()
 
-        delete_nib = (nib, direction, commit, message) ->
+        delete_nib = (nib, direction, type) ->
             uses = interpreter.find_nib_uses nib, direction
             names = (definition.text for id, definition of uses)
             if names.length
-                message = "Can't delete this #{message}.  It is used in #{names.join ', '}"
+                message = "Can't delete this #{type}.  It is used in #{names.join ', '}"
                 alert message
             else
-                commit nib
+                subroutine["delete_#{type}"] nib
 
         $scope.delete_input = (nib) ->
-            delete_nib nib, 'to', subroutine.delete_input, 'input'
+            delete_nib nib, 'to', 'input'
 
         $scope.delete_output = (nib) ->
-            delete_nib nib, 'from', subroutine.delete_output, 'output'
+            delete_nib nib, 'from', 'output'
 
 module.directive 'subroutine', ($location) ->
     link:(scope, element, attributes) ->
