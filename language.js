@@ -947,21 +947,39 @@
       return localStorage.state = JSON.stringify(state);
     };
     load_state = function(data) {
-      var builtin, builtin_data, definition_data, graph, id, implementation_pass, instance, second_pass, subroutine, subroutine_data, subroutines, the_class, _i, _j, _len, _len1, _ref, _ref1, _ref2, _ref3;
+      var builtin, builtin_data, definition_data, graph, id, implementation_pass, instance, second_pass, subroutine, subroutine_data, subroutines, the_class, transform_definition_data, transform_nib_data, _i, _j, _len, _len1, _ref, _ref1, _ref2, _ref3;
       switch (data.schema_version) {
         case 1:
           subroutines = {};
           second_pass = [];
+          transform_nib_data = function(nib_texts) {
+            var index, text, _i, _len, _results;
+            _results = [];
+            for (index = _i = 0, _len = nib_texts.length; _i < _len; index = ++_i) {
+              text = nib_texts[index];
+              _results.push({
+                text: text,
+                index: index
+              });
+            }
+            return _results;
+          };
+          transform_definition_data = function(definition_data) {
+            definition_data.inputs = transform_nib_data(definition_data.inputs);
+            definition_data.outputs = transform_nib_data(definition_data.outputs);
+            return definition_data.text = definition_data.name;
+          };
           _ref = data.builtins;
           for (id in _ref) {
             builtin_data = _ref[id];
-            builtin_data.text = builtin_data.name;
+            transform_definition_data(builtin_data);
             builtin = (new JavaScript).fromJSON(builtin_data);
             subroutines[builtin.id] = builtin;
           }
           _ref1 = data.subroutines;
           for (id in _ref1) {
             subroutine_data = _ref1[id];
+            transform_definition_data(subroutine_data);
             subroutine_data.text = subroutine_data.name;
             subroutine = (new Graph).fromJSON(subroutine_data);
             subroutines[subroutine.id] = subroutine;

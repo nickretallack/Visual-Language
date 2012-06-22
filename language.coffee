@@ -539,14 +539,23 @@ module.factory 'interpreter', ($q, $http) ->
                 subroutines = {}
                 second_pass = []
 
+                transform_nib_data = (nib_texts) ->
+                    ({text:text, index:index} for text, index in nib_texts)
+
+                transform_definition_data = (definition_data) ->
+                    definition_data.inputs = transform_nib_data definition_data.inputs
+                    definition_data.outputs = transform_nib_data definition_data.outputs
+                    definition_data.text = definition_data.name
+
                 # load builtins
                 for id, builtin_data of data.builtins
-                    builtin_data.text = builtin_data.name
+                    transform_definition_data builtin_data
                     builtin = (new JavaScript).fromJSON builtin_data
                     subroutines[builtin.id] = builtin
 
                 # load subroutine declarations
                 for id, subroutine_data of data.subroutines
+                    transform_definition_data subroutine_data
                     subroutine_data.text = subroutine_data.name
                     subroutine = (new Graph).fromJSON subroutine_data
                     subroutines[subroutine.id] = subroutine
