@@ -28,7 +28,7 @@ module.factory 'interpreter', ($q, $http) ->
 
     class Subroutine extends Definition
         fromJSON: (data) ->
-            all_subroutines[@id] = @
+            all_definitions[@id] = @
             @inputs = ((new Input).fromJSON {text:nib_data, index:index}, @ for nib_data, index in data.inputs)
             @outputs = ((new Output).fromJSON {text:nib_data, index:index}, @ for nib_data, index in data.outputs)
             @
@@ -36,7 +36,7 @@ module.factory 'interpreter', ($q, $http) ->
         initialize: ->
             ### Populate fields for a brand new instance. ###
             @id = UUID()
-            all_subroutines[@id] = @
+            all_definitions[@id] = @
             @inputs = []
             @outputs = []
             @
@@ -97,7 +97,7 @@ module.factory 'interpreter', ($q, $http) ->
         export: ->
             builtins = {}
             builtins[@id] = @
-            all_subroutines:{}
+            all_definitions:{}
             builtins: builtins
             schema_version:schema_version
 
@@ -304,7 +304,7 @@ module.factory 'interpreter', ($q, $http) ->
             for id, connection of out_connections
                 connection.delete()
 
-    find_value = (text, type, collection=all_subroutines) ->
+    find_value = (text, type, collection=all_definitions) ->
         for id, thing of collection
             if thing instanceof type
                 if thing.text is text
@@ -328,7 +328,7 @@ module.factory 'interpreter', ($q, $http) ->
 
     class Literal extends Definition # Abstract
         constructor: ->
-            all_subroutines[@id] = @
+            all_definitions[@id] = @
             @inputs = []
             @outputs = [(new Output).initialize(@id)]
         #content_id: -> CryptoJS.SHA256(@text).toString(CryptoJS.enc.Base64)
@@ -470,7 +470,7 @@ module.factory 'interpreter', ($q, $http) ->
 
     find_nib_uses = (nib, direction='to') ->
         uses = {}
-        for id, subroutine of all_subroutines
+        for id, subroutine of all_definitions
             for id, connection of subroutine.connections
                 if connection[direction].nib is nib
                     uses[subroutine.id] = subroutine
@@ -503,7 +503,7 @@ module.factory 'interpreter', ($q, $http) ->
     save_state = ->
         graphs = {}
         codes = {}
-        for id, subroutine of all_subroutines
+        for id, subroutine of all_definitions
             if subroutine instanceof Graph
                 graphs[subroutine.id] = subroutine
             else
@@ -610,11 +610,11 @@ module.factory 'interpreter', ($q, $http) ->
         $http.get('examples.json').success (data) ->
             source_data_deferred.resolve data
 
-    all_subroutines = {}
+    all_definitions = {}
     loaded = $q.defer()
     $q.when source_data, (source_data) ->
         for id, obj of load_state source_data
-            all_subroutines[id] = obj
+            all_definitions[id] = obj
         loaded.resolve true
         #start_saving()
 
@@ -636,4 +636,4 @@ module.factory 'interpreter', ($q, $http) ->
     Literal:Literal
     Input:Input
     Output:Output
-    subroutines:all_subroutines
+    subroutines:all_definitions
