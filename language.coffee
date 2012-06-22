@@ -19,7 +19,7 @@ module.factory 'interpreter', ($q, $http) ->
     class NotImplemented extends RuntimeException
         constructor: (@name) -> @message = "JavaScript \"#{@name}\" is not implemented"
 
-    class BuiltinSyntaxError extends RuntimeException
+    class CodeSyntaxError extends RuntimeException
         constructor: (@name, @exception) -> @message = "#{exception} in builtin \"#{@name}\": "
 
     ### DEFINITION TYPES ###
@@ -107,7 +107,7 @@ module.factory 'interpreter', ($q, $http) ->
                 output_function = eval_expression @output_implementation
             catch exception
                 if exception instanceof SyntaxError
-                    throw new BuiltinSyntaxError @text, exception
+                    throw new CodeSyntaxError @text, exception
                 else throw exception
 
             throw new NotImplemented @text unless output_function
@@ -627,7 +627,7 @@ module.factory 'interpreter', ($q, $http) ->
     InputError:InputError
     NotConnected:NotConnected
     NotImplemented:NotImplemented
-    BuiltinSyntaxError:BuiltinSyntaxError
+    BuiltinSyntaxError:CodeSyntaxError
     JavaScript:JavaScript
     Graph:Graph
     UnknownNode:UnknownNode
