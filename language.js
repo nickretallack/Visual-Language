@@ -7,7 +7,7 @@
   module = angular.module('vislang');
 
   module.factory('interpreter', function($q, $http) {
-    var BuiltinSyntaxError, Call, Connection, Definition, Exit, Graph, Input, InputError, JSONLiteral, JavaScript, Literal, Nib, Node, NotConnected, NotImplemented, Output, RuntimeException, StringLiteral, Subroutine, UnknownNode, Value, all_subroutines, dissociate_exception, eval_expression, execute, find_nib_uses, find_value, ignore_if_disconnected, is_input, load_implementation, load_state, loaded, make_connection, make_value, save_state, schema_version, source_data, source_data_deferred, start_saving;
+    var Call, CodeSyntaxError, Connection, Definition, Exit, Graph, Input, InputError, JSONLiteral, JavaScript, Literal, Nib, Node, NotConnected, NotImplemented, Output, RuntimeException, StringLiteral, Subroutine, UnknownNode, Value, all_definitions, dissociate_exception, eval_expression, execute, find_nib_uses, find_value, ignore_if_disconnected, is_input, load_implementation, load_state, loaded, make_connection, make_value, save_state, schema_version, source_data, source_data_deferred, start_saving;
     schema_version = 1;
     /* EXCEPTION TYPES
     */
@@ -66,17 +66,17 @@
       return NotImplemented;
 
     })(RuntimeException);
-    BuiltinSyntaxError = (function(_super) {
+    CodeSyntaxError = (function(_super) {
 
-      __extends(BuiltinSyntaxError, _super);
+      __extends(CodeSyntaxError, _super);
 
-      function BuiltinSyntaxError(name, exception) {
+      function CodeSyntaxError(name, exception) {
         this.name = name;
         this.exception = exception;
         this.message = "" + exception + " in builtin \"" + this.name + "\": ";
       }
 
-      return BuiltinSyntaxError;
+      return CodeSyntaxError;
 
     })(RuntimeException);
     /* DEFINITION TYPES
@@ -85,6 +85,14 @@
     Definition = (function() {
 
       function Definition() {}
+
+      Definition.prototype.toJSON = function() {
+        return {
+          id: this.id,
+          text: this.text,
+          type: this.type
+        };
+      };
 
       return Definition;
 
@@ -99,7 +107,7 @@
 
       Subroutine.prototype.fromJSON = function(data) {
         var index, nib_data;
-        all_subroutines[this.id] = this;
+        all_definitions[this.id] = this;
         this.inputs = (function() {
           var _i, _len, _ref, _results;
           _ref = data.inputs;
@@ -133,7 +141,7 @@
         /* Populate fields for a brand new instance.
         */
         this.id = UUID();
-        all_subroutines[this.id] = this;
+        all_definitions[this.id] = this;
         this.inputs = [];
         this.outputs = [];
         return this;
@@ -205,6 +213,13 @@
         return this.outputs.splice(nib.index, 1);
       };
 
+      Subroutine.prototype.toJSON = function() {
+        return _.extend(Subroutine.__super__.toJSON.call(this)({
+          inputs: this.inputs,
+          outputs: this.outputs
+        }));
+      };
+
       return Subroutine;
 
     })(Definition);
@@ -216,7 +231,7 @@
         return JavaScript.__super__.constructor.apply(this, arguments);
       }
 
-      JavaScript.prototype.type = 'builtin';
+      JavaScript.prototype.type = 'javascript';
 
       JavaScript.prototype.fromJSON = function(data) {
         this.text = data.name, this.id = data.id, this.memo_implementation = data.memo_implementation, this.output_implementation = data.output_implementation;
@@ -224,14 +239,10 @@
       };
 
       JavaScript.prototype.toJSON = function() {
-        return {
-          id: this.id,
-          text: this.text,
-          inputs: this.inputs,
-          outputs: this.outputs,
+        return _.extend(JavaScript.__super__.toJSON.call(this), {
           memo_implementation: this.memo_implementation,
           output_implementation: this.output_implementation
-        };
+        });
       };
 
       JavaScript.prototype["export"] = function() {
@@ -239,7 +250,7 @@
         builtins = {};
         builtins[this.id] = this;
         return {
-          all_subroutines: {},
+          all_definitions: {},
           builtins: builtins,
           schema_version: schema_version
         };
@@ -252,7 +263,7 @@
           output_function = eval_expression(this.output_implementation);
         } catch (exception) {
           if (exception instanceof SyntaxError) {
-            throw new BuiltinSyntaxError(this.text, exception);
+            throw new CodeSyntaxError(this.text, exception);
           } else {
             throw exception;
           }
@@ -274,7 +285,7 @@
 
       __extends(Graph, _super);
 
-      Graph.prototype.type = 'subroutine';
+      Graph.prototype.type = 'graph';
 
       function Graph() {
         /* Initialize the bare minimum bits.
@@ -292,14 +303,10 @@
       };
 
       Graph.prototype.toJSON = function() {
-        return {
-          id: this.id,
-          text: this.text,
+        return _.extend(Graph.__super__.toJSON.call(this)({
           nodes: _.values(this.nodes),
-          connections: _.values(this.connections),
-          inputs: this.inputs,
-          outputs: this.outputs
-        };
+          connections: _.values(this.connections)
+        }));
       };
 
       /* RUNNING
@@ -523,7 +530,7 @@
     find_value = function(text, type, collection) {
       var id, thing;
       if (collection == null) {
-        collection = all_subroutines;
+        collection = all_definitions;
       }
       for (id in collection) {
         thing = collection[id];
@@ -547,7 +554,7 @@
       __extends(Literal, _super);
 
       function Literal() {
-        all_subroutines[this.id] = this;
+        all_definitions[this.id] = this;
         this.inputs = [];
         this.outputs = [(new Output).initialize(this.id)];
       }
@@ -624,10 +631,10 @@
 
       Node.prototype.toJSON = function() {
         return {
-          position: this.position,
-          text: this.text,
           id: this.id,
-          type: this.type
+          type: this.type,
+          implementation_id: this.implementation.id,
+          position: this.position
         };
       };
 
@@ -647,13 +654,6 @@
         this.id = id != null ? id : UUID();
         Call.__super__.constructor.call(this);
       }
-
-      Call.prototype.toJSON = function() {
-        var json;
-        json = Call.__super__.toJSON.call(this);
-        json.implementation_id = this.implementation.id;
-        return json;
-      };
 
       Call.prototype.virtual_inputs = function(the_scope) {
         var input, input_values, _fn, _i, _len, _ref,
@@ -711,13 +711,6 @@
 
       Value.prototype.evaluate = function() {
         return this.implementation.evaluate();
-      };
-
-      Value.prototype.toJSON = function() {
-        var json;
-        json = Value.__super__.toJSON.call(this);
-        json.implementation_id = this.implementation.id;
-        return json;
       };
 
       Value.prototype.subroutines_referenced = function() {
@@ -859,8 +852,8 @@
         direction = 'to';
       }
       uses = {};
-      for (id in all_subroutines) {
-        subroutine = all_subroutines[id];
+      for (id in all_definitions) {
+        subroutine = all_definitions[id];
         _ref = subroutine.connections;
         for (id in _ref) {
           connection = _ref[id];
@@ -910,8 +903,8 @@
       var codes, graphs, id, state, subroutine;
       graphs = {};
       codes = {};
-      for (id in all_subroutines) {
-        subroutine = all_subroutines[id];
+      for (id in all_definitions) {
+        subroutine = all_definitions[id];
         if (subroutine instanceof Graph) {
           graphs[subroutine.id] = subroutine;
         } else {
@@ -1029,14 +1022,14 @@
         return source_data_deferred.resolve(data);
       });
     }
-    all_subroutines = {};
+    all_definitions = {};
     loaded = $q.defer();
     $q.when(source_data, function(source_data) {
       var id, obj, _ref;
       _ref = load_state(source_data);
       for (id in _ref) {
         obj = _ref[id];
-        all_subroutines[id] = obj;
+        all_definitions[id] = obj;
       }
       return loaded.resolve(true);
     });
@@ -1050,7 +1043,7 @@
       InputError: InputError,
       NotConnected: NotConnected,
       NotImplemented: NotImplemented,
-      BuiltinSyntaxError: BuiltinSyntaxError,
+      BuiltinSyntaxError: CodeSyntaxError,
       JavaScript: JavaScript,
       Graph: Graph,
       UnknownNode: UnknownNode,
@@ -1059,7 +1052,7 @@
       Literal: Literal,
       Input: Input,
       Output: Output,
-      subroutines: all_subroutines
+      subroutines: all_definitions
     };
   });
 

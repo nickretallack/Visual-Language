@@ -5,12 +5,16 @@ Currently it is in a 100% local form.  Will you always be able to download the w
 Will need a system to fetch newly published functions.  Should they show up in a different area from the normal functions?
 
 
+- gotta release something
+Well, I guess I could put the local storage stuff back in.  Just need to make a new format for it.
 
 
 
+- editing this node vs all uses
+copy-on-write?
+There should be a way to edit "just this node" (which clones the implementation) or dit the original implementation.  Perhaps there would also be a middle ground where you would only be editing ones that are referenced by the current pinned functions.  You could pin functions to indicate you're working on them, so the UI would know that the functions you edit should track those.
 
-
-
+Perhaps for now it would be easiest to go to the main implementation first, but include a "clone" button on the page if you came in from a particular node.  This would be the node edit view.
 
 
 - serious problem -- averted

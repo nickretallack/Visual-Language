@@ -25,6 +25,10 @@ module.factory 'interpreter', ($q, $http) ->
     ### DEFINITION TYPES ###
 
     class Definition
+        toJSON: ->
+            id:@id
+            text:@text
+            type:@type
 
     class Subroutine extends Definition
         fromJSON: (data) ->
@@ -80,19 +84,22 @@ module.factory 'interpreter', ($q, $http) ->
         delete_output: (nib) ->
             @outputs.splice nib.index, 1
 
+        toJSON: ->
+            _.extend super()
+                inputs:@inputs
+                outputs:@outputs
+
+
     class JavaScript extends Subroutine
-        type:'builtin'
+        type:'javascript'
         fromJSON: (data) ->
             {name:@text, @id, @memo_implementation, @output_implementation} = data
             super data
 
         toJSON: ->
-            id:@id
-            text:@text
-            inputs:@inputs
-            outputs:@outputs
-            memo_implementation:@memo_implementation
-            output_implementation:@output_implementation
+            _.extend super(),
+                memo_implementation:@memo_implementation
+                output_implementation:@output_implementation
 
         export: ->
             builtins = {}
@@ -119,7 +126,7 @@ module.factory 'interpreter', ($q, $http) ->
 
 
     class Graph extends Subroutine
-        type:'subroutine'
+        type:'graph'
         constructor: ->
             ### Initialize the bare minimum bits.
             Be sure to call fromJSON or initialize next. ###
@@ -132,13 +139,9 @@ module.factory 'interpreter', ($q, $http) ->
             super data
 
         toJSON: ->
-            # Defines the persistence format
-            id:@id
-            text:@text
-            nodes:_.values @nodes
-            connections:_.values @connections
-            inputs:@inputs
-            outputs:@outputs
+            _.extend super()
+                nodes:_.values @nodes
+                connections:_.values @connections
 
         ### RUNNING ###
 
@@ -358,20 +361,14 @@ module.factory 'interpreter', ($q, $http) ->
                 nib.delete_connections()
 
         toJSON: ->
-            position:@position
-            text:@text
             id:@id
             type:@type
+            implementation_id:@implementation.id
+            position:@position
 
     class Call extends Node
         type:'call'
         constructor: (@scope, @position, @implementation, @id=UUID()) -> super()
-            # TODO: just reference the name and inputs off the implementation
-
-        toJSON: ->
-            json = super()
-            json.implementation_id = @implementation.id
-            json
 
         virtual_inputs: (the_scope) ->
             input_values = []
@@ -402,11 +399,6 @@ module.factory 'interpreter', ($q, $http) ->
         type:'value'
         constructor:(@scope, @position, @implementation, @id=UUID()) -> super()
         evaluate: -> @implementation.evaluate()
-        toJSON: ->
-            json = super()
-            json.implementation_id = @implementation.id
-            json
-
         subroutines_referenced: -> []
 
     class UnknownNode extends Node
