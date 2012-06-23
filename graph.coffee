@@ -79,10 +79,9 @@ module.directive 'subroutine', ($location) ->
         $scope.click_node = (node, $event) ->
             $event.preventDefault()
             $event.stopPropagation()
-            if node in $scope.selection
-                $scope.dragging = $scope.selection
-            else
-                $scope.dragging = [node]
+            if node not in $scope.selection
+                $scope.selection = [node]
+            $scope.dragging = $scope.selection
 
         $scope.edit_node = (node, $event) ->
             $event.preventDefault()

@@ -21,7 +21,7 @@
 <a id="new-output" ng-click="new_output(subroutine)">+Output</a>
 
 
-<div class="node" ng-repeat="node in current_object.nodes" node="node" ng-style="position(node)" ng-mousedown="click_node(node, $event)" ng-dblclick="bust_node(node, $event)" ng-rightclick="" ng-class="{selected:selected(node)}">
+<div class="node" ng-repeat="node in current_object.nodes" node="node" ng-style="position(node)" ng-mousedown="click_node(node, $event)" ng-dblclick="edit_node(node, $event)" ng-rightclick="" ng-class="{selected:selected(node)}">
     <ul class="unstyled"><li ng-repeat="output in node.implementation.outputs" class="output">
     	<div nib="output" node="node"></div>
     	{{output.text}}

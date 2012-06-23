@@ -128,11 +128,10 @@
         $scope.click_node = function(node, $event) {
           $event.preventDefault();
           $event.stopPropagation();
-          if (__indexOf.call($scope.selection, node) >= 0) {
-            return $scope.dragging = $scope.selection;
-          } else {
-            return $scope.dragging = [node];
+          if (__indexOf.call($scope.selection, node) < 0) {
+            $scope.selection = [node];
           }
+          return $scope.dragging = $scope.selection;
         };
         $scope.edit_node = function(node, $event) {
           $event.preventDefault();

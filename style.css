@@ -48,8 +48,8 @@ ul.unstyled {margin:0; padding:0;}
 
 #selection {
     position:absolute;
-    background:blue;
+    background:lightblue;
 }
 .selected {
-    background:blue;
+    background:lightblue;
 }
