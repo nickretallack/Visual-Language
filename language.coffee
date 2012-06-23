@@ -54,8 +54,10 @@ module.factory 'interpreter', ($q, $http) ->
     class Subroutine extends Definition
         constructor: ({inputs, outputs}={}) ->
             super
-            @inputs = (new Input _.extend({scope:@}, nib_data) for nib_data in inputs or [])
-            @outputs = (new Output _.extend({scope:@}, nib_data) for nib_data in outputs or [])
+            @inputs = []
+            @outputs = []
+            @add_input data for data in (inputs or [])
+            @add_output data for data in (outputs or [])
 
         user_inputs: ->
             input_values = []
@@ -84,17 +86,23 @@ module.factory 'interpreter', ($q, $http) ->
                 else
                     throw exception
 
-        add_input: ->
-            @inputs.push new Input scope:@
+        add_input: (data={}) ->
+            @inputs.push new Input _.extend data,
+                scope:@
+                index:@inputs.length
 
-        add_output: ->
-            @outputs.push new Output scope:@
+        add_output: (data={}) ->
+            @outputs.push new Output _.extend data,
+                scope:@
+                index:@outputs.length
 
         delete_input: (nib) ->
-            @inputs.splice nib.index, 1
+            index = @inputs.indexOf nib
+            @inputs.splice index, 1
 
         delete_output: (nib) ->
-            @outputs.splice nib.index, 1
+            index = @outputs.indexOf nib
+            @outputs.splice index, 1
 
         toJSON: ->
             _.extend super(),
@@ -306,17 +314,16 @@ module.factory 'interpreter', ($q, $http) ->
 
             # duplicate the ones that cross the threshhold
             for connection in inbound_connections
-                new_nib = new Input scope:@
-                @inputs.push new_nib
+                new_nib = @add_input()
 
                 # Create a new connection to the previous connection's target,
                 # which is now inside the new subroutine
                 new_connection = new Connection
                     scope:@
+                    to:connection.to
                     from:
                         node:@
                         nib:new_nib
-                    to:connection.to
 
                 # Modify the old connection to point to the newly created input
                 connection.to =
@@ -324,8 +331,31 @@ module.factory 'interpreter', ($q, $http) ->
                     nib:new_nib
 
             # There may be multiple outputs with the same
+            # We'll have to group them by the nibs they're connected from
 
-            #for connection in outbound_connections
+            outbound_connections_by_nib = {}
+            for connection in outbound_connections
+                nib = connection.from.nib
+                outbound_connections_by_nib[nib.id] ?=
+                    nib:nib
+                    connections:[]
+                outbound_connections_by_nib[nib.id].connections.push connection
+
+            for id, grouping of outbound_connections_by_nib
+                new_nib = @add_output()
+
+                for connection in grouping.connections
+                    new_connection = new Connection
+                        scope:@
+                        from:connection.from
+                        to:
+                            node:@
+                            nib:new_nib
+
+                    connection.from =
+                        node:new_node
+                        nib:new_nib
+
 
 
     find_value = (text, type, collection=all_definitions) ->
@@ -357,7 +387,7 @@ module.factory 'interpreter', ($q, $http) ->
         constructor: ->
             super
             @inputs = []
-            @outputs = [new Output scope:@, id:@id]
+            @outputs = [new Output scope:@, id:@id, index:0]
 
         #content_id: -> CryptoJS.SHA256(@text).toString(CryptoJS.enc.Base64)
 
@@ -449,7 +479,7 @@ module.factory 'interpreter', ($q, $http) ->
     ### OTHER TYPES ###
 
     class Nib  # Abstract. Do not instantiate
-        constructor: ({@scope, @text, @id}={}) ->
+        constructor: ({@scope, @text, @id, @index}={}) ->
             @id ?= UUID()
 
         initialize: -> @

@@ -152,33 +152,21 @@
       __extends(Subroutine, _super);
 
       function Subroutine(_arg) {
-        var inputs, nib_data, outputs, _ref;
+        var data, inputs, outputs, _i, _j, _len, _len1, _ref, _ref1, _ref2;
         _ref = _arg != null ? _arg : {}, inputs = _ref.inputs, outputs = _ref.outputs;
         Subroutine.__super__.constructor.apply(this, arguments);
-        this.inputs = (function() {
-          var _i, _len, _ref1, _results;
-          _ref1 = inputs || [];
-          _results = [];
-          for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
-            nib_data = _ref1[_i];
-            _results.push(new Input(_.extend({
-              scope: this
-            }, nib_data)));
-          }
-          return _results;
-        }).call(this);
-        this.outputs = (function() {
-          var _i, _len, _ref1, _results;
-          _ref1 = outputs || [];
-          _results = [];
-          for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
-            nib_data = _ref1[_i];
-            _results.push(new Output(_.extend({
-              scope: this
-            }, nib_data)));
-          }
-          return _results;
-        }).call(this);
+        this.inputs = [];
+        this.outputs = [];
+        _ref1 = inputs || [];
+        for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
+          data = _ref1[_i];
+          this.add_input(data);
+        }
+        _ref2 = outputs || [];
+        for (_j = 0, _len1 = _ref2.length; _j < _len1; _j++) {
+          data = _ref2[_j];
+          this.add_output(data);
+        }
       }
 
       Subroutine.prototype.user_inputs = function() {
@@ -231,24 +219,36 @@
         }
       };
 
-      Subroutine.prototype.add_input = function() {
-        return this.inputs.push(new Input({
-          scope: this
-        }));
+      Subroutine.prototype.add_input = function(data) {
+        if (data == null) {
+          data = {};
+        }
+        return this.inputs.push(new Input(_.extend(data, {
+          scope: this,
+          index: this.inputs.length
+        })));
       };
 
-      Subroutine.prototype.add_output = function() {
-        return this.outputs.push(new Output({
-          scope: this
-        }));
+      Subroutine.prototype.add_output = function(data) {
+        if (data == null) {
+          data = {};
+        }
+        return this.outputs.push(new Output(_.extend(data, {
+          scope: this,
+          index: this.outputs.length
+        })));
       };
 
       Subroutine.prototype.delete_input = function(nib) {
-        return this.inputs.splice(nib.index, 1);
+        var index;
+        index = this.inputs.indexOf(nib);
+        return this.inputs.splice(index, 1);
       };
 
       Subroutine.prototype.delete_output = function(nib) {
-        return this.outputs.splice(nib.index, 1);
+        var index;
+        index = this.outputs.indexOf(nib);
+        return this.outputs.splice(index, 1);
       };
 
       Subroutine.prototype.toJSON = function() {
@@ -497,7 +497,7 @@
         /* Build a subroutine out of nodes in another subroutine.
         */
 
-        var connection, contained_connections, from_inside, id, inbound_connections, new_connection, new_nib, new_node, node, old_scope, outbound_connections, to_inside, _i, _j, _len, _len1, _ref, _ref1, _ref2, _results;
+        var connection, contained_connections, from_inside, grouping, id, inbound_connections, new_connection, new_nib, new_node, nib, node, old_scope, outbound_connections, outbound_connections_by_nib, to_inside, _i, _j, _k, _len, _len1, _len2, _name, _ref, _ref1, _ref2, _ref3, _results;
         old_scope = nodes[0].scope;
         for (id in nodes) {
           node = nodes[id];
@@ -530,25 +530,59 @@
           old_scope.remove_connection(connection);
           this.add_connection(connection);
         }
-        _results = [];
         for (_j = 0, _len1 = inbound_connections.length; _j < _len1; _j++) {
           connection = inbound_connections[_j];
-          new_nib = new Input({
-            scope: this
-          });
-          this.inputs.push(new_nib);
+          new_nib = this.add_input();
           new_connection = new Connection({
             scope: this,
+            to: connection.to,
             from: {
               node: this,
               nib: new_nib
-            },
-            to: connection.to
+            }
           });
-          _results.push(connection.to = {
+          connection.to = {
             node: new_node,
             nib: new_nib
-          });
+          };
+        }
+        outbound_connections_by_nib = {};
+        for (_k = 0, _len2 = outbound_connections.length; _k < _len2; _k++) {
+          connection = outbound_connections[_k];
+          nib = connection.from.nib;
+          if ((_ref3 = outbound_connections_by_nib[_name = nib.id]) == null) {
+            outbound_connections_by_nib[_name] = {
+              nib: nib,
+              connections: []
+            };
+          }
+          outbound_connections_by_nib[nib.id].connections.push(connection);
+        }
+        _results = [];
+        for (id in outbound_connections_by_nib) {
+          grouping = outbound_connections_by_nib[id];
+          new_nib = this.add_output();
+          _results.push((function() {
+            var _l, _len3, _ref4, _results1;
+            _ref4 = grouping.connections;
+            _results1 = [];
+            for (_l = 0, _len3 = _ref4.length; _l < _len3; _l++) {
+              connection = _ref4[_l];
+              new_connection = new Connection({
+                scope: this,
+                from: connection.from,
+                to: {
+                  node: this,
+                  nib: new_nib
+                }
+              });
+              _results1.push(connection.from = {
+                node: new_node,
+                nib: new_nib
+              });
+            }
+            return _results1;
+          }).call(this));
         }
         return _results;
       };
@@ -598,7 +632,8 @@
         this.outputs = [
           new Output({
             scope: this,
-            id: this.id
+            id: this.id,
+            index: 0
           })
         ];
       }
@@ -786,7 +821,7 @@
 
       function Nib(_arg) {
         var _ref, _ref1;
-        _ref = _arg != null ? _arg : {}, this.scope = _ref.scope, this.text = _ref.text, this.id = _ref.id;
+        _ref = _arg != null ? _arg : {}, this.scope = _ref.scope, this.text = _ref.text, this.id = _ref.id, this.index = _ref.index;
         if ((_ref1 = this.id) == null) {
           this.id = UUID();
         }
