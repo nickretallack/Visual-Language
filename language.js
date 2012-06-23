@@ -325,13 +325,13 @@
       function Graph() {
         Graph.__super__.constructor.apply(this, arguments);
         this.nodes = {};
-        this.connections = {};
+        this.connections = [];
       }
 
       Graph.prototype.toJSON = function() {
         return _.extend(Graph.__super__.toJSON.call(this), {
           nodes: _.values(this.nodes),
-          connections: _.values(this.connections)
+          connections: this.connections
         });
       };
 
@@ -373,10 +373,10 @@
         /* Use this to determine how nodes are connected
         */
 
-        var connection, id, _ref;
+        var connection, _i, _len, _ref;
         _ref = this.connections;
-        for (id in _ref) {
-          connection = _ref[id];
+        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+          connection = _ref[_i];
           if (connection[direction].node.id === node.id && connection[direction].nib.id === nib.id) {
             return connection;
           }
@@ -385,18 +385,9 @@
       };
 
       Graph.prototype.delete_connections = function(direction, node, nib) {
-        var connection, id, _ref, _results;
-        _ref = this.connections;
-        _results = [];
-        for (id in _ref) {
-          connection = _ref[id];
-          if (connection[direction].node.id === node.id && connection[direction].nib.id === nib.id) {
-            _results.push(delete this.connections[id]);
-          } else {
-            _results.push(void 0);
-          }
-        }
-        return _results;
+        return this.connections = _.reject(this.connections, function(connection) {
+          return connection[direction].node === node && connection[direction].nib === nib;
+        });
       };
 
       Graph.prototype["export"] = function() {
@@ -425,11 +416,11 @@
       };
 
       Graph.prototype.remove_connection = function(connection) {
-        return delete this.connections[connection.id];
+        return this.connections = _.without(this.connections, connection);
       };
 
       Graph.prototype.add_connection = function(connection) {
-        return this.connections[connection.id] = connection;
+        return this.connections.push(connection);
       };
 
       /* probably outdated
@@ -497,7 +488,7 @@
         /* Build a subroutine out of nodes in another subroutine.
         */
 
-        var connection, contained_connections, from_inside, grouping, id, inbound_connections, new_connection, new_nib, new_node, nib, node, old_scope, outbound_connections, outbound_connections_by_nib, to_inside, _i, _j, _k, _len, _len1, _len2, _name, _ref, _ref1, _ref2, _ref3, _results;
+        var connection, contained_connections, from_inside, grouping, id, inbound_connections, new_connection, new_nib, new_node, nib, node, old_scope, outbound_connections, outbound_connections_by_nib, to_inside, _i, _j, _k, _l, _len, _len1, _len2, _len3, _name, _ref, _ref1, _ref2, _ref3, _results;
         old_scope = nodes[0].scope;
         for (id in nodes) {
           node = nodes[id];
@@ -513,8 +504,8 @@
         outbound_connections = [];
         contained_connections = [];
         _ref = old_scope.connections;
-        for (id in _ref) {
-          connection = _ref[id];
+        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+          connection = _ref[_i];
           from_inside = (_ref1 = connection.from.node, __indexOf.call(nodes, _ref1) >= 0);
           to_inside = (_ref2 = connection.to.node, __indexOf.call(nodes, _ref2) >= 0);
           if (from_inside && to_inside) {
@@ -525,13 +516,13 @@
             inbound_connections.push(connection);
           }
         }
-        for (_i = 0, _len = contained_connections.length; _i < _len; _i++) {
-          connection = contained_connections[_i];
+        for (_j = 0, _len1 = contained_connections.length; _j < _len1; _j++) {
+          connection = contained_connections[_j];
           old_scope.remove_connection(connection);
           this.add_connection(connection);
         }
-        for (_j = 0, _len1 = inbound_connections.length; _j < _len1; _j++) {
-          connection = inbound_connections[_j];
+        for (_k = 0, _len2 = inbound_connections.length; _k < _len2; _k++) {
+          connection = inbound_connections[_k];
           new_nib = this.add_input();
           new_connection = new Connection({
             scope: this,
@@ -547,8 +538,8 @@
           };
         }
         outbound_connections_by_nib = {};
-        for (_k = 0, _len2 = outbound_connections.length; _k < _len2; _k++) {
-          connection = outbound_connections[_k];
+        for (_l = 0, _len3 = outbound_connections.length; _l < _len3; _l++) {
+          connection = outbound_connections[_l];
           nib = connection.from.nib;
           if ((_ref3 = outbound_connections_by_nib[_name = nib.id]) == null) {
             outbound_connections_by_nib[_name] = {
@@ -563,11 +554,11 @@
           grouping = outbound_connections_by_nib[id];
           new_nib = this.add_output();
           _results.push((function() {
-            var _l, _len3, _ref4, _results1;
+            var _len4, _m, _ref4, _results1;
             _ref4 = grouping.connections;
             _results1 = [];
-            for (_l = 0, _len3 = _ref4.length; _l < _len3; _l++) {
-              connection = _ref4[_l];
+            for (_m = 0, _len4 = _ref4.length; _m < _len4; _m++) {
+              connection = _ref4[_m];
               new_connection = new Connection({
                 scope: this,
                 from: connection.from,
@@ -721,6 +712,13 @@
         });
       };
 
+      Node.prototype.clone = function() {
+        var new_node;
+        new_node = JSON.parse(JSON.stringify(this));
+        new_node.id = UUID();
+        return new_node;
+      };
+
       return Node;
 
     })(Type);
@@ -871,7 +869,7 @@
         if ((_ref1 = this.id) == null) {
           this.id = UUID();
         }
-        this.scope.connections[this.id] = this;
+        this.scope.connections.push(this);
         if (!(this.from instanceof Object && this.to instanceof Object)) {
           throw "WTF";
         }
@@ -921,7 +919,7 @@
       });
     };
     find_nib_uses = function(nib, direction) {
-      var connection, id, subroutine, uses, _ref;
+      var connection, id, subroutine, uses, _i, _len, _ref;
       if (direction == null) {
         direction = 'to';
       }
@@ -929,8 +927,8 @@
       for (id in all_definitions) {
         subroutine = all_definitions[id];
         _ref = subroutine.connections;
-        for (id in _ref) {
-          connection = _ref[id];
+        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+          connection = _ref[_i];
           if (connection[direction].nib === nib) {
             uses[subroutine.id] = subroutine;
           }
@@ -1197,7 +1195,8 @@
         obj = _ref[id];
         all_definitions[id] = obj;
       }
-      return loaded.resolve(true);
+      loaded.resolve(true);
+      return start_saving();
     });
     return {
       make_connection: make_connection,

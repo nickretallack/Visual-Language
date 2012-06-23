@@ -168,7 +168,7 @@ module.directive 'subroutine', ($location) ->
                 line_height = 16
                 c = canvas.getContext '2d'
                 c.clearRect 0,0, $scope.editor_size.components()...
-                for id, connection of subroutine.connections
+                for connection in subroutine.connections
                     input_element = @nib_views["#{connection.from.node.id}-#{connection.from.nib.id}"]
                     output_element = @nib_views["#{connection.to.node.id}-#{connection.to.nib.id}"]
 

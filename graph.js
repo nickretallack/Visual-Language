@@ -239,14 +239,14 @@
         canvas = $element.find('canvas')[0];
         this.draw = draw = function() {
           return async(function() {
-            var c, connection, end_position, id, input_element, input_position, line_height, nib_position, output_element, output_position, view, _ref;
+            var c, connection, end_position, input_element, input_position, line_height, nib_position, output_element, output_position, view, _i, _len, _ref;
             if (subroutine) {
               line_height = 16;
               c = canvas.getContext('2d');
               c.clearRect.apply(c, [0, 0].concat(__slice.call($scope.editor_size.components())));
               _ref = subroutine.connections;
-              for (id in _ref) {
-                connection = _ref[id];
+              for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+                connection = _ref[_i];
                 input_element = _this.nib_views["" + connection.from.node.id + "-" + connection.from.nib.id];
                 output_element = _this.nib_views["" + connection.to.node.id + "-" + connection.to.nib.id];
                 if ((input_element != null ? input_element.length : void 0) && (output_element != null ? output_element.length : void 0)) {

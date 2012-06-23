@@ -148,12 +148,12 @@ module.factory 'interpreter', ($q, $http) ->
         constructor: ->
             super
             @nodes = {}
-            @connections = {}
+            @connections = []
 
         toJSON: ->
             _.extend super(),
                 nodes:_.values @nodes
-                connections:_.values @connections
+                connections:@connections
 
         ### RUNNING ###
 
@@ -177,15 +177,14 @@ module.factory 'interpreter', ($q, $http) ->
 
         find_connection: (direction, node, nib) ->
             ### Use this to determine how nodes are connected ###
-            for id, connection of @connections
+            for connection in @connections
                 if connection[direction].node.id is node.id and connection[direction].nib.id is nib.id
                     return connection
             undefined
 
         delete_connections: (direction, node, nib) ->
-            for id, connection of @connections
-                if connection[direction].node.id is node.id and connection[direction].nib.id is nib.id
-                    delete @connections[id]
+            @connections = _.reject @connections, (connection) ->
+                connection[direction].node is node and connection[direction].nib is nib
 
         export: ->
             dependencies = @get_dependencies()
@@ -209,10 +208,10 @@ module.factory 'interpreter', ($q, $http) ->
             @nodes[node.id] = node
 
         remove_connection: (connection) ->
-            delete @connections[connection.id]
+            @connections = _.without @connections, connection
 
         add_connection: (connection) ->
-            @connections[connection.id] = connection
+            @connections.push connection
 
         ### probably outdated
         get_dependencies: (dependencies={subroutines:{},builtins:{}}) ->
@@ -274,6 +273,11 @@ module.factory 'interpreter', ($q, $http) ->
             adjacency_list
         ###
 
+        #dump_into: (other_scope) ->
+        #    nodes = (node.clone() for id, node of @nodes)
+        #    other_
+
+
         make_from: (nodes) ->
             ### Build a subroutine out of nodes in another subroutine. ###
             old_scope = nodes[0].scope
@@ -293,7 +297,7 @@ module.factory 'interpreter', ($q, $http) ->
             inbound_connections = []
             outbound_connections = []
             contained_connections = []
-            for id, connection of old_scope.connections
+            for connection in old_scope.connections
                 from_inside = connection.from.node in nodes
                 to_inside = connection.to.node in nodes
                 if from_inside and to_inside
@@ -429,6 +433,11 @@ module.factory 'interpreter', ($q, $http) ->
                 implementation_id:@implementation.id
                 position:@position
 
+        clone: ->
+            new_node = JSON.parse JSON.stringify @
+            new_node.id = UUID()
+            new_node
+
     class Call extends Node
         type:'call'
         virtual_inputs: (the_scope) ->
@@ -494,7 +503,7 @@ module.factory 'interpreter', ($q, $http) ->
     class Connection
         constructor:({@scope, @from, @to, @id}={}) ->
             @id ?= UUID()
-            @scope.connections[@id] = @
+            @scope.connections.push @
             throw "WTF" unless @from instanceof Object and @to instanceof Object
 
         toJSON: ->
@@ -528,7 +537,7 @@ module.factory 'interpreter', ($q, $http) ->
     find_nib_uses = (nib, direction='to') ->
         uses = {}
         for id, subroutine of all_definitions
-            for id, connection of subroutine.connections
+            for connection in subroutine.connections
                 if connection[direction].nib is nib
                     uses[subroutine.id] = subroutine
         uses
@@ -734,7 +743,7 @@ module.factory 'interpreter', ($q, $http) ->
         for id, obj of load_state source_data
             all_definitions[id] = obj
         loaded.resolve true
-        #start_saving()
+        start_saving()
 
     make_connection:make_connection
     find_nib_uses:find_nib_uses
