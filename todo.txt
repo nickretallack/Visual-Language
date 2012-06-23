@@ -2,10 +2,14 @@
 Well, I guess I could put the local storage stuff back in.  Just need to make a new format for it.
 
 It's currently a little unusable.  What does it need?
-    finish the 'make subroutine from' call
+    finish the 'make subroutine from' call -- done
+    bust apart subroutines
+    some kind of context menu for selecting this stuff...
     delete nodes
     delete connections
     rearrange nib ordering with drag and drop
+    edit individual nodes, and give the 'clone' option
+        edit values
 
 Nice to haves:
     "idempotent" checkbox that memoizes?

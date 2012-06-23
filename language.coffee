@@ -86,23 +86,27 @@ module.factory 'interpreter', ($q, $http) ->
                 else
                     throw exception
 
-        add_input: (data={}) ->
-            @inputs.push new Input _.extend data,
+        delete_nib: (nib, group) ->
+            @[group] = _.without @[group], nib
+            for nib, index in @[group]
+                nib.index = index
+
+            ###
+            delete_index = @[group].indexOf nib
+            @[group].splice delete_index, 1
+            for index in [delete_index...@[group].length]
+                @[group][index].index -= 1
+            ###
+
+        add_nib: (group, the_class, data={}) ->
+            @[group].push new the_class _.extend data,
                 scope:@
-                index:@inputs.length
+                index:@[group].length
 
-        add_output: (data={}) ->
-            @outputs.push new Output _.extend data,
-                scope:@
-                index:@outputs.length
-
-        delete_input: (nib) ->
-            index = @inputs.indexOf nib
-            @inputs.splice index, 1
-
-        delete_output: (nib) ->
-            index = @outputs.indexOf nib
-            @outputs.splice index, 1
+        delete_input: (nib) -> @delete_nib nib, 'inputs'
+        delete_output: (nib) -> @delete_nib nib, 'outputs'
+        add_input: (data={}) -> @add_nib 'inputs', Input, data
+        add_output: (data={}) -> @add_nib 'outputs', Output, data
 
         toJSON: ->
             _.extend super(),
@@ -147,12 +151,12 @@ module.factory 'interpreter', ($q, $http) ->
         type:'graph'
         constructor: ->
             super
-            @nodes = {}
+            @nodes = []
             @connections = []
 
         toJSON: ->
             _.extend super(),
-                nodes:_.values @nodes
+                nodes:@nodes
                 connections:@connections
 
         ### RUNNING ###
@@ -186,6 +190,10 @@ module.factory 'interpreter', ($q, $http) ->
             @connections = _.reject @connections, (connection) ->
                 connection[direction].node is node and connection[direction].nib is nib
 
+        delete_node_connections: (node) ->
+            @connections = _.reject @connections, (connection) ->
+                connection.from.node is node or connection.to.node is node
+
         export: ->
             dependencies = @get_dependencies()
             dependencies.schema_version = schema_version
@@ -202,10 +210,10 @@ module.factory 'interpreter', ($q, $http) ->
         # these next four are only used by make_from right now
 
         remove_node: (node) ->
-            delete @nodes[node.id]
+            @nodes = _.without @nodes, node
 
         add_node: (node) ->
-            @nodes[node.id] = node
+            @nodes.push node
 
         remove_connection: (connection) ->
             @connections = _.without @connections, connection
@@ -283,7 +291,7 @@ module.factory 'interpreter', ($q, $http) ->
             old_scope = nodes[0].scope
 
             # move the nodes
-            for id, node of nodes
+            for node of nodes
                 old_scope.remove_node node
                 @add_node node
 
@@ -417,15 +425,14 @@ module.factory 'interpreter', ($q, $http) ->
     class Node extends Type# Abstract
         constructor: ({@scope, @id, @position, @implementation}={})->
             @id ?= UUID()
-            @scope.nodes[@id] = @
+            @scope.nodes.push @
 
         get_inputs: -> @implementation.inputs
         get_outputs: -> @implementation.outputs
 
         delete: ->
-            delete @scope.nodes[@id]
-            for nib in @get_nibs()
-                nib.delete_connections()
+            @scope.delete_node_connections @
+            @scope.remove_node @
 
         toJSON: ->
             _.extend super(),
@@ -638,7 +645,7 @@ module.factory 'interpreter', ($q, $http) ->
         for connection_data in data.connections
             get_node = (direction) ->
                 id = connection_data[direction].node
-                if id is graph.id then graph else graph.nodes[id]
+                if id is graph.id then graph else _.find graph.nodes, (node) -> node.id is id
 
             from_node = get_node 'from'
             to_node = get_node 'to'
@@ -697,7 +704,7 @@ module.factory 'interpreter', ($q, $http) ->
 
         for connection in data.connections
             get_node = (nib) ->
-                if nib.parent_id is subroutine.id then subroutine else subroutine.nodes[nib.parent_id]
+                if nib.parent_id is subroutine.id then subroutine else _.find subroutine.nodes, (node) -> node.id is nib.parent_id
 
             get_nib = (node, direction1, direction2) ->
                 collection = if node instanceof Definition then node[direction2] else node.implementation[direction1]

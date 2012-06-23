@@ -219,36 +219,55 @@
         }
       };
 
+      Subroutine.prototype.delete_nib = function(nib, group) {
+        var index, _i, _len, _ref, _results;
+        this[group] = _.without(this[group], nib);
+        _ref = this[group];
+        _results = [];
+        for (index = _i = 0, _len = _ref.length; _i < _len; index = ++_i) {
+          nib = _ref[index];
+          _results.push(nib.index = index);
+        }
+        return _results;
+        /*
+                    delete_index = @[group].indexOf nib
+                    @[group].splice delete_index, 1
+                    for index in [delete_index...@[group].length]
+                        @[group][index].index -= 1
+        */
+
+      };
+
+      Subroutine.prototype.add_nib = function(group, the_class, data) {
+        if (data == null) {
+          data = {};
+        }
+        return this[group].push(new the_class(_.extend(data, {
+          scope: this,
+          index: this[group].length
+        })));
+      };
+
+      Subroutine.prototype.delete_input = function(nib) {
+        return this.delete_nib(nib, 'inputs');
+      };
+
+      Subroutine.prototype.delete_output = function(nib) {
+        return this.delete_nib(nib, 'outputs');
+      };
+
       Subroutine.prototype.add_input = function(data) {
         if (data == null) {
           data = {};
         }
-        return this.inputs.push(new Input(_.extend(data, {
-          scope: this,
-          index: this.inputs.length
-        })));
+        return this.add_nib('inputs', Input, data);
       };
 
       Subroutine.prototype.add_output = function(data) {
         if (data == null) {
           data = {};
         }
-        return this.outputs.push(new Output(_.extend(data, {
-          scope: this,
-          index: this.outputs.length
-        })));
-      };
-
-      Subroutine.prototype.delete_input = function(nib) {
-        var index;
-        index = this.inputs.indexOf(nib);
-        return this.inputs.splice(index, 1);
-      };
-
-      Subroutine.prototype.delete_output = function(nib) {
-        var index;
-        index = this.outputs.indexOf(nib);
-        return this.outputs.splice(index, 1);
+        return this.add_nib('outputs', Output, data);
       };
 
       Subroutine.prototype.toJSON = function() {
@@ -324,13 +343,13 @@
 
       function Graph() {
         Graph.__super__.constructor.apply(this, arguments);
-        this.nodes = {};
+        this.nodes = [];
         this.connections = [];
       }
 
       Graph.prototype.toJSON = function() {
         return _.extend(Graph.__super__.toJSON.call(this), {
-          nodes: _.values(this.nodes),
+          nodes: this.nodes,
           connections: this.connections
         });
       };
@@ -390,6 +409,12 @@
         });
       };
 
+      Graph.prototype.delete_node_connections = function(node) {
+        return this.connections = _.reject(this.connections, function(connection) {
+          return connection.from.node === node || connection.to.node === node;
+        });
+      };
+
       Graph.prototype["export"] = function() {
         var dependencies;
         dependencies = this.get_dependencies();
@@ -408,11 +433,11 @@
       };
 
       Graph.prototype.remove_node = function(node) {
-        return delete this.nodes[node.id];
+        return this.nodes = _.without(this.nodes, node);
       };
 
       Graph.prototype.add_node = function(node) {
-        return this.nodes[node.id] = node;
+        return this.nodes.push(node);
       };
 
       Graph.prototype.remove_connection = function(connection) {
@@ -490,8 +515,7 @@
 
         var connection, contained_connections, from_inside, grouping, id, inbound_connections, new_connection, new_nib, new_node, nib, node, old_scope, outbound_connections, outbound_connections_by_nib, to_inside, _i, _j, _k, _l, _len, _len1, _len2, _len3, _name, _ref, _ref1, _ref2, _ref3, _results;
         old_scope = nodes[0].scope;
-        for (id in nodes) {
-          node = nodes[id];
+        for (node in nodes) {
           old_scope.remove_node(node);
           this.add_node(node);
         }
@@ -681,7 +705,7 @@
         if ((_ref1 = this.id) == null) {
           this.id = UUID();
         }
-        this.scope.nodes[this.id] = this;
+        this.scope.nodes.push(this);
       }
 
       Node.prototype.get_inputs = function() {
@@ -693,15 +717,8 @@
       };
 
       Node.prototype["delete"] = function() {
-        var nib, _i, _len, _ref, _results;
-        delete this.scope.nodes[this.id];
-        _ref = this.get_nibs();
-        _results = [];
-        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-          nib = _ref[_i];
-          _results.push(nib.delete_connections());
-        }
-        return _results;
+        this.scope.delete_node_connections(this);
+        return this.scope.remove_node(this);
       };
 
       Node.prototype.toJSON = function() {
@@ -1069,7 +1086,9 @@
           if (id === graph.id) {
             return graph;
           } else {
-            return graph.nodes[id];
+            return _.find(graph.nodes, function(node) {
+              return node.id === id;
+            });
           }
         };
         from_node = get_node('from');
@@ -1138,7 +1157,9 @@
           if (nib.parent_id === subroutine.id) {
             return subroutine;
           } else {
-            return subroutine.nodes[nib.parent_id];
+            return _.find(subroutine.nodes, function(node) {
+              return node.id === nib.parent_id;
+            });
           }
         };
         get_nib = function(node, direction1, direction2) {
