@@ -79,8 +79,15 @@ module.directive 'subroutine', ($location) ->
         $scope.click_node = (node, $event) ->
             $event.preventDefault()
             $event.stopPropagation()
-            if node not in $scope.selection
+
+            if $event.shiftKey
+                if node not in $scope.selection
+                    $scope.selection.push node
+                else
+                    $scope.selection = _.without $scope.selection, node
+            else if node not in $scope.selection
                 $scope.selection = [node]
+
             $scope.dragging = $scope.selection
 
         $scope.edit_node = (node, $event) ->
@@ -111,6 +118,8 @@ module.directive 'subroutine', ($location) ->
 
         $scope.boxing = false
         $element.bind 'mousedown', (event) -> $scope.$apply ->
+            event.preventDefault()
+            event.stopPropagation()
             $scope.boxing = $scope.mouse_position
 
         get_bounds = (point1, point2) ->
@@ -141,7 +150,13 @@ module.directive 'subroutine', ($location) ->
             $scope.dragging = []
 
             if $scope.boxing
-                $scope.selection = _.filter subroutine.nodes, (node) -> in_box node.position, $scope.boxing, $scope.mouse_position
+                newly_selected = _.filter subroutine.nodes, (node) -> in_box node.position, $scope.boxing, $scope.mouse_position
+                if event.shiftKey
+                    for node in newly_selected
+                        if node not in $scope.selection
+                            $scope.selection.push node
+                else
+                    $scope.selection = newly_selected
 
             $scope.drawing = $scope.boxing = null
             draw()

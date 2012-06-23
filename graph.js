@@ -128,7 +128,13 @@
         $scope.click_node = function(node, $event) {
           $event.preventDefault();
           $event.stopPropagation();
-          if (__indexOf.call($scope.selection, node) < 0) {
+          if ($event.shiftKey) {
+            if (__indexOf.call($scope.selection, node) < 0) {
+              $scope.selection.push(node);
+            } else {
+              $scope.selection = _.without($scope.selection, node);
+            }
+          } else if (__indexOf.call($scope.selection, node) < 0) {
             $scope.selection = [node];
           }
           return $scope.dragging = $scope.selection;
@@ -168,6 +174,8 @@
         $scope.boxing = false;
         $element.bind('mousedown', function(event) {
           return $scope.$apply(function() {
+            event.preventDefault();
+            event.stopPropagation();
             return $scope.boxing = $scope.mouse_position;
           });
         });
@@ -203,11 +211,22 @@
         };
         $element.bind('mouseup', function(event) {
           return $scope.$apply(function() {
+            var newly_selected, node, _i, _len;
             $scope.dragging = [];
             if ($scope.boxing) {
-              $scope.selection = _.filter(subroutine.nodes, function(node) {
+              newly_selected = _.filter(subroutine.nodes, function(node) {
                 return in_box(node.position, $scope.boxing, $scope.mouse_position);
               });
+              if (event.shiftKey) {
+                for (_i = 0, _len = newly_selected.length; _i < _len; _i++) {
+                  node = newly_selected[_i];
+                  if (__indexOf.call($scope.selection, node) < 0) {
+                    $scope.selection.push(node);
+                  }
+                }
+              } else {
+                $scope.selection = newly_selected;
+              }
             }
             $scope.drawing = $scope.boxing = null;
             return draw();
