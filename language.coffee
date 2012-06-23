@@ -348,7 +348,7 @@ module.factory 'interpreter', ($q, $http) ->
             for {beginning_connection, middle_connection} in through_connections
                 nib = middle_connection.to.nib
                 outer_connections = _.filter @connections, (outer_connection) =>
-                    outer_connection.nib is nib and outer_connection.node is busting_node
+                    outer_connection.from.nib is nib and outer_connection.from.node is busting_node
 
                 for outer_connection in outer_connections
                     outer_connection.from = clone_endpoint beginning_connection.from

@@ -586,7 +586,7 @@
           _ref1 = through_connections[_m], beginning_connection = _ref1.beginning_connection, middle_connection = _ref1.middle_connection;
           nib = middle_connection.to.nib;
           outer_connections = _.filter(this.connections, function(outer_connection) {
-            return outer_connection.nib === nib && outer_connection.node === busting_node;
+            return outer_connection.from.nib === nib && outer_connection.from.node === busting_node;
           });
           for (_n = 0, _len5 = outer_connections.length; _n < _len5; _n++) {
             outer_connection = outer_connections[_n];
