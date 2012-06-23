@@ -605,7 +605,7 @@
         /* Build a subroutine out of nodes in another subroutine.
         */
 
-        var connection, contained_connections, from_inside, grouping, id, inbound_connections, new_connection, new_nib, new_node, nib, node, old_scope, outbound_connections, outbound_connections_by_nib, to_inside, _i, _j, _k, _l, _len, _len1, _len2, _len3, _len4, _m, _name, _ref, _ref1, _ref2, _ref3, _results;
+        var connection, contained_connections, from_inside, grouping, id, inbound_connections, new_connection, new_nib, new_node, nib, node, old_scope, outbound_connections, outbound_connections_by_nib, to_inside, _i, _j, _k, _l, _len, _len1, _len2, _len3, _len4, _len5, _m, _n, _name, _ref, _ref1, _ref2, _ref3, _ref4;
         old_scope = nodes[0].scope;
         for (_i = 0, _len = nodes.length; _i < _len; _i++) {
           node = nodes[_i];
@@ -666,33 +666,27 @@
           }
           outbound_connections_by_nib[nib.id].connections.push(connection);
         }
-        _results = [];
         for (id in outbound_connections_by_nib) {
           grouping = outbound_connections_by_nib[id];
           new_nib = this.add_output();
-          _results.push((function() {
-            var _len5, _n, _ref4, _results1;
-            _ref4 = grouping.connections;
-            _results1 = [];
-            for (_n = 0, _len5 = _ref4.length; _n < _len5; _n++) {
-              connection = _ref4[_n];
-              new Connection({
-                scope: this,
-                from: clone_endpoint(connection.from),
-                to: {
-                  node: this,
-                  nib: new_nib
-                }
-              });
-              _results1.push(connection.from = {
-                node: new_node,
+          _ref4 = grouping.connections;
+          for (_n = 0, _len5 = _ref4.length; _n < _len5; _n++) {
+            connection = _ref4[_n];
+            new Connection({
+              scope: this,
+              from: clone_endpoint(connection.from),
+              to: {
+                node: this,
                 nib: new_nib
-              });
-            }
-            return _results1;
-          }).call(this));
+              }
+            });
+            connection.from = {
+              node: new_node,
+              nib: new_nib
+            };
+          }
         }
-        return _results;
+        return new_node;
       };
 
       return Graph;

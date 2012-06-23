@@ -99,6 +99,7 @@
       controller: function($scope, $element, $attrs, interpreter) {
         var $$element, canvas, canvas_offset, draw, get_bounds, header_height, in_box, nib_center, nib_offset, resize_canvas, subroutine, transform_the_position,
           _this = this;
+        $element = $($element).find('#subroutine');
         $$element = $($element);
         subroutine = $scope.$eval($attrs.subroutine);
         $scope.dragging = [];
@@ -152,21 +153,23 @@
           return $location.path("/" + node.implementation.id);
         };
         $scope.can_bust = function(nodes) {
-          return nodes.length === 1 && nodes[0] instanceof interpreter.Graph;
+          return nodes.length === 1 && nodes[0].implementation instanceof interpreter.Graph;
         };
         $scope.bust_node = function(node) {
           var new_nodes;
           new_nodes = subroutine.bust_node(node);
-          return $scope.selection = new_nodes;
+          $scope.selection = new_nodes;
+          return draw();
         };
         $scope.can_join = function(nodes) {
           return nodes.length > 1;
         };
         $scope.join_nodes = function(nodes) {
-          var new_subroutine;
+          var new_node, new_subroutine;
           new_subroutine = new interpreter.Graph;
-          new_subroutine.make_from(nodes);
-          return $scope.selection = [new_subroutine];
+          new_node = new_subroutine.make_from(nodes);
+          $scope.selection = [new_node];
+          return draw();
         };
         $scope.selected = function(node) {
           return __indexOf.call($scope.selection, node) >= 0;

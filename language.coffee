@@ -439,6 +439,8 @@ module.factory 'interpreter', ($q, $http) ->
                         node:new_node
                         nib:new_nib
 
+            return new_node
+
 
     find_value = (text, type, collection=all_definitions) ->
         for id, thing of collection

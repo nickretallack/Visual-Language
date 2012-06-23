@@ -55,6 +55,8 @@ module.directive 'anySubroutine', ->
 module.directive 'subroutine', ($location) ->
     link:(scope, element, attributes) ->
     controller:($scope, $element, $attrs, interpreter) ->
+        # Don't capture events from the overlay elements
+        $element = $($element).find '#subroutine'
         $$element = $ $element
         subroutine = $scope.$eval $attrs.subroutine
         $scope.dragging = []
@@ -99,18 +101,19 @@ module.directive 'subroutine', ($location) ->
             $location.path "/#{node.implementation.id}"
 
         $scope.can_bust = (nodes) ->
-            nodes.length is 1 and nodes[0] instanceof interpreter.Graph
+            nodes.length is 1 and nodes[0].implementation instanceof interpreter.Graph
         $scope.bust_node = (node) ->
             new_nodes = subroutine.bust_node node
             $scope.selection = new_nodes
+            draw()
 
         $scope.can_join = (nodes) ->
             nodes.length > 1
         $scope.join_nodes = (nodes) ->
             new_subroutine = new interpreter.Graph
-            new_subroutine.make_from nodes
-            $scope.selection = [new_subroutine]
-
+            new_node = new_subroutine.make_from nodes
+            $scope.selection = [new_node]
+            draw()
 
         $scope.selected = (node) ->
             node in $scope.selection

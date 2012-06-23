@@ -1,54 +1,53 @@
 {{name_node(current_object)}}
 <div ng-switch="current_object.type" any-subroutine="current_object">
 
-<div ng-switch-when="graph" id="subroutine" subroutine="current_object">
-<canvas id="connections" connections="current_object"></canvas>
-<div id="selection" ng-style="selection_style()"></div>
+<div ng-switch-when="graph" subroutine="current_object">
+
+<div id="subroutine">
+    <canvas id="connections" connections="current_object"></canvas>
+    <div id="selection" ng-style="selection_style()"></div>
+    <div class="subroutine-input" ng-repeat="input in current_object.inputs" ng-style="{'top':(($index+1) * editor_size.y / (current_object.inputs.length+1)) + 'px'}">
+        <div nib="input" node="current_object"></div>
+        <input ng-model="input.text" shrinky-input="input.text">
+        <a ng-click="delete_input(input)">-</a>
+    </div>
+    <a id="new-input" ng-click="new_input(subroutine)">+Input</a>
+
+    <div class="subroutine-output" ng-repeat="output in current_object.outputs" ng-style="{'top':(($index+1) * editor_size.y / (current_object.outputs.length+1)) + 'px'}">
+        <a ng-click="delete_output(output)">-</a>
+        <input ng-model="output.text" shrinky-input="output.text">
+        <div nib="output" node="current_object"></div>
+        <div><a ng-click="evaluate_output(output)">evaluate</a></div>
+    </div>
+    <a id="new-output" ng-click="new_output(subroutine)">+Output</a>
+
+
+    <div class="node" ng-repeat="node in current_object.nodes" node="node" ng-style="position(node)" ng-mousedown="click_node(node, $event)" ng-dblclick="edit_node(node, $event)" ng-rightclick="" ng-class="{selected:selected(node)}">
+        <ul class="unstyled"><li ng-repeat="output in node.implementation.outputs" class="output">
+        	<div nib="output" node="node"></div>
+        	{{output.text}}
+        </li></ul>
+
+        <div class="node-title">{{node.implementation | text_or_id}}</div>
+
+        <ul class="unstyled"><li ng-repeat="input in node.implementation.inputs" class="input">
+        	{{input.text}}
+        	<div nib="input" node="node"></div>
+        </li></ul>
+    </div>
+</div>
+
 
 <div id="editor-options">
+    <div id="title-row">
+    <input ng-model="current_object.text" shrinky-input="current_object | text_or_id" class="title" placeholder="{{current_object.id}}"> options
+    </div>
 
-<div id="title-row">
-<input ng-model="current_object.text" shrinky-input="current_object | text_or_id" class="title" placeholder="{{current_object.id}}"> options
-</div>
-
-<div id="selection-row" class="btn-toolbar">
-    <a class="btn" ng-show="can_edit(selection)" ng-click="edit_node(selection[0])">Edit</a>
-    <a class="btn" ng-show="can_bust(selection)" ng-click="bust_node(selection[0])">Bust</a>
-    <a class="btn" ng-show="can_join(selection)" ng-click="join_nodes(selection)">Join</a>
-</div>
-
-</div>
-
-
-
-<div class="subroutine-input" ng-repeat="input in current_object.inputs" ng-style="{'top':(($index+1) * editor_size.y / (current_object.inputs.length+1)) + 'px'}">
-    <div nib="input" node="current_object"></div>
-    <input ng-model="input.text" shrinky-input="input.text">
-    <a ng-click="delete_input(input)">-</a>
-</div>
-<a id="new-input" ng-click="new_input(subroutine)">+Input</a>
-
-<div class="subroutine-output" ng-repeat="output in current_object.outputs" ng-style="{'top':(($index+1) * editor_size.y / (current_object.outputs.length+1)) + 'px'}">
-    <a ng-click="delete_output(output)">-</a>
-    <input ng-model="output.text" shrinky-input="output.text">
-    <div nib="output" node="current_object"></div>
-    <div><a ng-click="evaluate_output(output)">evaluate</a></div>
-</div>
-<a id="new-output" ng-click="new_output(subroutine)">+Output</a>
-
-
-<div class="node" ng-repeat="node in current_object.nodes" node="node" ng-style="position(node)" ng-mousedown="click_node(node, $event)" ng-dblclick="edit_node(node, $event)" ng-rightclick="" ng-class="{selected:selected(node)}">
-    <ul class="unstyled"><li ng-repeat="output in node.implementation.outputs" class="output">
-    	<div nib="output" node="node"></div>
-    	{{output.text}}
-    </li></ul>
-
-    <div class="node-title">{{node.implementation | text_or_id}}</div>
-
-    <ul class="unstyled"><li ng-repeat="input in node.implementation.inputs" class="input">
-    	{{input.text}}
-    	<div nib="input" node="node"></div>
-    </li></ul>
+    <div id="selection-row" class="btn-toolbar">
+        <a class="btn" ng-show="can_edit(selection)" ng-click="edit_node(selection[0])">Edit</a>
+        <a class="btn" ng-show="can_bust(selection)" ng-click="bust_node(selection[0])">Bust</a>
+        <a class="btn" ng-show="can_join(selection)" ng-click="join_nodes(selection)">Join</a>
+    </div>
 </div>
 
 </div>
