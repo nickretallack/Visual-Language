@@ -519,7 +519,7 @@
 
 
       Graph.prototype.bust_node = function(busting_node) {
-        var beginning_connection, busting_scope, connection, inbound_connections, inner_connection, inner_connections, internal_connections, middle_connection, new_node, nib, node, node_mapping, outbound_connections, outer_connection, outer_connections, through_connections, translate_endpoint, _i, _j, _k, _l, _len, _len1, _len2, _len3, _len4, _len5, _len6, _m, _n, _o, _ref, _ref1, _results,
+        var beginning_connection, busting_scope, connection, inbound_connections, inner_connection, inner_connections, internal_connections, middle_connection, new_node, nib, node, node_mapping, outbound_connections, outer_connection, outer_connections, through_connections, translate_endpoint, _i, _j, _k, _l, _len, _len1, _len2, _len3, _len4, _len5, _len6, _m, _n, _o, _ref, _ref1,
           _this = this;
         this.remove_node(busting_node);
         busting_scope = busting_node.implementation;
@@ -530,15 +530,15 @@
           new_node = node.clone(this);
           node_mapping[node.id] = new_node;
         }
-        internal_connections = _.filter(busting_scope.connections, function(connection) {
-          return connection.from.node !== busting_scope && connection.to.node !== busting_scope;
-        });
         translate_endpoint = function(endpoint) {
           return {
             node: node_mapping[endpoint.node.id],
             nib: endpoint.nib
           };
         };
+        internal_connections = _.filter(busting_scope.connections, function(connection) {
+          return connection.from.node !== busting_scope && connection.to.node !== busting_scope;
+        });
         for (_j = 0, _len1 = internal_connections.length; _j < _len1; _j++) {
           connection = internal_connections[_j];
           new Connection({
@@ -550,14 +550,6 @@
         inbound_connections = _.filter(this.connections, function(connection) {
           return connection.to.node === busting_node;
         });
-        /*
-                    outbound_connections = []
-                    for connection in @connections
-                        #outbound_connections.push connection if connection.from.node is busting_node
-                        inbound_connections.push connection if connection.to.node is busting_node
-                        # can't possibly be both inbound and outbound at the same time in the parent scope
-        */
-
         through_connections = [];
         for (_k = 0, _len2 = inbound_connections.length; _k < _len2; _k++) {
           connection = inbound_connections[_k];
@@ -596,7 +588,6 @@
         outbound_connections = _.filter(this.connections, function(connection) {
           return connection.from.node === busting_node;
         });
-        _results = [];
         for (_o = 0, _len6 = outbound_connections.length; _o < _len6; _o++) {
           connection = outbound_connections[_o];
           nib = connection.from.nib;
@@ -604,41 +595,10 @@
             return connection.to.node === busting_scope && connection.to.nib === nib;
           });
           if (inner_connection) {
-            _results.push(connection.from = translate_endpoint(inner_connection.from));
-          } else {
-            _results.push(void 0);
+            connection.from = translate_endpoint(inner_connection.from);
           }
         }
-        return _results;
-        /*
-        
-        
-                    inside_inbound_connections = []
-                    inside_outbound_connections = []
-                    threaded_connections = []
-                    for connection in busting_scope.connections
-                        inbound = connection.from.node is busting_scope
-                        outbound = connection.to.node is busting_scope
-                        if inbound and outbound
-                            threaded_connections.push connection
-                        else if inbound
-                            inside_inbound_connections.push connection
-                        else if outbound
-                            inside_outbound_connections.push connection
-                        else
-                            # clone the connection right now
-                            @connections.push new Connection
-                                scope:@
-                                from:
-                                    node:node_mapping[connection.from.node.id] #_.find nodes, (node) -> node.old_id is connection.from.node.id
-                                    nib:connection.from.nib
-                                to:
-                                    node:node_mapping[connection.from.node.id] #_.find nodes, (node) -> node.old_id is connection.to.node.id
-                                    nib:connection.to.nib
-        
-                    for connection in inbound_connections
-        */
-
+        return _.values(node_mapping);
       };
 
       Graph.prototype.make_from = function(nodes) {
@@ -1377,7 +1337,8 @@
       Literal: Literal,
       Input: Input,
       Output: Output,
-      subroutines: all_definitions
+      subroutines: all_definitions,
+      Subroutine: Subroutine
     };
   });
 

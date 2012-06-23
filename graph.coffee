@@ -90,13 +90,27 @@ module.directive 'subroutine', ($location) ->
 
             $scope.dragging = $scope.selection
 
-        $scope.edit_node = (node, $event) ->
-            $event.preventDefault()
-            $location.path "/#{node.implementation.id}" unless node.implementation instanceof interpreter.Literal
 
-        $scope.bust_node = (node, $event) ->
-            $event.preventDefault()
-            subroutine.bust_node node
+        $scope.can_edit = (nodes) ->
+            nodes.length is 1 and nodes[0].implementation instanceof interpreter.Subroutine
+        $scope.edit_node = (node, $event) ->
+            return unless $scope.can_edit [node]
+            $event?.preventDefault()
+            $location.path "/#{node.implementation.id}"
+
+        $scope.can_bust = (nodes) ->
+            nodes.length is 1 and nodes[0] instanceof interpreter.Graph
+        $scope.bust_node = (node) ->
+            new_nodes = subroutine.bust_node node
+            $scope.selection = new_nodes
+
+        $scope.can_join = (nodes) ->
+            nodes.length > 1
+        $scope.join_nodes = (nodes) ->
+            new_subroutine = new interpreter.Graph
+            new_subroutine.make_from nodes
+            $scope.selection = [new_subroutine]
+
 
         $scope.selected = (node) ->
             node in $scope.selection

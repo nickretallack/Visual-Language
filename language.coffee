@@ -297,13 +297,14 @@ module.factory 'interpreter', ($q, $http) ->
                 new_node = node.clone @
                 node_mapping[node.id] = new_node
 
-            # clone internal connections
-            internal_connections = _.filter busting_scope.connections, (connection) ->
-                connection.from.node isnt busting_scope and connection.to.node isnt busting_scope
-
+            # Points at the new clone of a node instead of the original
             translate_endpoint = (endpoint) ->
                 node:node_mapping[endpoint.node.id]
                 nib:endpoint.nib
+
+            # clone internal connections
+            internal_connections = _.filter busting_scope.connections, (connection) ->
+                connection.from.node isnt busting_scope and connection.to.node isnt busting_scope
 
             for connection in internal_connections
                 new Connection
@@ -311,20 +312,8 @@ module.factory 'interpreter', ($q, $http) ->
                     from:translate_endpoint connection.from
                     to:translate_endpoint connection.to
 
-            #nodes = (node.clone() for node in @nodes)
-            #other_scope.nodes = other_scope.nodes.concat nodes
-
             inbound_connections = _.filter @connections, (connection) ->
                 connection.to.node is busting_node
-
-
-            ###
-            outbound_connections = []
-            for connection in @connections
-                #outbound_connections.push connection if connection.from.node is busting_node
-                inbound_connections.push connection if connection.to.node is busting_node
-                # can't possibly be both inbound and outbound at the same time in the parent scope
-            ###
 
             through_connections = []
             for connection in inbound_connections
@@ -357,7 +346,6 @@ module.factory 'interpreter', ($q, $http) ->
 
             outbound_connections = _.filter @connections, (connection) =>
                 connection.from.node is busting_node
-                #outbound_connections.push connection if connection.from.node is busting_node
 
             for connection in outbound_connections
                 nib = connection.from.nib
@@ -366,34 +354,7 @@ module.factory 'interpreter', ($q, $http) ->
                 if inner_connection
                     connection.from = translate_endpoint inner_connection.from
 
-            ###
-
-
-            inside_inbound_connections = []
-            inside_outbound_connections = []
-            threaded_connections = []
-            for connection in busting_scope.connections
-                inbound = connection.from.node is busting_scope
-                outbound = connection.to.node is busting_scope
-                if inbound and outbound
-                    threaded_connections.push connection
-                else if inbound
-                    inside_inbound_connections.push connection
-                else if outbound
-                    inside_outbound_connections.push connection
-                else
-                    # clone the connection right now
-                    @connections.push new Connection
-                        scope:@
-                        from:
-                            node:node_mapping[connection.from.node.id] #_.find nodes, (node) -> node.old_id is connection.from.node.id
-                            nib:connection.from.nib
-                        to:
-                            node:node_mapping[connection.from.node.id] #_.find nodes, (node) -> node.old_id is connection.to.node.id
-                            nib:connection.to.nib
-
-            for connection in inbound_connections
-            ###
+            return _.values node_mapping
 
 
         make_from: (nodes) ->
@@ -886,3 +847,4 @@ module.factory 'interpreter', ($q, $http) ->
     Input:Input
     Output:Output
     subroutines:all_definitions
+    Subroutine:Subroutine

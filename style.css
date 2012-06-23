@@ -31,8 +31,12 @@ textarea {display:block}
 
 .subroutine-input input, .subroutine-output input {border:0; padding:0;}
 
-#subroutine .title { position:absolute; left:0; top:0;}
-.title {font-size:18pt; border:none; margin-left:5px;}
+#editor-options {
+    position:absolute; left:5px; top:0;
+}
+
+#subroutine .title { }
+.title {font-size:18pt; border:none;}
 
 #new-input, #new-output {
     position:absolute;

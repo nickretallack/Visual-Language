@@ -139,15 +139,34 @@
           }
           return $scope.dragging = $scope.selection;
         };
-        $scope.edit_node = function(node, $event) {
-          $event.preventDefault();
-          if (!(node.implementation instanceof interpreter.Literal)) {
-            return $location.path("/" + node.implementation.id);
-          }
+        $scope.can_edit = function(nodes) {
+          return nodes.length === 1 && nodes[0].implementation instanceof interpreter.Subroutine;
         };
-        $scope.bust_node = function(node, $event) {
-          $event.preventDefault();
-          return subroutine.bust_node(node);
+        $scope.edit_node = function(node, $event) {
+          if (!$scope.can_edit([node])) {
+            return;
+          }
+          if ($event != null) {
+            $event.preventDefault();
+          }
+          return $location.path("/" + node.implementation.id);
+        };
+        $scope.can_bust = function(nodes) {
+          return nodes.length === 1 && nodes[0] instanceof interpreter.Graph;
+        };
+        $scope.bust_node = function(node) {
+          var new_nodes;
+          new_nodes = subroutine.bust_node(node);
+          return $scope.selection = new_nodes;
+        };
+        $scope.can_join = function(nodes) {
+          return nodes.length > 1;
+        };
+        $scope.join_nodes = function(nodes) {
+          var new_subroutine;
+          new_subroutine = new interpreter.Graph;
+          new_subroutine.make_from(nodes);
+          return $scope.selection = [new_subroutine];
         };
         $scope.selected = function(node) {
           return __indexOf.call($scope.selection, node) >= 0;
