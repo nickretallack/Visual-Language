@@ -1,12 +1,24 @@
+- gotta release something
+Well, I guess I could put the local storage stuff back in.  Just need to make a new format for it.
+
+It's currently a little unusable.  What does it need?
+    finish the 'make subroutine from' call
+    delete nodes
+    delete connections
+    rearrange nib ordering with drag and drop
+
+Nice to haves:
+    "idempotent" checkbox that memoizes?
+    "stateful" checkbox that adds extra null nibs
+    "glob nibs" - one nib internally that is many nibs externally, var args
+
+
 - networking / publishing / collaboration
 This is a serious component.  What should I do for it?  Hm.
 Currently it is in a 100% local form.  Will you always be able to download the whole library?  Probably not, but perhaps I can solve that problem when I come to it.
 
 Will need a system to fetch newly published functions.  Should they show up in a different area from the normal functions?
 
-
-- gotta release something
-Well, I guess I could put the local storage stuff back in.  Just need to make a new format for it.
 
 
 
@@ -29,15 +41,13 @@ Connections should connect to nib objects, and they should be remembered by ID. 
     - execution - done
     - inputs for builtins - done
     - rename things - done
-    - saving
-    - loading new and legacy stuff
+    - saving - done
+    - loading new and legacy stuff - done
 
 - other important stuff
     - placeholder names - done
     - proper events for inputs - done
-    - finish the 'make subroutine from' call
-    - contextual warning when deleting nibs from definitions
-    - rearrange nib ordering with drag and drop (should be easy now)
+    - contextual warning when deleting nibs from definitions - done
 
 
 - networking

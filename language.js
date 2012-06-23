@@ -2,7 +2,8 @@
 (function() {
   var module,
     __hasProp = {}.hasOwnProperty,
-    __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
+    __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; },
+    __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
 
   module = angular.module('vislang');
 
@@ -415,19 +416,23 @@
         return Graph.__super__.delete_output.call(this, nib);
       };
 
+      Graph.prototype.remove_node = function(node) {
+        return delete this.nodes[node.id];
+      };
+
+      Graph.prototype.add_node = function(node) {
+        return this.nodes[node.id] = node;
+      };
+
+      Graph.prototype.remove_connection = function(connection) {
+        return delete this.connections[connection.id];
+      };
+
+      Graph.prototype.add_connection = function(connection) {
+        return this.connections[connection.id] = connection;
+      };
+
       /* probably outdated
-      remove_node: (node) ->
-          delete @nodes[node.id]
-      
-      add_node: (node) ->
-          @nodes[node.id] = node
-      
-      remove_connection: (connection) ->
-          delete @connections[connection.id]
-      
-      add_connection: (connection) ->
-          @connections[connection.id] = connection
-      
       get_dependencies: (dependencies={subroutines:{},builtins:{}}) ->
           # TODO: UPDATE
           dependencies.subroutines[@id] = @ if @id not of dependencies.subroutines
@@ -492,59 +497,58 @@
         /* Build a subroutine out of nodes in another subroutine.
         */
 
-        var connection, contained_connections, id, in_connections, new_node, nib, node, old_scope, out_connections, _i, _len, _ref, _ref1, _ref2, _ref3, _results;
+        var connection, contained_connections, from_inside, id, inbound_connections, new_connection, new_nib, new_node, node, old_scope, outbound_connections, to_inside, _i, _j, _len, _len1, _ref, _ref1, _ref2, _results;
         old_scope = nodes[0].scope;
-        in_connections = {};
-        out_connections = {};
-        for (_i = 0, _len = nodes.length; _i < _len; _i++) {
-          node = nodes[_i];
-          _ref = node.inputs;
-          for (id in _ref) {
-            nib = _ref[id];
-            _ref1 = nib.connections;
-            for (id in _ref1) {
-              connection = _ref1[id];
-              in_connections[connection.connection.id] = connection.connection;
-            }
-          }
-          _ref2 = node.outputs;
-          for (id in _ref2) {
-            nib = _ref2[id];
-            _ref3 = nib.connections;
-            for (id in _ref3) {
-              connection = _ref3[id];
-              out_connections[connection.connection.id] = connection.connection;
-            }
-          }
-        }
-        contained_connections = {};
-        for (id in in_connections) {
-          connection = in_connections[id];
-          if (connection.id in out_connections) {
-            contained_connections[connection.id] = connection;
-            delete in_connections[connection.id];
-            delete out_connections[connection.id];
-          }
-        }
-        for (id in contained_connections) {
-          connection = contained_connections[id];
-          old_scope.remove_connection(connection);
-          this.add_connection(connection);
-        }
         for (id in nodes) {
           node = nodes[id];
           old_scope.remove_node(node);
           this.add_node(node);
         }
-        new_node = new SubroutineApplication(old_scope, V(0, 0), this);
-        for (id in in_connections) {
-          connection = in_connections[id];
-          connection["delete"]();
+        new_node = new Call({
+          scope: old_scope,
+          position: V(0, 0),
+          implementation: this
+        });
+        inbound_connections = [];
+        outbound_connections = [];
+        contained_connections = [];
+        _ref = old_scope.connections;
+        for (id in _ref) {
+          connection = _ref[id];
+          from_inside = (_ref1 = connection.from.node, __indexOf.call(nodes, _ref1) >= 0);
+          to_inside = (_ref2 = connection.to.node, __indexOf.call(nodes, _ref2) >= 0);
+          if (from_inside && to_inside) {
+            contained_connections.push(connection);
+          } else if (from_inside) {
+            outbound_connections.push(connection);
+          } else if (to_inside) {
+            inbound_connections.push(connection);
+          }
+        }
+        for (_i = 0, _len = contained_connections.length; _i < _len; _i++) {
+          connection = contained_connections[_i];
+          old_scope.remove_connection(connection);
+          this.add_connection(connection);
         }
         _results = [];
-        for (id in out_connections) {
-          connection = out_connections[id];
-          _results.push(connection["delete"]());
+        for (_j = 0, _len1 = inbound_connections.length; _j < _len1; _j++) {
+          connection = inbound_connections[_j];
+          new_nib = new Input({
+            scope: this
+          });
+          this.inputs.push(new_nib);
+          new_connection = new Connection({
+            scope: this,
+            from: {
+              node: this,
+              nib: new_nib
+            },
+            to: connection.to
+          });
+          _results.push(connection.to = {
+            node: new_node,
+            nib: new_nib
+          });
         }
         return _results;
       };
@@ -646,8 +650,11 @@
       __extends(Node, _super);
 
       function Node(_arg) {
-        var _ref;
+        var _ref, _ref1;
         _ref = _arg != null ? _arg : {}, this.scope = _ref.scope, this.id = _ref.id, this.position = _ref.position, this.implementation = _ref.implementation;
+        if ((_ref1 = this.id) == null) {
+          this.id = UUID();
+        }
         this.scope.nodes[this.id] = this;
       }
 
@@ -779,7 +786,7 @@
 
       function Nib(_arg) {
         var _ref, _ref1;
-        _ref = _arg != null ? _arg : {}, this.parent = _ref.parent, this.text = _ref.text, this.id = _ref.id;
+        _ref = _arg != null ? _arg : {}, this.scope = _ref.scope, this.text = _ref.text, this.id = _ref.id;
         if ((_ref1 = this.id) == null) {
           this.id = UUID();
         }
@@ -1155,8 +1162,7 @@
         obj = _ref[id];
         all_definitions[id] = obj;
       }
-      loaded.resolve(true);
-      return start_saving();
+      return loaded.resolve(true);
     });
     return {
       make_connection: make_connection,

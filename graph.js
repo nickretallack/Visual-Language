@@ -106,8 +106,9 @@
         $scope.selection = [];
         this.nib_views = {};
         $scope.$on('new-graph-from-selection', function() {
-          subroutine = new interpreter.Graph;
-          return subroutine.make_from($scope.selection);
+          var new_subroutine;
+          new_subroutine = new interpreter.Graph;
+          return new_subroutine.make_from($scope.selection);
         });
         transform_the_position = function(position) {
           return position = transform_position(position, $scope.editor_size);
@@ -248,7 +249,7 @@
                 connection = _ref[id];
                 input_element = _this.nib_views["" + connection.from.node.id + "-" + connection.from.nib.id];
                 output_element = _this.nib_views["" + connection.to.node.id + "-" + connection.to.nib.id];
-                if (input_element.length && output_element.length) {
+                if ((input_element != null ? input_element.length : void 0) && (output_element != null ? output_element.length : void 0)) {
                   input_position = V(input_element.offset()).subtract(nib_offset);
                   output_position = V(output_element.offset()).subtract(nib_offset);
                   c.beginPath();

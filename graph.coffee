@@ -63,8 +63,8 @@ module.directive 'subroutine', ($location) ->
         @nib_views = {}
 
         $scope.$on 'new-graph-from-selection', ->
-            subroutine = new interpreter.Graph
-            subroutine.make_from $scope.selection
+            new_subroutine = new interpreter.Graph
+            new_subroutine.make_from $scope.selection
 
         transform_the_position = (position) ->
             position = transform_position position, $scope.editor_size
@@ -175,7 +175,7 @@ module.directive 'subroutine', ($location) ->
                     #input_element = $ ".nib##{connection.from.id}-#{connection.input.id}"# connection.input.view
                     #output_element = $ ".nib##{connection.to.id}-#{connection.output.id}" #connection.output.view
 
-                    if input_element.length and output_element.length
+                    if input_element?.length and output_element?.length
                         input_position = V(input_element.offset()).subtract nib_offset
                         output_position = V(output_element.offset()).subtract nib_offset
                         c.beginPath()

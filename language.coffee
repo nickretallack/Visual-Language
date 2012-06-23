@@ -192,7 +192,8 @@ module.factory 'interpreter', ($q, $http) ->
             @delete_connections 'from', @, nib
             super nib
 
-        ### probably outdated
+        # these next four are only used by make_from right now
+
         remove_node: (node) ->
             delete @nodes[node.id]
 
@@ -205,6 +206,7 @@ module.factory 'interpreter', ($q, $http) ->
         add_connection: (connection) ->
             @connections[connection.id] = connection
 
+        ### probably outdated
         get_dependencies: (dependencies={subroutines:{},builtins:{}}) ->
             # TODO: UPDATE
             dependencies.subroutines[@id] = @ if @id not of dependencies.subroutines
@@ -268,48 +270,63 @@ module.factory 'interpreter', ($q, $http) ->
             ### Build a subroutine out of nodes in another subroutine. ###
             old_scope = nodes[0].scope
 
-            # first find all the connections
-            in_connections = {}
-            out_connections = {}
-            for node in nodes
-                for id, nib of node.inputs
-                    for id, connection of nib.connections
-                        in_connections[connection.connection.id] = connection.connection
-                for id, nib of node.outputs
-                    for id, connection of nib.connections
-                        out_connections[connection.connection.id] = connection.connection
-
-            # see which ones are contained in the system
-            contained_connections = {}
-            for id, connection of in_connections
-                if connection.id of out_connections
-                    contained_connections[connection.id] = connection
-                    delete in_connections[connection.id]
-                    delete out_connections[connection.id]
-
-            # move the contained ones
-            for id, connection of contained_connections
-                old_scope.remove_connection connection
-                @add_connection connection
-
             # move the nodes
             for id, node of nodes
                 old_scope.remove_node node
                 @add_node node
 
             # create a node for this in the old parent
-            new_node = new SubroutineApplication old_scope, V(0,0), @
+            new_node = new Call
+                scope:old_scope
+                position:V(0,0)
+                implementation:@
 
-            # connect the hanging connections.
-            # Each one becomes two: a connection on the inside and on the outside.
+            # find connections to these nodes
+            inbound_connections = []
+            outbound_connections = []
+            contained_connections = []
+            for id, connection of old_scope.connections
+                from_inside = connection.from.node in nodes
+                to_inside = connection.to.node in nodes
+                if from_inside and to_inside
+                    contained_connections.push connection
+                else if from_inside
+                    outbound_connections.push connection
+                else if to_inside
+                    inbound_connections.push connection
 
-            for id, connection of in_connections
-                #nib = new interpreter.Output
-                #subroutine.inputs.push nib
-                connection.delete()
+            # move the contained connections
+            for connection in contained_connections
+                old_scope.remove_connection connection
+                @add_connection connection
 
-            for id, connection of out_connections
-                connection.delete()
+            # find out how many inputs/outputs our new subroutine needs
+            # Inputs are easy since they can only have one connection each
+
+
+            # duplicate the ones that cross the threshhold
+            for connection in inbound_connections
+                new_nib = new Input scope:@
+                @inputs.push new_nib
+
+                # Create a new connection to the previous connection's target,
+                # which is now inside the new subroutine
+                new_connection = new Connection
+                    scope:@
+                    from:
+                        node:@
+                        nib:new_nib
+                    to:connection.to
+
+                # Modify the old connection to point to the newly created input
+                connection.to =
+                    node:new_node
+                    nib:new_nib
+
+            # There may be multiple outputs with the same
+
+            #for connection in outbound_connections
+
 
     find_value = (text, type, collection=all_definitions) ->
         for id, thing of collection
@@ -365,6 +382,7 @@ module.factory 'interpreter', ($q, $http) ->
 
     class Node extends Type# Abstract
         constructor: ({@scope, @id, @position, @implementation}={})->
+            @id ?= UUID()
             @scope.nodes[@id] = @
 
         get_inputs: -> @implementation.inputs
@@ -431,7 +449,7 @@ module.factory 'interpreter', ($q, $http) ->
     ### OTHER TYPES ###
 
     class Nib  # Abstract. Do not instantiate
-        constructor: ({@parent, @text, @id}={}) ->
+        constructor: ({@scope, @text, @id}={}) ->
             @id ?= UUID()
 
         initialize: -> @
@@ -686,7 +704,7 @@ module.factory 'interpreter', ($q, $http) ->
         for id, obj of load_state source_data
             all_definitions[id] = obj
         loaded.resolve true
-        start_saving()
+        #start_saving()
 
     make_connection:make_connection
     find_nib_uses:find_nib_uses
