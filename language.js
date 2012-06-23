@@ -529,7 +529,6 @@
           node = _ref[_i];
           new_node = node.clone(this);
           node_mapping[node.id] = new_node;
-          this.nodes.push(new_node);
         }
         internal_connections = _.filter(busting_scope.connections, function(connection) {
           return connection.from.node !== busting_scope && connection.to.node !== busting_scope;
@@ -565,20 +564,20 @@
           this.remove_connection(connection);
           nib = connection.to.nib;
           inner_connections = _.filter(busting_scope.connections, function(inner_connection) {
-            return inner_connection.nib === nib && inner_connection.node === busting_scope;
+            return inner_connection.from.nib === nib && inner_connection.from.node === busting_scope;
           });
           for (_l = 0, _len3 = inner_connections.length; _l < _len3; _l++) {
             inner_connection = inner_connections[_l];
-            if (inner_connection.to.node instanceof Node) {
-              new Connection({
-                scope: this,
-                from: clone_endpoint(connection.from),
-                to: translate_endpoint(connection.to)
-              });
-            } else {
+            if (inner_connection.to.node === busting_scope) {
               through_connections.push({
                 beginning_connection: connection,
                 middle_connection: inner_connection
+              });
+            } else {
+              new Connection({
+                scope: this,
+                from: clone_endpoint(connection.from),
+                to: translate_endpoint(inner_connection.to)
               });
             }
           }
@@ -602,7 +601,7 @@
           connection = outbound_connections[_o];
           nib = connection.from.nib;
           inner_connection = _.find(busting_scope.connections, function(connection) {
-            return connection.node === busting_scope && connection.nib === nib;
+            return connection.to.node === busting_scope && connection.to.nib === nib;
           });
           if (inner_connection) {
             _results.push(connection.from = translate_endpoint(inner_connection.from));
@@ -867,7 +866,7 @@
         var data, new_node, old_id;
         data = JSON.parse(JSON.stringify(this));
         old_id = data.id;
-        data.id = new UUID();
+        data.id = UUID();
         new_node = resurrect_node(new_scope, data);
         new_node.old_id = old_id;
         return new_node;

@@ -108,7 +108,8 @@
         $scope.$on('new-graph-from-selection', function() {
           var new_subroutine;
           new_subroutine = new interpreter.Graph;
-          return new_subroutine.make_from($scope.selection);
+          new_subroutine.make_from($scope.selection);
+          return $scope.selection = [];
         });
         transform_the_position = function(position) {
           return position = transform_position(position, $scope.editor_size);

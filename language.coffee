@@ -296,7 +296,6 @@ module.factory 'interpreter', ($q, $http) ->
             for node in busting_scope.nodes
                 new_node = node.clone @
                 node_mapping[node.id] = new_node
-                @nodes.push new_node
 
             # clone internal connections
             internal_connections = _.filter busting_scope.connections, (connection) ->
@@ -333,18 +332,18 @@ module.factory 'interpreter', ($q, $http) ->
                 @remove_connection connection
                 nib = connection.to.nib
                 inner_connections = _.filter busting_scope.connections, (inner_connection) =>
-                    inner_connection.nib is nib and inner_connection.node is busting_scope
+                    inner_connection.from.nib is nib and inner_connection.from.node is busting_scope
 
                 for inner_connection in inner_connections
-                    if inner_connection.to.node instanceof Node
-                        new Connection
-                            scope:@
-                            from:clone_endpoint connection.from
-                            to:translate_endpoint connection.to
-                    else
+                    if inner_connection.to.node is busting_scope
                         through_connections.push
                             beginning_connection:connection
                             middle_connection:inner_connection
+                    else
+                        new Connection
+                            scope:@
+                            from:clone_endpoint connection.from
+                            to:translate_endpoint inner_connection.to
 
             for {beginning_connection, middle_connection} in through_connections
                 nib = middle_connection.to.nib
@@ -363,7 +362,7 @@ module.factory 'interpreter', ($q, $http) ->
             for connection in outbound_connections
                 nib = connection.from.nib
                 inner_connection = _.find busting_scope.connections, (connection) =>
-                    connection.node is busting_scope and connection.nib is nib
+                    connection.to.node is busting_scope and connection.to.nib is nib
                 if inner_connection
                     connection.from = translate_endpoint inner_connection.from
 
@@ -553,7 +552,7 @@ module.factory 'interpreter', ($q, $http) ->
         clone: (new_scope) ->
             data = JSON.parse JSON.stringify @
             old_id = data.id
-            data.id = new UUID()
+            data.id = UUID()
             new_node = resurrect_node new_scope, data
             new_node.old_id = old_id
             new_node

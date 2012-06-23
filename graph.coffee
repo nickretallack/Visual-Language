@@ -65,6 +65,7 @@ module.directive 'subroutine', ($location) ->
         $scope.$on 'new-graph-from-selection', ->
             new_subroutine = new interpreter.Graph
             new_subroutine.make_from $scope.selection
+            $scope.selection = []
 
         transform_the_position = (position) ->
             position = transform_position position, $scope.editor_size
