@@ -87,6 +87,10 @@ module.directive 'subroutine', ($location) ->
             $event.preventDefault()
             $location.path "/#{node.implementation.id}" unless node.implementation instanceof interpreter.Literal
 
+        $scope.bust_node = (node, $event) ->
+            $event.preventDefault()
+            subroutine.bust_node node
+
         $scope.selected = (node) ->
             node in $scope.selection
 

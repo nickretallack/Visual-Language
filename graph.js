@@ -139,6 +139,10 @@
             return $location.path("/" + node.implementation.id);
           }
         };
+        $scope.bust_node = function(node, $event) {
+          $event.preventDefault();
+          return subroutine.bust_node(node);
+        };
         $scope.selected = function(node) {
           return __indexOf.call($scope.selection, node) >= 0;
         };

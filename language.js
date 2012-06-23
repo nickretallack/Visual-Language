@@ -8,7 +8,7 @@
   module = angular.module('vislang');
 
   module.factory('interpreter', function($q, $http) {
-    var Call, CodeSyntaxError, Connection, Definition, Exit, Graph, Input, InputError, JSONLiteral, JavaScript, Literal, Nib, Node, NotConnected, NotImplemented, Output, RuntimeException, StringLiteral, Subroutine, Type, UnknownNode, Value, all_definitions, definition_class_map, definition_classes, dissociate_exception, eval_expression, execute, find_nib_uses, find_value, ignore_if_disconnected, is_input, load_implementation, load_implementation_v2, load_state, loaded, make_connection, make_index_map, make_value, node_class_map, node_classes, save_state, schema_version, source_data, source_data_deferred, start_saving;
+    var Call, CodeSyntaxError, Connection, Definition, Exit, Graph, Input, InputError, JSONLiteral, JavaScript, Literal, Nib, Node, NotConnected, NotImplemented, Output, RuntimeException, StringLiteral, Subroutine, Type, UnknownNode, Value, all_definitions, definition_class_map, definition_classes, dissociate_exception, eval_expression, execute, find_nib_uses, find_value, ignore_if_disconnected, is_input, load_implementation, load_implementation_v2, load_state, loaded, make_connection, make_index_map, make_value, node_class_map, node_classes, resurrect_node, save_state, schema_version, source_data, source_data_deferred, start_saving;
     schema_version = 2;
     make_index_map = function(objects, attribute) {
       var obj, result, _i, _len;
@@ -239,13 +239,16 @@
       };
 
       Subroutine.prototype.add_nib = function(group, the_class, data) {
+        var nib;
         if (data == null) {
           data = {};
         }
-        return this[group].push(new the_class(_.extend(data, {
+        nib = new the_class(_.extend(data, {
           scope: this,
           index: this[group].length
-        })));
+        }));
+        this[group].push(nib);
+        return nib;
       };
 
       Subroutine.prototype.delete_input = function(nib) {
@@ -509,13 +512,127 @@
       */
 
 
+      Graph.prototype.bust_node = function(busting_node) {
+        var beginning_connection, busting_scope, connection, inbound_connections, inner_connection, inner_connections, middle_connection, new_node, nib, node, node_mapping, outbound_connections, outer_connection, outer_connections, through_connections, _i, _j, _k, _l, _len, _len1, _len2, _len3, _len4, _len5, _m, _n, _ref, _ref1, _results,
+          _this = this;
+        this.remove_node(busting_node);
+        busting_scope = busting_node.implementation;
+        node_mapping = {};
+        _ref = busting_scope.nodes;
+        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+          node = _ref[_i];
+          new_node = node.clone(this);
+          node_mapping[node.id] = new_node;
+          this.nodes.push(new_node);
+        }
+        inbound_connections = _.filter(this.connections, function(connection) {
+          return connection.to.node === busting_node;
+        });
+        /*
+                    outbound_connections = []
+                    for connection in @connections
+                        #outbound_connections.push connection if connection.from.node is busting_node
+                        inbound_connections.push connection if connection.to.node is busting_node
+                        # can't possibly be both inbound and outbound at the same time in the parent scope
+        */
+
+        through_connections = [];
+        for (_j = 0, _len1 = inbound_connections.length; _j < _len1; _j++) {
+          connection = inbound_connections[_j];
+          this.remove_connection(connection);
+          nib = connection.to.nib;
+          inner_connections = _.filter(busting_scope.connections, function(inner_connection) {
+            return inner_connection.nib === nib && inner_connection.node === busting_scope;
+          });
+          for (_k = 0, _len2 = inner_connections.length; _k < _len2; _k++) {
+            inner_connection = inner_connections[_k];
+            if (inner_connection.to.node instanceof Node) {
+              this.connections.push(new Connection({
+                scope: this,
+                from: connection.from,
+                to: {
+                  node: node_mapping[inner_connection.to.node.id],
+                  nib: inner_connection.to.nib
+                }
+              }));
+            } else {
+              through_connections.push({
+                beginning_connection: connection,
+                middle_connection: inner_connection
+              });
+            }
+          }
+        }
+        for (_l = 0, _len3 = through_connections.length; _l < _len3; _l++) {
+          _ref1 = through_connections[_l], beginning_connection = _ref1.beginning_connection, middle_connection = _ref1.middle_connection;
+          nib = middle_connection.to.nib;
+          outer_connections = _.filter(this.connections, function(outer_connection) {
+            return outer_connection.nib === nib && outer_connection.node === busting_node;
+          });
+          for (_m = 0, _len4 = outer_connections.length; _m < _len4; _m++) {
+            outer_connection = outer_connections[_m];
+            outer_connection.from = beginning_connection.from;
+          }
+        }
+        outbound_connections = _.filter(this.connections, function(connection) {
+          return connection.from.node === busting_node;
+        });
+        _results = [];
+        for (_n = 0, _len5 = outbound_connections.length; _n < _len5; _n++) {
+          connection = outbound_connections[_n];
+          nib = connection.from.nib;
+          inner_connection = _.find(busting_scope.connections, function(connection) {
+            return connection.node === busting_scope && connection.nib === nib;
+          });
+          if (inner_connection) {
+            _results.push(connection.from = {
+              node: node_mapping[inner_connection.from.node.id],
+              nib: inner_connection.from.nib
+            });
+          } else {
+            _results.push(void 0);
+          }
+        }
+        return _results;
+        /*
+        
+        
+                    inside_inbound_connections = []
+                    inside_outbound_connections = []
+                    threaded_connections = []
+                    for connection in busting_scope.connections
+                        inbound = connection.from.node is busting_scope
+                        outbound = connection.to.node is busting_scope
+                        if inbound and outbound
+                            threaded_connections.push connection
+                        else if inbound
+                            inside_inbound_connections.push connection
+                        else if outbound
+                            inside_outbound_connections.push connection
+                        else
+                            # clone the connection right now
+                            @connections.push new Connection
+                                scope:@
+                                from:
+                                    node:node_mapping[connection.from.node.id] #_.find nodes, (node) -> node.old_id is connection.from.node.id
+                                    nib:connection.from.nib
+                                to:
+                                    node:node_mapping[connection.from.node.id] #_.find nodes, (node) -> node.old_id is connection.to.node.id
+                                    nib:connection.to.nib
+        
+                    for connection in inbound_connections
+        */
+
+      };
+
       Graph.prototype.make_from = function(nodes) {
         /* Build a subroutine out of nodes in another subroutine.
         */
 
-        var connection, contained_connections, from_inside, grouping, id, inbound_connections, new_connection, new_nib, new_node, nib, node, old_scope, outbound_connections, outbound_connections_by_nib, to_inside, _i, _j, _k, _l, _len, _len1, _len2, _len3, _name, _ref, _ref1, _ref2, _ref3, _results;
+        var connection, contained_connections, from_inside, grouping, id, inbound_connections, new_connection, new_nib, new_node, nib, node, old_scope, outbound_connections, outbound_connections_by_nib, to_inside, _i, _j, _k, _l, _len, _len1, _len2, _len3, _len4, _m, _name, _ref, _ref1, _ref2, _ref3, _results;
         old_scope = nodes[0].scope;
-        for (node in nodes) {
+        for (_i = 0, _len = nodes.length; _i < _len; _i++) {
+          node = nodes[_i];
           old_scope.remove_node(node);
           this.add_node(node);
         }
@@ -528,8 +645,8 @@
         outbound_connections = [];
         contained_connections = [];
         _ref = old_scope.connections;
-        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-          connection = _ref[_i];
+        for (_j = 0, _len1 = _ref.length; _j < _len1; _j++) {
+          connection = _ref[_j];
           from_inside = (_ref1 = connection.from.node, __indexOf.call(nodes, _ref1) >= 0);
           to_inside = (_ref2 = connection.to.node, __indexOf.call(nodes, _ref2) >= 0);
           if (from_inside && to_inside) {
@@ -540,13 +657,13 @@
             inbound_connections.push(connection);
           }
         }
-        for (_j = 0, _len1 = contained_connections.length; _j < _len1; _j++) {
-          connection = contained_connections[_j];
+        for (_k = 0, _len2 = contained_connections.length; _k < _len2; _k++) {
+          connection = contained_connections[_k];
           old_scope.remove_connection(connection);
           this.add_connection(connection);
         }
-        for (_k = 0, _len2 = inbound_connections.length; _k < _len2; _k++) {
-          connection = inbound_connections[_k];
+        for (_l = 0, _len3 = inbound_connections.length; _l < _len3; _l++) {
+          connection = inbound_connections[_l];
           new_nib = this.add_input();
           new_connection = new Connection({
             scope: this,
@@ -562,8 +679,8 @@
           };
         }
         outbound_connections_by_nib = {};
-        for (_l = 0, _len3 = outbound_connections.length; _l < _len3; _l++) {
-          connection = outbound_connections[_l];
+        for (_m = 0, _len4 = outbound_connections.length; _m < _len4; _m++) {
+          connection = outbound_connections[_m];
           nib = connection.from.nib;
           if ((_ref3 = outbound_connections_by_nib[_name = nib.id]) == null) {
             outbound_connections_by_nib[_name] = {
@@ -578,23 +695,24 @@
           grouping = outbound_connections_by_nib[id];
           new_nib = this.add_output();
           _results.push((function() {
-            var _len4, _m, _ref4, _results1;
+            var _len5, _n, _ref4, _results1;
             _ref4 = grouping.connections;
             _results1 = [];
-            for (_m = 0, _len4 = _ref4.length; _m < _len4; _m++) {
-              connection = _ref4[_m];
-              new_connection = new Connection({
+            for (_n = 0, _len5 = _ref4.length; _n < _len5; _n++) {
+              connection = _ref4[_n];
+              this.add_connection(new Connection({
                 scope: this,
                 from: connection.from,
                 to: {
                   node: this,
                   nib: new_nib
                 }
-              });
-              _results1.push(connection.from = {
+              }));
+              connection.from = {
                 node: new_node,
                 nib: new_nib
-              });
+              };
+              _results1.push(console.log(connection));
             }
             return _results1;
           }).call(this));
@@ -729,10 +847,13 @@
         });
       };
 
-      Node.prototype.clone = function() {
-        var new_node;
-        new_node = JSON.parse(JSON.stringify(this));
-        new_node.id = UUID();
+      Node.prototype.clone = function(new_scope) {
+        var data, new_node, old_id;
+        data = JSON.parse(JSON.stringify(this));
+        old_id = data.id;
+        data.id = new UUID();
+        new_node = resurrect_node(new_scope, data);
+        new_node.old_id = old_id;
         return new_node;
       };
 
@@ -1061,20 +1182,24 @@
           return all_definitions;
       }
     };
+    resurrect_node = function(scope, node_data) {
+      var implementation, node, node_class, position;
+      node_class = node_class_map[node_data.type];
+      position = V(node_data.position);
+      implementation = all_definitions[node_data.implementation_id];
+      return node = new node_class({
+        scope: scope,
+        position: position,
+        implementation: implementation,
+        id: node_data.id
+      });
+    };
     load_implementation_v2 = function(graph, data) {
-      var connection_data, from_nib, from_node, get_nib, get_node, implementation, node, node_class, node_data, position, to_nib, to_node, _i, _j, _len, _len1, _ref, _ref1, _results;
+      var connection_data, from_nib, from_node, get_nib, get_node, node_data, to_nib, to_node, _i, _j, _len, _len1, _ref, _ref1, _results;
       _ref = data.nodes;
       for (_i = 0, _len = _ref.length; _i < _len; _i++) {
         node_data = _ref[_i];
-        node_class = node_class_map[node_data.type];
-        position = V(node_data.position);
-        implementation = all_definitions[node_data.implementation_id];
-        node = new node_class({
-          scope: graph,
-          position: position,
-          implementation: implementation,
-          id: node_data.id
-        });
+        resurrect_node(graph, node_data);
       }
       _ref1 = data.connections;
       _results = [];
@@ -1094,7 +1219,7 @@
         from_node = get_node('from');
         to_node = get_node('to');
         get_nib = function(node, direction) {
-          var nib;
+          var implementation, nib;
           implementation = node instanceof Definition ? node : node.implementation;
           nib = implementation.find_nib(connection_data[direction].nib);
           if (!nib) {
@@ -1216,8 +1341,7 @@
         obj = _ref[id];
         all_definitions[id] = obj;
       }
-      loaded.resolve(true);
-      return start_saving();
+      return loaded.resolve(true);
     });
     return {
       make_connection: make_connection,

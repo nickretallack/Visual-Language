@@ -99,9 +99,11 @@ module.factory 'interpreter', ($q, $http) ->
             ###
 
         add_nib: (group, the_class, data={}) ->
-            @[group].push new the_class _.extend data,
+            nib = new the_class _.extend data,
                 scope:@
                 index:@[group].length
+            @[group].push nib
+            nib
 
         delete_input: (nib) -> @delete_nib nib, 'inputs'
         delete_output: (nib) -> @delete_nib nib, 'outputs'
@@ -281,9 +283,102 @@ module.factory 'interpreter', ($q, $http) ->
             adjacency_list
         ###
 
-        #dump_into: (other_scope) ->
-        #    nodes = (node.clone() for id, node of @nodes)
-        #    other_
+        bust_node: (busting_node) ->
+            @remove_node busting_node
+            busting_scope = busting_node.implementation
+
+            node_mapping = {}
+            for node in busting_scope.nodes
+                new_node = node.clone @
+                node_mapping[node.id] = new_node
+                @nodes.push new_node
+
+            #nodes = (node.clone() for node in @nodes)
+            #other_scope.nodes = other_scope.nodes.concat nodes
+
+            inbound_connections = _.filter @connections, (connection) ->
+                connection.to.node is busting_node
+
+            ###
+            outbound_connections = []
+            for connection in @connections
+                #outbound_connections.push connection if connection.from.node is busting_node
+                inbound_connections.push connection if connection.to.node is busting_node
+                # can't possibly be both inbound and outbound at the same time in the parent scope
+            ###
+
+            through_connections = []
+            for connection in inbound_connections
+                # find things that are connected to this nib and expand them in place of this connection
+                @remove_connection connection
+                nib = connection.to.nib
+                inner_connections = _.filter busting_scope.connections, (inner_connection) =>
+                    inner_connection.nib is nib and inner_connection.node is busting_scope
+
+                for inner_connection in inner_connections
+                    if inner_connection.to.node instanceof Node
+                        @connections.push new Connection
+                            scope:@
+                            from:connection.from
+                            to:
+                                node:node_mapping[inner_connection.to.node.id]
+                                nib:inner_connection.to.nib
+                    else
+                        through_connections.push
+                            beginning_connection:connection
+                            middle_connection:inner_connection
+
+            for {beginning_connection, middle_connection} in through_connections
+                nib = middle_connection.to.nib
+                outer_connections = _.filter @connections, (outer_connection) =>
+                    outer_connection.nib is nib and outer_connection.node is busting_node
+
+                for outer_connection in outer_connections
+                    outer_connection.from = beginning_connection.from
+
+            # Now that all the through-connections are handled, handle the normal outbound connections.
+
+            outbound_connections = _.filter @connections, (connection) =>
+                connection.from.node is busting_node
+                #outbound_connections.push connection if connection.from.node is busting_node
+
+            for connection in outbound_connections
+                nib = connection.from.nib
+                inner_connection = _.find busting_scope.connections, (connection) =>
+                    connection.node is busting_scope and connection.nib is nib
+                if inner_connection
+                    connection.from =
+                        node:node_mapping[inner_connection.from.node.id]
+                        nib:inner_connection.from.nib
+
+            ###
+
+
+            inside_inbound_connections = []
+            inside_outbound_connections = []
+            threaded_connections = []
+            for connection in busting_scope.connections
+                inbound = connection.from.node is busting_scope
+                outbound = connection.to.node is busting_scope
+                if inbound and outbound
+                    threaded_connections.push connection
+                else if inbound
+                    inside_inbound_connections.push connection
+                else if outbound
+                    inside_outbound_connections.push connection
+                else
+                    # clone the connection right now
+                    @connections.push new Connection
+                        scope:@
+                        from:
+                            node:node_mapping[connection.from.node.id] #_.find nodes, (node) -> node.old_id is connection.from.node.id
+                            nib:connection.from.nib
+                        to:
+                            node:node_mapping[connection.from.node.id] #_.find nodes, (node) -> node.old_id is connection.to.node.id
+                            nib:connection.to.nib
+
+            for connection in inbound_connections
+            ###
 
 
         make_from: (nodes) ->
@@ -291,7 +386,7 @@ module.factory 'interpreter', ($q, $http) ->
             old_scope = nodes[0].scope
 
             # move the nodes
-            for node of nodes
+            for node in nodes
                 old_scope.remove_node node
                 @add_node node
 
@@ -357,7 +452,7 @@ module.factory 'interpreter', ($q, $http) ->
                 new_nib = @add_output()
 
                 for connection in grouping.connections
-                    new_connection = new Connection
+                    @add_connection new Connection
                         scope:@
                         from:connection.from
                         to:
@@ -367,6 +462,8 @@ module.factory 'interpreter', ($q, $http) ->
                     connection.from =
                         node:new_node
                         nib:new_nib
+
+                    console.log connection
 
 
 
@@ -440,9 +537,12 @@ module.factory 'interpreter', ($q, $http) ->
                 implementation_id:@implementation.id
                 position:@position
 
-        clone: ->
-            new_node = JSON.parse JSON.stringify @
-            new_node.id = UUID()
+        clone: (new_scope) ->
+            data = JSON.parse JSON.stringify @
+            old_id = data.id
+            data.id = new UUID()
+            new_node = resurrect_node new_scope, data
+            new_node.old_id = old_id
             new_node
 
     class Call extends Node
@@ -629,18 +729,21 @@ module.factory 'interpreter', ($q, $http) ->
 
                 all_definitions
 
+    resurrect_node = (scope, node_data) ->
+        node_class = node_class_map[node_data.type]
+        position = V node_data.position
+        implementation = all_definitions[node_data.implementation_id]
+        # TODO: in case no implementation is found, create an unknown node
+        node = new node_class
+            scope:scope
+            position:position
+            implementation:implementation
+            id:node_data.id
+        # Automatically populates graph.nodes
+
     load_implementation_v2 = (graph, data) ->
         for node_data in data.nodes
-            node_class = node_class_map[node_data.type]
-            position = V node_data.position
-            implementation = all_definitions[node_data.implementation_id]
-            # TODO: in case no implementation is found, create an unknown node
-            node = new node_class
-                scope:graph
-                position:position
-                implementation:implementation
-                id:node_data.id
-            # Automatically populates graph.nodes
+            resurrect_node graph, node_data
 
         for connection_data in data.connections
             get_node = (direction) ->
@@ -750,7 +853,7 @@ module.factory 'interpreter', ($q, $http) ->
         for id, obj of load_state source_data
             all_definitions[id] = obj
         loaded.resolve true
-        start_saving()
+        #start_saving()
 
     make_connection:make_connection
     find_nib_uses:find_nib_uses
