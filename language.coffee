@@ -149,6 +149,10 @@ module.factory 'interpreter', ($q, $http) ->
             return output_function (args.concat [scope?.memos[node.id]])...
 
 
+    clone_endpoint = (endpoint) ->
+        node:endpoint.node
+        nib:endpoint.nib
+
     class Graph extends Subroutine
         type:'graph'
         constructor: ->
@@ -287,17 +291,33 @@ module.factory 'interpreter', ($q, $http) ->
             @remove_node busting_node
             busting_scope = busting_node.implementation
 
+            # clone nodes
             node_mapping = {}
             for node in busting_scope.nodes
                 new_node = node.clone @
                 node_mapping[node.id] = new_node
                 @nodes.push new_node
 
+            # clone internal connections
+            internal_connections = _.filter busting_scope.connections, (connection) ->
+                connection.from.node isnt busting_scope and connection.to.node isnt busting_scope
+
+            translate_endpoint = (endpoint) ->
+                node:node_mapping[endpoint.node.id]
+                nib:endpoint.nib
+
+            for connection in internal_connections
+                new Connection
+                    scope:@
+                    from:translate_endpoint connection.from
+                    to:translate_endpoint connection.to
+
             #nodes = (node.clone() for node in @nodes)
             #other_scope.nodes = other_scope.nodes.concat nodes
 
             inbound_connections = _.filter @connections, (connection) ->
                 connection.to.node is busting_node
+
 
             ###
             outbound_connections = []
@@ -317,12 +337,10 @@ module.factory 'interpreter', ($q, $http) ->
 
                 for inner_connection in inner_connections
                     if inner_connection.to.node instanceof Node
-                        @connections.push new Connection
+                        new Connection
                             scope:@
-                            from:connection.from
-                            to:
-                                node:node_mapping[inner_connection.to.node.id]
-                                nib:inner_connection.to.nib
+                            from:clone_endpoint connection.from
+                            to:translate_endpoint connection.to
                     else
                         through_connections.push
                             beginning_connection:connection
@@ -334,7 +352,7 @@ module.factory 'interpreter', ($q, $http) ->
                     outer_connection.nib is nib and outer_connection.node is busting_node
 
                 for outer_connection in outer_connections
-                    outer_connection.from = beginning_connection.from
+                    outer_connection.from = clone_endpoint beginning_connection.from
 
             # Now that all the through-connections are handled, handle the normal outbound connections.
 
@@ -347,9 +365,7 @@ module.factory 'interpreter', ($q, $http) ->
                 inner_connection = _.find busting_scope.connections, (connection) =>
                     connection.node is busting_scope and connection.nib is nib
                 if inner_connection
-                    connection.from =
-                        node:node_mapping[inner_connection.from.node.id]
-                        nib:inner_connection.from.nib
+                    connection.from = translate_endpoint inner_connection.from
 
             ###
 
@@ -427,7 +443,7 @@ module.factory 'interpreter', ($q, $http) ->
                 # which is now inside the new subroutine
                 new_connection = new Connection
                     scope:@
-                    to:connection.to
+                    to:clone_endpoint connection.to
                     from:
                         node:@
                         nib:new_nib
@@ -452,9 +468,9 @@ module.factory 'interpreter', ($q, $http) ->
                 new_nib = @add_output()
 
                 for connection in grouping.connections
-                    @add_connection new Connection
+                    new Connection
                         scope:@
-                        from:connection.from
+                        from:clone_endpoint connection.from
                         to:
                             node:@
                             nib:new_nib
@@ -462,9 +478,6 @@ module.factory 'interpreter', ($q, $http) ->
                     connection.from =
                         node:new_node
                         nib:new_nib
-
-                    console.log connection
-
 
 
     find_value = (text, type, collection=all_definitions) ->
