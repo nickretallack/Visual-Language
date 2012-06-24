@@ -79,7 +79,6 @@ module.directive 'subroutine', ($location) ->
             top:position.y + 'px'
 
         $scope.click_node = (node, $event) ->
-            $event.preventDefault()
             $event.stopPropagation()
 
             if $event.shiftKey
@@ -123,7 +122,6 @@ module.directive 'subroutine', ($location) ->
             node in $scope.selection
 
         this.click_nib = $scope.click_nib = (node, nib, $event) ->
-            $event.preventDefault()
             $event.stopPropagation()
             $scope.drawing =
                 node:node
@@ -136,12 +134,6 @@ module.directive 'subroutine', ($location) ->
                     to:
                         node:node
                         nib:nib
-
-        $scope.boxing = false
-        $element.bind 'mousedown', (event) -> $scope.$apply ->
-            event.preventDefault()
-            event.stopPropagation()
-            $scope.boxing = $scope.mouse_position
 
         get_bounds = (point1, point2) ->
             bounds =
@@ -167,6 +159,10 @@ module.directive 'subroutine', ($location) ->
             bounds = get_bounds point1, point2
             bounds.left < point.x < bounds.right and bounds.top < point.y < bounds.bottom
 
+        $scope.boxing = false
+        $element.bind 'mousedown', (event) -> $scope.$apply ->
+            $scope.boxing = $scope.mouse_position
+
         $element.bind 'mouseup', (event) -> $scope.$apply ->
             $scope.dragging = []
 
@@ -184,19 +180,17 @@ module.directive 'subroutine', ($location) ->
 
         $scope.mouse_position = V 0,0
         $element.bind 'mousemove', (event) -> $scope.$apply ->
+            # update mouse position for other methods to consume deltas from
             new_mouse_position = (V event.clientX, event.clientY).minus canvas_offset
             mouse_delta = $scope.mouse_position.minus new_mouse_position
             $scope.mouse_position = new_mouse_position
-
-            if $scope.dragging or $scope.boxing
-                event.preventDefault()
 
             if $scope.dragging
                 for node in $scope.dragging
                     node.position = node.position.plus V -mouse_delta.y, -mouse_delta.x
                 draw()
 
-        $element.bind 'keypress', (event) ->
+        $element.bind 'keydown', (event) ->
             console.log "yeah"
 
         ### Drawing the Connection Field ###

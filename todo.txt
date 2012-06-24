@@ -4,15 +4,19 @@ Well, I guess I could put the local storage stuff back in.  Just need to make a 
 It's currently a little unusable.  What does it need?
     finish the 'make subroutine from' call -- done
     bust apart subroutines - done
-    better selection support -- click nodes, hold shift, etc
-    contexual options for the thing you have selected
-        delete nodes
-        delete connections
+    better selection support -- click nodes, hold shift, etc -- done
+    contexual options for the thing you have selected - done
+    delete nodes - done
     rearrange nib ordering with drag and drop
     edit individual nodes, and give the 'clone' option
         edit values
+    sort nibs in make_from based on their positions on the outside...
+        how do you compare a node to a nib though?  Perhaps parent inputs are always first?
+
+    position/select nodes based on their centers
 
 Nice to haves:
+    delete connections
     "idempotent" checkbox that memoizes?
     "stateful" checkbox that adds extra null nibs
     "glob nibs" - one nib internally that is many nibs externally, var args

@@ -127,7 +127,6 @@
           };
         };
         $scope.click_node = function(node, $event) {
-          $event.preventDefault();
           $event.stopPropagation();
           if ($event.shiftKey) {
             if (__indexOf.call($scope.selection, node) < 0) {
@@ -179,7 +178,6 @@
           return __indexOf.call($scope.selection, node) >= 0;
         };
         this.click_nib = $scope.click_nib = function(node, nib, $event) {
-          $event.preventDefault();
           $event.stopPropagation();
           return $scope.drawing = {
             node: node,
@@ -197,14 +195,6 @@
             });
           }
         };
-        $scope.boxing = false;
-        $element.bind('mousedown', function(event) {
-          return $scope.$apply(function() {
-            event.preventDefault();
-            event.stopPropagation();
-            return $scope.boxing = $scope.mouse_position;
-          });
-        });
         get_bounds = function(point1, point2) {
           var bounds;
           bounds = {
@@ -235,6 +225,12 @@
           bounds = get_bounds(point1, point2);
           return (bounds.left < (_ref = point.x) && _ref < bounds.right) && (bounds.top < (_ref1 = point.y) && _ref1 < bounds.bottom);
         };
+        $scope.boxing = false;
+        $element.bind('mousedown', function(event) {
+          return $scope.$apply(function() {
+            return $scope.boxing = $scope.mouse_position;
+          });
+        });
         $element.bind('mouseup', function(event) {
           return $scope.$apply(function() {
             var newly_selected, node, _i, _len;
@@ -265,9 +261,6 @@
             new_mouse_position = (V(event.clientX, event.clientY)).minus(canvas_offset);
             mouse_delta = $scope.mouse_position.minus(new_mouse_position);
             $scope.mouse_position = new_mouse_position;
-            if ($scope.dragging || $scope.boxing) {
-              event.preventDefault();
-            }
             if ($scope.dragging) {
               _ref = $scope.dragging;
               for (_i = 0, _len = _ref.length; _i < _len; _i++) {
@@ -278,7 +271,7 @@
             }
           });
         });
-        $element.bind('keypress', function(event) {
+        $element.bind('keydown', function(event) {
           return console.log("yeah");
         });
         /* Drawing the Connection Field

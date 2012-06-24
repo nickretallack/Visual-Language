@@ -16,7 +16,17 @@ textarea {display:block}
 
 #inputs_editor, #outputs_editor {display:inline-block; width:300px}
 
-#subroutine {position:absolute; top:0px; left:0; right:0; bottom:0;}
+#subroutine {
+    position:absolute; top:0px; left:0; right:0; bottom:0;
+
+    /* No accidental selections */
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
 
 .subroutine-input {position:absolute; right:0;}
 .subroutine-output {position:absolute; left:0;}
