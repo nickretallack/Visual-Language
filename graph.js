@@ -147,34 +147,31 @@
           subroutine.delete_nodes($scope.selection);
           return draw();
         };
-        $scope.can_edit = function(nodes) {
-          return nodes.length === 1 && nodes[0].implementation instanceof interpreter.Subroutine;
+        $scope.can_edit_selected_node = function() {
+          return $scope.selection.length === 1 && $scope.selection[0].implementation instanceof interpreter.Subroutine;
         };
-        $scope.edit_node = function(node, $event) {
-          if (!$scope.can_edit([node])) {
+        $scope.edit_node = function(node) {
+          if (!($scope.selection[0].implementation instanceof interpreter.Subroutine)) {
             return;
-          }
-          if ($event != null) {
-            $event.preventDefault();
           }
           return $location.path("/" + node.implementation.id);
         };
-        $scope.can_bust = function(nodes) {
-          return nodes.length === 1 && nodes[0].implementation instanceof interpreter.Graph;
+        $scope.can_bust_selected_node = function() {
+          return $scope.selection.length === 1 && $scope.selection[0].implementation instanceof interpreter.Graph;
         };
-        $scope.bust_node = function(node) {
+        $scope.bust_selected_node = function() {
           var new_nodes;
-          new_nodes = subroutine.bust_node(node);
+          new_nodes = subroutine.bust_node($scope.selection[0]);
           $scope.selection = new_nodes;
           return draw();
         };
-        $scope.can_join = function(nodes) {
-          return nodes.length > 1;
+        $scope.can_join_selected_nodes = function() {
+          return $scope.selection.length > 1;
         };
-        $scope.join_nodes = function(nodes) {
+        $scope.join_selected_nodes = function() {
           var new_node, new_subroutine;
           new_subroutine = new interpreter.Graph;
-          new_node = new_subroutine.make_from(nodes);
+          new_node = new_subroutine.make_from($scope.selection);
           $scope.selection = [new_node];
           return draw();
         };
@@ -280,6 +277,9 @@
               return draw();
             }
           });
+        });
+        $element.bind('keypress', function(event) {
+          return console.log("yeah");
         });
         /* Drawing the Connection Field
         */

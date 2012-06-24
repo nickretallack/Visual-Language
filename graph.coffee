@@ -98,25 +98,24 @@ module.directive 'subroutine', ($location) ->
             subroutine.delete_nodes $scope.selection
             draw()
 
-        $scope.can_edit = (nodes) ->
-            nodes.length is 1 and nodes[0].implementation instanceof interpreter.Subroutine
-        $scope.edit_node = (node, $event) ->
-            return unless $scope.can_edit [node]
-            $event?.preventDefault()
+        $scope.can_edit_selected_node = ->
+            $scope.selection.length is 1 and $scope.selection[0].implementation instanceof interpreter.Subroutine
+        $scope.edit_node = (node) ->
+            return unless $scope.selection[0].implementation instanceof interpreter.Subroutine
             $location.path "/#{node.implementation.id}"
 
-        $scope.can_bust = (nodes) ->
-            nodes.length is 1 and nodes[0].implementation instanceof interpreter.Graph
-        $scope.bust_node = (node) ->
-            new_nodes = subroutine.bust_node node
+        $scope.can_bust_selected_node = ->
+            $scope.selection.length is 1 and $scope.selection[0].implementation instanceof interpreter.Graph
+        $scope.bust_selected_node = ->
+            new_nodes = subroutine.bust_node $scope.selection[0]
             $scope.selection = new_nodes
             draw()
 
-        $scope.can_join = (nodes) ->
-            nodes.length > 1
-        $scope.join_nodes = (nodes) ->
+        $scope.can_join_selected_nodes = ->
+            $scope.selection.length > 1
+        $scope.join_selected_nodes = ->
             new_subroutine = new interpreter.Graph
-            new_node = new_subroutine.make_from nodes
+            new_node = new_subroutine.make_from $scope.selection
             $scope.selection = [new_node]
             draw()
 
@@ -196,6 +195,9 @@ module.directive 'subroutine', ($location) ->
                 for node in $scope.dragging
                     node.position = node.position.plus V -mouse_delta.y, -mouse_delta.x
                 draw()
+
+        $element.bind 'keypress', (event) ->
+            console.log "yeah"
 
         ### Drawing the Connection Field ###
         header_height = 40
