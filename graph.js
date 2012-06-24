@@ -140,6 +140,13 @@
           }
           return $scope.dragging = $scope.selection;
         };
+        $scope.can_delete_selection = function() {
+          return $scope.selection.length > 0;
+        };
+        $scope.delete_selection = function() {
+          subroutine.delete_nodes($scope.selection);
+          return draw();
+        };
         $scope.can_edit = function(nodes) {
           return nodes.length === 1 && nodes[0].implementation instanceof interpreter.Subroutine;
         };

@@ -44,6 +44,7 @@
     </div>
 
     <div id="selection-row" class="btn-toolbar">
+        <a class="btn" ng-show="can_delete_selection()" ng-click="delete_selection()">Delete</a>
         <a class="btn" ng-show="can_edit(selection)" ng-click="edit_node(selection[0])">Edit</a>
         <a class="btn" ng-show="can_bust(selection)" ng-click="bust_node(selection[0])">Bust</a>
         <a class="btn" ng-show="can_join(selection)" ng-click="join_nodes(selection)">Join</a>

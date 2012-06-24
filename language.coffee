@@ -2,11 +2,18 @@ module = angular.module 'vislang'
 module.factory 'interpreter', ($q, $http) ->
     schema_version = 2
 
+
     make_index_map = (objects, attribute) ->
         result = {}
         for obj in objects
             result[obj[attribute]] = obj
         result
+
+
+    clone_endpoint = (endpoint) ->
+        node:endpoint.node
+        nib:endpoint.nib
+
 
     ### EXCEPTION TYPES ###
 
@@ -149,10 +156,6 @@ module.factory 'interpreter', ($q, $http) ->
             return output_function (args.concat [scope?.memos[node.id]])...
 
 
-    clone_endpoint = (endpoint) ->
-        node:endpoint.node
-        nib:endpoint.nib
-
     class Graph extends Subroutine
         type:'graph'
         constructor: ->
@@ -199,6 +202,11 @@ module.factory 'interpreter', ($q, $http) ->
         delete_node_connections: (node) ->
             @connections = _.reject @connections, (connection) ->
                 connection.from.node is node or connection.to.node is node
+
+        delete_nodes: (nodes) ->
+            @connections = _.reject @connections, (connection) ->
+                connection.from.node in nodes or connection.to.node in nodes
+            @nodes = _.without @nodes, nodes...
 
         export: ->
             dependencies = @get_dependencies()

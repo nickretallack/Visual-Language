@@ -92,6 +92,11 @@ module.directive 'subroutine', ($location) ->
 
             $scope.dragging = $scope.selection
 
+        $scope.can_delete_selection = ->
+            $scope.selection.length > 0
+        $scope.delete_selection = ->
+            subroutine.delete_nodes $scope.selection
+            draw()
 
         $scope.can_edit = (nodes) ->
             nodes.length is 1 and nodes[0].implementation instanceof interpreter.Subroutine

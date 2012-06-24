@@ -3,7 +3,8 @@
   var module,
     __hasProp = {}.hasOwnProperty,
     __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; },
-    __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
+    __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; },
+    __slice = [].slice;
 
   module = angular.module('vislang');
 
@@ -18,6 +19,12 @@
         result[obj[attribute]] = obj;
       }
       return result;
+    };
+    clone_endpoint = function(endpoint) {
+      return {
+        node: endpoint.node,
+        nib: endpoint.nib
+      };
     };
     /* EXCEPTION TYPES
     */
@@ -338,12 +345,6 @@
       return JavaScript;
 
     })(Subroutine);
-    clone_endpoint = function(endpoint) {
-      return {
-        node: endpoint.node,
-        nib: endpoint.nib
-      };
-    };
     Graph = (function(_super) {
 
       __extends(Graph, _super);
@@ -422,6 +423,14 @@
         return this.connections = _.reject(this.connections, function(connection) {
           return connection.from.node === node || connection.to.node === node;
         });
+      };
+
+      Graph.prototype.delete_nodes = function(nodes) {
+        this.connections = _.reject(this.connections, function(connection) {
+          var _ref, _ref1;
+          return (_ref = connection.from.node, __indexOf.call(nodes, _ref) >= 0) || (_ref1 = connection.to.node, __indexOf.call(nodes, _ref1) >= 0);
+        });
+        return this.nodes = _.without.apply(_, [this.nodes].concat(__slice.call(nodes)));
       };
 
       Graph.prototype["export"] = function() {
