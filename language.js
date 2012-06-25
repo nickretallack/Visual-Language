@@ -1224,21 +1224,19 @@
         from_node = get_node('from');
         to_node = get_node('to');
         get_nib = function(node, nibs, direction) {
-          var nib;
           if (node instanceof Value) {
             return nibs[0];
           } else {
-            nib = _.find(nibs, function(nib) {
+            return _.find(nibs, function(nib) {
               return nib.id === connection_data[direction].nib;
             });
-            if (!nib) {
-              console.log("Broken connection!", node, connection_data);
-            }
-            return nib;
           }
         };
         from_nib = get_nib(from_node, from_node.get_outputs(), 'from');
         to_nib = get_nib(to_node, to_node.get_inputs(), 'to');
+        if (!(from_node && to_node && from_nib && to_nib)) {
+          console.log("Broken connection!", connection_data, from_node, to_node, from_nib, to_nib);
+        }
         _results.push(new Connection({
           id: connection_data.id,
           scope: graph,
@@ -1255,7 +1253,7 @@
       return _results;
     };
     load_implementation = function(subroutine, data, subroutines) {
-      var connection, found_value, from_nib, from_node, get_nib, get_node, implementation, node, position, to_nib, to_node, value, _i, _j, _len, _len1, _ref, _ref1, _results;
+      var connection_data, found_value, from_nib, from_node, get_node, implementation, node, position, to_nib, to_node, value, _i, _j, _len, _len1, _ref, _ref1, _results;
       _ref = data.nodes;
       for (_i = 0, _len = _ref.length; _i < _len; _i++) {
         node = _ref[_i];
@@ -1287,7 +1285,7 @@
       _ref1 = data.connections;
       _results = [];
       for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
-        connection = _ref1[_j];
+        connection_data = _ref1[_j];
         get_node = function(nib) {
           if (nib.parent_id === subroutine.id) {
             return subroutine;
@@ -1297,15 +1295,15 @@
             });
           }
         };
-        get_nib = function(nibs, direction) {
-          return nibs[connection[direction].index];
-        };
-        from_node = get_node(connection.output);
-        to_node = get_node(connection.input);
-        from_nib = get_nib(from_node.get_outputs(), 'output');
-        to_nib = get_nib(to_node.get_inputs(), 'input');
+        from_node = get_node(connection_data.output);
+        to_node = get_node(connection_data.input);
+        from_nib = from_node.get_outputs()[connection_data.output.index];
+        to_nib = to_node.get_inputs()[connection_data.input.index];
+        if (!(from_node && to_node && from_nib && to_nib)) {
+          console.log("Broken connection!", connection_data, from_node, to_node, from_nib, to_nib);
+        }
         _results.push(new Connection({
-          id: connection.id,
+          id: connection_data.id,
           scope: subroutine,
           from: {
             node: from_node,
@@ -1316,18 +1314,6 @@
             nib: to_nib
           }
         }));
-        /*
-        
-                    # input/output reversal.  TODO: clean up subroutine implementation to avoid this
-                    source_connector = if source instanceof Node then source.outputs else source.inputs
-                    sink_connector = if sink instanceof Node then sink.inputs else sink.outputs
-        
-                    if connection.output.index >= source_connector.length or connection.input.index >= sink_connector.length
-                        console.log "Oh no, trying to make an invalid connection"
-                    else
-                        source_connector[connection.output.index].connect sink_connector[connection.input.index]
-        */
-
       }
       return _results;
     };

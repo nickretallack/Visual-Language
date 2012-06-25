@@ -756,28 +756,16 @@ module.factory 'interpreter', ($q, $http) ->
             from_node = get_node 'from'
             to_node = get_node 'to'
 
-            #get_nib = (node, direction) ->
-            #    implementation = if node instanceof Definition then node else node.implementation
-            #    nib = implementation.find_nib connection_data[direction].nib
-            #    throw "Broken connection!" unless nib
-            #    nib
-
             get_nib = (node, nibs, direction) ->
                 if node instanceof Value
                     nibs[0]
                 else
-                    nib = _.find nibs, (nib) -> nib.id is connection_data[direction].nib
-                    console.log "Broken connection!", node, connection_data unless nib
-                    nib
+                    _.find nibs, (nib) -> nib.id is connection_data[direction].nib
 
             from_nib = get_nib from_node, from_node.get_outputs(), 'from'
             to_nib = get_nib to_node, to_node.get_inputs(), 'to'
 
-            #from_nib = _.find from_node.get_outputs(), (nib) -> nib.id is connection_data.from.nib
-            #to_nib = _.find to_node.get_inputs(), (nib) -> nib.id is connection_data.to.nib
-
-            #from_nib = get_nib from_node, 'from'
-            #to_nib = get_nib to_node, 'to'
+            console.log "Broken connection!", connection_data, from_node, to_node, from_nib, to_nib unless from_node and to_node and from_nib and to_nib
 
             new Connection
                 id: connection_data.id
@@ -822,21 +810,19 @@ module.factory 'interpreter', ($q, $http) ->
                 else
                     new UnknownNode position, node.type, node.text, node.id
 
-        for connection in data.connections
+        for connection_data in data.connections
             get_node = (nib) ->
                 if nib.parent_id is subroutine.id then subroutine else _.find subroutine.nodes, (node) -> node.id is nib.parent_id
 
-            get_nib = (nibs, direction) ->
-                nibs[connection[direction].index]
+            from_node = get_node connection_data.output
+            to_node = get_node connection_data.input
+            from_nib = from_node.get_outputs()[connection_data.output.index]
+            to_nib = to_node.get_inputs()[connection_data.input.index]
 
-            from_node = get_node connection.output
-            to_node = get_node connection.input
-            from_nib = get_nib from_node.get_outputs(), 'output'
-            to_nib = get_nib to_node.get_inputs(), 'input'
-            #[to_nib, from_nib] = [from_nib, to_nib]
+            console.log "Broken connection!", connection_data, from_node, to_node, from_nib, to_nib unless from_node and to_node and from_nib and to_nib
 
             new Connection
-                id: connection.id
+                id: connection_data.id
                 scope: subroutine
                 from:
                     node: from_node
@@ -844,17 +830,6 @@ module.factory 'interpreter', ($q, $http) ->
                 to:
                     node: to_node
                     nib: to_nib
-            ###
-
-            # input/output reversal.  TODO: clean up subroutine implementation to avoid this
-            source_connector = if source instanceof Node then source.outputs else source.inputs
-            sink_connector = if sink instanceof Node then sink.inputs else sink.outputs
-
-            if connection.output.index >= source_connector.length or connection.input.index >= sink_connector.length
-                console.log "Oh no, trying to make an invalid connection"
-            else
-                source_connector[connection.output.index].connect sink_connector[connection.input.index]
-            ###
 
     if localStorage.state?
         source_data = JSON.parse localStorage.state
