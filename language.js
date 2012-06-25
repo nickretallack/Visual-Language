@@ -1322,7 +1322,10 @@
         obj = _ref[id];
         all_definitions[id] = obj;
       }
-      return loaded.resolve(true);
+      loaded.resolve(true);
+      if (window.location.search !== '?debug') {
+        return start_saving();
+      }
     });
     return {
       make_connection: make_connection,

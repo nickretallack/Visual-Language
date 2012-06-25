@@ -840,7 +840,7 @@ module.factory 'interpreter', ($q, $http) ->
         for id, obj of load_state source_data
             all_definitions[id] = obj
         loaded.resolve true
-        #start_saving()
+        start_saving() unless window.location.search is '?debug'
 
     make_connection:make_connection
     find_nib_uses:find_nib_uses
