@@ -23,14 +23,14 @@
 
 
     <div class="node" ng-repeat="node in current_object.nodes" node="node" ng-style="position(node)" ng-mousedown="click_node(node, $event)" ng-dblclick="edit_node(node, $event)" ng-rightclick="" ng-class="{selected:selected(node)}">
-        <ul class="unstyled"><li ng-repeat="output in node.implementation.outputs" class="output">
+        <ul class="unstyled"><li ng-repeat="output in node.get_outputs()" class="output">
         	<div nib="output" node="node"></div>
         	{{output.text}}
         </li></ul>
 
         <div class="node-title">{{node.implementation | text_or_id}}</div>
 
-        <ul class="unstyled"><li ng-repeat="input in node.implementation.inputs" class="input">
+        <ul class="unstyled"><li ng-repeat="input in node.get_inputs()" class="input">
         	{{input.text}}
         	<div nib="input" node="node"></div>
         </li></ul>

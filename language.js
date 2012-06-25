@@ -9,7 +9,7 @@
   module = angular.module('vislang');
 
   module.factory('interpreter', function($q, $http) {
-    var Call, CodeSyntaxError, Connection, Definition, Exit, Graph, Input, InputError, JSONLiteral, JavaScript, Literal, Nib, Node, NotConnected, NotImplemented, Output, RuntimeException, StringLiteral, Subroutine, Type, UnknownNode, Value, all_definitions, clone_endpoint, definition_class_map, definition_classes, dissociate_exception, eval_expression, execute, find_nib_uses, find_value, ignore_if_disconnected, is_input, load_implementation, load_implementation_v2, load_state, loaded, make_connection, make_index_map, make_value, node_class_map, node_classes, resurrect_node, save_state, schema_version, source_data, source_data_deferred, start_saving;
+    var Call, CodeSyntaxError, Connection, Definition, Exit, Graph, Input, InputError, JSONLiteral, JavaScript, Literal, Nib, Node, NotConnected, NotImplemented, Output, RuntimeException, StringLiteral, Subroutine, Type, UnknownNode, Value, all_definitions, clone_endpoint, definition_class_map, definition_classes, dissociate_exception, eval_expression, execute, find_nib_uses, find_value, ignore_if_disconnected, is_input, load_implementation, load_implementation_v2, load_state, loaded, make_connection, make_index_map, make_value, node_class_map, node_classes, resurrect_node, save_state, schema_version, source_data, source_data_deferred, start_saving, value_output_nib;
     schema_version = 2;
     make_index_map = function(objects, attribute) {
       var obj, result, _i, _len;
@@ -285,6 +285,14 @@
           inputs: this.inputs,
           outputs: this.outputs
         });
+      };
+
+      Subroutine.prototype.get_inputs = function() {
+        return this.outputs;
+      };
+
+      Subroutine.prototype.get_outputs = function() {
+        return this.inputs;
       };
 
       return Subroutine;
@@ -739,14 +747,6 @@
 
       function Literal() {
         Literal.__super__.constructor.apply(this, arguments);
-        this.inputs = [];
-        this.outputs = [
-          new Output({
-            scope: this,
-            id: this.id,
-            index: 0
-          })
-        ];
       }
 
       return Literal;
@@ -871,6 +871,14 @@
         return this.implementation.invoke(output_nib, input_values, the_scope, this);
       };
 
+      Call.prototype.get_inputs = function() {
+        return this.implementation.inputs;
+      };
+
+      Call.prototype.get_outputs = function() {
+        return this.implementation.outputs;
+      };
+
       /*
               subroutines_referenced: ->
                   # TODO: UPDATE
@@ -894,6 +902,7 @@
 
       function Value() {
         Value.__super__.constructor.apply(this, arguments);
+        this.outputs = [value_output_nib];
       }
 
       Value.prototype.type = 'value';
@@ -904,6 +913,14 @@
 
       Value.prototype.subroutines_referenced = function() {
         return [];
+      };
+
+      Value.prototype.get_inputs = function() {
+        return [];
+      };
+
+      Value.prototype.get_outputs = function() {
+        return this.outputs;
       };
 
       return Value;
@@ -936,8 +953,10 @@
       function Nib(_arg) {
         var _ref, _ref1;
         _ref = _arg != null ? _arg : {}, this.scope = _ref.scope, this.text = _ref.text, this.id = _ref.id, this.index = _ref.index;
-        if ((_ref1 = this.id) == null) {
-          this.id = UUID();
+        if (this.id !== null) {
+          if ((_ref1 = this.id) == null) {
+            this.id = UUID();
+          }
         }
       }
 
@@ -1007,6 +1026,11 @@
       return Connection;
 
     })();
+    value_output_nib = new Output({
+      scope: null,
+      id: null,
+      index: 0
+    });
     is_input = function(it) {
       var is_input_class;
       is_input_class = it.nib instanceof Input;
@@ -1199,17 +1223,22 @@
         };
         from_node = get_node('from');
         to_node = get_node('to');
-        get_nib = function(node, direction) {
-          var implementation, nib;
-          implementation = node instanceof Definition ? node : node.implementation;
-          nib = implementation.find_nib(connection_data[direction].nib);
-          if (!nib) {
-            throw "Broken connection!";
+        get_nib = function(node, nibs, direction) {
+          var nib;
+          if (node instanceof Value) {
+            return nibs[0];
+          } else {
+            nib = _.find(nibs, function(nib) {
+              return nib.id === connection_data[direction].nib;
+            });
+            if (!nib) {
+              console.log("Broken connection!", node, connection_data);
+            }
+            return nib;
           }
-          return nib;
         };
-        from_nib = get_nib(from_node, 'from');
-        to_nib = get_nib(to_node, 'to');
+        from_nib = get_nib(from_node, from_node.get_outputs(), 'from');
+        to_nib = get_nib(to_node, to_node.get_inputs(), 'to');
         _results.push(new Connection({
           id: connection_data.id,
           scope: graph,
@@ -1268,25 +1297,23 @@
             });
           }
         };
-        get_nib = function(node, direction1, direction2) {
-          var collection;
-          collection = node instanceof Definition ? node[direction2] : node.implementation[direction1];
-          return collection[connection[direction1.slice(0, -1)].index];
+        get_nib = function(nibs, direction) {
+          return nibs[connection[direction].index];
         };
-        from_node = get_node(connection.input);
-        to_node = get_node(connection.output);
-        from_nib = get_nib(from_node, 'inputs', 'outputs');
-        to_nib = get_nib(to_node, 'outputs', 'inputs');
+        from_node = get_node(connection.output);
+        to_node = get_node(connection.input);
+        from_nib = get_nib(from_node.get_outputs(), 'output');
+        to_nib = get_nib(to_node.get_inputs(), 'input');
         _results.push(new Connection({
           id: connection.id,
           scope: subroutine,
           from: {
-            node: to_node,
-            nib: to_nib
-          },
-          to: {
             node: from_node,
             nib: from_nib
+          },
+          to: {
+            node: to_node,
+            nib: to_nib
           }
         }));
         /*

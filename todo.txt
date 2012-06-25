@@ -1,3 +1,5 @@
+- Next serious architectural problem: nibs on function values.  All values should only ever have one nib anyway, so it's irrelevant what that nib is.  Perhaps the connection should just have a null there?  Is there any situation in which a value node would have multiple nibs?  Maybe if you were pulling properties off it, but that is so far ahead of what I have in this language, and it could be accomplished with a regular function anyway.  Alright, fixed it by implementing a get_inputs/outputs interface which all node-likes observe.
+
 - gotta release something
 Well, I guess I could put the local storage stuff back in.  Just need to make a new format for it.
 

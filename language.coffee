@@ -122,6 +122,14 @@ module.factory 'interpreter', ($q, $http) ->
                 inputs:@inputs
                 outputs:@outputs
 
+        # This bit seems confusing because a subroutine is used in two ways.
+        # When referencing it as the implementation of a node, you'll want to access @inputs and @outputs.
+        # However, when accessing it as a node itself, these are reversed.
+        # This is because inputs on the inside are outputs on the outside and visa versa.
+        # These functions follow the same protocol as the functions of the same name on Node classes
+        get_inputs: -> @outputs
+        get_outputs: -> @inputs
+
 
     class JavaScript extends Subroutine
         type:'javascript'
@@ -478,8 +486,6 @@ module.factory 'interpreter', ($q, $http) ->
     class Literal extends Definition # Abstract
         constructor: ->
             super
-            @inputs = []
-            @outputs = [new Output scope:@, id:@id, index:0]
 
         #content_id: -> CryptoJS.SHA256(@text).toString(CryptoJS.enc.Base64)
 
@@ -542,6 +548,9 @@ module.factory 'interpreter', ($q, $http) ->
             input_values = @virtual_inputs the_scope
             return @implementation.invoke output_nib, input_values, the_scope, @
 
+        get_inputs: -> @implementation.inputs
+        get_outputs: -> @implementation.outputs
+
         ###
         subroutines_referenced: ->
             # TODO: UPDATE
@@ -558,10 +567,14 @@ module.factory 'interpreter', ($q, $http) ->
     class Value extends Node
         constructor: ->
             super
+            @outputs = [value_output_nib]
 
         type:'value'
         evaluate: -> @implementation.evaluate()
         subroutines_referenced: -> []
+        get_inputs: -> []
+        get_outputs: -> @outputs
+
 
     class UnknownNode extends Node
         constructor:(@position, type, text, @id) ->
@@ -582,7 +595,8 @@ module.factory 'interpreter', ($q, $http) ->
 
     class Nib  # Abstract. Do not instantiate
         constructor: ({@scope, @text, @id, @index}={}) ->
-            @id ?= UUID()
+            # Null nib id is allowed for value nodes
+            @id ?= UUID() unless @id is null
 
         initialize: -> @
 
@@ -606,6 +620,8 @@ module.factory 'interpreter', ($q, $http) ->
             to:
                 nib:@to.nib.id
                 node:@to.node.id
+
+    value_output_nib = new Output scope:null, id:null, index:0
 
     is_input = (it) ->
         is_input_class = it.nib instanceof Input
@@ -740,14 +756,28 @@ module.factory 'interpreter', ($q, $http) ->
             from_node = get_node 'from'
             to_node = get_node 'to'
 
-            get_nib = (node, direction) ->
-                implementation = if node instanceof Definition then node else node.implementation
-                nib = implementation.find_nib connection_data[direction].nib
-                throw "Broken connection!" unless nib
-                nib
+            #get_nib = (node, direction) ->
+            #    implementation = if node instanceof Definition then node else node.implementation
+            #    nib = implementation.find_nib connection_data[direction].nib
+            #    throw "Broken connection!" unless nib
+            #    nib
 
-            from_nib = get_nib from_node, 'from'
-            to_nib = get_nib to_node, 'to'
+            get_nib = (node, nibs, direction) ->
+                if node instanceof Value
+                    nibs[0]
+                else
+                    nib = _.find nibs, (nib) -> nib.id is connection_data[direction].nib
+                    console.log "Broken connection!", node, connection_data unless nib
+                    nib
+
+            from_nib = get_nib from_node, from_node.get_outputs(), 'from'
+            to_nib = get_nib to_node, to_node.get_inputs(), 'to'
+
+            #from_nib = _.find from_node.get_outputs(), (nib) -> nib.id is connection_data.from.nib
+            #to_nib = _.find to_node.get_inputs(), (nib) -> nib.id is connection_data.to.nib
+
+            #from_nib = get_nib from_node, 'from'
+            #to_nib = get_nib to_node, 'to'
 
             new Connection
                 id: connection_data.id
@@ -796,24 +826,24 @@ module.factory 'interpreter', ($q, $http) ->
             get_node = (nib) ->
                 if nib.parent_id is subroutine.id then subroutine else _.find subroutine.nodes, (node) -> node.id is nib.parent_id
 
-            get_nib = (node, direction1, direction2) ->
-                collection = if node instanceof Definition then node[direction2] else node.implementation[direction1]
-                collection[connection[direction1[...-1]].index]
+            get_nib = (nibs, direction) ->
+                nibs[connection[direction].index]
 
-            from_node = get_node connection.input
-            to_node = get_node connection.output
-            from_nib = get_nib from_node, 'inputs', 'outputs'
-            to_nib = get_nib to_node, 'outputs', 'inputs'
+            from_node = get_node connection.output
+            to_node = get_node connection.input
+            from_nib = get_nib from_node.get_outputs(), 'output'
+            to_nib = get_nib to_node.get_inputs(), 'input'
+            #[to_nib, from_nib] = [from_nib, to_nib]
 
             new Connection
                 id: connection.id
                 scope: subroutine
                 from:
-                    node: to_node
-                    nib: to_nib
-                to:
                     node: from_node
                     nib: from_nib
+                to:
+                    node: to_node
+                    nib: to_nib
             ###
 
             # input/output reversal.  TODO: clean up subroutine implementation to avoid this
