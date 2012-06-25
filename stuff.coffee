@@ -7,7 +7,7 @@ module.run ($rootScope) ->
     $rootScope.search = ''
 
 module.filter 'text_or_id', ->
-    (obj, length) ->
+    (obj) ->
         obj.text or obj.id
 
 module.directive 'ace', ->

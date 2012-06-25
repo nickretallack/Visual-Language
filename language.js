@@ -1042,6 +1042,9 @@
       uses = {};
       for (id in all_definitions) {
         subroutine = all_definitions[id];
+        if (!(subroutine instanceof Graph)) {
+          continue;
+        }
         _ref = subroutine.connections;
         for (_i = 0, _len = _ref.length; _i < _len; _i++) {
           connection = _ref[_i];

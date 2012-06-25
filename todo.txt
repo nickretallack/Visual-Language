@@ -12,7 +12,7 @@ It's currently a little unusable.  What does it need?
         edit values
     sort nibs in make_from based on their positions on the outside...
         how do you compare a node to a nib though?  Perhaps parent inputs are always first?
-
+    keyboard bindings
     position/select nodes based on their centers
 
 Nice to haves:

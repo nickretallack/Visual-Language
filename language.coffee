@@ -627,6 +627,7 @@ module.factory 'interpreter', ($q, $http) ->
     find_nib_uses = (nib, direction='to') ->
         uses = {}
         for id, subroutine of all_definitions
+            continue unless subroutine instanceof Graph
             for connection in subroutine.connections
                 if connection[direction].nib is nib
                     uses[subroutine.id] = subroutine

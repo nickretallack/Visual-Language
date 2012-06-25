@@ -15,7 +15,7 @@
   });
 
   module.filter('text_or_id', function() {
-    return function(obj, length) {
+    return function(obj) {
       return obj.text || obj.id;
     };
   });
