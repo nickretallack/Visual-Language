@@ -134,7 +134,7 @@
       };
 
       Definition.prototype.toJSON = function() {
-        return _.extend(Definition.__super__.toJSON.call(this), {
+        return _.extend(Definition.__super__.toJSON.apply(this, arguments), {
           id: this.id,
           text: this.text
         });
@@ -281,7 +281,7 @@
       };
 
       Subroutine.prototype.toJSON = function() {
-        return _.extend(Subroutine.__super__.toJSON.call(this), {
+        return _.extend(Subroutine.__super__.toJSON.apply(this, arguments), {
           inputs: this.inputs,
           outputs: this.outputs
         });
@@ -303,7 +303,7 @@
       }
 
       JavaScript.prototype.toJSON = function() {
-        return _.extend(JavaScript.__super__.toJSON.call(this), {
+        return _.extend(JavaScript.__super__.toJSON.apply(this, arguments), {
           memo_implementation: this.memo_implementation,
           output_implementation: this.output_implementation
         });
@@ -358,7 +358,7 @@
       }
 
       Graph.prototype.toJSON = function() {
-        return _.extend(Graph.__super__.toJSON.call(this), {
+        return _.extend(Graph.__super__.toJSON.apply(this, arguments), {
           nodes: this.nodes,
           connections: this.connections
         });
@@ -818,7 +818,7 @@
       };
 
       Node.prototype.toJSON = function() {
-        return _.extend(Node.__super__.toJSON.call(this), {
+        return _.extend(Node.__super__.toJSON.apply(this, arguments), {
           id: this.id,
           implementation_id: this.implementation.id,
           position: this.position
@@ -893,7 +893,7 @@
       __extends(Value, _super);
 
       function Value() {
-        return Value.__super__.constructor.apply(this, arguments);
+        Value.__super__.constructor.apply(this, arguments);
       }
 
       Value.prototype.type = 'value';
@@ -920,7 +920,7 @@
         this.text = "Unknown " + type + ": " + text;
         this.inputs = [];
         this.outputs = [];
-        UnknownNode.__super__.constructor.call(this);
+        UnknownNode.__super__.constructor.apply(this, arguments);
       }
 
       return UnknownNode;

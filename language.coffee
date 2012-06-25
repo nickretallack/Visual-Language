@@ -50,7 +50,7 @@ module.factory 'interpreter', ($q, $http) ->
         initialize: -> @
 
         toJSON: ->
-            _.extend super(),
+            _.extend super,
                 id:@id
                 text:@text
 
@@ -118,7 +118,7 @@ module.factory 'interpreter', ($q, $http) ->
         add_output: (data={}) -> @add_nib 'outputs', Output, data
 
         toJSON: ->
-            _.extend super(),
+            _.extend super,
                 inputs:@inputs
                 outputs:@outputs
 
@@ -128,7 +128,7 @@ module.factory 'interpreter', ($q, $http) ->
         constructor: ({@memo_implementation, @output_implementation}={}) -> super
 
         toJSON: ->
-            _.extend super(),
+            _.extend super,
                 memo_implementation:@memo_implementation
                 output_implementation:@output_implementation
 
@@ -164,7 +164,7 @@ module.factory 'interpreter', ($q, $http) ->
             @connections = []
 
         toJSON: ->
-            _.extend super(),
+            _.extend super,
                 nodes:@nodes
                 connections:@connections
 
@@ -515,7 +515,7 @@ module.factory 'interpreter', ($q, $http) ->
             @scope.remove_node @
 
         toJSON: ->
-            _.extend super(),
+            _.extend super,
                 id:@id
                 implementation_id:@implementation.id
                 position:@position
@@ -556,6 +556,9 @@ module.factory 'interpreter', ($q, $http) ->
         ###
 
     class Value extends Node
+        constructor: ->
+            super
+
         type:'value'
         evaluate: -> @implementation.evaluate()
         subroutines_referenced: -> []
@@ -566,7 +569,7 @@ module.factory 'interpreter', ($q, $http) ->
             @text = "Unknown #{type}: #{text}"
             @inputs = []
             @outputs = []
-            super()
+            super
 
     node_classes = [
         Call

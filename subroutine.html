@@ -40,14 +40,15 @@
 
 <div id="editor-options">
     <div id="title-row">
-    <input ng-model="current_object.text" shrinky-input="current_object | text_or_id" class="title" placeholder="{{current_object.id}}"> options
+    <input ng-model="current_object.text" shrinky-input="current_object | text_or_id" class="title" placeholder="{{current_object.id}}">
     </div>
 
-    <div id="selection-row" class="btn-toolbar">
+    <div id="selection-row" class="btn-toolbar" ng-show="selection">
         <a class="btn" ng-show="can_delete_selection()" ng-click="delete_selection()">Delete</a>
         <a class="btn" ng-show="can_edit_selected_node()" ng-click="edit_node(selection[0])">Edit</a>
         <a class="btn" ng-show="can_bust_selected_node()" ng-click="bust_selected_node()">Bust</a>
         <a class="btn" ng-show="can_join_selected_nodes()" ng-click="join_selected_nodes()">Join</a>
+        <span ng-pluralize count="selection.length" when="{'0':'', '1':'selected node', 'other':'selected nodes'}"></span>
     </div>
 </div>
 
