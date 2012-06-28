@@ -11,7 +11,6 @@ module.filter 'text_or_id', ->
         obj.text or obj.id
 
 module.directive 'ace', ->
-    restrict: 'A'
     require: '?ngModel'
     link:(scope, element, attributes, ngModel) ->
         # set up ace
