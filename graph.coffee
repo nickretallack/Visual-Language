@@ -115,7 +115,7 @@ module.directive 'subroutine', ($location) ->
             $scope.selection.length > 1
         $scope.join_selected_nodes = ->
             new_subroutine = new interpreter.Graph
-            new_node = new_subroutine.make_from $scope.selection
+            new_node = new_subroutine.make_from subroutine, $scope.selection
             $scope.selection = [new_node]
             draw()
 

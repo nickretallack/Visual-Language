@@ -171,7 +171,7 @@
         $scope.join_selected_nodes = function() {
           var new_node, new_subroutine;
           new_subroutine = new interpreter.Graph;
-          new_node = new_subroutine.make_from($scope.selection);
+          new_node = new_subroutine.make_from(subroutine, $scope.selection);
           $scope.selection = [new_node];
           return draw();
         };

@@ -467,6 +467,7 @@
       };
 
       Graph.prototype.add_node = function(node) {
+        node.scope = this;
         return this.nodes.push(node);
       };
 
@@ -622,13 +623,12 @@
         return _.values(node_mapping);
       };
 
-      Graph.prototype.make_from = function(nodes) {
+      Graph.prototype.make_from = function(old_scope, nodes) {
         /* Build a subroutine out of nodes in another subroutine.
         */
 
-        var connection, contained_connections, cross_threshhold, from_inside, group_connections, inbound_connections, new_node, node, old_scope, outbound_connections, to_inside, _i, _j, _k, _len, _len1, _len2, _ref, _ref1, _ref2,
+        var connection, contained_connections, cross_threshhold, from_inside, group_connections, inbound_connections, new_node, node, outbound_connections, to_inside, _i, _j, _k, _len, _len1, _len2, _ref, _ref1, _ref2,
           _this = this;
-        old_scope = nodes[0].scope;
         for (_i = 0, _len = nodes.length; _i < _len; _i++) {
           node = nodes[_i];
           old_scope.remove_node(node);

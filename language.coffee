@@ -235,6 +235,7 @@ module.factory 'interpreter', ($q, $http) ->
             @nodes = _.without @nodes, node
 
         add_node: (node) ->
+            node.scope = @
             @nodes.push node
 
         remove_connection: (connection) ->
@@ -373,9 +374,8 @@ module.factory 'interpreter', ($q, $http) ->
             return _.values node_mapping
 
 
-        make_from: (nodes) ->
+        make_from: (old_scope, nodes) ->
             ### Build a subroutine out of nodes in another subroutine. ###
-            old_scope = nodes[0].scope
 
             # move the nodes
             for node in nodes
