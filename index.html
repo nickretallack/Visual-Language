@@ -64,7 +64,7 @@
     <td class="name">
         <a ng-hide="is_literal(subroutine)" href="#/{{subroutine.id}}">{{subroutine | text_or_id}}</a>
         <span ng-show="is_literal(subroutine)">{{subroutine | text_or_id}}</span>
-    <td><a ng-hide="is_literal(subroutine)" ng-click="use(subroutine)">use</a>
+    <td><a ng-hide="is_literal(subroutine)" ng-click="use(subroutine)">call</a>
     <td><a ng-click="use_value(subroutine)">value</a>
 </tr>
 </table>

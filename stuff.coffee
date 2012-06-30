@@ -8,7 +8,7 @@ module.run ($rootScope) ->
 
 module.filter 'text_or_id', ->
     (obj) ->
-        obj.text or obj.id
+        if obj.text? then obj.text else obj.id
 
 module.directive 'ace', ->
     require: '?ngModel'
@@ -60,6 +60,9 @@ module.controller 'subroutine', ($scope, $routeParams, interpreter, $q) ->
         $scope.$root.current_object = interpreter.subroutines[$routeParams.id]
 
 module.controller 'library', ($scope, $q, interpreter) ->
+
+    $scope.order = (item) ->
+        
 
     $scope.get_subroutines = ->
         _.values interpreter.subroutines

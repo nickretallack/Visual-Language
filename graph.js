@@ -144,6 +144,7 @@
         };
         $scope.delete_selection = function() {
           subroutine.delete_nodes($scope.selection);
+          $scope.selection = [];
           return draw();
         };
         $scope.can_edit_selected_node = function() {
@@ -270,9 +271,6 @@
               return draw();
             }
           });
-        });
-        $element.bind('keydown', function(event) {
-          return console.log("yeah");
         });
         /* Drawing the Connection Field
         */

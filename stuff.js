@@ -16,13 +16,16 @@
 
   module.filter('text_or_id', function() {
     return function(obj) {
-      return obj.text || obj.id;
+      if (obj.text != null) {
+        return obj.text;
+      } else {
+        return obj.id;
+      }
     };
   });
 
   module.directive('ace', function() {
     return {
-      restrict: 'A',
       require: '?ngModel',
       link: function(scope, element, attributes, ngModel) {
         var JavaScriptMode, changing, editor, read, session;
@@ -100,6 +103,7 @@
 
   module.controller('library', function($scope, $q, interpreter) {
     var _this = this;
+    $scope.order = function(item) {};
     $scope.get_subroutines = function() {
       return _.values(interpreter.subroutines);
     };

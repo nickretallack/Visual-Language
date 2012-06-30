@@ -295,6 +295,10 @@
         return this.inputs;
       };
 
+      Subroutine.prototype.evaluate = function() {
+        return this;
+      };
+
       return Subroutine;
 
     })(Definition);
@@ -733,7 +737,7 @@
       }) : (value = eval_expression(user_input), value instanceof String ? (find_value(value, StringLiteral)) || new StringLiteral({
         text: value
       }) : (find_value(user_input, JSONLiteral)) || new JSONLiteral({
-        text: value
+        text: user_input
       }));
       return new Value({
         scope: scope,

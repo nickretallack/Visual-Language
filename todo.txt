@@ -1,3 +1,31 @@
+Next steps:
+    - test functions as values
+    - make a game
+    - write instructions
+    - add 'bypass' option for selections that only have one input and output.  Connect around em.
+    - when the same output goes to multiple inputs, it becomes multiple inputs in the new function.  This is bad.
+    - Somehow I was doing joins and the new nodes were showing up in the wrong scope.
+    - some way of stopping/startinge the application --maybe it should be in a different window
+
+Heisenbugs
+    - sometimes nib removal reports it is used in no function
+        - turn this into a confirm that deletes all connections to this nib
+
+Extras:
+    rearrange nib ordering with drag and drop
+    edit individual nodes, and give the 'clone' option
+        edit values
+    sort nibs in make_from based on their positions on the outside...
+        how do you compare a node to a nib though?  Perhaps parent inputs are always first?
+    keyboard bindings
+    position/select nodes based on their centers
+    delete connections
+    "idempotent" checkbox that memoizes?
+    "stateful" checkbox that adds extra null nibs
+    "glob nibs" - one nib internally that is many nibs externally, var args
+
+
+
 - Next serious architectural problem: nibs on function values.  All values should only ever have one nib anyway, so it's irrelevant what that nib is.  Perhaps the connection should just have a null there?  Is there any situation in which a value node would have multiple nibs?  Maybe if you were pulling properties off it, but that is so far ahead of what I have in this language, and it could be accomplished with a regular function anyway.  Alright, fixed it by implementing a get_inputs/outputs interface which all node-likes observe.
 
 - gotta release something
@@ -9,20 +37,6 @@ It's currently a little unusable.  What does it need?
     better selection support -- click nodes, hold shift, etc -- done
     contexual options for the thing you have selected - done
     delete nodes - done
-    rearrange nib ordering with drag and drop
-    edit individual nodes, and give the 'clone' option
-        edit values
-    sort nibs in make_from based on their positions on the outside...
-        how do you compare a node to a nib though?  Perhaps parent inputs are always first?
-    keyboard bindings
-    position/select nodes based on their centers
-
-Nice to haves:
-    delete connections
-    "idempotent" checkbox that memoizes?
-    "stateful" checkbox that adds extra null nibs
-    "glob nibs" - one nib internally that is many nibs externally, var args
-
 
 - networking / publishing / collaboration
 This is a serious component.  What should I do for it?  Hm.

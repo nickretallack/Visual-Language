@@ -95,6 +95,7 @@ module.directive 'subroutine', ($location) ->
             $scope.selection.length > 0
         $scope.delete_selection = ->
             subroutine.delete_nodes $scope.selection
+            $scope.selection = []
             draw()
 
         $scope.can_edit_selected_node = ->
@@ -190,8 +191,8 @@ module.directive 'subroutine', ($location) ->
                     node.position = node.position.plus V -mouse_delta.y, -mouse_delta.x
                 draw()
 
-        $element.bind 'keydown', (event) ->
-            console.log "yeah"
+        #$element.bind 'keydown', (event) ->
+        #    console.log "yeah"
 
         ### Drawing the Connection Field ###
         header_height = 40

@@ -129,7 +129,7 @@ module.factory 'interpreter', ($q, $http) ->
         # These functions follow the same protocol as the functions of the same name on Node classes
         get_inputs: -> @outputs
         get_outputs: -> @inputs
-
+        evaluate: -> @
 
     class JavaScript extends Subroutine
         type:'javascript'
@@ -476,7 +476,7 @@ module.factory 'interpreter', ($q, $http) ->
                 if value instanceof String
                     (find_value value, StringLiteral) or new StringLiteral text:value
                 else
-                    (find_value user_input, JSONLiteral) or new JSONLiteral text:value
+                    (find_value user_input, JSONLiteral) or new JSONLiteral text:user_input
 
         new Value
             scope:scope
