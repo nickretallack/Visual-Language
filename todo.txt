@@ -3,8 +3,9 @@ Next steps:
     - make a game
     - write instructions
     - add 'bypass' option for selections that only have one input and output.  Connect around em.
-    - when the same output goes to multiple inputs, it becomes multiple inputs in the new function.  This is bad.
+    - when the same output goes to multiple inputs, it becomes multiple inputs in the new function.  This is bad. -- fixed
     - Somehow I was doing joins and the new nodes were showing up in the wrong scope.
+        - aha, maybe when you change scopes it doesn't clear the selection
     - some way of stopping/startinge the application --maybe it should be in a different window
 
 Heisenbugs
