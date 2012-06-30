@@ -443,11 +443,10 @@ module.factory 'interpreter', ($q, $http) ->
 
             outbound_connections_by_nib = {}
             for connection in outbound_connections
-                nib = connection.from.nib
-                outbound_connections_by_nib[nib.id] ?=
-                    nib:nib
+                key = "#{connection.from.nib.id}-#{connection.from.node.id}"
+                outbound_connections_by_nib[key] ?=
                     connections:[]
-                outbound_connections_by_nib[nib.id].connections.push connection
+                outbound_connections_by_nib[key].connections.push connection
 
             for id, grouping of outbound_connections_by_nib
                 new_nib = @add_output()

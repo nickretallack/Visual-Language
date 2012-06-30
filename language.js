@@ -626,7 +626,7 @@
         /* Build a subroutine out of nodes in another subroutine.
         */
 
-        var connection, contained_connections, from_inside, grouping, id, inbound_connections, inbound_connections_by_nib, new_connection, new_nib, new_node, nib, node, old_scope, outbound_connections, outbound_connections_by_nib, to_inside, _i, _j, _k, _l, _len, _len1, _len2, _len3, _len4, _len5, _len6, _m, _n, _name, _name1, _o, _ref, _ref1, _ref2, _ref3, _ref4, _ref5, _ref6;
+        var connection, contained_connections, from_inside, grouping, id, inbound_connections, inbound_connections_by_nib, key, new_connection, new_nib, new_node, nib, node, old_scope, outbound_connections, outbound_connections_by_nib, to_inside, _i, _j, _k, _l, _len, _len1, _len2, _len3, _len4, _len5, _len6, _m, _n, _name, _o, _ref, _ref1, _ref2, _ref3, _ref4, _ref5, _ref6;
         old_scope = nodes[0].scope;
         for (_i = 0, _len = nodes.length; _i < _len; _i++) {
           node = nodes[_i];
@@ -694,14 +694,13 @@
         outbound_connections_by_nib = {};
         for (_n = 0, _len5 = outbound_connections.length; _n < _len5; _n++) {
           connection = outbound_connections[_n];
-          nib = connection.from.nib;
-          if ((_ref5 = outbound_connections_by_nib[_name1 = nib.id]) == null) {
-            outbound_connections_by_nib[_name1] = {
-              nib: nib,
+          key = "" + connection.from.nib.id + "-" + connection.from.node.id;
+          if ((_ref5 = outbound_connections_by_nib[key]) == null) {
+            outbound_connections_by_nib[key] = {
               connections: []
             };
           }
-          outbound_connections_by_nib[nib.id].connections.push(connection);
+          outbound_connections_by_nib[key].connections.push(connection);
         }
         for (id in outbound_connections_by_nib) {
           grouping = outbound_connections_by_nib[id];
