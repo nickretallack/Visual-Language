@@ -410,24 +410,33 @@ module.factory 'interpreter', ($q, $http) ->
             # find out how many inputs/outputs our new subroutine needs
             # Inputs are easy since they can only have one connection each
 
+            inbound_connections_by_nib = {}
+            for connection in inbound_connections
+                nib = connection.from.nib
+                inbound_connections_by_nib[nib.id] ?=
+                    nib:nib
+                    connections:[]
+                inbound_connections_by_nib[nib.id].connections.push connection
 
             # duplicate the ones that cross the threshhold
-            for connection in inbound_connections
+            for id, grouping of inbound_connections_by_nib
                 new_nib = @add_input()
 
-                # Create a new connection to the previous connection's target,
-                # which is now inside the new subroutine
-                new_connection = new Connection
-                    scope:@
-                    to:clone_endpoint connection.to
-                    from:
-                        node:@
-                        nib:new_nib
+                for connection in grouping.connections
 
-                # Modify the old connection to point to the newly created input
-                connection.to =
-                    node:new_node
-                    nib:new_nib
+                    # Create a new connection to the previous connection's target,
+                    # which is now inside the new subroutine
+                    new_connection = new Connection
+                        scope:@
+                        to:clone_endpoint connection.to
+                        from:
+                            node:@
+                            nib:new_nib
+
+                    # Modify the old connection to point to the newly created input
+                    connection.to =
+                        node:new_node
+                        nib:new_nib
 
             # There may be multiple outputs with the same
             # We'll have to group them by the nibs they're connected from
