@@ -626,7 +626,7 @@
         /* Build a subroutine out of nodes in another subroutine.
         */
 
-        var connection, contained_connections, from_inside, grouping, id, inbound_connections, inbound_connections_by_nib, key, new_connection, new_nib, new_node, nib, node, old_scope, outbound_connections, outbound_connections_by_nib, to_inside, _i, _j, _k, _l, _len, _len1, _len2, _len3, _len4, _len5, _len6, _m, _n, _name, _o, _ref, _ref1, _ref2, _ref3, _ref4, _ref5, _ref6;
+        var connection, contained_connections, from_inside, group, group_connections, inbound_connections, new_nib, new_node, node, old_scope, outbound_connections, to_inside, _i, _j, _k, _l, _len, _len1, _len2, _len3, _len4, _len5, _len6, _m, _n, _o, _ref, _ref1, _ref2, _ref3, _ref4;
         old_scope = nodes[0].scope;
         for (_i = 0, _len = nodes.length; _i < _len; _i++) {
           node = nodes[_i];
@@ -659,25 +659,26 @@
           old_scope.remove_connection(connection);
           this.add_connection(connection);
         }
-        inbound_connections_by_nib = {};
-        for (_l = 0, _len3 = inbound_connections.length; _l < _len3; _l++) {
-          connection = inbound_connections[_l];
-          nib = connection.from.nib;
-          if ((_ref3 = inbound_connections_by_nib[_name = nib.id]) == null) {
-            inbound_connections_by_nib[_name] = {
-              nib: nib,
-              connections: []
-            };
+        group_connections = function(connections) {
+          var groups, key, _l, _len3, _ref3;
+          groups = {};
+          for (_l = 0, _len3 = connections.length; _l < _len3; _l++) {
+            connection = connections[_l];
+            key = "" + connection.from.nib.id + "-" + connection.from.node.id;
+            if ((_ref3 = groups[key]) == null) {
+              groups[key] = [];
+            }
+            groups[key].push(connection);
           }
-          inbound_connections_by_nib[nib.id].connections.push(connection);
-        }
-        for (id in inbound_connections_by_nib) {
-          grouping = inbound_connections_by_nib[id];
+          return _.values(groups);
+        };
+        _ref3 = group_connections(inbound_connections);
+        for (_l = 0, _len3 = _ref3.length; _l < _len3; _l++) {
+          group = _ref3[_l];
           new_nib = this.add_input();
-          _ref4 = grouping.connections;
-          for (_m = 0, _len4 = _ref4.length; _m < _len4; _m++) {
-            connection = _ref4[_m];
-            new_connection = new Connection({
+          for (_m = 0, _len4 = group.length; _m < _len4; _m++) {
+            connection = group[_m];
+            new Connection({
               scope: this,
               to: clone_endpoint(connection.to),
               from: {
@@ -691,23 +692,12 @@
             };
           }
         }
-        outbound_connections_by_nib = {};
-        for (_n = 0, _len5 = outbound_connections.length; _n < _len5; _n++) {
-          connection = outbound_connections[_n];
-          key = "" + connection.from.nib.id + "-" + connection.from.node.id;
-          if ((_ref5 = outbound_connections_by_nib[key]) == null) {
-            outbound_connections_by_nib[key] = {
-              connections: []
-            };
-          }
-          outbound_connections_by_nib[key].connections.push(connection);
-        }
-        for (id in outbound_connections_by_nib) {
-          grouping = outbound_connections_by_nib[id];
+        _ref4 = group_connections(outbound_connections);
+        for (_n = 0, _len5 = _ref4.length; _n < _len5; _n++) {
+          group = _ref4[_n];
           new_nib = this.add_output();
-          _ref6 = grouping.connections;
-          for (_o = 0, _len6 = _ref6.length; _o < _len6; _o++) {
-            connection = _ref6[_o];
+          for (_o = 0, _len6 = group.length; _o < _len6; _o++) {
+            connection = group[_o];
             new Connection({
               scope: this,
               from: clone_endpoint(connection.from),

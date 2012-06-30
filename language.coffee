@@ -410,23 +410,22 @@ module.factory 'interpreter', ($q, $http) ->
             # find out how many inputs/outputs our new subroutine needs
             # Inputs are easy since they can only have one connection each
 
-            inbound_connections_by_nib = {}
-            for connection in inbound_connections
-                nib = connection.from.nib
-                inbound_connections_by_nib[nib.id] ?=
-                    nib:nib
-                    connections:[]
-                inbound_connections_by_nib[nib.id].connections.push connection
+            group_connections = (connections) ->
+                groups = {}
+                for connection in connections
+                    key = "#{connection.from.nib.id}-#{connection.from.node.id}"
+                    groups[key] ?= []
+                    groups[key].push connection
+                _.values groups
 
             # duplicate the ones that cross the threshhold
-            for id, grouping of inbound_connections_by_nib
+            for group in group_connections inbound_connections
                 new_nib = @add_input()
 
-                for connection in grouping.connections
-
+                for connection in group
                     # Create a new connection to the previous connection's target,
                     # which is now inside the new subroutine
-                    new_connection = new Connection
+                    new Connection
                         scope:@
                         to:clone_endpoint connection.to
                         from:
@@ -441,17 +440,10 @@ module.factory 'interpreter', ($q, $http) ->
             # There may be multiple outputs with the same
             # We'll have to group them by the nibs they're connected from
 
-            outbound_connections_by_nib = {}
-            for connection in outbound_connections
-                key = "#{connection.from.nib.id}-#{connection.from.node.id}"
-                outbound_connections_by_nib[key] ?=
-                    connections:[]
-                outbound_connections_by_nib[key].connections.push connection
-
-            for id, grouping of outbound_connections_by_nib
+            for group in group_connections outbound_connections
                 new_nib = @add_output()
 
-                for connection in grouping.connections
+                for connection in group
                     new Connection
                         scope:@
                         from:clone_endpoint connection.from
