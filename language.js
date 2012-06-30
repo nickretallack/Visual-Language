@@ -626,7 +626,8 @@
         /* Build a subroutine out of nodes in another subroutine.
         */
 
-        var connection, contained_connections, from_inside, group, group_connections, inbound_connections, new_nib, new_node, node, old_scope, outbound_connections, to_inside, _i, _j, _k, _l, _len, _len1, _len2, _len3, _len4, _len5, _len6, _m, _n, _o, _ref, _ref1, _ref2, _ref3, _ref4;
+        var connection, contained_connections, cross_threshhold, from_inside, group_connections, inbound_connections, new_node, node, old_scope, outbound_connections, to_inside, _i, _j, _k, _len, _len1, _len2, _ref, _ref1, _ref2,
+          _this = this;
         old_scope = nodes[0].scope;
         for (_i = 0, _len = nodes.length; _i < _len; _i++) {
           node = nodes[_i];
@@ -672,46 +673,39 @@
           }
           return _.values(groups);
         };
-        _ref3 = group_connections(inbound_connections);
-        for (_l = 0, _len3 = _ref3.length; _l < _len3; _l++) {
-          group = _ref3[_l];
-          new_nib = this.add_input();
-          for (_m = 0, _len4 = group.length; _m < _len4; _m++) {
-            connection = group[_m];
-            new Connection({
-              scope: this,
-              to: clone_endpoint(connection.to),
-              from: {
-                node: this,
-                nib: new_nib
+        cross_threshhold = function(connections, add_nib, direction, other_direction) {
+          var data, group, new_nib, _l, _len3, _ref3, _results;
+          _ref3 = group_connections(connections);
+          _results = [];
+          for (_l = 0, _len3 = _ref3.length; _l < _len3; _l++) {
+            group = _ref3[_l];
+            new_nib = _this[add_nib]();
+            _results.push((function() {
+              var _len4, _m, _results1;
+              _results1 = [];
+              for (_m = 0, _len4 = group.length; _m < _len4; _m++) {
+                connection = group[_m];
+                data = {
+                  scope: this
+                };
+                data[direction] = clone_endpoint(connection[direction]);
+                data[other_direction] = {
+                  node: this,
+                  nib: new_nib
+                };
+                new Connection(data);
+                _results1.push(connection[direction] = {
+                  node: new_node,
+                  nib: new_nib
+                });
               }
-            });
-            connection.to = {
-              node: new_node,
-              nib: new_nib
-            };
+              return _results1;
+            }).call(_this));
           }
-        }
-        _ref4 = group_connections(outbound_connections);
-        for (_n = 0, _len5 = _ref4.length; _n < _len5; _n++) {
-          group = _ref4[_n];
-          new_nib = this.add_output();
-          for (_o = 0, _len6 = group.length; _o < _len6; _o++) {
-            connection = group[_o];
-            new Connection({
-              scope: this,
-              from: clone_endpoint(connection.from),
-              to: {
-                node: this,
-                nib: new_nib
-              }
-            });
-            connection.from = {
-              node: new_node,
-              nib: new_nib
-            };
-          }
-        }
+          return _results;
+        };
+        cross_threshhold(inbound_connections, 'add_input', 'to', 'from');
+        cross_threshhold(outbound_connections, 'add_output', 'from', 'to');
         return new_node;
       };
 

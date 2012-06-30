@@ -388,7 +388,7 @@ module.factory 'interpreter', ($q, $http) ->
                 position:V(0,0)
                 implementation:@
 
-            # find connections to these nodes
+            # classify the connections that touch these nodes
             inbound_connections = []
             outbound_connections = []
             contained_connections = []
@@ -407,10 +407,9 @@ module.factory 'interpreter', ($q, $http) ->
                 old_scope.remove_connection connection
                 @add_connection connection
 
-            # find out how many inputs/outputs our new subroutine needs
-            # Inputs are easy since they can only have one connection each
-
             group_connections = (connections) ->
+                # Connections are grouped by their source, since one source can connect to multiple sinks.
+                # One sink cannot connect to multiple sources, so there is no need to group in the other direction.
                 groups = {}
                 for connection in connections
                     key = "#{connection.from.nib.id}-#{connection.from.node.id}"
@@ -418,42 +417,28 @@ module.factory 'interpreter', ($q, $http) ->
                     groups[key].push connection
                 _.values groups
 
-            # duplicate the ones that cross the threshhold
-            for group in group_connections inbound_connections
-                new_nib = @add_input()
+            cross_threshhold = (connections, add_nib, direction, other_direction) =>
+                # We group connections from the same source to avoid creating extra nibs
+                for group in group_connections connections
+                    new_nib = @[add_nib]()
 
-                for connection in group
-                    # Create a new connection to the previous connection's target,
-                    # which is now inside the new subroutine
-                    new Connection
-                        scope:@
-                        to:clone_endpoint connection.to
-                        from:
+                    for connection in group
+                        # Create a new connection to the previous connection's target,
+                        # which is now inside the new subroutine
+                        data = scope:@
+                        data[direction] = clone_endpoint connection[direction]
+                        data[other_direction] =
                             node:@
                             nib:new_nib
+                        new Connection data
 
-                    # Modify the old connection to point to the newly created input
-                    connection.to =
-                        node:new_node
-                        nib:new_nib
-
-            # There may be multiple outputs with the same
-            # We'll have to group them by the nibs they're connected from
-
-            for group in group_connections outbound_connections
-                new_nib = @add_output()
-
-                for connection in group
-                    new Connection
-                        scope:@
-                        from:clone_endpoint connection.from
-                        to:
-                            node:@
+                        # Modify the old connection to point to the newly created input
+                        connection[direction] =
+                            node:new_node
                             nib:new_nib
 
-                    connection.from =
-                        node:new_node
-                        nib:new_nib
+            cross_threshhold inbound_connections, 'add_input', 'to', 'from'
+            cross_threshhold outbound_connections, 'add_output', 'from', 'to'
 
             return new_node
 
