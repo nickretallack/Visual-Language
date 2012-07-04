@@ -1,12 +1,29 @@
+Stateful globals: a real problem.
+I wanted this language to make it easy to test pieces individually.  However, there are many ways external information can make its way into (and out of) a function without being picked up as an input or output.  This is no good.  I need some way to normalize state for testing purposes.
+
+The real problem is interaction with event handlers.  Event handlers need to be able to mutate state.  When a user hits a key on the keyboard, event handlers need to update the state of the keyboard for consumption by other methods that care about keys being held down.  That new state of the keyboard then needs to be fed to anyone who needs that information.  How do I tie this knot?
+
+This is the messy stateful problem many languages deal with.  Ideally I'd be able to refer to the keyboard as a service, and ask it questions.  Its newest state would be provided to my update function any time that function ran.  Its newest state would also get run through the event handlers and subsequently replaced.  That way it could act as a proper input.
+
+update (keyboard_state, game_state) -> game_state
+keydown (keyboard_state) -> keyboard_state
+
+Currently nobody is there to collect the new keyboard state from the keydown handler.  The addEventListener implementation has the opportunity to collect this information.  What should it do with it?  Perhaps it should send it to a publish function of some sort.  Somehow the new keyboard state has to make its way to the looper function, since that's where update is invoked, and update needs to be fed the keyboard state.
+
+Perhaps setup-keyboard-events should return some accessor that can get the current state.  This could be called by the looper every time it wants to call update.  Honestly, I need some way of handling services just like Angular does, and that is kinda like how Angular does it.  A service needs to have some way of providing its current state.
+
+Now I need this tying the knot part.  
+
+
+
 Next steps:
-    - test functions as values
     - make a game
+    - add the import/export system back
     - write instructions
-    - add 'bypass' option for selections that only have one input and output.  Connect around em.
-    - when the same output goes to multiple inputs, it becomes multiple inputs in the new function.  This is bad. -- fixed
-    - Somehow I was doing joins and the new nodes were showing up in the wrong scope.
-        - aha, maybe when you change scopes it doesn't clear the selection
     - some way of stopping/startinge the application --maybe it should be in a different window
+    - add a node-creation menu for when you click on empty space
+        - new [javascript | graph | literal]
+        - search the library and insert [value | call]
 
 Heisenbugs
     - sometimes nib removal reports it is used in no function
@@ -24,8 +41,14 @@ Extras:
     "idempotent" checkbox that memoizes?
     "stateful" checkbox that adds extra null nibs
     "glob nibs" - one nib internally that is many nibs externally, var args
+    add 'bypass' option for selections that only have one input and output.  Connect around em.
 
+done
+    - test functions as values - done
+    - when the same output goes to multiple inputs, it becomes multiple inputs in the new function.  This is bad. -- fixed
+    - Somehow I was doing joins and the new nodes were showing up in the wrong scope.
 
+----
 
 - Next serious architectural problem: nibs on function values.  All values should only ever have one nib anyway, so it's irrelevant what that nib is.  Perhaps the connection should just have a null there?  Is there any situation in which a value node would have multiple nibs?  Maybe if you were pulling properties off it, but that is so far ahead of what I have in this language, and it could be accomplished with a regular function anyway.  Alright, fixed it by implementing a get_inputs/outputs interface which all node-likes observe.
 
