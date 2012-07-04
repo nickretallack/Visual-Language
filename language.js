@@ -9,7 +9,7 @@
   module = angular.module('vislang');
 
   module.factory('interpreter', function($q, $http) {
-    var Call, CodeSyntaxError, Connection, Definition, Exit, Graph, Input, InputError, JSONLiteral, JavaScript, Literal, Nib, Node, NotConnected, NotImplemented, Output, RuntimeException, StringLiteral, Subroutine, Type, UnknownNode, Value, all_definitions, clone_endpoint, definition_class_map, definition_classes, dissociate_exception, eval_expression, execute, find_nib_uses, find_value, ignore_if_disconnected, is_input, load_implementation, load_implementation_v2, load_state, loaded, make_connection, make_index_map, make_value, node_class_map, node_classes, resurrect_node, save_state, schema_version, source_data, source_data_deferred, start_saving, value_output_nib;
+    var Call, CodeSyntaxError, Connection, Definition, Exit, Graph, Input, InputError, JSONLiteral, JavaScript, Literal, Nib, Node, NotConnected, NotImplemented, Output, RuntimeException, StringLiteral, Subroutine, Symbol, Type, UnknownNode, Value, all_definitions, clone_endpoint, definition_class_map, definition_classes, dissociate_exception, eval_expression, execute, find_nib_uses, find_value, ignore_if_disconnected, is_input, load_implementation, load_implementation_v2, load_state, loaded, make_connection, make_index_map, make_value, node_class_map, node_classes, resurrect_node, save_state, schema_version, source_data, source_data_deferred, start_saving, value_output_nib;
     schema_version = 2;
     make_index_map = function(objects, attribute) {
       var obj, result, _i, _len;
@@ -749,7 +749,7 @@
       __extends(Literal, _super);
 
       function Literal() {
-        Literal.__super__.constructor.apply(this, arguments);
+        return Literal.__super__.constructor.apply(this, arguments);
       }
 
       return Literal;
@@ -762,8 +762,6 @@
       function JSONLiteral() {
         return JSONLiteral.__super__.constructor.apply(this, arguments);
       }
-
-      JSONLiteral.prototype.type = 'json_literal';
 
       JSONLiteral.prototype.evaluate = function() {
         return eval_expression(this.text);
@@ -780,8 +778,6 @@
         return StringLiteral.__super__.constructor.apply(this, arguments);
       }
 
-      StringLiteral.prototype.type = 'string_literal';
-
       StringLiteral.prototype.evaluate = function() {
         return this.text;
       };
@@ -789,7 +785,22 @@
       return StringLiteral;
 
     })(Literal);
-    definition_classes = [Graph, JavaScript, JSONLiteral, StringLiteral];
+    Symbol = (function(_super) {
+
+      __extends(Symbol, _super);
+
+      function Symbol() {
+        return Symbol.__super__.constructor.apply(this, arguments);
+      }
+
+      Symbol.prototype.evaluate = function() {
+        return this.id;
+      };
+
+      return Symbol;
+
+    })(Literal);
+    definition_classes = [Graph, JavaScript, JSONLiteral, StringLiteral, Symbol];
     definition_class_map = make_index_map(definition_classes, 'name');
     /* NODE TYPES
     */
@@ -1360,6 +1371,7 @@
       Call: Call,
       Value: Value,
       Literal: Literal,
+      Symbol: Symbol,
       Input: Input,
       Output: Output,
       subroutines: all_definitions,

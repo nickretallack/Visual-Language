@@ -469,24 +469,23 @@ module.factory 'interpreter', ($q, $http) ->
             implementation: implementation
 
     class Literal extends Definition # Abstract
-        constructor: ->
-            super
-
         #content_id: -> CryptoJS.SHA256(@text).toString(CryptoJS.enc.Base64)
 
     class JSONLiteral extends Literal
-        type:'json_literal'
         evaluate: -> eval_expression @text
 
     class StringLiteral extends Literal
-        type:'string_literal'
         evaluate: -> @text
+
+    class Symbol extends Literal
+        evaluate: -> @id
 
     definition_classes = [
         Graph
         JavaScript
         JSONLiteral
         StringLiteral
+        Symbol
     ]
 
     definition_class_map = make_index_map definition_classes, 'name'
@@ -848,6 +847,7 @@ module.factory 'interpreter', ($q, $http) ->
     Call:Call
     Value:Value
     Literal:Literal
+    Symbol:Symbol
     Input:Input
     Output:Output
     subroutines:all_definitions

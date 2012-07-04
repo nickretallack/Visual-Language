@@ -49,7 +49,7 @@
 <div id="tools" ng-controller="library" class="span4">
 <table class="table table-condensed table-striped">
 
-<tr ng-show="is_valid_json(search)">
+<tr ng-show="search | is_valid_json">
     <td class="name">JSON Literal
     <td>
     <td><a ng-click="use_value(search)">value</a>
@@ -58,6 +58,12 @@
 <tr><td class="name">String Literal
     <td>
     <td><a ng-click="use_string_literal(search)">value</a>
+</tr>
+
+<tr ng-show="search">
+    <td class="name">New Symbol
+    <td>
+    <td><a ng-click="new_symbol(search)">value</a>
 </tr>
 
 <tr ng-repeat="subroutine in get_subroutines() | filter:{text:search} | orderBy:'text'">

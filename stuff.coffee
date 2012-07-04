@@ -10,6 +10,8 @@ module.filter 'text_or_id', ->
     (obj) ->
         if obj.text? then obj.text else obj.id
 
+module.filter 'is_valid_json', -> is_valid_json
+
 module.directive 'ace', ->
     require: '?ngModel'
     link:(scope, element, attributes, ngModel) ->
@@ -61,9 +63,6 @@ module.controller 'subroutine', ($scope, $routeParams, interpreter, $q) ->
 
 module.controller 'library', ($scope, $q, interpreter) ->
 
-    $scope.order = (item) ->
-        
-
     $scope.get_subroutines = ->
         _.values interpreter.subroutines
 
@@ -73,6 +72,13 @@ module.controller 'library', ($scope, $q, interpreter) ->
             position: V(0,0)
             implementation: subroutine
 
+    $scope.new_symbol = (user_input) ->
+        symbol = new interpreter.Symbol text:user_input
+        new interpreter.Value
+            scope:$scope.$root.current_object
+            position: V(0,0)
+            implementation:symbol
+
     $scope.use_value = (user_input) ->
         interpreter.make_value $scope.$root.current_object, V(0,0), user_input
 
@@ -81,20 +87,6 @@ module.controller 'library', ($scope, $q, interpreter) ->
 
     $scope.is_literal = (thing) -> thing instanceof interpreter.Literal
 
-    $scope.is_valid_json = is_valid_json
-
-    $scope.literal_text = ''
-    $scope.use_literal = =>
-        if valid_json $scope.literal_text
-            new interpreter.Value
-                scope: $scope.$root.current_object
-                position: V(0,0)
-                implementation: $scope.literal_text
-            $scope.literal_text = ''
-            hide()
-
-    $scope.name_subroutine = (subroutine) ->
-        subroutine.text or subroutine.id[0..20]
 
 ### INTERACTION ###
 

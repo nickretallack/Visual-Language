@@ -24,6 +24,10 @@
     };
   });
 
+  module.filter('is_valid_json', function() {
+    return is_valid_json;
+  });
+
   module.directive('ace', function() {
     return {
       require: '?ngModel',
@@ -102,8 +106,6 @@
   });
 
   module.controller('library', function($scope, $q, interpreter) {
-    var _this = this;
-    $scope.order = function(item) {};
     $scope.get_subroutines = function() {
       return _.values(interpreter.subroutines);
     };
@@ -114,30 +116,25 @@
         implementation: subroutine
       });
     };
+    $scope.new_symbol = function(user_input) {
+      var symbol;
+      symbol = new interpreter.Symbol({
+        text: user_input
+      });
+      return new interpreter.Value({
+        scope: $scope.$root.current_object,
+        position: V(0, 0),
+        implementation: symbol
+      });
+    };
     $scope.use_value = function(user_input) {
       return interpreter.make_value($scope.$root.current_object, V(0, 0), user_input);
     };
     $scope.use_string_literal = function(text) {
       return interpreter.make_value($scope.$root.current_object, V(0, 0), text, true);
     };
-    $scope.is_literal = function(thing) {
+    return $scope.is_literal = function(thing) {
       return thing instanceof interpreter.Literal;
-    };
-    $scope.is_valid_json = is_valid_json;
-    $scope.literal_text = '';
-    $scope.use_literal = function() {
-      if (valid_json($scope.literal_text)) {
-        new interpreter.Value({
-          scope: $scope.$root.current_object,
-          position: V(0, 0),
-          implementation: $scope.literal_text
-        });
-        $scope.literal_text = '';
-        return hide();
-      }
-    };
-    return $scope.name_subroutine = function(subroutine) {
-      return subroutine.text || subroutine.id.slice(0, 21);
     };
   });
 
