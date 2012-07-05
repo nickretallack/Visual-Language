@@ -38,6 +38,13 @@
     };
   });
 
+  module.filter('syntax', function(interpreter) {
+    return function(obj) {
+      var result;
+      return result = obj instanceof interpreter.CoffeeScript ? 'coffee' : obj instanceof interpreter.JavaScript ? 'javascript' : obj instanceof interpreter.JSONLiteral ? 'json' : 'plain';
+    };
+  });
+
   module.filter('implementation_type', function(interpreter) {
     return function(it) {
       if (it instanceof interpreter.Graph) {
@@ -72,9 +79,14 @@
     return {
       require: '?ngModel',
       link: function(scope, element, attributes, ngModel) {
-        var changing, editor, read, session;
+        var JavaScriptMode, changing, editor, read, session, syntax;
         editor = ace.edit(element[0]);
         session = editor.getSession();
+        syntax = scope.$eval(attributes.syntax);
+        if (syntax && syntax !== 'plain') {
+          JavaScriptMode = require("ace/mode/" + syntax).Mode;
+          session.setMode(new JavaScriptMode());
+        }
         if (!ngModel) {
           return;
         }

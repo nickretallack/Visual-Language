@@ -1,7 +1,8 @@
 Next steps:
     - make a game
     - vectors
-    - display calls and values differently
+    - display graphics
+    - copy-paste nodes
     - make json / string literals editable, and symbols renamable.
     - Allow a paragraph of explanation inside all definitions
     - add the import/export system back
@@ -45,6 +46,7 @@ Now I need this tying the knot part.
 
 
 done
+    - display calls and values differently
     - test functions as values - done
     - when the same output goes to multiple inputs, it becomes multiple inputs in the new function.  This is bad. -- fixed
     - Somehow I was doing joins and the new nodes were showing up in the wrong scope.

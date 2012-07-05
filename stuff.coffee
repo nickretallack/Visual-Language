@@ -19,6 +19,18 @@ module.filter 'node_type', (interpreter) ->
         else
             'value'
 
+module.filter 'syntax', (interpreter) ->
+    (obj) ->
+        result = if obj instanceof interpreter.CoffeeScript
+            'coffee'
+        else if obj instanceof interpreter.JavaScript
+            'javascript'
+        else if obj instanceof interpreter.JSONLiteral
+            'json'
+        else
+            'plain'
+
+
 module.filter 'implementation_type', (interpreter) ->
     (it) ->
         if it instanceof interpreter.Graph
@@ -51,9 +63,12 @@ module.directive 'ace', ->
         editor = ace.edit element[0]
         session = editor.getSession()
 
+        syntax = scope.$eval attributes.syntax
+
         # Set the theme
-        #JavaScriptMode = require("ace/mode/coffee").Mode
-        #session.setMode new JavaScriptMode()
+        if syntax and syntax isnt 'plain'
+            JavaScriptMode = require("ace/mode/#{syntax}").Mode
+            session.setMode new JavaScriptMode()
 
         # set up data binding
         return unless ngModel
