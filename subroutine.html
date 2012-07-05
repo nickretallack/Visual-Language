@@ -1,5 +1,5 @@
 {{name_node(current_object)}}
-<div ng-switch="current_object.type" any-subroutine="current_object">
+<div ng-switch="current_object | editor_type" any-subroutine="current_object">
 
 <div ng-switch-when="graph" subroutine="current_object">
 
@@ -64,7 +64,7 @@
 <h2><input ng:model="current_object.text"></h2>
 </div>
 
-<div ng-switch-when="javascript" id="builtin_editor">
+<div ng-switch-when="code" id="builtin_editor">
     <input ng-model="current_object.text" class="title" shrinky-input="current_object | text_or_id" placeholder="{{current_object.id}}">
     <div class="container-fluid">
         <div class="row-fluid">

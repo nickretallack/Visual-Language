@@ -131,8 +131,7 @@ module.factory 'interpreter', ($q, $http) ->
         get_outputs: -> @inputs
         evaluate: -> @
 
-    class JavaScript extends Subroutine
-        type:'javascript'
+    class Code extends Subroutine
         constructor: ({@memo_implementation, @output_implementation}={}) -> super
 
         toJSON: ->
@@ -140,19 +139,10 @@ module.factory 'interpreter', ($q, $http) ->
                 memo_implementation:@memo_implementation
                 output_implementation:@output_implementation
 
-        ###
-        export: ->
-            builtins = {}
-            builtins[@id] = @
-            all_definitions:{}
-            builtins: builtins
-            schema_version:schema_version
-        ###
-
         invoke: (output_nib, inputs, scope, node) ->
             try
-                memo_function = eval_expression @memo_implementation
-                output_function = eval_expression @output_implementation
+                memo_function = @eval_code @memo_implementation
+                output_function = @eval_code @output_implementation
             catch exception
                 if exception instanceof SyntaxError
                     throw new CodeSyntaxError @text, exception
@@ -165,9 +155,13 @@ module.factory 'interpreter', ($q, $http) ->
                 scope.memos[node.id] = memo_function args...
             return output_function (args.concat [scope?.memos[node.id]])...
 
+    class CoffeeScript extends Code
+        eval_code: (code) -> eval window.CoffeeScript.compile code, bare:true if code
+
+    class JavaScript extends Code
+        eval_code: eval_expression
 
     class Graph extends Subroutine
-        type:'graph'
         constructor: ->
             super
             @nodes = []
@@ -486,6 +480,7 @@ module.factory 'interpreter', ($q, $http) ->
     definition_classes = [
         Graph
         JavaScript
+        CoffeeScript
         JSONLiteral
         StringLiteral
         Symbol
@@ -845,7 +840,9 @@ module.factory 'interpreter', ($q, $http) ->
     NotImplemented:NotImplemented
     BuiltinSyntaxError:CodeSyntaxError
     JavaScript:JavaScript
+    CoffeeScript:CoffeeScript
     Graph:Graph
+    Code:Code
     UnknownNode:UnknownNode
     Call:Call
     Value:Value

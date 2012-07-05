@@ -28,15 +28,25 @@
     return is_valid_json;
   });
 
+  module.filter('editor_type', function(interpreter) {
+    return function(obj) {
+      if (obj instanceof interpreter.Graph) {
+        return 'graph';
+      } else if (obj instanceof interpreter.Code) {
+        return 'code';
+      } else if (obj instanceof interpreter.Literal) {
+        return 'literal';
+      }
+    };
+  });
+
   module.directive('ace', function() {
     return {
       require: '?ngModel',
       link: function(scope, element, attributes, ngModel) {
-        var JavaScriptMode, changing, editor, read, session;
-        JavaScriptMode = require("ace/mode/javascript").Mode;
+        var changing, editor, read, session;
         editor = ace.edit(element[0]);
         session = editor.getSession();
-        session.setMode(new JavaScriptMode());
         if (!ngModel) {
           return;
         }
@@ -222,6 +232,9 @@
     };
     $scope.new_code = function() {
       return make_something(interpreter.JavaScript);
+    };
+    $scope.new_coffeescript = function() {
+      return make_something(interpreter.CoffeeScript);
     };
     return $scope.new_graph_from_selection = function() {
       return $scope.$broadcast('new-graph-from-selection');

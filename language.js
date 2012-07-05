@@ -9,7 +9,7 @@
   module = angular.module('vislang');
 
   module.factory('interpreter', function($q, $http) {
-    var Call, CodeSyntaxError, Connection, Definition, Exit, Graph, Input, InputError, JSONLiteral, JavaScript, Literal, Nib, Node, NotConnected, NotImplemented, Output, RuntimeException, StringLiteral, Subroutine, Symbol, Type, UnknownNode, Value, all_definitions, clone_endpoint, definition_class_map, definition_classes, dissociate_exception, eval_expression, execute, find_nib_uses, find_value, ignore_if_disconnected, is_input, load_implementation, load_implementation_v2, load_state, loaded, make_connection, make_index_map, make_value, node_class_map, node_classes, resurrect_node, save_state, schema_version, source_data, source_data_deferred, start_saving, value_output_nib;
+    var Call, Code, CodeSyntaxError, CoffeeScript, Connection, Definition, Exit, Graph, Input, InputError, JSONLiteral, JavaScript, Literal, Nib, Node, NotConnected, NotImplemented, Output, RuntimeException, StringLiteral, Subroutine, Symbol, Type, UnknownNode, Value, all_definitions, clone_endpoint, definition_class_map, definition_classes, dissociate_exception, eval_expression, execute, find_nib_uses, find_value, ignore_if_disconnected, is_input, load_implementation, load_implementation_v2, load_state, loaded, make_connection, make_index_map, make_value, node_class_map, node_classes, resurrect_node, save_state, schema_version, source_data, source_data_deferred, start_saving, value_output_nib;
     schema_version = 2;
     make_index_map = function(objects, attribute) {
       var obj, result, _i, _len;
@@ -302,40 +302,28 @@
       return Subroutine;
 
     })(Definition);
-    JavaScript = (function(_super) {
+    Code = (function(_super) {
 
-      __extends(JavaScript, _super);
+      __extends(Code, _super);
 
-      JavaScript.prototype.type = 'javascript';
-
-      function JavaScript(_arg) {
+      function Code(_arg) {
         var _ref;
         _ref = _arg != null ? _arg : {}, this.memo_implementation = _ref.memo_implementation, this.output_implementation = _ref.output_implementation;
-        JavaScript.__super__.constructor.apply(this, arguments);
+        Code.__super__.constructor.apply(this, arguments);
       }
 
-      JavaScript.prototype.toJSON = function() {
-        return _.extend(JavaScript.__super__.toJSON.apply(this, arguments), {
+      Code.prototype.toJSON = function() {
+        return _.extend(Code.__super__.toJSON.apply(this, arguments), {
           memo_implementation: this.memo_implementation,
           output_implementation: this.output_implementation
         });
       };
 
-      /*
-              export: ->
-                  builtins = {}
-                  builtins[@id] = @
-                  all_definitions:{}
-                  builtins: builtins
-                  schema_version:schema_version
-      */
-
-
-      JavaScript.prototype.invoke = function(output_nib, inputs, scope, node) {
+      Code.prototype.invoke = function(output_nib, inputs, scope, node) {
         var args, memo_function, output_function;
         try {
-          memo_function = eval_expression(this.memo_implementation);
-          output_function = eval_expression(this.output_implementation);
+          memo_function = this.eval_code(this.memo_implementation);
+          output_function = this.eval_code(this.output_implementation);
         } catch (exception) {
           if (exception instanceof SyntaxError) {
             throw new CodeSyntaxError(this.text, exception);
@@ -353,14 +341,44 @@
         return output_function.apply(null, args.concat([scope != null ? scope.memos[node.id] : void 0]));
       };
 
-      return JavaScript;
+      return Code;
 
     })(Subroutine);
+    CoffeeScript = (function(_super) {
+
+      __extends(CoffeeScript, _super);
+
+      function CoffeeScript() {
+        return CoffeeScript.__super__.constructor.apply(this, arguments);
+      }
+
+      CoffeeScript.prototype.eval_code = function(code) {
+        if (code) {
+          return eval(window.CoffeeScript.compile(code, {
+            bare: true
+          }));
+        }
+      };
+
+      return CoffeeScript;
+
+    })(Code);
+    JavaScript = (function(_super) {
+
+      __extends(JavaScript, _super);
+
+      function JavaScript() {
+        return JavaScript.__super__.constructor.apply(this, arguments);
+      }
+
+      JavaScript.prototype.eval_code = eval_expression;
+
+      return JavaScript;
+
+    })(Code);
     Graph = (function(_super) {
 
       __extends(Graph, _super);
-
-      Graph.prototype.type = 'graph';
 
       function Graph() {
         Graph.__super__.constructor.apply(this, arguments);
@@ -799,7 +817,7 @@
       return Symbol;
 
     })(Literal);
-    definition_classes = [Graph, JavaScript, JSONLiteral, StringLiteral, Symbol];
+    definition_classes = [Graph, JavaScript, CoffeeScript, JSONLiteral, StringLiteral, Symbol];
     definition_class_map = make_index_map(definition_classes, 'name');
     /* NODE TYPES
     */
@@ -1365,7 +1383,9 @@
       NotImplemented: NotImplemented,
       BuiltinSyntaxError: CodeSyntaxError,
       JavaScript: JavaScript,
+      CoffeeScript: CoffeeScript,
       Graph: Graph,
+      Code: Code,
       UnknownNode: UnknownNode,
       Call: Call,
       Value: Value,

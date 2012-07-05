@@ -12,14 +12,25 @@ module.filter 'text_or_id', ->
 
 module.filter 'is_valid_json', -> is_valid_json
 
+module.filter 'editor_type', (interpreter) ->
+    (obj) ->
+        if obj instanceof interpreter.Graph
+            'graph'
+        else if obj instanceof interpreter.Code
+            'code'
+        else if obj instanceof interpreter.Literal
+            'literal'
+
 module.directive 'ace', ->
     require: '?ngModel'
     link:(scope, element, attributes, ngModel) ->
         # set up ace
-        JavaScriptMode = require("ace/mode/javascript").Mode
         editor = ace.edit element[0]
         session = editor.getSession()
-        session.setMode new JavaScriptMode()
+
+        # Set the theme
+        #JavaScriptMode = require("ace/mode/coffee").Mode
+        #session.setMode new JavaScriptMode()
 
         # set up data binding
         return unless ngModel
@@ -146,6 +157,9 @@ module.controller 'Controller', ($scope, $http, $location, interpreter, $q) ->
 
     $scope.new_code = ->
         make_something interpreter.JavaScript
+
+    $scope.new_coffeescript = ->
+        make_something interpreter.CoffeeScript
 
     $scope.new_graph_from_selection = ->
         $scope.$broadcast 'new-graph-from-selection'
