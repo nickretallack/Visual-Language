@@ -42,11 +42,13 @@ textarea {display:block}
 .output .nib {margin-left:-7px;}
 .input .nib {margin-right:-7px;}
 
+.node-title {white-space:normal; word-break:break-all; max-width:120px;}
+
 .node.call {border:none; }
 .node.call .node-title {font-weight:bold;}
 
-.node.value { border:1px dotted black; border-radius:100px; max-width:500px;}
-.node.value .node-title {font-weight:normal; white-space:normal; word-break:break-all; overflow:hidden; max-width:100%;}
+.node.value { border:1px dotted black; border-radius:100px;}
+.node.value .node-title {font-weight:normal; overflow:hidden; max-width:500px}
 
 .node.value {}
 
