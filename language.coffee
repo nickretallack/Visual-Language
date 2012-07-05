@@ -2,6 +2,7 @@ module = angular.module 'vislang'
 module.factory 'interpreter', ($q, $http) ->
     schema_version = 2
 
+    eval_expression = (expression) -> eval "(#{expression})"
 
     make_index_map = (objects, attribute) ->
         result = {}
@@ -92,6 +93,15 @@ module.factory 'interpreter', ($q, $http) ->
                     alert "Invalid JSON: #{exception.message}"
                 else
                     throw exception
+
+        call: (inputs, output_index=0) ->
+            # This is how programs are meant to deal with subroutine literals
+            nib = @outputs[output_index]
+            wrapped_inputs = []
+            for input in inputs
+                do (input) ->
+                    wrapped_inputs.push -> input
+            @invoke nib, wrapped_inputs
 
         delete_nib: (nib, group) ->
             @[group] = _.without @[group], nib
@@ -654,8 +664,6 @@ module.factory 'interpreter', ($q, $http) ->
        catch exception
           throw exception unless exception instanceof NotConnected
 
-    eval_expression = (expression) -> eval "(#{expression})"
-
     start_saving = -> setInterval save_state, 500
 
     save_state = ->
@@ -829,26 +837,42 @@ module.factory 'interpreter', ($q, $http) ->
         loaded.resolve true
         start_saving() unless window.location.search is '?debug'
 
+    # helpers
     make_connection:make_connection
     find_nib_uses:find_nib_uses
     make_value:make_value
     loaded:loaded.promise
+
+    # exceptions
     RuntimeException:RuntimeException
     Exit:Exit
     InputError:InputError
     NotConnected:NotConnected
     NotImplemented:NotImplemented
     BuiltinSyntaxError:CodeSyntaxError
-    JavaScript:JavaScript
-    CoffeeScript:CoffeeScript
+
+    # subroutines
+    Definition:Definition
+    Subroutine:Subroutine
     Graph:Graph
     Code:Code
-    UnknownNode:UnknownNode
+    JavaScript:JavaScript
+    CoffeeScript:CoffeeScript
+
+    # literals
+    Literal:Literal
+    JSONLiteral:JSONLiteral
+    StringLiteral:StringLiteral
+    Symbol:Symbol
+
+    # nodes
+    Node:Node
     Call:Call
     Value:Value
-    Literal:Literal
-    Symbol:Symbol
+
+    # pieces
     Input:Input
     Output:Output
+    Connection:Connection
     subroutines:all_definitions
-    Subroutine:Subroutine
+

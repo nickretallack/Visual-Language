@@ -22,7 +22,7 @@
     <a id="new-output" ng-click="new_output(subroutine)">+Output</a>
 
 
-    <div class="node"
+    <div class="node {{node | node_type}} {{node.implementation | implementation_type}}" 
         ng-repeat="node in current_object.nodes"
         node="node"
         ng-style="position(node)"

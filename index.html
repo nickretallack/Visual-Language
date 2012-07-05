@@ -32,9 +32,9 @@
     <div class="navbar-inner">
         <div class="container-fluid main" style="position:absolute; left:20px; right:300px;">
             <a class="brand">VisLang</a>
-            <a class="btn btn-primary" ng-click="new_coffeescript()">New CoffeeScript</a>
-            <a class="btn btn-primary" ng-click="new_code()">New JavaScript</a>
-            <a class="btn btn-success" ng-click="new_graph()">New Graph</a>
+            <a class="btn btn-primary" ng-click="new_graph()">New Graph</a>
+            <a class="btn btn-success" ng-click="new_coffeescript()">New CoffeeScript</a>
+            <a class="btn btn-success" ng-click="new_code()">New JavaScript</a>
         </div>
         <div class="container side" style="position:absolute; right:0; width:280px;">
         <a class="brand">Library</a>
@@ -50,26 +50,26 @@
 </div>
 
 <div id="tools" ng-controller="library" class="span4">
-<table class="table table-condensed table-striped">
+<table class="table-condensed">
 
-<tr ng-show="search | is_valid_json">
+<tr class="json" ng-show="search | is_valid_json">
     <td class="name">JSON Literal
     <td>
     <td><a ng-click="use_value(search)">value</a>
 </tr>
 
-<tr><td class="name">String Literal
+<tr class="string"><td class="name">String Literal
     <td>
     <td><a ng-click="use_string_literal(search)">value</a>
 </tr>
 
-<tr ng-show="search">
+<tr class="symbol" ng-show="search">
     <td class="name">New Symbol
     <td>
     <td><a ng-click="new_symbol(search)">value</a>
 </tr>
 
-<tr ng-repeat="subroutine in get_subroutines() | filter:{text:search} | orderBy:'text'">
+<tr ng-repeat="subroutine in get_subroutines() | filter:{text:search} | orderBy:sort" class="{{subroutine | implementation_type}}">
     <td class="name">
         <a ng-hide="is_literal(subroutine)" href="#/{{subroutine.id}}">{{subroutine | text_or_id}}</a>
         <span ng-show="is_literal(subroutine)">{{subroutine | text_or_id}}</span>

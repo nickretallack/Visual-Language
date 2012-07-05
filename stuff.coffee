@@ -12,6 +12,29 @@ module.filter 'text_or_id', ->
 
 module.filter 'is_valid_json', -> is_valid_json
 
+module.filter 'node_type', (interpreter) ->
+    (obj) ->
+        if obj instanceof interpreter.Call
+            'call'
+        else
+            'value'
+
+module.filter 'implementation_type', (interpreter) ->
+    (it) ->
+        if it instanceof interpreter.Graph
+            'graph'
+        else if it instanceof interpreter.JavaScript
+            'javascript'
+        else if it instanceof interpreter.CoffeeScript
+            'coffeescript'
+        else if it instanceof interpreter.StringLiteral
+            'string'
+        else if it instanceof interpreter.JSONLiteral
+            'json'
+        else if it instanceof interpreter.Symbol
+            'symbol'
+
+
 module.filter 'editor_type', (interpreter) ->
     (obj) ->
         if obj instanceof interpreter.Graph
@@ -72,7 +95,12 @@ module.controller 'subroutine', ($scope, $routeParams, interpreter, $q) ->
     $q.when interpreter.loaded, ->
         $scope.$root.current_object = interpreter.subroutines[$routeParams.id]
 
-module.controller 'library', ($scope, $q, interpreter) ->
+module.controller 'library', ($scope, $q, interpreter, $filter) ->
+
+    sequence =  ['graph', 'coffeescript', 'javascript', 'symbol', 'json', 'string']
+    $scope.sort = (item) ->
+        type_order = sequence.indexOf $filter('implementation_type')(item)
+        [type_order, item.text]
 
     $scope.get_subroutines = ->
         _.values interpreter.subroutines

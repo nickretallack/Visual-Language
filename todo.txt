@@ -1,4 +1,32 @@
-Stateful globals: a real problem.
+Next steps:
+    - make a game
+    - vectors
+    - display calls and values differently
+    - make json / string literals editable, and symbols renamable.
+    - Allow a paragraph of explanation inside all definitions
+    - add the import/export system back
+    - write instructions
+    - some way of stopping/startinge the application --maybe it should be in a different window
+    - add a node-creation menu for when you click on empty space
+        - new [javascript | graph | literal]
+        - search the library and insert [value | call]
+
+    - not letting you remove nibs is annoying.  It should let you force it and delete connections.
+    - rearrange nib ordering with drag and drop
+    - edit individual nodes, and give the 'clone' option
+    sort nibs in make_from based on their positions on the outside...
+        how do you compare a node to a nib though?  Perhaps parent inputs are always first?
+    - keyboard binding for delete
+    - position/select nodes based on their centers instead of their corners
+    - click nibs to delete connections
+    - "glob nibs" - one nib internally that is many nibs externally, var args.  This would be especially useful as it would enable a "list" function.
+    - "idempotent" checkbox that memoizes?
+    - "stateful" checkbox that adds extra null nibs.  Display those specially.
+    - add 'bypass' option for selections that only have one input and output.  Connect around em.
+
+
+
+Stateful globals: a real problem. -- solved
 I wanted this language to make it easy to test pieces individually.  However, there are many ways external information can make its way into (and out of) a function without being picked up as an input or output.  This is no good.  I need some way to normalize state for testing purposes.
 
 The real problem is interaction with event handlers.  Event handlers need to be able to mutate state.  When a user hits a key on the keyboard, event handlers need to update the state of the keyboard for consumption by other methods that care about keys being held down.  That new state of the keyboard then needs to be fed to anyone who needs that information.  How do I tie this knot?
@@ -15,33 +43,6 @@ Perhaps setup-keyboard-events should return some accessor that can get the curre
 Now I need this tying the knot part.  
 
 
-
-Next steps:
-    - make a game
-    - add the import/export system back
-    - write instructions
-    - some way of stopping/startinge the application --maybe it should be in a different window
-    - add a node-creation menu for when you click on empty space
-        - new [javascript | graph | literal]
-        - search the library and insert [value | call]
-
-Heisenbugs
-    - sometimes nib removal reports it is used in no function
-        - turn this into a confirm that deletes all connections to this nib
-
-Extras:
-    rearrange nib ordering with drag and drop
-    edit individual nodes, and give the 'clone' option
-        edit values
-    sort nibs in make_from based on their positions on the outside...
-        how do you compare a node to a nib though?  Perhaps parent inputs are always first?
-    keyboard bindings
-    position/select nodes based on their centers
-    delete connections
-    "idempotent" checkbox that memoizes?
-    "stateful" checkbox that adds extra null nibs
-    "glob nibs" - one nib internally that is many nibs externally, var args
-    add 'bypass' option for selections that only have one input and output.  Connect around em.
 
 done
     - test functions as values - done

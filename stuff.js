@@ -28,6 +28,34 @@
     return is_valid_json;
   });
 
+  module.filter('node_type', function(interpreter) {
+    return function(obj) {
+      if (obj instanceof interpreter.Call) {
+        return 'call';
+      } else {
+        return 'value';
+      }
+    };
+  });
+
+  module.filter('implementation_type', function(interpreter) {
+    return function(it) {
+      if (it instanceof interpreter.Graph) {
+        return 'graph';
+      } else if (it instanceof interpreter.JavaScript) {
+        return 'javascript';
+      } else if (it instanceof interpreter.CoffeeScript) {
+        return 'coffeescript';
+      } else if (it instanceof interpreter.StringLiteral) {
+        return 'string';
+      } else if (it instanceof interpreter.JSONLiteral) {
+        return 'json';
+      } else if (it instanceof interpreter.Symbol) {
+        return 'symbol';
+      }
+    };
+  });
+
   module.filter('editor_type', function(interpreter) {
     return function(obj) {
       if (obj instanceof interpreter.Graph) {
@@ -115,7 +143,14 @@
     });
   });
 
-  module.controller('library', function($scope, $q, interpreter) {
+  module.controller('library', function($scope, $q, interpreter, $filter) {
+    var sequence;
+    sequence = ['graph', 'coffeescript', 'javascript', 'symbol', 'json', 'string'];
+    $scope.sort = function(item) {
+      var type_order;
+      type_order = sequence.indexOf($filter('implementation_type')(item));
+      return [type_order, item.text];
+    };
     $scope.get_subroutines = function() {
       return _.values(interpreter.subroutines);
     };

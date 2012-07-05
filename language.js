@@ -11,6 +11,9 @@
   module.factory('interpreter', function($q, $http) {
     var Call, Code, CodeSyntaxError, CoffeeScript, Connection, Definition, Exit, Graph, Input, InputError, JSONLiteral, JavaScript, Literal, Nib, Node, NotConnected, NotImplemented, Output, RuntimeException, StringLiteral, Subroutine, Symbol, Type, UnknownNode, Value, all_definitions, clone_endpoint, definition_class_map, definition_classes, dissociate_exception, eval_expression, execute, find_nib_uses, find_value, ignore_if_disconnected, is_input, load_implementation, load_implementation_v2, load_state, loaded, make_connection, make_index_map, make_value, node_class_map, node_classes, resurrect_node, save_state, schema_version, source_data, source_data_deferred, start_saving, value_output_nib;
     schema_version = 2;
+    eval_expression = function(expression) {
+      return eval("(" + expression + ")");
+    };
     make_index_map = function(objects, attribute) {
       var obj, result, _i, _len;
       result = {};
@@ -224,6 +227,25 @@
             throw exception;
           }
         }
+      };
+
+      Subroutine.prototype.call = function(inputs, output_index) {
+        var input, nib, wrapped_inputs, _fn, _i, _len;
+        if (output_index == null) {
+          output_index = 0;
+        }
+        nib = this.outputs[output_index];
+        wrapped_inputs = [];
+        _fn = function(input) {
+          return wrapped_inputs.push(function() {
+            return input;
+          });
+        };
+        for (_i = 0, _len = inputs.length; _i < _len; _i++) {
+          input = inputs[_i];
+          _fn(input);
+        }
+        return this.invoke(nib, wrapped_inputs);
       };
 
       Subroutine.prototype.delete_nib = function(nib, group) {
@@ -1139,9 +1161,6 @@
         }
       }
     };
-    eval_expression = function(expression) {
-      return eval("(" + expression + ")");
-    };
     start_saving = function() {
       return setInterval(save_state, 500);
     };
@@ -1382,19 +1401,23 @@
       NotConnected: NotConnected,
       NotImplemented: NotImplemented,
       BuiltinSyntaxError: CodeSyntaxError,
-      JavaScript: JavaScript,
-      CoffeeScript: CoffeeScript,
+      Definition: Definition,
+      Subroutine: Subroutine,
       Graph: Graph,
       Code: Code,
-      UnknownNode: UnknownNode,
+      JavaScript: JavaScript,
+      CoffeeScript: CoffeeScript,
+      Literal: Literal,
+      JSONLiteral: JSONLiteral,
+      StringLiteral: StringLiteral,
+      Symbol: Symbol,
+      Node: Node,
       Call: Call,
       Value: Value,
-      Literal: Literal,
-      Symbol: Symbol,
       Input: Input,
       Output: Output,
-      subroutines: all_definitions,
-      Subroutine: Subroutine
+      Connection: Connection,
+      subroutines: all_definitions
     };
   });
 
