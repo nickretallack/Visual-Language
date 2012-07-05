@@ -321,16 +321,15 @@
         });
       };
 
-      JavaScript.prototype["export"] = function() {
-        var builtins;
-        builtins = {};
-        builtins[this.id] = this;
-        return {
-          all_definitions: {},
-          builtins: builtins,
-          schema_version: schema_version
-        };
-      };
+      /*
+              export: ->
+                  builtins = {}
+                  builtins[@id] = @
+                  all_definitions:{}
+                  builtins: builtins
+                  schema_version:schema_version
+      */
+
 
       JavaScript.prototype.invoke = function(output_nib, inputs, scope, node) {
         var args, memo_function, output_function;
@@ -400,7 +399,7 @@
         var connection, nib, node, _ref;
         connection = this.find_connection('to', to_node, to_nib);
         if (!connection) {
-          throw new NotConnected;
+          throw new NotConnected("Missing connection in " + this.text + " to node " + (JSON.stringify(to_node)));
         }
         _ref = connection.from, node = _ref.node, nib = _ref.nib;
         if (node instanceof Graph) {

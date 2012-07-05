@@ -140,12 +140,14 @@ module.factory 'interpreter', ($q, $http) ->
                 memo_implementation:@memo_implementation
                 output_implementation:@output_implementation
 
+        ###
         export: ->
             builtins = {}
             builtins[@id] = @
             all_definitions:{}
             builtins: builtins
             schema_version:schema_version
+        ###
 
         invoke: (output_nib, inputs, scope, node) ->
             try
@@ -189,7 +191,8 @@ module.factory 'interpreter', ($q, $http) ->
         evaluate_connection: (scope, to_node, to_nib) ->
             ### This helper will follow a connection and evaluate whatever it finds ###
             connection = @find_connection 'to', to_node, to_nib
-            throw new NotConnected unless connection
+            unless connection
+                throw new NotConnected "Missing connection in #{@text} to node #{JSON.stringify(to_node)}"
             {node, nib} = connection.from
             if node instanceof Graph
                 return scope.inputs[nib.index]()

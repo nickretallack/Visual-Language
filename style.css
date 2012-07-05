@@ -67,3 +67,5 @@ ul.unstyled {margin:0; padding:0;}
 .selected {
     background:lightblue;
 }
+
+.node-title {font-weight:bold;}
