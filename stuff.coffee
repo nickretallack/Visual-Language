@@ -30,6 +30,8 @@ module.filter 'syntax', (interpreter) ->
         else
             'plain'
 
+module.filter 'isa', (interpreter) ->
+    (obj, type) -> obj instanceof interpreter[type]
 
 module.filter 'implementation_type', (interpreter) ->
     (it) ->
@@ -53,6 +55,8 @@ module.filter 'editor_type', (interpreter) ->
             'graph'
         else if obj instanceof interpreter.Code
             'code'
+        else if obj instanceof interpreter.Symbol
+            'symbol'
         else if obj instanceof interpreter.Literal
             'literal'
 

@@ -45,6 +45,12 @@
     };
   });
 
+  module.filter('isa', function(interpreter) {
+    return function(obj, type) {
+      return obj instanceof interpreter[type];
+    };
+  });
+
   module.filter('implementation_type', function(interpreter) {
     return function(it) {
       if (it instanceof interpreter.Graph) {
@@ -69,6 +75,8 @@
         return 'graph';
       } else if (obj instanceof interpreter.Code) {
         return 'code';
+      } else if (obj instanceof interpreter.Symbol) {
+        return 'symbol';
       } else if (obj instanceof interpreter.Literal) {
         return 'literal';
       }

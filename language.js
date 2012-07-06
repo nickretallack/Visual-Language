@@ -806,6 +806,21 @@
         implementation: implementation
       });
     };
+    Symbol = (function(_super) {
+
+      __extends(Symbol, _super);
+
+      function Symbol() {
+        return Symbol.__super__.constructor.apply(this, arguments);
+      }
+
+      Symbol.prototype.evaluate = function() {
+        return this.id;
+      };
+
+      return Symbol;
+
+    })(Definition);
     Literal = (function(_super) {
 
       __extends(Literal, _super);
@@ -845,21 +860,6 @@
       };
 
       return StringLiteral;
-
-    })(Literal);
-    Symbol = (function(_super) {
-
-      __extends(Symbol, _super);
-
-      function Symbol() {
-        return Symbol.__super__.constructor.apply(this, arguments);
-      }
-
-      Symbol.prototype.evaluate = function() {
-        return this.id;
-      };
-
-      return Symbol;
 
     })(Literal);
     definition_classes = [Graph, JavaScript, CoffeeScript, JSONLiteral, StringLiteral, Symbol];

@@ -47,17 +47,7 @@
     <div id="title-row">
     <input ng-model="current_object.text" shrinky-input="current_object | text_or_id" class="title" placeholder="{{current_object.id}}">
 
-    <div class="btn-group">
-      <a class="btn dropdown-toggle" data-toggle="dropdown">
-        {{ current_object.find_uses().length }} Uses
-        <span class="caret"></span>
-      </a>
-      <ul class="dropdown-menu">
-        <li ng-repeat="graph in current_object.find_uses()">
-            <a ng-href="#/{{graph.id}}">{{graph.text}}</a>
-        </li>
-      </ul>
-    </div>
+    <div ng-include="'definition-options.html'"></div>
 
     <!--<a ng-click="duplicate()">duplicate</a>-->
     </div>
@@ -74,11 +64,18 @@
 </div>
 
 <div ng-switch-when="literal">
-<h2><input ng:model="current_object.text"></h2>
+    <div ng-include="'definition-options.html'"></div>
+    <div ace syntax="current_object | syntax" ng-model="current_object.text" style="position:relative; width:100%; height:500px"></div>
+</div>
+
+<div ng-switch-when="symbol">
+    <input ng-model="current_object.text" class="title" shrinky-input="current_object | text_or_id" placeholder="{{current_object.id}}">
+    <div ng-include="'definition-options.html'"></div>
 </div>
 
 <div ng-switch-when="code" id="builtin_editor">
     <input ng-model="current_object.text" class="title" shrinky-input="current_object | text_or_id" placeholder="{{current_object.id}}">
+    <div ng-include="'definition-options.html'"></div>
     <div class="container-fluid">
         <div class="row-fluid">
             <div class="span6">

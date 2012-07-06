@@ -486,6 +486,9 @@ module.factory 'interpreter', ($q, $http) ->
             position: position
             implementation: implementation
 
+    class Symbol extends Definition
+        evaluate: -> @id
+
     class Literal extends Definition # Abstract
         #content_id: -> CryptoJS.SHA256(@text).toString(CryptoJS.enc.Base64)
 
@@ -494,9 +497,6 @@ module.factory 'interpreter', ($q, $http) ->
 
     class StringLiteral extends Literal
         evaluate: -> @text
-
-    class Symbol extends Literal
-        evaluate: -> @id
 
     definition_classes = [
         Graph
