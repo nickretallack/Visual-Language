@@ -291,8 +291,11 @@
     $scope.new_coffeescript = function() {
       return make_something(interpreter.CoffeeScript);
     };
-    return $scope.new_graph_from_selection = function() {
+    $scope.new_graph_from_selection = function() {
       return $scope.$broadcast('new-graph-from-selection');
+    };
+    return $scope.delete_definition = function(obj) {
+      return delete interpreter.subroutines[obj.id];
     };
     /*
         $scope.import = ->

@@ -211,6 +211,8 @@ module.controller 'Controller', ($scope, $http, $location, interpreter, $q) ->
     $scope.new_graph_from_selection = ->
         $scope.$broadcast 'new-graph-from-selection'
 
+    $scope.delete_definition = (obj) ->
+        delete interpreter.subroutines[obj.id]
 
     ###
     $scope.import = ->
