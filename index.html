@@ -32,9 +32,19 @@
     <div class="navbar-inner">
         <div class="container-fluid main" style="position:absolute; left:20px; right:300px;">
             <a class="brand">VisLang</a>
-            <a class="btn btn-primary" ng-click="new_graph()">New Graph</a>
-            <a class="btn btn-success" ng-click="new_coffeescript()">New CoffeeScript</a>
-            <a class="btn btn-success" ng-click="new_code()">New JavaScript</a>
+
+            <div class="btn-group">
+              <a class="btn dropdown-toggle" data-toggle="dropdown">
+                New
+                <span class="caret"></span>
+              </a>
+              <ul class="dropdown-menu">
+                <li><a ng-click="new_graph()">Graph</a></li>
+                <li><a ng-click="new_coffeescript()">CoffeeScript</a></li>
+                <li><a ng-click="new_code()">JavaScript</a></li>
+              </ul>
+            </div>
+
         </div>
         <div class="container side" style="position:absolute; right:0; width:280px;">
         <a class="brand">Library</a>
