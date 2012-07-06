@@ -1,5 +1,7 @@
 Next steps:
     - make a game
+    - list all the places a definition is used when you're editing it
+    - setup/teardown for timers, event handlers, globals, and elements
     - vectors
     - display graphics
     - copy-paste nodes

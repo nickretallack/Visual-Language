@@ -46,6 +46,19 @@
 <div id="editor-options">
     <div id="title-row">
     <input ng-model="current_object.text" shrinky-input="current_object | text_or_id" class="title" placeholder="{{current_object.id}}">
+
+    <div class="btn-group">
+      <a class="btn dropdown-toggle" data-toggle="dropdown">
+        {{ current_object.find_uses().length }} Uses
+        <span class="caret"></span>
+      </a>
+      <ul class="dropdown-menu">
+        <li ng-repeat="graph in current_object.find_uses()">
+            <a ng-href="#/{{graph.id}}">{{graph.text}}</a>
+        </li>
+      </ul>
+    </div>
+
     <!--<a ng-click="duplicate()">duplicate</a>-->
     </div>
 

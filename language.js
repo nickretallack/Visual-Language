@@ -154,6 +154,18 @@
         }
       };
 
+      Definition.prototype.find_uses = function() {
+        var graph, id, _results;
+        _results = [];
+        for (id in all_definitions) {
+          graph = all_definitions[id];
+          if (graph instanceof Graph && graph.uses_definition(this)) {
+            _results.push(graph);
+          }
+        }
+        return _results;
+      };
+
       return Definition;
 
     })(Type);
@@ -516,6 +528,17 @@
 
       Graph.prototype.add_connection = function(connection) {
         return this.connections.push(connection);
+      };
+
+      Graph.prototype.uses_definition = function(definition) {
+        var node, _i, _len, _ref;
+        _ref = this.nodes;
+        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+          node = _ref[_i];
+          if (node.implementation === definition) {
+            return true;
+          }
+        }
       };
 
       /* probably outdated

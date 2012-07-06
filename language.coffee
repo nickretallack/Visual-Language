@@ -59,6 +59,9 @@ module.factory 'interpreter', ($q, $http) ->
             for nib in @inputs.concat @outputs
                 return nib if nib.id is id
 
+        find_uses: ->
+            graph for id, graph of all_definitions when graph instanceof Graph and graph.uses_definition @
+
     class Subroutine extends Definition
         constructor: ({inputs, outputs}={}) ->
             super
@@ -250,6 +253,14 @@ module.factory 'interpreter', ($q, $http) ->
 
         add_connection: (connection) ->
             @connections.push connection
+
+        # -
+
+        uses_definition: (definition) ->
+            for node in @nodes
+                if node.implementation is definition
+                    return true
+        
 
         ### probably outdated
         get_dependencies: (dependencies={subroutines:{},builtins:{}}) ->
