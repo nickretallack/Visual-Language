@@ -42,22 +42,22 @@ textarea {display:block}
 .output .nib {margin-left:-7px;}
 .input .nib {margin-right:-7px;}
 
-.node-title {white-space:normal; word-break:break-all; max-width:120px;}
+.node-title {white-space:normal; max-width:120px;}
 
-.node.call {border:none; }
-.node.call .node-title {font-weight:bold;}
+.node.call {border:none; border-radius:5px;}
+.node.call .node-title {font-weight:bold; text-align:center;}
 
-.node.value { border:1px dotted black; border-radius:100px;}
-.node.value .node-title {font-weight:normal; overflow:hidden; max-width:500px}
+.node.value { border:1px dotted black; }
+.node.value .node-title {font-weight:normal; overflow:hidden; max-width:500px; word-break:break-all;}
 
 .node.value {}
 
-.graph { background:#33cccc; }
-.javascript { background:lime; }
+.graph { background:lightblue; }
+.javascript { background:lightgreen; }
 .coffeescript { background:lightgreen; }
-.json { background:#ff7400; }
-.string { background:#ff9640; }
-.symbol { background:#bf7130; }
+.json { background:lightgray; }
+.string { background:gray; }
+.symbol { background:lime }
 
 
 .subroutine-input input, .subroutine-output input {border:0; padding:0;}
