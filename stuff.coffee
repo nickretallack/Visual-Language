@@ -214,6 +214,12 @@ module.controller 'Controller', ($scope, $http, $location, interpreter, $q) ->
     $scope.delete_definition = (obj) ->
         delete interpreter.subroutines[obj.id]
 
+    $scope.undelete_definition = (obj) ->
+        interpreter.subroutines[obj.id] = obj
+
+    $scope.definition_exists = (obj) ->
+        obj.id of interpreter.subroutines
+
     ###
     $scope.import = ->
         import_data valid_source $scope.import_export_text

@@ -294,8 +294,14 @@
     $scope.new_graph_from_selection = function() {
       return $scope.$broadcast('new-graph-from-selection');
     };
-    return $scope.delete_definition = function(obj) {
+    $scope.delete_definition = function(obj) {
       return delete interpreter.subroutines[obj.id];
+    };
+    $scope.undelete_definition = function(obj) {
+      return interpreter.subroutines[obj.id] = obj;
+    };
+    return $scope.definition_exists = function(obj) {
+      return obj.id in interpreter.subroutines;
     };
     /*
         $scope.import = ->
