@@ -21,40 +21,11 @@ module.directive 'nib', ->
         element.bind 'mouseup', (event) -> scope.$apply ->
             controller.release_nib node, nib, event
 
-module.directive 'anySubroutine', ->
+module.directive 'subroutine', ->
     link:(scope, element, attributes) ->
     controller:($scope, $element, $attrs, interpreter) ->
-        subroutine = undefined
-        $scope.$watch $attrs.anySubroutine, (the_subroutine) ->
-            $scope.subroutine = subroutine = the_subroutine
 
-        $scope.evaluate_output = (output) ->
-            subroutine.run output
-
-        $scope.new_input =  ->
-            subroutine.add_input()
-            async -> $('.subroutine-input:last input').focus()
-
-        $scope.new_output =  ->
-            subroutine.add_output()
-            async -> $('.subroutine-output:last input').focus()
-
-        delete_nib = (nib, direction, type) ->
-            uses = interpreter.find_nib_uses nib, direction
-            names = (definition.text for id, definition of uses)
-            if names.length
-                message = "Can't delete this #{type}.  It is used in #{names.join ', '}"
-                alert message
-            else
-                subroutine["delete_#{type}"] nib
-
-        $scope.delete_input = (nib) ->
-            delete_nib nib, 'to', 'input'
-
-        $scope.delete_output = (nib) ->
-            delete_nib nib, 'from', 'output'
-
-module.directive 'subroutine', ($location) ->
+module.directive 'graph', ($location) ->
     link:(scope, element, attributes) ->
     controller:($scope, $element, $attrs, interpreter) ->
         # Don't capture events from the overlay elements
