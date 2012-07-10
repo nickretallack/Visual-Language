@@ -11,9 +11,11 @@ module.directive 'nib', ->
     scope:
         nib:'='
         node:'='
+        index:'='
     link:(scope, element, attributes, controller) ->
-        {nib, node} = scope
-        controller.nib_views["#{node.id}-#{nib.id}"] = $ element
+        {nib, node, index} = scope
+        index ?= 0
+        controller.nib_views["#{node.id}-#{nib.id}-#{index}"] = $ element
         element.bind 'mousedown', (event) -> scope.$apply ->
             controller.click_nib node, nib, event
         element.bind 'mouseup', (event) -> scope.$apply ->
@@ -128,13 +130,14 @@ module.directive 'subroutine', ($location) ->
                 node:node
                 nib:nib
 
-        this.release_nib = $scope.release_nib = (node, nib) ->
+        this.release_nib = $scope.release_nib = (node, nib, index=0) ->
             if $scope.drawing
                 interpreter.make_connection subroutine,
                     from: $scope.drawing
                     to:
                         node:node
                         nib:nib
+                        index:index
 
         get_bounds = (point1, point2) ->
             bounds =
@@ -207,12 +210,9 @@ module.directive 'subroutine', ($location) ->
                 c = canvas.getContext '2d'
                 c.clearRect 0,0, $scope.editor_size.components()...
                 for connection in subroutine.connections
-                    input_element = @nib_views["#{connection.from.node.id}-#{connection.from.nib.id}"]
-                    output_element = @nib_views["#{connection.to.node.id}-#{connection.to.nib.id}"]
-
-                    #input_element = $ ".nib##{connection.from.id}-#{connection.input.id}"# connection.input.view
-                    #output_element = $ ".nib##{connection.to.id}-#{connection.output.id}" #connection.output.view
-
+                    input_element = @nib_views["#{connection.from.node.id}-#{connection.from.nib.id}-#{connection.from.index}"]
+                    output_element = @nib_views["#{connection.to.node.id}-#{connection.to.nib.id}-#{connection.to.index}"]
+                    
                     if input_element?.length and output_element?.length
                         input_position = V(input_element.offset()).subtract nib_offset
                         output_position = V(output_element.offset()).subtract nib_offset

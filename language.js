@@ -1027,12 +1027,15 @@
     Nib = (function() {
 
       function Nib(_arg) {
-        var _ref, _ref1;
-        _ref = _arg != null ? _arg : {}, this.scope = _ref.scope, this.text = _ref.text, this.id = _ref.id, this.index = _ref.index;
+        var _ref, _ref1, _ref2;
+        _ref = _arg != null ? _arg : {}, this.scope = _ref.scope, this.text = _ref.text, this.id = _ref.id, this.index = _ref.index, this.n_ary = _ref.n_ary;
         if (this.id !== null) {
           if ((_ref1 = this.id) == null) {
             this.id = UUID();
           }
+        }
+        if ((_ref2 = this.n_ary) == null) {
+          this.n_ary = false;
         }
       }
 
@@ -1043,7 +1046,8 @@
       Nib.prototype.toJSON = function() {
         return {
           text: this.text,
-          id: this.id
+          id: this.id,
+          n_ary: this.n_ary
         };
       };
 
@@ -1075,12 +1079,18 @@
     Connection = (function() {
 
       function Connection(_arg) {
-        var _ref, _ref1;
+        var _base, _base1, _ref, _ref1, _ref2, _ref3;
         _ref = _arg != null ? _arg : {}, this.scope = _ref.scope, this.from = _ref.from, this.to = _ref.to, this.id = _ref.id;
         if ((_ref1 = this.id) == null) {
           this.id = UUID();
         }
         this.scope.connections.push(this);
+        if ((_ref2 = (_base = this.to).index) == null) {
+          _base.index = 0;
+        }
+        if ((_ref3 = (_base1 = this.from).index) == null) {
+          _base1.index = 0;
+        }
         if (!(this.from instanceof Object && this.to instanceof Object)) {
           throw "WTF";
         }

@@ -36,8 +36,10 @@
         <div class="node-title">{{node.implementation | text_or_id}}</div>
 
         <ul class="unstyled"><li ng-repeat="input in node.get_inputs()" class="input">
-        	{{input.text}}
-        	<div nib="input" node="node"></div>
+            <ul class="unstyled"><li ng-repeat="index in [0]">
+            	{{input.text}}
+            	<div nib="input" index="index" node="node"></div>
+            </li></ul>
         </li></ul>
     </div>
 </div>

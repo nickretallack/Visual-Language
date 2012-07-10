@@ -597,15 +597,17 @@ module.factory 'interpreter', ($q, $http) ->
     ### OTHER TYPES ###
 
     class Nib  # Abstract. Do not instantiate
-        constructor: ({@scope, @text, @id, @index}={}) ->
+        constructor: ({@scope, @text, @id, @index, @n_ary}={}) ->
             # Null nib id is allowed for value nodes
             @id ?= UUID() unless @id is null
+            @n_ary ?= false
 
         initialize: -> @
 
         toJSON: ->
             text:@text
             id:@id
+            n_ary:@n_ary
 
     class Input extends Nib
     class Output extends Nib
@@ -614,6 +616,8 @@ module.factory 'interpreter', ($q, $http) ->
         constructor:({@scope, @from, @to, @id}={}) ->
             @id ?= UUID()
             @scope.connections.push @
+            @to.index ?= 0
+            @from.index ?= 0
             throw "WTF" unless @from instanceof Object and @to instanceof Object
 
         toJSON: ->

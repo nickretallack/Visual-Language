@@ -20,12 +20,16 @@
       require: '^subroutine',
       scope: {
         nib: '=',
-        node: '='
+        node: '=',
+        index: '='
       },
       link: function(scope, element, attributes, controller) {
-        var nib, node;
-        nib = scope.nib, node = scope.node;
-        controller.nib_views["" + node.id + "-" + nib.id] = $(element);
+        var index, nib, node;
+        nib = scope.nib, node = scope.node, index = scope.index;
+        if (index == null) {
+          index = 0;
+        }
+        controller.nib_views["" + node.id + "-" + nib.id + "-" + index] = $(element);
         element.bind('mousedown', function(event) {
           return scope.$apply(function() {
             return controller.click_nib(node, nib, event);
@@ -185,13 +189,17 @@
             nib: nib
           };
         };
-        this.release_nib = $scope.release_nib = function(node, nib) {
+        this.release_nib = $scope.release_nib = function(node, nib, index) {
+          if (index == null) {
+            index = 0;
+          }
           if ($scope.drawing) {
             return interpreter.make_connection(subroutine, {
               from: $scope.drawing,
               to: {
                 node: node,
-                nib: nib
+                nib: nib,
+                index: index
               }
             });
           }
@@ -290,8 +298,8 @@
               _ref = subroutine.connections;
               for (_i = 0, _len = _ref.length; _i < _len; _i++) {
                 connection = _ref[_i];
-                input_element = _this.nib_views["" + connection.from.node.id + "-" + connection.from.nib.id];
-                output_element = _this.nib_views["" + connection.to.node.id + "-" + connection.to.nib.id];
+                input_element = _this.nib_views["" + connection.from.node.id + "-" + connection.from.nib.id + "-" + connection.from.index];
+                output_element = _this.nib_views["" + connection.to.node.id + "-" + connection.to.nib.id + "-" + connection.to.index];
                 if ((input_element != null ? input_element.length : void 0) && (output_element != null ? output_element.length : void 0)) {
                   input_position = V(input_element.offset()).subtract(nib_offset);
                   output_position = V(output_element.offset()).subtract(nib_offset);
