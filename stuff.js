@@ -87,13 +87,13 @@
     return {
       require: '?ngModel',
       link: function(scope, element, attributes, ngModel) {
-        var JavaScriptMode, changing, editor, read, session, syntax;
+        var SyntaxMode, changing, editor, read, session, syntax;
         editor = ace.edit(element[0]);
         session = editor.getSession();
         syntax = scope.$eval(attributes.syntax);
         if (syntax && syntax !== 'plain') {
-          JavaScriptMode = require("ace/mode/" + syntax).Mode;
-          session.setMode(new JavaScriptMode());
+          SyntaxMode = require("ace/mode/" + syntax).Mode;
+          session.setMode(new SyntaxMode());
         }
         if (!ngModel) {
           return;
@@ -147,19 +147,65 @@
     };
   });
 
+  module.controller('subroutine', function($scope, $routeParams, interpreter, $q) {
+    var definition, delete_nib;
+    definition = null;
+    $q.when(interpreter.loaded, function() {
+      return definition = $scope.$root.definition = interpreter.subroutines[$routeParams.id];
+    });
+    $scope.evaluate_output = function(output) {
+      return definition.run(output);
+    };
+    $scope.new_input = function() {
+      definition.add_input();
+      return async(function() {
+        return $('.subroutine-input:last input').focus();
+      });
+    };
+    $scope.new_output = function() {
+      definition.add_output();
+      return async(function() {
+        return $('.subroutine-output:last input').focus();
+      });
+    };
+    delete_nib = function(nib, direction, type) {
+      var id, message, names, uses;
+      uses = interpreter.find_nib_uses(nib, direction);
+      names = (function() {
+        var _results;
+        _results = [];
+        for (id in uses) {
+          definition = uses[id];
+          _results.push(definition.text);
+        }
+        return _results;
+      })();
+      if (names.length) {
+        message = "Can't delete this " + type + ".  It is used in " + (names.join(', '));
+        return alert(message);
+      } else {
+        return definition["delete_" + type](nib);
+      }
+    };
+    $scope.delete_input = function(nib) {
+      return delete_nib(nib, 'to', 'input');
+    };
+    return $scope.delete_output = function(nib) {
+      return delete_nib(nib, 'from', 'output');
+    };
+  });
+
   module.config(function($routeProvider) {
     $routeProvider.when('/:id', {
       controller: 'subroutine',
       templateUrl: "subroutine.html"
     });
+    $routeProvider.when('/:id/run', {
+      controller: 'subroutine',
+      templateUrl: 'run.html'
+    });
     return $routeProvider.when('', {
       templateUrl: "intro.html"
-    });
-  });
-
-  module.controller('subroutine', function($scope, $routeParams, interpreter, $q) {
-    return $q.when(interpreter.loaded, function() {
-      return $scope.$root.current_object = interpreter.subroutines[$routeParams.id];
     });
   });
 

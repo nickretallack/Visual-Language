@@ -1,14 +1,14 @@
     <div class="btn-toolbar">
       <a class="btn dropdown-toggle" data-toggle="dropdown">
-        {{ current_object.find_uses().length }} Uses
+        {{ definition.find_uses().length }} Uses
         <span class="caret"></span>
       </a>
       <ul class="dropdown-menu">
-        <li ng-repeat="graph in current_object.find_uses()">
+        <li ng-repeat="graph in definition.find_uses()">
             <a ng-href="#/{{graph.id}}">{{graph.text}}</a>
         </li>
       </ul>
-      <a ng-show="definition_exists(current_object)" ng-click="delete_definition(current_object)" class="btn">Delete</a>
-      <a ng-hide="definition_exists(current_object)" ng-click="undelete_definition(current_object)" class="btn">Un-Delete</a>
+      <a ng-show="definition_exists(definition)" ng-click="delete_definition(definition)" class="btn">Delete</a>
+      <a ng-hide="definition_exists(definition)" ng-click="undelete_definition(definition)" class="btn">Un-Delete</a>
 
     </div>

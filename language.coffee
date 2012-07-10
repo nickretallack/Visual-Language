@@ -2,6 +2,10 @@ module = angular.module 'vislang'
 module.factory 'interpreter', ($q, $http) ->
     schema_version = 2
 
+    instance_state =
+        event_handlers:[]
+        timers:[]
+
     eval_expression = (expression) -> eval "(#{expression})"
 
     make_index_map = (objects, attribute) ->

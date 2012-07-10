@@ -4,10 +4,13 @@ transform_position = (position, editor_size) ->
     x:position.y + editor_size.x/2
     y:position.x + editor_size.y/2
 
+nib_index = (endpoint) ->
+    "#{endpoint.node.id}-#{endpoint.nib.id}-#{endpoint.index}"
+
 module.directive 'nib', ->
     template:"""<div class="nib"></div>"""
     replace:true
-    require:'^subroutine'
+    require:'^graph'
     scope:
         nib:'='
         node:'='
@@ -15,23 +18,19 @@ module.directive 'nib', ->
     link:(scope, element, attributes, controller) ->
         {nib, node, index} = scope
         index ?= 0
-        controller.nib_views["#{node.id}-#{nib.id}-#{index}"] = $ element
+        controller.nib_views[nib_index node:node, nib:nib, index:index] = $ element
         element.bind 'mousedown', (event) -> scope.$apply ->
             controller.click_nib node, nib, event
         element.bind 'mouseup', (event) -> scope.$apply ->
             controller.release_nib node, nib, event
 
-module.directive 'subroutine', ->
-    link:(scope, element, attributes) ->
-    controller:($scope, $element, $attrs, interpreter) ->
-
 module.directive 'graph', ($location) ->
     link:(scope, element, attributes) ->
     controller:($scope, $element, $attrs, interpreter) ->
         # Don't capture events from the overlay elements
-        $element = $($element).find '#subroutine'
+        $element = $($element).find '#graph'
         $$element = $ $element
-        subroutine = $scope.$eval $attrs.subroutine
+        subroutine = $scope.$eval $attrs.graph
         $scope.dragging = []
         $scope.drawing = null # nib you're drawing a line from right now
         $scope.selection = []
@@ -95,13 +94,14 @@ module.directive 'graph', ($location) ->
         $scope.selected = (node) ->
             node in $scope.selection
 
-        this.click_nib = $scope.click_nib = (node, nib, $event) ->
+        this.click_nib = $scope.click_nib = (node, nib, $event, index=0) ->
             $event.stopPropagation()
             $scope.drawing =
                 node:node
                 nib:nib
+                index:index
 
-        this.release_nib = $scope.release_nib = (node, nib, index=0) ->
+        this.release_nib = $scope.release_nib = (node, nib, $event, index=0) ->
             if $scope.drawing
                 interpreter.make_connection subroutine,
                     from: $scope.drawing
@@ -181,8 +181,8 @@ module.directive 'graph', ($location) ->
                 c = canvas.getContext '2d'
                 c.clearRect 0,0, $scope.editor_size.components()...
                 for connection in subroutine.connections
-                    input_element = @nib_views["#{connection.from.node.id}-#{connection.from.nib.id}-#{connection.from.index}"]
-                    output_element = @nib_views["#{connection.to.node.id}-#{connection.to.nib.id}-#{connection.to.index}"]
+                    input_element = @nib_views[nib_index connection.from]
+                    output_element = @nib_views[nib_index connection.to]
                     
                     if input_element?.length and output_element?.length
                         input_position = V(input_element.offset()).subtract nib_offset
@@ -193,7 +193,7 @@ module.directive 'graph', ($location) ->
                         c.stroke()
 
                 if $scope.drawing
-                    view = @nib_views["#{$scope.drawing.node.id}-#{$scope.drawing.nib.id}"]
+                    view = @nib_views[nib_index $scope.drawing]
                     nib_position = V(view.offset()).subtract nib_offset
                     end_position = $scope.mouse_position #.subtract canvas_offset
                     c.beginPath()

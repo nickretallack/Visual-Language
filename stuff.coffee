@@ -71,8 +71,8 @@ module.directive 'ace', ->
 
         # Set the theme
         if syntax and syntax isnt 'plain'
-            JavaScriptMode = require("ace/mode/#{syntax}").Mode
-            session.setMode new JavaScriptMode()
+            SyntaxMode = require("ace/mode/#{syntax}").Mode
+            session.setMode new SyntaxMode()
 
         # set up data binding
         return unless ngModel
@@ -106,13 +106,43 @@ module.directive 'shrinkyInput', ->
                 $(element).css width:doppelganger.width()+2
                 scope.$emit 'redraw-graph'
 
+module.controller 'subroutine', ($scope, $routeParams, interpreter, $q) ->
+    definition = null
+    $q.when interpreter.loaded, ->
+        definition = $scope.$root.definition = interpreter.subroutines[$routeParams.id]
+
+    $scope.evaluate_output = (output) ->
+        definition.run output
+
+    $scope.new_input =  ->
+        definition.add_input()
+        async -> $('.subroutine-input:last input').focus()
+
+    $scope.new_output =  ->
+        definition.add_output()
+        async -> $('.subroutine-output:last input').focus()
+
+    delete_nib = (nib, direction, type) ->
+        uses = interpreter.find_nib_uses nib, direction
+        names = (definition.text for id, definition of uses)
+        if names.length
+            message = "Can't delete this #{type}.  It is used in #{names.join ', '}"
+            alert message
+        else
+            definition["delete_#{type}"] nib
+
+    $scope.delete_input = (nib) ->
+        delete_nib nib, 'to', 'input'
+
+    $scope.delete_output = (nib) ->
+        delete_nib nib, 'from', 'output'
+
+
 module.config ($routeProvider) ->
     $routeProvider.when '/:id', controller:'subroutine', templateUrl:"subroutine.html"
+    $routeProvider.when '/:id/run', controller:'subroutine', templateUrl:'run.html'
     $routeProvider.when '', templateUrl:"intro.html"
 
-module.controller 'subroutine', ($scope, $routeParams, interpreter, $q) ->
-    $q.when interpreter.loaded, ->
-        $scope.$root.current_object = interpreter.subroutines[$routeParams.id]
 
 module.controller 'library', ($scope, $q, interpreter, $filter) ->
 

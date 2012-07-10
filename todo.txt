@@ -1,6 +1,30 @@
+New big step: long-running programs as instances.
+When you run a program, it needs two things: a graphical output and a log output.
+
+For functions with multiple outputs, you should have the option to evaluate just one or all of them or a selection of them.
+
+For the instructions page:
+    Basic Values:
+    Text - Its value is used exactly as it is typed.
+    JSON - Its value is run through a JSON parser.  It can be a number, a list, a map, etc.
+    Symbol - Its value is its ID.  It is useful if you want a value that will not be the same as any other value in the program.
+
+    Functions:
+    JavaScript / CoffeeScript - A function implemented in another programming language
+    Graph - A function implemented in the visual programming language
+
+    Vocab Lesson: A "Function" is a concept in mathematics.  It is a mapping from a set of inputs to a set of outputs.  For example, Plus is a function that maps two inputs to one output.  If the inputs are 2 and 2, the output is 4.
+
+    Functions can be used in two ways:
+    Call - This node uses ("calls") the function once.  You can connect other nodes to its inputs and outputs.
+
+    Value - This node only has one output nib, like the other value types.  The output value it provides is the function itself.  This allows you to connect it to the input of another function.  Those functions can determine what inputs it gets and what is done with its outputs, and it may call the function multiple times.
+
+    Vocab Lesson: Functions that take other functions as inputs are called "Higher Order Functions".
+
+
 Next steps:
     - make a game
-    - list all the places a definition is used when you're editing it
     - setup/teardown for timers, event handlers, globals, and elements
     - vectors
     - display graphics
@@ -27,6 +51,10 @@ Next steps:
     - "stateful" checkbox that adds extra null nibs.  Display those specially.
     - add 'bypass' option for selections that only have one input and output.  Connect around em.
 
+done
+    - delete button
+    - list all the places a definition is used when you're editing it
+    - display calls and values differently
 
 
 Stateful globals: a real problem. -- solved
@@ -48,7 +76,6 @@ Now I need this tying the knot part.
 
 
 done
-    - display calls and values differently
     - test functions as values - done
     - when the same output goes to multiple inputs, it becomes multiple inputs in the new function.  This is bad. -- fixed
     - Somehow I was doing joins and the new nodes were showing up in the wrong scope.

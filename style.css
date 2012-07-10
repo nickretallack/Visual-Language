@@ -16,7 +16,7 @@ textarea {display:block}
 
 #inputs_editor, #outputs_editor {display:inline-block; width:300px}
 
-#subroutine {
+#graph {
     position:absolute; top:0px; left:0; right:0; bottom:0;
 
     /* No accidental selections */
@@ -66,7 +66,6 @@ textarea {display:block}
     position:absolute; left:5px; top:0;
 }
 
-#subroutine .title { }
 .title {font-size:18pt; border:none;}
 
 #new-input, #new-output {
