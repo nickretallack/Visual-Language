@@ -8,13 +8,9 @@
 
   module = angular.module('vislang');
 
-  module.factory('interpreter', function($q, $http) {
-    var Call, Code, CodeSyntaxError, CoffeeScript, Connection, Definition, Exit, Graph, Input, InputError, JSON, JavaScript, Literal, Nib, Node, NotConnected, NotImplemented, Output, RuntimeException, Subroutine, Symbol, Text, Type, UnknownNode, Value, all_definitions, clone_endpoint, definition_class_map, definition_classes, dissociate_exception, eval_expression, execute, find_nib_uses, find_value, ignore_if_disconnected, instance_state, is_input, load_implementation, load_implementation_v2, load_state, loaded, make_connection, make_index_map, make_value, node_class_map, node_classes, resurrect_node, save_state, schema_version, source_data, source_data_deferred, start_saving, value_output_nib;
+  module.factory('interpreter', function($q, $http, $timeout) {
+    var Call, Code, CodeSyntaxError, CoffeeScript, Connection, Definition, Exit, Graph, Input, InputError, JSON, JavaScript, Literal, Nib, Node, NotConnected, NotImplemented, Output, Runtime, RuntimeException, Subroutine, Symbol, Text, Type, UnknownNode, Value, all_definitions, clone_endpoint, definition_class_map, definition_classes, dissociate_exception, eval_expression, execute, find_nib_uses, find_value, ignore_if_disconnected, is_input, load_implementation, load_implementation_v2, load_state, loaded, make_connection, make_index_map, make_value, node_class_map, node_classes, resurrect_node, save_state, schema_version, source_data, source_data_deferred, start_saving, value_output_nib;
     schema_version = 2;
-    instance_state = {
-      event_handlers: [],
-      timers: []
-    };
     eval_expression = function(expression) {
       return eval("(" + expression + ")");
     };
@@ -173,6 +169,38 @@
       return Definition;
 
     })(Type);
+    Runtime = (function() {
+
+      function Runtime(_arg) {
+        this.graphics_element = (_arg != null ? _arg : {}).graphics_element;
+        this.log_messages = [];
+        this.event_handlers = [];
+        this.timers = [];
+      }
+
+      Runtime.prototype.cleanup = function() {
+        var handler, timer, _i, _j, _len, _len1, _ref, _results;
+        for (_i = 0, _len = event_handlers.length; _i < _len; _i++) {
+          handler = event_handlers[_i];
+          handler.element.removeEventListener(handler.handler);
+        }
+        _ref = this.timers;
+        _results = [];
+        for (_j = 0, _len1 = _ref.length; _j < _len1; _j++) {
+          timer = _ref[_j];
+          _results.push(clearTimeout(timer));
+        }
+        return _results;
+      };
+
+      Runtime.prototype.log = function(message) {
+        this.log_messages.push(message);
+        return console.log(message);
+      };
+
+      return Runtime;
+
+    })();
     Subroutine = (function(_super) {
 
       __extends(Subroutine, _super);
@@ -226,26 +254,26 @@
         return input_values;
       };
 
-      Subroutine.prototype.run = function(nib) {
+      Subroutine.prototype.run = function(nib, runtime) {
         var input_values,
           _this = this;
         input_values = this.user_inputs();
         try {
-          return setTimeout(function() {
-            return execute(function() {
-              return _this.invoke(nib, input_values);
+          return $timeout(function() {
+            return execute(runtime, function() {
+              return _this.invoke(nib, input_values, null, null, runtime);
             });
           });
         } catch (exception) {
           if (exception instanceof InputError) {
-            return alert("Invalid JSON: " + exception.message);
+            return runtime.log("Invalid JSON: " + exception.message);
           } else {
             throw exception;
           }
         }
       };
 
-      Subroutine.prototype.call = function(inputs, output_index) {
+      Subroutine.prototype.call = function(inputs, output_index, runtime) {
         var input, nib, wrapped_inputs, _fn, _i, _len;
         if (output_index == null) {
           output_index = 0;
@@ -261,7 +289,7 @@
           input = inputs[_i];
           _fn(input);
         }
-        return this.invoke(nib, wrapped_inputs);
+        return this.invoke(nib, wrapped_inputs, null, null, runtime);
       };
 
       Subroutine.prototype.delete_nib = function(nib, group) {
@@ -357,7 +385,7 @@
         });
       };
 
-      Code.prototype.invoke = function(output_nib, inputs, scope, node) {
+      Code.prototype.invoke = function(output_nib, inputs, scope, node, runtime) {
         var args, memo_function, output_function;
         try {
           memo_function = this.eval_code(this.memo_implementation);
@@ -372,7 +400,7 @@
         if (!output_function) {
           throw new NotImplemented(this.text);
         }
-        args = inputs.concat([output_nib.index]);
+        args = inputs.concat([output_nib.index, runtime]);
         if (scope && memo_function && !(node.id in scope.memos)) {
           scope.memos[node.id] = memo_function.apply(null, args);
         }
@@ -435,7 +463,7 @@
       */
 
 
-      Graph.prototype.invoke = function(output_nib, inputs) {
+      Graph.prototype.invoke = function(output_nib, inputs, parent_scope, node, runtime) {
         /* Evaluates an output in a fresh scope
         */
 
@@ -445,10 +473,10 @@
           inputs: inputs,
           memos: {}
         };
-        return this.evaluate_connection(scope, this, output_nib);
+        return this.evaluate_connection(scope, this, output_nib, runtime);
       };
 
-      Graph.prototype.evaluate_connection = function(scope, to_node, to_nib) {
+      Graph.prototype.evaluate_connection = function(scope, to_node, to_nib, runtime) {
         /* This helper will follow a connection and evaluate whatever it finds
         */
 
@@ -461,7 +489,7 @@
         if (node instanceof Graph) {
           return scope.inputs[nib.index]();
         } else {
-          return node.evaluate(scope, nib);
+          return node.evaluate(scope, nib, runtime);
         }
       };
 
@@ -928,14 +956,14 @@
 
       Call.prototype.type = 'call';
 
-      Call.prototype.virtual_inputs = function(the_scope) {
+      Call.prototype.virtual_inputs = function(the_scope, runtime) {
         var input, input_values, _fn, _i, _len, _ref,
           _this = this;
         input_values = [];
         _ref = this.implementation.inputs;
         _fn = function(input) {
           return input_values.push(_.memoize(function() {
-            return the_scope.subroutine.evaluate_connection(the_scope, _this, input);
+            return the_scope.subroutine.evaluate_connection(the_scope, _this, input, runtime);
           }));
         };
         for (_i = 0, _len = _ref.length; _i < _len; _i++) {
@@ -945,10 +973,10 @@
         return input_values;
       };
 
-      Call.prototype.evaluate = function(the_scope, output_nib) {
+      Call.prototype.evaluate = function(the_scope, output_nib, runtime) {
         var input_values;
-        input_values = this.virtual_inputs(the_scope);
-        return this.implementation.invoke(output_nib, input_values, the_scope, this);
+        input_values = this.virtual_inputs(the_scope, runtime);
+        return this.implementation.invoke(output_nib, input_values, the_scope, this, runtime);
       };
 
       Call.prototype.get_inputs = function() {
@@ -1173,17 +1201,17 @@
       try {
         return procedure();
       } catch (exception) {
-        return setTimeout(function() {
+        return $timeout(function() {
           throw exception;
         });
       }
     };
-    execute = function(routine) {
+    execute = function(runtime, routine) {
       try {
-        return alert(window.JSON.stringify(routine()));
+        return runtime.log(window.JSON.stringify(routine()));
       } catch (exception) {
         if (exception instanceof RuntimeException) {
-          return alert("Error: " + exception.message);
+          return runtime.log("Error: " + exception.message);
         } else {
           throw exception;
         }
@@ -1460,7 +1488,8 @@
       Input: Input,
       Output: Output,
       Connection: Connection,
-      subroutines: all_definitions
+      subroutines: all_definitions,
+      Runtime: Runtime
     };
   });
 

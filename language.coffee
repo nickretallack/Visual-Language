@@ -1,10 +1,6 @@
 module = angular.module 'vislang'
-module.factory 'interpreter', ($q, $http) ->
+module.factory 'interpreter', ($q, $http, $timeout) ->
     schema_version = 2
-
-    instance_state =
-        event_handlers:[]
-        timers:[]
 
     eval_expression = (expression) -> eval "(#{expression})"
 
@@ -66,6 +62,26 @@ module.factory 'interpreter', ($q, $http) ->
         find_uses: ->
             graph for id, graph of all_definitions when graph instanceof Graph and graph.uses_definition @
 
+    class Runtime
+        constructor: ({@graphics_element}={}) ->
+            @log_messages = []
+            @event_handlers = []
+            @timers = []
+
+        cleanup: ->
+            for handler in event_handlers
+                handler.element.removeEventListener handler.handler
+
+            for timer in @timers
+                clearTimeout timer
+
+        log: (message) ->
+            @log_messages.push message
+            console.log message
+
+
+
+
     class Subroutine extends Definition
         constructor: ({inputs, outputs}={}) ->
             super
@@ -91,24 +107,24 @@ module.factory 'interpreter', ($q, $http) ->
                     input_values.push value
             input_values
 
-        run: (nib) ->
+        run: (nib, runtime) ->
             input_values = @user_inputs()
             try
-                setTimeout => execute => @invoke nib, input_values,
+                $timeout => execute runtime, => @invoke nib, input_values, null, null, runtime
             catch exception
                 if exception instanceof InputError
-                    alert "Invalid JSON: #{exception.message}"
+                    runtime.log "Invalid JSON: #{exception.message}"
                 else
                     throw exception
 
-        call: (inputs, output_index=0) ->
+        call: (inputs, output_index=0, runtime) ->
             # This is how programs are meant to deal with subroutine literals
             nib = @outputs[output_index]
             wrapped_inputs = []
             for input in inputs
                 do (input) ->
                     wrapped_inputs.push -> input
-            @invoke nib, wrapped_inputs
+            @invoke nib, wrapped_inputs, null, null, runtime
 
         delete_nib: (nib, group) ->
             @[group] = _.without @[group], nib
@@ -156,7 +172,7 @@ module.factory 'interpreter', ($q, $http) ->
                 memo_implementation:@memo_implementation
                 output_implementation:@output_implementation
 
-        invoke: (output_nib, inputs, scope, node) ->
+        invoke: (output_nib, inputs, scope, node, runtime) ->
             try
                 memo_function = @eval_code @memo_implementation
                 output_function = @eval_code @output_implementation
@@ -167,7 +183,7 @@ module.factory 'interpreter', ($q, $http) ->
 
             throw new NotImplemented @text unless output_function
 
-            args = inputs.concat [output_nib.index]
+            args = inputs.concat [output_nib.index, runtime]
             if scope and memo_function and node.id not of scope.memos
                 scope.memos[node.id] = memo_function args...
             return output_function (args.concat [scope?.memos[node.id]])...
@@ -191,15 +207,15 @@ module.factory 'interpreter', ($q, $http) ->
 
         ### RUNNING ###
 
-        invoke: (output_nib, inputs) ->
+        invoke: (output_nib, inputs, parent_scope, node, runtime) ->
             ### Evaluates an output in a fresh scope ###
             scope =
                 subroutine:@
                 inputs:inputs
                 memos:{}
-            @evaluate_connection scope, @, output_nib
+            @evaluate_connection scope, @, output_nib, runtime
 
-        evaluate_connection: (scope, to_node, to_nib) ->
+        evaluate_connection: (scope, to_node, to_nib, runtime) ->
             ### This helper will follow a connection and evaluate whatever it finds ###
             connection = @find_connection 'to', to_node, to_nib
             unless connection
@@ -208,7 +224,7 @@ module.factory 'interpreter', ($q, $http) ->
             if node instanceof Graph
                 return scope.inputs[nib.index]()
             else
-                return node.evaluate scope, nib
+                return node.evaluate scope, nib, runtime
 
         find_connection: (direction, node, nib) ->
             ### Use this to determine how nodes are connected ###
@@ -543,17 +559,17 @@ module.factory 'interpreter', ($q, $http) ->
 
     class Call extends Node
         type:'call'
-        virtual_inputs: (the_scope) ->
+        virtual_inputs: (the_scope, runtime) ->
             input_values = []
             for input in @implementation.inputs
                 do (input) =>
                     input_values.push _.memoize =>
-                        the_scope.subroutine.evaluate_connection the_scope, @, input
+                        the_scope.subroutine.evaluate_connection the_scope, @, input, runtime
             return input_values
 
-        evaluate: (the_scope, output_nib) ->
-            input_values = @virtual_inputs the_scope
-            return @implementation.invoke output_nib, input_values, the_scope, @
+        evaluate: (the_scope, output_nib, runtime) ->
+            input_values = @virtual_inputs the_scope, runtime
+            return @implementation.invoke output_nib, input_values, the_scope, @, runtime
 
         get_inputs: -> @implementation.inputs
         get_outputs: -> @implementation.outputs
@@ -667,14 +683,14 @@ module.factory 'interpreter', ($q, $http) ->
         try
             procedure()
         catch exception
-            setTimeout -> throw exception # don't break this execution thread because of a loading exception
+            $timeout -> throw exception # don't break this execution thread because of a loading exception
 
-    execute = (routine) ->
+    execute = (runtime, routine) ->
         try
-            alert window.JSON.stringify routine()
+            runtime.log window.JSON.stringify routine()
         catch exception
             if exception instanceof RuntimeException
-                alert "Error: #{exception.message}"
+                runtime.log "Error: #{exception.message}"
             else throw exception
 
     ignore_if_disconnected = (procedure) ->
@@ -902,4 +918,5 @@ module.factory 'interpreter', ($q, $http) ->
     Output:Output
     Connection:Connection
     subroutines:all_definitions
+    Runtime:Runtime
 

@@ -57,6 +57,7 @@
     </div>
 </nav>
 
+
 <div id="main">
 <ng-view></ng-view>
 </div>
@@ -90,6 +91,12 @@
 </table>
 </div>
 
+<div id="runtime" ng-show="runtime">
+    <ul id="console">
+        <li ng-repeat="message in runtime.log_messages">{{message}}</li>
+    </ul>
+    <div id="graphics"></div>
+</div>
 
 </body>
 </html>

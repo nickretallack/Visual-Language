@@ -88,3 +88,20 @@ ul.unstyled {margin:0; padding:0;}
     background:lightblue;
 }
 
+#runtime {
+    position:absolute;
+    left:100px;
+    top:100px;
+    width:800px;
+    height:400px;
+    background:white;
+    z-index:5;
+}
+#console {
+    width:400px;
+    height:400px;
+    overflow:auto;
+}
+
+
+

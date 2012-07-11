@@ -154,7 +154,10 @@
       return definition = $scope.$root.definition = interpreter.subroutines[$routeParams.id];
     });
     $scope.evaluate_output = function(output) {
-      return definition.run(output);
+      var runtime;
+      runtime = new interpreter.Runtime;
+      $scope.$root.runtime = runtime;
+      return definition.run(output, runtime);
     };
     $scope.new_input = function() {
       definition.add_input();

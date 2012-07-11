@@ -110,7 +110,9 @@ module.controller 'subroutine', ($scope, $routeParams, interpreter, $q) ->
         definition = $scope.$root.definition = interpreter.subroutines[$routeParams.id]
 
     $scope.evaluate_output = (output) ->
-        definition.run output
+        runtime = new interpreter.Runtime
+        $scope.$root.runtime = runtime
+        definition.run output, runtime
 
     $scope.new_input =  ->
         definition.add_input()
