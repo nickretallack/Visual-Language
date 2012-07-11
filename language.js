@@ -9,7 +9,7 @@
   module = angular.module('vislang');
 
   module.factory('interpreter', function($q, $http) {
-    var Call, Code, CodeSyntaxError, CoffeeScript, Connection, Definition, Exit, Graph, Input, InputError, JSONLiteral, JavaScript, Literal, Nib, Node, NotConnected, NotImplemented, Output, RuntimeException, StringLiteral, Subroutine, Symbol, Type, UnknownNode, Value, all_definitions, clone_endpoint, definition_class_map, definition_classes, dissociate_exception, eval_expression, execute, find_nib_uses, find_value, ignore_if_disconnected, instance_state, is_input, load_implementation, load_implementation_v2, load_state, loaded, make_connection, make_index_map, make_value, node_class_map, node_classes, resurrect_node, save_state, schema_version, source_data, source_data_deferred, start_saving, value_output_nib;
+    var Call, Code, CodeSyntaxError, CoffeeScript, Connection, Definition, Exit, Graph, Input, InputError, JSON, JavaScript, Literal, Nib, Node, NotConnected, NotImplemented, Output, RuntimeException, Subroutine, Symbol, Text, Type, UnknownNode, Value, all_definitions, clone_endpoint, definition_class_map, definition_classes, dissociate_exception, eval_expression, execute, find_nib_uses, find_value, ignore_if_disconnected, instance_state, is_input, load_implementation, load_implementation_v2, load_state, loaded, make_connection, make_index_map, make_value, node_class_map, node_classes, resurrect_node, save_state, schema_version, source_data, source_data_deferred, start_saving, value_output_nib;
     schema_version = 2;
     instance_state = {
       event_handlers: [],
@@ -208,7 +208,7 @@
               throw new Exit("cancelled execution");
             }
             try {
-              return JSON.parse(result);
+              return window.JSON.parse(result);
             } catch (exception) {
               if (exception instanceof SyntaxError) {
                 throw new InputError(result);
@@ -455,7 +455,7 @@
         var connection, nib, node, _ref;
         connection = this.find_connection('to', to_node, to_nib);
         if (!connection) {
-          throw new NotConnected("Missing connection in " + this.text + " to node " + (JSON.stringify(to_node)));
+          throw new NotConnected("Missing connection in " + this.text + " to node " + (window.JSON.stringify(to_node)));
         }
         _ref = connection.from, node = _ref.node, nib = _ref.nib;
         if (node instanceof Graph) {
@@ -797,11 +797,11 @@
       if (force_string == null) {
         force_string = false;
       }
-      implementation = user_input instanceof Definition ? user_input : force_string ? (find_value(user_input, StringLiteral)) || new StringLiteral({
+      implementation = user_input instanceof Definition ? user_input : force_string ? (find_value(user_input, Text)) || new Text({
         text: user_input
-      }) : (value = eval_expression(user_input), value instanceof String ? (find_value(value, StringLiteral)) || new StringLiteral({
+      }) : (value = eval_expression(user_input), value instanceof String ? (find_value(value, Text)) || new Text({
         text: value
-      }) : (find_value(user_input, JSONLiteral)) || new JSONLiteral({
+      }) : (find_value(user_input, JSON)) || new JSON({
         text: user_input
       }));
       return new Value({
@@ -836,37 +836,37 @@
       return Literal;
 
     })(Definition);
-    JSONLiteral = (function(_super) {
+    JSON = (function(_super) {
 
-      __extends(JSONLiteral, _super);
+      __extends(JSON, _super);
 
-      function JSONLiteral() {
-        return JSONLiteral.__super__.constructor.apply(this, arguments);
+      function JSON() {
+        return JSON.__super__.constructor.apply(this, arguments);
       }
 
-      JSONLiteral.prototype.evaluate = function() {
+      JSON.prototype.evaluate = function() {
         return eval_expression(this.text);
       };
 
-      return JSONLiteral;
+      return JSON;
 
     })(Literal);
-    StringLiteral = (function(_super) {
+    Text = (function(_super) {
 
-      __extends(StringLiteral, _super);
+      __extends(Text, _super);
 
-      function StringLiteral() {
-        return StringLiteral.__super__.constructor.apply(this, arguments);
+      function Text() {
+        return Text.__super__.constructor.apply(this, arguments);
       }
 
-      StringLiteral.prototype.evaluate = function() {
+      Text.prototype.evaluate = function() {
         return this.text;
       };
 
-      return StringLiteral;
+      return Text;
 
     })(Literal);
-    definition_classes = [Graph, JavaScript, CoffeeScript, JSONLiteral, StringLiteral, Symbol];
+    definition_classes = [Graph, JavaScript, CoffeeScript, JSON, Text, Symbol];
     definition_class_map = make_index_map(definition_classes, 'name');
     /* NODE TYPES
     */
@@ -907,7 +907,7 @@
 
       Node.prototype.clone = function(new_scope) {
         var data, new_node, old_id;
-        data = JSON.parse(JSON.stringify(this));
+        data = window.JSON.parse(window.JSON.stringify(this));
         old_id = data.id;
         data.id = UUID();
         new_node = resurrect_node(new_scope, data);
@@ -1180,7 +1180,7 @@
     };
     execute = function(routine) {
       try {
-        return alert(JSON.stringify(routine()));
+        return alert(window.JSON.stringify(routine()));
       } catch (exception) {
         if (exception instanceof RuntimeException) {
           return alert("Error: " + exception.message);
@@ -1207,7 +1207,7 @@
         definitions: _.values(all_definitions),
         schema_version: schema_version
       };
-      return localStorage.state = JSON.stringify(state);
+      return localStorage.state = window.JSON.stringify(state);
     };
     load_state = function(data) {
       var builtin, builtin_data, definition_data, graph, id, implementation_pass, instance, second_pass, subroutine, subroutine_data, subroutines, the_class, transform_definition_data, transform_nib_data, _i, _j, _len, _len1, _ref, _ref1, _ref2, _ref3;
@@ -1258,6 +1258,11 @@
           _ref2 = data.definitions;
           for (id in _ref2) {
             definition_data = _ref2[id];
+            if (definition_data.type === 'JSONLiteral') {
+              definition_data.type = 'JSON';
+            } else if (definition_data.type === 'StringLiteral') {
+              definition_data.type = 'Text';
+            }
             the_class = definition_class_map[definition_data.type];
             instance = new the_class(definition_data);
             if (instance instanceof Graph) {
@@ -1346,7 +1351,7 @@
         node = _ref[_i];
         position = V(node.position);
         if (node.type === 'literal') {
-          implementation = 'implementation_id' in node ? subroutines[node.implementation_id] : (found_value = find_value(node.text, JSONLiteral, subroutines), found_value ? found_value : (value = new JSONLiteral({
+          implementation = 'implementation_id' in node ? subroutines[node.implementation_id] : (found_value = find_value(node.text, JSON, subroutines), found_value ? found_value : (value = new JSON({
             text: node.text
           }), subroutines[value.id] = value, value));
           new Value({
@@ -1405,7 +1410,7 @@
       return _results;
     };
     if (localStorage.state != null) {
-      source_data = JSON.parse(localStorage.state);
+      source_data = window.JSON.parse(localStorage.state);
     } else {
       source_data_deferred = $q.defer();
       source_data = source_data_deferred.promise;
@@ -1438,6 +1443,7 @@
       NotConnected: NotConnected,
       NotImplemented: NotImplemented,
       BuiltinSyntaxError: CodeSyntaxError,
+      definition_types: definition_classes,
       Definition: Definition,
       Subroutine: Subroutine,
       Graph: Graph,
@@ -1445,8 +1451,8 @@
       JavaScript: JavaScript,
       CoffeeScript: CoffeeScript,
       Literal: Literal,
-      JSONLiteral: JSONLiteral,
-      StringLiteral: StringLiteral,
+      JSON: JSON,
+      Text: Text,
       Symbol: Symbol,
       Node: Node,
       Call: Call,

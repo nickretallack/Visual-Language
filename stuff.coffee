@@ -25,7 +25,7 @@ module.filter 'syntax', (interpreter) ->
             'coffee'
         else if obj instanceof interpreter.JavaScript
             'javascript'
-        else if obj instanceof interpreter.JSONLiteral
+        else if obj instanceof interpreter.JSON
             'json'
         else
             'plain'
@@ -41,9 +41,9 @@ module.filter 'implementation_type', (interpreter) ->
             'javascript'
         else if it instanceof interpreter.CoffeeScript
             'coffeescript'
-        else if it instanceof interpreter.StringLiteral
+        else if it instanceof interpreter.Text
             'string'
-        else if it instanceof interpreter.JSONLiteral
+        else if it instanceof interpreter.JSON
             'json'
         else if it instanceof interpreter.Symbol
             'symbol'
@@ -182,14 +182,14 @@ dragging_offset = V 0,0
 
 is_valid_json = (json) ->
     try
-        JSON.parse json
+        window.JSON.parse json
         return true
     catch exception
         return false
 
 valid_json = (json) ->
     try
-        return JSON.parse json
+        return window.JSON.parse json
     catch exception
         if exception instanceof SyntaxError
             alert "#{exception} Invalid JSON: #{json}"
@@ -197,7 +197,7 @@ valid_json = (json) ->
         else
             throw exception
 
-pretty_json = (obj) -> JSON.stringify obj, undefined, 2
+pretty_json = (obj) -> window.JSON.stringify obj, undefined, 2
 
 module.controller 'Controller', ($scope, $http, $location, interpreter, $q) ->
     $scope.tab_click = (tab) ->
@@ -207,6 +207,11 @@ module.controller 'Controller', ($scope, $http, $location, interpreter, $q) ->
         $q.when interpreter.loaded, ->
             subroutine = new type
             $location.path "#{subroutine.id}"
+
+    $scope.definition_types = interpreter.definition_types
+
+    $scope.create_definition = (type) ->
+        make_something type
 
     $scope.new_graph = ->
         make_something interpreter.Graph

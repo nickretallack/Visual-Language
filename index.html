@@ -41,9 +41,9 @@
                 <span class="caret"></span>
               </a>
               <ul class="dropdown-menu">
-                <li><a ng-click="new_graph()">Graph</a></li>
-                <li><a ng-click="new_coffeescript()">CoffeeScript</a></li>
-                <li><a ng-click="new_code()">JavaScript</a></li>
+                <li ng-repeat="type in definition_types">
+                    <a ng-click="create_definition(type)">{{type.name}}</a>
+                </li>
               </ul>
             </div>
 

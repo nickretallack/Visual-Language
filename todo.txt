@@ -3,6 +3,10 @@ When you run a program, it needs two things: a graphical output and a log output
 
 For functions with multiple outputs, you should have the option to evaluate just one or all of them or a selection of them.
 
+
+Oh my god.  What if I did the documentation entirely in the program?
+
+
 For the instructions page:
     Basic Values:
     Text - Its value is used exactly as it is typed.

@@ -41,7 +41,7 @@
   module.filter('syntax', function(interpreter) {
     return function(obj) {
       var result;
-      return result = obj instanceof interpreter.CoffeeScript ? 'coffee' : obj instanceof interpreter.JavaScript ? 'javascript' : obj instanceof interpreter.JSONLiteral ? 'json' : 'plain';
+      return result = obj instanceof interpreter.CoffeeScript ? 'coffee' : obj instanceof interpreter.JavaScript ? 'javascript' : obj instanceof interpreter.JSON ? 'json' : 'plain';
     };
   });
 
@@ -59,9 +59,9 @@
         return 'javascript';
       } else if (it instanceof interpreter.CoffeeScript) {
         return 'coffeescript';
-      } else if (it instanceof interpreter.StringLiteral) {
+      } else if (it instanceof interpreter.Text) {
         return 'string';
-      } else if (it instanceof interpreter.JSONLiteral) {
+      } else if (it instanceof interpreter.JSON) {
         return 'json';
       } else if (it instanceof interpreter.Symbol) {
         return 'symbol';
@@ -261,7 +261,7 @@
 
   is_valid_json = function(json) {
     try {
-      JSON.parse(json);
+      window.JSON.parse(json);
       return true;
     } catch (exception) {
       return false;
@@ -270,7 +270,7 @@
 
   valid_json = function(json) {
     try {
-      return JSON.parse(json);
+      return window.JSON.parse(json);
     } catch (exception) {
       if (exception instanceof SyntaxError) {
         alert("" + exception + " Invalid JSON: " + json);
@@ -282,7 +282,7 @@
   };
 
   pretty_json = function(obj) {
-    return JSON.stringify(obj, void 0, 2);
+    return window.JSON.stringify(obj, void 0, 2);
   };
 
   module.controller('Controller', function($scope, $http, $location, interpreter, $q) {
@@ -296,6 +296,10 @@
         subroutine = new type;
         return $location.path("" + subroutine.id);
       });
+    };
+    $scope.definition_types = interpreter.definition_types;
+    $scope.create_definition = function(type) {
+      return make_something(type);
     };
     $scope.new_graph = function() {
       return make_something(interpreter.Graph);

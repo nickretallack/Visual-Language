@@ -82,7 +82,7 @@ module.factory 'interpreter', ($q, $http) ->
                         result = prompt "Provide a JSON value for input #{input.index}: \"#{input.text}\""
                         throw new Exit "cancelled execution" if result is null
                         try
-                            return JSON.parse result
+                            return window.JSON.parse result
                         catch exception
                             if exception instanceof SyntaxError
                                 throw new InputError result
@@ -203,7 +203,7 @@ module.factory 'interpreter', ($q, $http) ->
             ### This helper will follow a connection and evaluate whatever it finds ###
             connection = @find_connection 'to', to_node, to_nib
             unless connection
-                throw new NotConnected "Missing connection in #{@text} to node #{JSON.stringify(to_node)}"
+                throw new NotConnected "Missing connection in #{@text} to node #{window.JSON.stringify(to_node)}"
             {node, nib} = connection.from
             if node instanceof Graph
                 return scope.inputs[nib.index]()
@@ -477,13 +477,13 @@ module.factory 'interpreter', ($q, $http) ->
             user_input
         else
             if force_string
-                (find_value user_input, StringLiteral) or new StringLiteral text:user_input
+                (find_value user_input, Text) or new Text text:user_input
             else
                 value = eval_expression user_input
                 if value instanceof String
-                    (find_value value, StringLiteral) or new StringLiteral text:value
+                    (find_value value, Text) or new Text text:value
                 else
-                    (find_value user_input, JSONLiteral) or new JSONLiteral text:user_input
+                    (find_value user_input, JSON) or new JSON text:user_input
 
         new Value
             scope:scope
@@ -496,18 +496,18 @@ module.factory 'interpreter', ($q, $http) ->
     class Literal extends Definition # Abstract
         #content_id: -> CryptoJS.SHA256(@text).toString(CryptoJS.enc.Base64)
 
-    class JSONLiteral extends Literal
+    class JSON extends Literal
         evaluate: -> eval_expression @text
 
-    class StringLiteral extends Literal
+    class Text extends Literal
         evaluate: -> @text
 
     definition_classes = [
         Graph
         JavaScript
         CoffeeScript
-        JSONLiteral
-        StringLiteral
+        JSON
+        Text
         Symbol
     ]
 
@@ -534,7 +534,7 @@ module.factory 'interpreter', ($q, $http) ->
                 position:@position
 
         clone: (new_scope) ->
-            data = JSON.parse JSON.stringify @
+            data = window.JSON.parse window.JSON.stringify @
             old_id = data.id
             data.id = UUID()
             new_node = resurrect_node new_scope, data
@@ -671,7 +671,7 @@ module.factory 'interpreter', ($q, $http) ->
 
     execute = (routine) ->
         try
-            alert JSON.stringify routine()
+            alert window.JSON.stringify routine()
         catch exception
             if exception instanceof RuntimeException
                 alert "Error: #{exception.message}"
@@ -690,7 +690,7 @@ module.factory 'interpreter', ($q, $http) ->
             definitions:_.values all_definitions
             schema_version:schema_version
 
-        localStorage.state = JSON.stringify state
+        localStorage.state = window.JSON.stringify state
 
     load_state = (data) ->
         switch data.schema_version
@@ -729,6 +729,12 @@ module.factory 'interpreter', ($q, $http) ->
             when 2
                 implementation_pass = []
                 for id, definition_data of data.definitions
+
+                    if definition_data.type is 'JSONLiteral'
+                        definition_data.type = 'JSON'
+                    else if definition_data.type is 'StringLiteral'
+                        definition_data.type = 'Text'
+
                     the_class = definition_class_map[definition_data.type]
                     instance = new the_class definition_data
                     if instance instanceof Graph
@@ -795,11 +801,11 @@ module.factory 'interpreter', ($q, $http) ->
                     subroutines[node.implementation_id]
                     # TODO: what if this subroutine isn't found?
                 else
-                    found_value = find_value node.text, JSONLiteral, subroutines
+                    found_value = find_value node.text, JSON, subroutines
                     if found_value
                         found_value
                     else
-                        value = new JSONLiteral text:node.text
+                        value = new JSON text:node.text
                         subroutines[value.id] = value
                         value
 
@@ -841,7 +847,7 @@ module.factory 'interpreter', ($q, $http) ->
                     nib: to_nib
 
     if localStorage.state?
-        source_data = JSON.parse localStorage.state
+        source_data = window.JSON.parse localStorage.state
     else
         source_data_deferred = $q.defer()
         source_data = source_data_deferred.promise
@@ -870,8 +876,10 @@ module.factory 'interpreter', ($q, $http) ->
     NotImplemented:NotImplemented
     BuiltinSyntaxError:CodeSyntaxError
 
-    # subroutines
+    definition_types:definition_classes
     Definition:Definition
+
+    # subroutines
     Subroutine:Subroutine
     Graph:Graph
     Code:Code
@@ -880,8 +888,8 @@ module.factory 'interpreter', ($q, $http) ->
 
     # literals
     Literal:Literal
-    JSONLiteral:JSONLiteral
-    StringLiteral:StringLiteral
+    JSON:JSON
+    Text:Text
     Symbol:Symbol
 
     # nodes
