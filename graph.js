@@ -107,12 +107,9 @@
           return draw();
         };
         $scope.can_edit_selected_node = function() {
-          return $scope.selection.length === 1 && $scope.selection[0].implementation instanceof interpreter.Subroutine;
+          return $scope.selection.length === 1;
         };
         $scope.edit_node = function(node) {
-          if (!($scope.selection[0].implementation instanceof interpreter.Subroutine)) {
-            return;
-          }
           return $location.path("/" + node.implementation.id);
         };
         $scope.can_bust_selected_node = function() {

@@ -71,9 +71,8 @@ module.directive 'graph', ($location) ->
             draw()
 
         $scope.can_edit_selected_node = ->
-            $scope.selection.length is 1 and $scope.selection[0].implementation instanceof interpreter.Subroutine
+            $scope.selection.length is 1
         $scope.edit_node = (node) ->
-            return unless $scope.selection[0].implementation instanceof interpreter.Subroutine
             $location.path "/#{node.implementation.id}"
 
         $scope.can_bust_selected_node = ->
