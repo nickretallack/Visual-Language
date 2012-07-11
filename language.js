@@ -176,6 +176,7 @@
         this.log_messages = [];
         this.event_handlers = [];
         this.timers = [];
+        this.state = {};
       }
 
       Runtime.prototype.cleanup = function() {
@@ -217,7 +218,7 @@
             return handler_subroutine.call([event], output_index, _this);
           });
         };
-        addEventListener(type, handler);
+        element.addEventListener(type, handler);
         return this.event_handlers.push({
           element: element,
           handler: handler

@@ -67,6 +67,7 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
             @log_messages = []
             @event_handlers = []
             @timers = []
+            @state = {}
 
         cleanup: ->
             for handler in @event_handlers
@@ -84,7 +85,7 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
         addEventListener: (type, handler_subroutine, element, output_index=0) ->
             handler = (event) => $rootScope.$apply =>
                 handler_subroutine.call [event], output_index, @
-            addEventListener type, handler
+            element.addEventListener type, handler
             @event_handlers.push
                 element:element
                 handler:handler
