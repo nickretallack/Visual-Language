@@ -225,7 +225,7 @@
     };
     $scope.use = function(subroutine) {
       return new interpreter.Call({
-        scope: $scope.$root.current_object,
+        scope: $scope.$root.definition,
         position: V(0, 0),
         implementation: subroutine
       });
@@ -236,16 +236,16 @@
         text: user_input
       });
       return new interpreter.Value({
-        scope: $scope.$root.current_object,
+        scope: $scope.$root.definition,
         position: V(0, 0),
         implementation: symbol
       });
     };
     $scope.use_value = function(user_input) {
-      return interpreter.make_value($scope.$root.current_object, V(0, 0), user_input);
+      return interpreter.make_value($scope.$root.definition, V(0, 0), user_input);
     };
     $scope.use_string_literal = function(text) {
-      return interpreter.make_value($scope.$root.current_object, V(0, 0), text, true);
+      return interpreter.make_value($scope.$root.definition, V(0, 0), text, true);
     };
     return $scope.is_literal = function(thing) {
       return thing instanceof interpreter.Literal;
@@ -301,6 +301,10 @@
       });
     };
     $scope.definition_types = interpreter.definition_types;
+    $scope.quit_runtime = function() {
+      $scope.$root.runtime.cleanup();
+      return $scope.$root.runtime = null;
+    };
     $scope.create_definition = function(type) {
       return make_something(type);
     };

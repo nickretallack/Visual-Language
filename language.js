@@ -8,7 +8,7 @@
 
   module = angular.module('vislang');
 
-  module.factory('interpreter', function($q, $http, $timeout) {
+  module.factory('interpreter', function($q, $http, $timeout, $rootScope) {
     var Call, Code, CodeSyntaxError, CoffeeScript, Connection, Definition, Exit, Graph, Input, InputError, JSON, JavaScript, Literal, Nib, Node, NotConnected, NotImplemented, Output, Runtime, RuntimeException, Subroutine, Symbol, Text, Type, UnknownNode, Value, all_definitions, clone_endpoint, definition_class_map, definition_classes, dissociate_exception, eval_expression, execute, find_nib_uses, find_value, ignore_if_disconnected, is_input, load_implementation, load_implementation_v2, load_state, loaded, make_connection, make_index_map, make_value, node_class_map, node_classes, resurrect_node, save_state, schema_version, source_data, source_data_deferred, start_saving, value_output_nib;
     schema_version = 2;
     eval_expression = function(expression) {
@@ -179,22 +179,53 @@
       }
 
       Runtime.prototype.cleanup = function() {
-        var handler, timer, _i, _j, _len, _len1, _ref, _results;
-        for (_i = 0, _len = event_handlers.length; _i < _len; _i++) {
-          handler = event_handlers[_i];
+        var handler, timer, _i, _j, _len, _len1, _ref, _ref1, _results;
+        _ref = this.event_handlers;
+        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+          handler = _ref[_i];
           handler.element.removeEventListener(handler.handler);
         }
-        _ref = this.timers;
+        _ref1 = this.timers;
         _results = [];
-        for (_j = 0, _len1 = _ref.length; _j < _len1; _j++) {
-          timer = _ref[_j];
+        for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
+          timer = _ref1[_j];
           _results.push(clearTimeout(timer));
         }
         return _results;
       };
 
+      Runtime.prototype.setInterval = function(handler, output_index, delay) {
+        var handle, timer,
+          _this = this;
+        handle = function() {
+          return $rootScope.$apply(function() {
+            return handler.call([], output_index, _this);
+          });
+        };
+        timer = setInterval(handle, delay);
+        return this.timers.push(timer);
+      };
+
+      Runtime.prototype.addEventListener = function(type, handler_subroutine, element, output_index) {
+        var handler,
+          _this = this;
+        if (output_index == null) {
+          output_index = 0;
+        }
+        handler = function(event) {
+          return $rootScope.$apply(function() {
+            return handler_subroutine.call([event], output_index, _this);
+          });
+        };
+        addEventListener(type, handler);
+        return this.event_handlers.push({
+          element: element,
+          handler: handler
+        });
+      };
+
       Runtime.prototype.log = function(message) {
-        this.log_messages.push(message);
+        this.log_messages.unshift(message);
         return console.log(message);
       };
 

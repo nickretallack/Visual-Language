@@ -156,22 +156,22 @@ module.controller 'library', ($scope, $q, interpreter, $filter) ->
 
     $scope.use = (subroutine) ->
         new interpreter.Call
-            scope: $scope.$root.current_object
+            scope: $scope.$root.definition
             position: V(0,0)
             implementation: subroutine
 
     $scope.new_symbol = (user_input) ->
         symbol = new interpreter.Symbol text:user_input
         new interpreter.Value
-            scope:$scope.$root.current_object
+            scope:$scope.$root.definition
             position: V(0,0)
             implementation:symbol
 
     $scope.use_value = (user_input) ->
-        interpreter.make_value $scope.$root.current_object, V(0,0), user_input
+        interpreter.make_value $scope.$root.definition, V(0,0), user_input
 
     $scope.use_string_literal = (text) ->
-        interpreter.make_value $scope.$root.current_object, V(0,0), text, true
+        interpreter.make_value $scope.$root.definition, V(0,0), text, true
 
     $scope.is_literal = (thing) -> thing instanceof interpreter.Literal
 
@@ -211,6 +211,10 @@ module.controller 'Controller', ($scope, $http, $location, interpreter, $q) ->
             $location.path "#{subroutine.id}"
 
     $scope.definition_types = interpreter.definition_types
+
+    $scope.quit_runtime = ->
+        $scope.$root.runtime.cleanup()
+        $scope.$root.runtime = null
 
     $scope.create_definition = (type) ->
         make_something type

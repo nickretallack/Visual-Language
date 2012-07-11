@@ -1,5 +1,5 @@
 module = angular.module 'vislang'
-module.factory 'interpreter', ($q, $http, $timeout) ->
+module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
     schema_version = 2
 
     eval_expression = (expression) -> eval "(#{expression})"
@@ -69,18 +69,29 @@ module.factory 'interpreter', ($q, $http, $timeout) ->
             @timers = []
 
         cleanup: ->
-            for handler in event_handlers
+            for handler in @event_handlers
                 handler.element.removeEventListener handler.handler
 
             for timer in @timers
                 clearTimeout timer
 
+        setInterval: (handler, output_index, delay) ->
+            handle = => $rootScope.$apply =>
+                handler.call [], output_index, @
+            timer = setInterval handle, delay
+            @timers.push timer
+
+        addEventListener: (type, handler_subroutine, element, output_index=0) ->
+            handler = (event) => $rootScope.$apply =>
+                handler_subroutine.call [event], output_index, @
+            addEventListener type, handler
+            @event_handlers.push
+                element:element
+                handler:handler
+
         log: (message) ->
-            @log_messages.push message
+            @log_messages.unshift message
             console.log message
-
-
-
 
     class Subroutine extends Definition
         constructor: ({inputs, outputs}={}) ->

@@ -92,8 +92,9 @@
 </div>
 
 <div id="runtime" ng-show="runtime">
+    <a ng-click="quit_runtime(runtime)">Stop</a>
     <ul id="console">
-        <li ng-repeat="message in runtime.log_messages">{{message}}</li>
+        <li ng-repeat="message in runtime.log_messages | limitTo:20" reverse="true">{{message}}</li>
     </ul>
     <div id="graphics"></div>
 </div>
