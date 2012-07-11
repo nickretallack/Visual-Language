@@ -60,19 +60,17 @@ module.filter 'editor_type', (interpreter) ->
         else if obj instanceof interpreter.Literal
             'literal'
 
-module.directive 'ace', ->
+module.directive 'ace', ($interpolate) ->
     require: '?ngModel'
     link:(scope, element, attributes, ngModel) ->
-        # set up ace
+
         editor = ace.edit element[0]
         session = editor.getSession()
 
-        syntax = scope.$eval attributes.syntax
-
-        # Set the theme
-        if syntax and syntax isnt 'plain'
-            SyntaxMode = require("ace/mode/#{syntax}").Mode
-            session.setMode new SyntaxMode()
+        attributes.$observe 'syntax', (syntax) ->
+            if syntax and syntax isnt 'plain'
+                SyntaxMode = require("ace/mode/#{syntax}").Mode
+                session.setMode new SyntaxMode()
 
         # set up data binding
         return unless ngModel
@@ -87,7 +85,7 @@ module.directive 'ace', ->
         session.on 'change', -> scope.$apply read unless changing
 
 
-module.directive 'shrinkyInput', ->
+module.directive 'shrinkyInput', ($timeout) ->
     link:(scope, element, attributes, controller) ->
         doppelganger = $ """<span class="offscreen"></span>"""
         $element = $ element
@@ -102,7 +100,7 @@ module.directive 'shrinkyInput', ->
         $(document.body).append doppelganger
         scope.$watch attributes.shrinkyInput, (text) ->
             doppelganger.text text + "M"
-            async -> scope.$apply ->
+            $timeout ->
                 $(element).css width:doppelganger.width()+2
                 scope.$emit 'redraw-graph'
 
@@ -181,25 +179,6 @@ module.controller 'library', ($scope, $q, interpreter, $filter) ->
 dragging_object = null
 connecting_object = null
 dragging_offset = V 0,0
-
-highlighted_objects = {}
-
-highlight = (node) ->
-    node.view.children[0].material = highlighted_node_material
-    highlighted_objects[node.id] = node
-
-unhighlight = (node) ->
-    node.view.children[0].material = node_material
-    delete highlighted_objects[node.id]
-
-unhighlight_all = ->
-    for id, obj of highlighted_objects
-        unhighlight obj
-
-whitespace_split = (input) ->
-    results = input.split(/\s+/)
-    results = results[1..] if results[0] is ''
-    results
 
 is_valid_json = (json) ->
     try
