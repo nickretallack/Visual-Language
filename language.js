@@ -1164,11 +1164,13 @@
         return {
           from: {
             nib: this.from.nib.id,
-            node: this.from.node.id
+            node: this.from.node.id,
+            index: this.from.node.index
           },
           to: {
             nib: this.to.nib.id,
-            node: this.to.node.id
+            node: this.to.node.id,
+            index: this.to.node.index
           }
         };
       };

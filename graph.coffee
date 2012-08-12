@@ -5,7 +5,7 @@ transform_position = (position, editor_size) ->
     y:position.x + editor_size.y/2
 
 nib_index = (endpoint) ->
-    "#{endpoint.node.id}-#{endpoint.nib.id}-#{endpoint.index}"
+    "#{endpoint.node.id}-#{endpoint.nib.id}-#{endpoint.index or 0}"
 
 module.directive 'nib', ->
     template:"""<div class="nib"></div>"""

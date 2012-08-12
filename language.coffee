@@ -656,9 +656,11 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
             from:
                 nib:@from.nib.id
                 node:@from.node.id
+                index:@from.node.index
             to:
                 nib:@to.nib.id
                 node:@to.node.id
+                index:@to.node.index
 
     value_output_nib = new Output scope:null, id:null, index:0
 

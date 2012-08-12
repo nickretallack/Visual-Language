@@ -14,7 +14,7 @@
   };
 
   nib_index = function(endpoint) {
-    return "" + endpoint.node.id + "-" + endpoint.nib.id + "-" + endpoint.index;
+    return "" + endpoint.node.id + "-" + endpoint.nib.id + "-" + (endpoint.index || 0);
   };
 
   module.directive('nib', function() {
