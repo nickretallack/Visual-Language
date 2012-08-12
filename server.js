@@ -4,7 +4,7 @@
 
   express = require('express');
 
-  app = express.createServer();
+  app = express();
 
   app.use(express["static"](__dirname));
 
