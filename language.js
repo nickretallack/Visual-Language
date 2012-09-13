@@ -853,7 +853,7 @@
 
       return Lambda;
 
-    })(Subroutine);
+    })(Graph);
     find_value = function(text, type, collection) {
       var id, thing;
       if (collection == null) {
@@ -1206,7 +1206,7 @@
     is_input = function(it) {
       var is_input_class;
       is_input_class = it.nib instanceof Input;
-      if (it.node instanceof Graph) {
+      if (it.node instanceof Graph || it.node.implementation instanceof Lambda) {
         return is_input_class;
       } else {
         return !is_input_class;

@@ -492,7 +492,7 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
 
             return new_node
 
-    class Lambda extends Subroutine
+    class Lambda extends Graph
         constructor: ->
             super
             @implementation_input = new Input
@@ -676,7 +676,7 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
 
     is_input = (it) ->
         is_input_class = it.nib instanceof Input
-        if it.node instanceof Graph then is_input_class else not is_input_class
+        if it.node instanceof Graph or it.node.implementation instanceof Lambda then is_input_class else not is_input_class
 
     make_connection = (scope, {from, to}) ->
         from_input = is_input from

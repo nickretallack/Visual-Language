@@ -39,7 +39,9 @@ module.filter 'isa', (interpreter) ->
 
 module.filter 'implementation_type', (interpreter) ->
     (it) ->
-        if it instanceof interpreter.Graph
+        if it instanceof interpreter.Lambda
+            'lambda'
+        else if it instanceof interpreter.Graph
             'graph'
         else if it instanceof interpreter.JavaScript
             'javascript'
@@ -51,13 +53,13 @@ module.filter 'implementation_type', (interpreter) ->
             'json'
         else if it instanceof interpreter.Symbol
             'symbol'
-        else if it instanceof interpreter.Lambda
-            'lambda'
 
 
 module.filter 'editor_type', (interpreter) ->
     (obj) ->
-        if obj instanceof interpreter.Graph
+        if obj instanceof interpreter.Lambda
+            'lambda'
+        else if obj instanceof interpreter.Graph
             'graph'
         else if obj instanceof interpreter.Code
             'code'
@@ -65,8 +67,6 @@ module.filter 'editor_type', (interpreter) ->
             'symbol'
         else if obj instanceof interpreter.Literal
             'literal'
-        else if obj instanceof interpreter.Lambda
-            'lambda'
 
 module.directive 'ace', ($interpolate) ->
     require: '?ngModel'

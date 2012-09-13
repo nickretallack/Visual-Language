@@ -57,7 +57,9 @@
 
   module.filter('implementation_type', function(interpreter) {
     return function(it) {
-      if (it instanceof interpreter.Graph) {
+      if (it instanceof interpreter.Lambda) {
+        return 'lambda';
+      } else if (it instanceof interpreter.Graph) {
         return 'graph';
       } else if (it instanceof interpreter.JavaScript) {
         return 'javascript';
@@ -69,15 +71,15 @@
         return 'json';
       } else if (it instanceof interpreter.Symbol) {
         return 'symbol';
-      } else if (it instanceof interpreter.Lambda) {
-        return 'lambda';
       }
     };
   });
 
   module.filter('editor_type', function(interpreter) {
     return function(obj) {
-      if (obj instanceof interpreter.Graph) {
+      if (obj instanceof interpreter.Lambda) {
+        return 'lambda';
+      } else if (obj instanceof interpreter.Graph) {
         return 'graph';
       } else if (obj instanceof interpreter.Code) {
         return 'code';
@@ -85,8 +87,6 @@
         return 'symbol';
       } else if (obj instanceof interpreter.Literal) {
         return 'literal';
-      } else if (obj instanceof interpreter.Lambda) {
-        return 'lambda';
       }
     };
   });
