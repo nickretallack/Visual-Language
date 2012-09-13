@@ -84,7 +84,6 @@ module.directive 'ace', ($interpolate) ->
         read = -> ngModel.$setViewValue session.getValue()
         session.on 'change', -> scope.$apply read unless changing
 
-
 module.directive 'shrinkyInput', ($timeout) ->
     link:(scope, element, attributes, controller) ->
         doppelganger = $ """<span class="offscreen"></span>"""
@@ -104,6 +103,11 @@ module.directive 'shrinkyInput', ($timeout) ->
                 $(element).css width:doppelganger.width()+2
                 scope.$emit 'redraw-graph'
 
+module.directive 'runtimeGraphics', (interpreter) ->
+    link:(scope, element, attributes) ->
+        runtime = scope.$eval attributes.runtimeGraphics
+        element.append runtime.graphics_element
+
 module.controller 'subroutine', ($scope, $routeParams, interpreter, $q) ->
     definition = null
     $q.when interpreter.loaded, ->
@@ -111,6 +115,7 @@ module.controller 'subroutine', ($scope, $routeParams, interpreter, $q) ->
 
     $scope.evaluate_output = (output) ->
         runtime = new interpreter.Runtime
+            graphics_element:$ "<div></div>"
         $scope.$root.runtime = runtime
         definition.run output, runtime
 

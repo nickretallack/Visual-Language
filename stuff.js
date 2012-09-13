@@ -147,6 +147,16 @@
     };
   });
 
+  module.directive('runtimeGraphics', function(interpreter) {
+    return {
+      link: function(scope, element, attributes) {
+        var runtime;
+        runtime = scope.$eval(attributes.runtimeGraphics);
+        return element.append(runtime.graphics_element);
+      }
+    };
+  });
+
   module.controller('subroutine', function($scope, $routeParams, interpreter, $q) {
     var definition, delete_nib;
     definition = null;
@@ -155,7 +165,9 @@
     });
     $scope.evaluate_output = function(output) {
       var runtime;
-      runtime = new interpreter.Runtime;
+      runtime = new interpreter.Runtime({
+        graphics_element: $("<div></div>")
+      });
       $scope.$root.runtime = runtime;
       return definition.run(output, runtime);
     };

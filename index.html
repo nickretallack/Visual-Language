@@ -85,18 +85,20 @@
 <tr ng-repeat="subroutine in get_subroutines() | filter:{text:search} | orderBy:sort" class="{{subroutine | implementation_type}}">
     <td class="name">
         <a href="#/{{subroutine.id}}">{{subroutine | text_or_id}}</a>
-    <td><a ng-hide="is_literal(subroutine)" ng-click="use(subroutine)">call</a>
+    <td><a ng-show="subroutine | isa:'Subroutine'" ng-click="use(subroutine)">call</a>
     <td><a ng-click="use_value(subroutine)">value</a>
 </tr>
 </table>
 </div>
 
-<div id="runtime" ng-show="runtime">
-    <a ng-click="quit_runtime(runtime)">Stop</a>
-    <ul id="console">
-        <li ng-repeat="message in runtime.log_messages | limitTo:20" reverse="true">{{message}}</li>
-    </ul>
-    <div id="graphics"></div>
+<div ng-switch="!!runtime">
+    <div ng-switch-when="true" id="runtime">
+        <a ng-click="quit_runtime(runtime)">Stop</a>
+        <ul id="console">
+            <li ng-repeat="message in runtime.log_messages | limitTo:20" reverse="true">{{message}}</li>
+        </ul>
+        <div id="graphics" runtime-graphics="runtime"></div>
+    </div>
 </div>
 
 </body>
