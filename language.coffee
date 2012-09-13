@@ -578,7 +578,6 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
             new_node
 
     class Call extends Node
-        type:'call'
         virtual_inputs: (the_scope, runtime) ->
             input_values = []
             for input in @implementation.inputs
@@ -621,7 +620,6 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
         subroutines_referenced: -> []
         get_inputs: -> []
         get_outputs: -> @outputs
-
 
     class UnknownNode extends Node
         constructor:(@position, type, text, @id) ->

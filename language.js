@@ -1002,8 +1002,6 @@
         return Call.__super__.constructor.apply(this, arguments);
       }
 
-      Call.prototype.type = 'call';
-
       Call.prototype.virtual_inputs = function(the_scope, runtime) {
         var input, input_values, _fn, _i, _len, _ref,
           _this = this;

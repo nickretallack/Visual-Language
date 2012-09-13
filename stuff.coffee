@@ -31,7 +31,11 @@ module.filter 'syntax', (interpreter) ->
             'plain'
 
 module.filter 'isa', (interpreter) ->
-    (obj, type) -> obj instanceof interpreter[type]
+    (obj, type) ->
+        try
+            obj instanceof interpreter[type]
+        catch error
+            console.log 'yeah'
 
 module.filter 'implementation_type', (interpreter) ->
     (it) ->
@@ -47,6 +51,8 @@ module.filter 'implementation_type', (interpreter) ->
             'json'
         else if it instanceof interpreter.Symbol
             'symbol'
+        else if it instanceof interpreter.Lambda
+            'lambda'
 
 
 module.filter 'editor_type', (interpreter) ->

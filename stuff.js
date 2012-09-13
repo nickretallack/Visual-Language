@@ -47,7 +47,11 @@
 
   module.filter('isa', function(interpreter) {
     return function(obj, type) {
-      return obj instanceof interpreter[type];
+      try {
+        return obj instanceof interpreter[type];
+      } catch (error) {
+        return console.log('yeah');
+      }
     };
   });
 
@@ -65,6 +69,8 @@
         return 'json';
       } else if (it instanceof interpreter.Symbol) {
         return 'symbol';
+      } else if (it instanceof interpreter.Lambda) {
+        return 'lambda';
       }
     };
   });

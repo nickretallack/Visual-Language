@@ -21,7 +21,6 @@
     </div>
     <a id="new-output" ng-click="new_output(subroutine)">+Output</a>
 
-
     <div class="node {{node | node_type}} {{node.implementation | implementation_type}}" 
         ng-repeat="node in definition.nodes"
         node="node"
@@ -29,20 +28,50 @@
         ng-mousedown="click_node(node, $event)"
         ng-dblclick="edit_node(node, $event)" ng-rightclick="" ng-class="{selected:selected(node)}">
 
-        <ul class="unstyled"><li ng-repeat="output in node.get_outputs()" class="output">
-        	<div nib="output" node="node"></div>
-        	{{output.text}}
-        </li></ul>
+        <div ng-switch="(node.implementation | isa:'Lambda') && (node | isa: 'Value')">
+            <div ng-switch-when="true" class="lambda">
 
-        <div class="node-title">{{node.implementation | text_or_id}}</div>
+                <ul class="unstyled"><li ng-repeat="output in node.get_outputs()" class="output">
+                    <div nib="output" node="node"></div>
+                    {{output.text}}
+                </li></ul>
 
-        <ul class="unstyled">
-            <li ng-repeat="input in node.get_inputs()" class="input">
-            <ul class="unstyled"><li ng-repeat="index in [0]">
-            	{{input.text}}
-            	<div nib="input" index="index" node="node"></div>
-            </li></ul>
-        </li></ul>
+                <div class="inner-lambda">
+                    <ul class="unstyled"><li ng-repeat="output in node.implementation.outputs" class="output">
+                        {{output.text}}
+                        <div nib="output" node="node"></div>
+                    </li></ul>
+
+                    <div class="lambda-canvas">
+                    </div>
+
+                    <ul class="unstyled">
+                        <li ng-repeat="input in node.implementation.inputs" class="input">
+                        <ul class="unstyled"><li ng-repeat="index in [0]">
+                            <div nib="input" index="index" node="node"></div>
+                            {{input.text}}
+                        </li></ul>
+                    </li></ul>
+                </div>
+            </div>
+
+            <div ng-switch-default>
+                <ul class="unstyled"><li ng-repeat="output in node.get_outputs()" class="output">
+                	<div nib="output" node="node"></div>
+                	{{output.text}}
+                </li></ul>
+
+                <div class="node-title">{{node.implementation | text_or_id}}</div>
+
+                <ul class="unstyled">
+                    <li ng-repeat="input in node.get_inputs()" class="input">
+                    <ul class="unstyled"><li ng-repeat="index in [0]">
+                    	{{input.text}}
+                    	<div nib="input" index="index" node="node"></div>
+                    </li></ul>
+                </li></ul>
+            </div>
+        </div>
     </div>
 </div>
 
