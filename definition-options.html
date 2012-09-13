@@ -1,5 +1,5 @@
     <div class="btn-toolbar">
-      <a class="btn dropdown-toggle" data-toggle="dropdown">
+      <a class="btn dropdown-toggle" data-toggle="dropdown" ng-class="{disabled:definition.find_uses().length==0}">
         {{ definition.find_uses().length }} Uses
         <span class="caret"></span>
       </a>
