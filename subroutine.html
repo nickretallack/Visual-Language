@@ -28,6 +28,7 @@
         ng-style="position(node)"
         ng-mousedown="click_node(node, $event)"
         ng-dblclick="edit_node(node, $event)" ng-rightclick="" ng-class="{selected:selected(node)}">
+
         <ul class="unstyled"><li ng-repeat="output in node.get_outputs()" class="output">
         	<div nib="output" node="node"></div>
         	{{output.text}}
@@ -35,7 +36,8 @@
 
         <div class="node-title">{{node.implementation | text_or_id}}</div>
 
-        <ul class="unstyled"><li ng-repeat="input in node.get_inputs()" class="input">
+        <ul class="unstyled">
+            <li ng-repeat="input in node.get_inputs()" class="input">
             <ul class="unstyled"><li ng-repeat="index in [0]">
             	{{input.text}}
             	<div nib="input" index="index" node="node"></div>
@@ -74,32 +76,19 @@
     <div ng-include="'definition-options.html'"></div>
 </div>
 
+<div ng-switch-when="lambda">
+    <input ng-model="definition.text" class="title" shrinky-input="definition | text_or_id" placeholder="{{definition.id}}">
+    <div ng-include="'definition-options.html'"></div>
+    <div class="container-fluid">
+        <div ng-include="'nibs-editor.html'"></div>
+    </div>
+</div>
+
 <div ng-switch-when="code" id="builtin_editor">
     <input ng-model="definition.text" class="title" shrinky-input="definition | text_or_id" placeholder="{{definition.id}}">
     <div ng-include="'definition-options.html'"></div>
     <div class="container-fluid">
-        <div class="row-fluid">
-            <div class="span6">
-
-                <h3>Outputs</h3>
-                <div ng-repeat="output in definition.outputs">
-                    <input ng-model="output.text">
-                    <a ng-click="delete_output(output)">-</a>
-                    <a ng-click="evaluate_output(output)">evaluate</a>
-                </div>
-                <a ng-click="new_output(definition)">+Output</a>
-            </div>
-            <div class="span6">
-
-                <h3>Inputs</h3>
-                <div ng-repeat="input in definition.inputs">
-                    <input ng-model="input.text">
-                    <a ng-click="delete_input(input)">-</a>
-                </div>
-                <a ng-click="new_input(definition)">+Input</a>
-            </div>
-        </div>
-
+        <div ng-include="'nibs-editor.html'"></div>
         <div class="row-fluid">
             <div class="span6">
                 <h3>Memo Implementation</h3>

@@ -79,6 +79,8 @@
         return 'symbol';
       } else if (obj instanceof interpreter.Literal) {
         return 'literal';
+      } else if (obj instanceof interpreter.Lambda) {
+        return 'lambda';
       }
     };
   });

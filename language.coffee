@@ -492,6 +492,13 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
 
             return new_node
 
+    class Lambda extends Subroutine
+        constructor: ->
+            super
+            @implementation_input = new Input
+                scope:@
+                text:'implementation'
+                id:@id
 
     find_value = (text, type, collection=all_definitions) ->
         for id, thing of collection
@@ -537,6 +544,7 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
         JSON
         Text
         Symbol
+        Lambda
     ]
 
     definition_class_map = make_index_map definition_classes, 'name'
@@ -583,7 +591,11 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
             input_values = @virtual_inputs the_scope, runtime
             return @implementation.invoke output_nib, input_values, the_scope, @, runtime
 
-        get_inputs: -> @implementation.inputs
+        get_inputs: -> 
+            inputs = @implementation.inputs
+            if @implementation instanceof Lambda
+                [@implementation.implementation_input].concat inputs 
+            else inputs 
         get_outputs: -> @implementation.outputs
 
         ###
@@ -915,6 +927,7 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
     Code:Code
     JavaScript:JavaScript
     CoffeeScript:CoffeeScript
+    Lambda:Lambda
 
     # literals
     Literal:Literal

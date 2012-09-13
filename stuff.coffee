@@ -59,6 +59,8 @@ module.filter 'editor_type', (interpreter) ->
             'symbol'
         else if obj instanceof interpreter.Literal
             'literal'
+        else if obj instanceof interpreter.Lambda
+            'lambda'
 
 module.directive 'ace', ($interpolate) ->
     require: '?ngModel'

@@ -9,7 +9,7 @@
   module = angular.module('vislang');
 
   module.factory('interpreter', function($q, $http, $timeout, $rootScope) {
-    var Call, Code, CodeSyntaxError, CoffeeScript, Connection, Definition, Exit, Graph, Input, InputError, JSON, JavaScript, Literal, Nib, Node, NotConnected, NotImplemented, Output, Runtime, RuntimeException, Subroutine, Symbol, Text, Type, UnknownNode, Value, all_definitions, clone_endpoint, definition_class_map, definition_classes, dissociate_exception, eval_expression, execute, find_nib_uses, find_value, ignore_if_disconnected, is_input, load_implementation, load_implementation_v2, load_state, loaded, make_connection, make_index_map, make_value, node_class_map, node_classes, resurrect_node, save_state, schema_version, source_data, source_data_deferred, start_saving, value_output_nib;
+    var Call, Code, CodeSyntaxError, CoffeeScript, Connection, Definition, Exit, Graph, Input, InputError, JSON, JavaScript, Lambda, Literal, Nib, Node, NotConnected, NotImplemented, Output, Runtime, RuntimeException, Subroutine, Symbol, Text, Type, UnknownNode, Value, all_definitions, clone_endpoint, definition_class_map, definition_classes, dissociate_exception, eval_expression, execute, find_nib_uses, find_value, ignore_if_disconnected, is_input, load_implementation, load_implementation_v2, load_state, loaded, make_connection, make_index_map, make_value, node_class_map, node_classes, resurrect_node, save_state, schema_version, source_data, source_data_deferred, start_saving, value_output_nib;
     schema_version = 2;
     eval_expression = function(expression) {
       return eval("(" + expression + ")");
@@ -838,6 +838,22 @@
       return Graph;
 
     })(Subroutine);
+    Lambda = (function(_super) {
+
+      __extends(Lambda, _super);
+
+      function Lambda() {
+        Lambda.__super__.constructor.apply(this, arguments);
+        this.implementation_input = new Input({
+          scope: this,
+          text: 'implementation',
+          id: this.id
+        });
+      }
+
+      return Lambda;
+
+    })(Subroutine);
     find_value = function(text, type, collection) {
       var id, thing;
       if (collection == null) {
@@ -926,7 +942,7 @@
       return Text;
 
     })(Literal);
-    definition_classes = [Graph, JavaScript, CoffeeScript, JSON, Text, Symbol];
+    definition_classes = [Graph, JavaScript, CoffeeScript, JSON, Text, Symbol, Lambda];
     definition_class_map = make_index_map(definition_classes, 'name');
     /* NODE TYPES
     */
@@ -1012,7 +1028,13 @@
       };
 
       Call.prototype.get_inputs = function() {
-        return this.implementation.inputs;
+        var inputs;
+        inputs = this.implementation.inputs;
+        if (this.implementation instanceof Lambda) {
+          return [this.implementation.implementation_input].concat(inputs);
+        } else {
+          return inputs;
+        }
       };
 
       Call.prototype.get_outputs = function() {
@@ -1512,6 +1534,7 @@
       Code: Code,
       JavaScript: JavaScript,
       CoffeeScript: CoffeeScript,
+      Lambda: Lambda,
       Literal: Literal,
       JSON: JSON,
       Text: Text,
