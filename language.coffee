@@ -172,6 +172,8 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
         # However, when accessing it as a node itself, these are reversed.
         # This is because inputs on the inside are outputs on the outside and visa versa.
         # These functions follow the same protocol as the functions of the same name on Node classes
+        get_nib_type: (type) ->
+            if type is 'input' then @get_inputs() else @get_outputs()
         get_inputs: -> @outputs
         get_outputs: -> @inputs
         evaluate: -> @
@@ -556,6 +558,9 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
             @id ?= UUID()
             @scope.nodes.push @
 
+        get_nib_type: (type) ->
+            if type is 'input' then @get_inputs() else @get_outputs()
+
         get_inputs: -> @implementation.inputs
         get_outputs: -> @implementation.outputs
 
@@ -667,24 +672,32 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
                 nib:@from.nib.id
                 node:@from.node.id
                 index:@from.node.index
+                internal:@from.internal?
             to:
                 nib:@to.nib.id
                 node:@to.node.id
                 index:@to.node.index
+                internal:@to.internal?
 
     value_output_nib = new Output scope:null, id:null, index:0
 
     is_input = (it) ->
         is_input_class = it.nib instanceof Input
-        if it.node instanceof Graph or it.node.implementation instanceof Lambda then is_input_class else not is_input_class
+        if it.node instanceof Graph or it.internal then is_input_class else not is_input_class
 
     make_connection = (scope, {from, to}) ->
+        # check if it's an internal connection on a lambda
+        for connector in [to,from]
+            if connector.node instanceof Lambda and connector.nib isnt value_output_nib
+                connector.internal = true
+
         from_input = is_input from
         to_input = is_input to
         return unless (from_input and not to_input) or (to_input and not from_input)
 
         if to_input
             [from,to] = [to,from]
+
 
         # delete other connections that are to this nib/node combination
         scope.delete_connections 'to', to.node, to.nib
@@ -811,14 +824,19 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
             from_node = get_node 'from'
             to_node = get_node 'to'
 
-            get_nib = (node, nibs, direction) ->
-                if node instanceof Value
-                    nibs[0]
+            get_nib = (node, connector, nib_type) ->
+                if connector.internal
+                    nibs = node.implementation["get_#{nib_type}"]()
+                    _.find nibs, (nib) -> nib.id is connector.nib
                 else
-                    _.find nibs, (nib) -> nib.id is connection_data[direction].nib
+                    nibs = node["get_#{nib_type}"]()
+                    if node instanceof Value
+                        nibs[0]
+                    else
+                        _.find nibs, (nib) -> nib.id is connector.nib
 
-            from_nib = get_nib from_node, from_node.get_outputs(), 'from'
-            to_nib = get_nib to_node, to_node.get_inputs(), 'to'
+            from_nib = get_nib from_node, connection_data['from'], 'outputs'
+            to_nib = get_nib to_node, connection_data['to'], 'inputs'
 
             console.log "Broken connection!", connection_data, from_node, to_node, from_nib, to_nib unless from_node and to_node and from_nib and to_nib
 

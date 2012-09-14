@@ -385,6 +385,14 @@
         });
       };
 
+      Subroutine.prototype.get_nib_type = function(type) {
+        if (type === 'input') {
+          return this.get_inputs();
+        } else {
+          return this.get_outputs();
+        }
+      };
+
       Subroutine.prototype.get_inputs = function() {
         return this.outputs;
       };
@@ -960,6 +968,14 @@
         this.scope.nodes.push(this);
       }
 
+      Node.prototype.get_nib_type = function(type) {
+        if (type === 'input') {
+          return this.get_inputs();
+        } else {
+          return this.get_outputs();
+        }
+      };
+
       Node.prototype.get_inputs = function() {
         return this.implementation.inputs;
       };
@@ -1185,12 +1201,14 @@
           from: {
             nib: this.from.nib.id,
             node: this.from.node.id,
-            index: this.from.node.index
+            index: this.from.node.index,
+            internal: this.from.internal != null
           },
           to: {
             nib: this.to.nib.id,
             node: this.to.node.id,
-            index: this.to.node.index
+            index: this.to.node.index,
+            internal: this.to.internal != null
           }
         };
       };
@@ -1206,22 +1224,29 @@
     is_input = function(it) {
       var is_input_class;
       is_input_class = it.nib instanceof Input;
-      if (it.node instanceof Graph || it.node.implementation instanceof Lambda) {
+      if (it.node instanceof Graph || it.internal) {
         return is_input_class;
       } else {
         return !is_input_class;
       }
     };
     make_connection = function(scope, _arg) {
-      var from, from_input, to, to_input, _ref;
+      var connector, from, from_input, to, to_input, _i, _len, _ref, _ref1;
       from = _arg.from, to = _arg.to;
+      _ref = [to, from];
+      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+        connector = _ref[_i];
+        if (connector.node instanceof Lambda && connector.nib !== value_output_nib) {
+          connector.internal = true;
+        }
+      }
       from_input = is_input(from);
       to_input = is_input(to);
       if (!((from_input && !to_input) || (to_input && !from_input))) {
         return;
       }
       if (to_input) {
-        _ref = [to, from], from = _ref[0], to = _ref[1];
+        _ref1 = [to, from], from = _ref1[0], to = _ref1[1];
       }
       scope.delete_connections('to', to.node, to.nib);
       return new Connection({
@@ -1397,17 +1422,26 @@
         };
         from_node = get_node('from');
         to_node = get_node('to');
-        get_nib = function(node, nibs, direction) {
-          if (node instanceof Value) {
-            return nibs[0];
-          } else {
+        get_nib = function(node, connector, nib_type) {
+          var nibs;
+          if (connector.internal) {
+            nibs = node.implementation["get_" + nib_type]();
             return _.find(nibs, function(nib) {
-              return nib.id === connection_data[direction].nib;
+              return nib.id === connector.nib;
             });
+          } else {
+            nibs = node["get_" + nib_type]();
+            if (node instanceof Value) {
+              return nibs[0];
+            } else {
+              return _.find(nibs, function(nib) {
+                return nib.id === connector.nib;
+              });
+            }
           }
         };
-        from_nib = get_nib(from_node, from_node.get_outputs(), 'from');
-        to_nib = get_nib(to_node, to_node.get_inputs(), 'to');
+        from_nib = get_nib(from_node, connection_data['from'], 'outputs');
+        to_nib = get_nib(to_node, connection_data['to'], 'inputs');
         if (!(from_node && to_node && from_nib && to_nib)) {
           console.log("Broken connection!", connection_data, from_node, to_node, from_nib, to_nib);
         }
