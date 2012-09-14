@@ -1236,7 +1236,7 @@
       _ref = [to, from];
       for (_i = 0, _len = _ref.length; _i < _len; _i++) {
         connector = _ref[_i];
-        if (connector.node instanceof Lambda && connector.nib !== value_output_nib) {
+        if (connector.node.implementation instanceof Lambda && connector.nib !== value_output_nib) {
           connector.internal = true;
         }
       }

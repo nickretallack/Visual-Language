@@ -688,7 +688,7 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
     make_connection = (scope, {from, to}) ->
         # check if it's an internal connection on a lambda
         for connector in [to,from]
-            if connector.node instanceof Lambda and connector.nib isnt value_output_nib
+            if connector.node.implementation instanceof Lambda and connector.nib isnt value_output_nib
                 connector.internal = true
 
         from_input = is_input from
