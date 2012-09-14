@@ -672,12 +672,12 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
                 nib:@from.nib.id
                 node:@from.node.id
                 index:@from.node.index
-                internal:@from.internal?
+                internal:@from.internal
             to:
                 nib:@to.nib.id
                 node:@to.node.id
                 index:@to.node.index
-                internal:@to.internal?
+                internal:@to.internal
 
     value_output_nib = new Output scope:null, id:null, index:0
 
@@ -688,7 +688,7 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
     make_connection = (scope, {from, to}) ->
         # check if it's an internal connection on a lambda
         for connector in [to,from]
-            if connector.node.implementation instanceof Lambda and connector.nib isnt value_output_nib
+            if connector.node.implementation instanceof Lambda and connector.node instanceof Value and connector.nib isnt value_output_nib
                 connector.internal = true
 
         from_input = is_input from
@@ -846,9 +846,11 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
                 from:
                     node: from_node
                     nib: from_nib
+                    internal:connection_data.from.internal
                 to:
                     node: to_node
                     nib: to_nib
+                    internal:connection_data.to.internal
 
     load_implementation = (subroutine, data, subroutines) ->
         for node in data.nodes

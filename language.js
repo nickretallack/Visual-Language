@@ -1202,13 +1202,13 @@
             nib: this.from.nib.id,
             node: this.from.node.id,
             index: this.from.node.index,
-            internal: this.from.internal != null
+            internal: this.from.internal
           },
           to: {
             nib: this.to.nib.id,
             node: this.to.node.id,
             index: this.to.node.index,
-            internal: this.to.internal != null
+            internal: this.to.internal
           }
         };
       };
@@ -1236,7 +1236,7 @@
       _ref = [to, from];
       for (_i = 0, _len = _ref.length; _i < _len; _i++) {
         connector = _ref[_i];
-        if (connector.node.implementation instanceof Lambda && connector.nib !== value_output_nib) {
+        if (connector.node.implementation instanceof Lambda && connector.node instanceof Value && connector.nib !== value_output_nib) {
           connector.internal = true;
         }
       }
@@ -1450,11 +1450,13 @@
           scope: graph,
           from: {
             node: from_node,
-            nib: from_nib
+            nib: from_nib,
+            internal: connection_data.from.internal
           },
           to: {
             node: to_node,
-            nib: to_nib
+            nib: to_nib,
+            internal: connection_data.to.internal
           }
         }));
       }
