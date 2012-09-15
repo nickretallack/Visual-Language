@@ -1,0 +1,21 @@
+<div class="row-fluid">
+    <div class="span6">
+
+        <h3>Outputs</h3>
+        <div ng-repeat="output in definition.outputs">
+            <input ng-model="output.text">
+            <a ng-click="delete_output(output)">-</a>
+            <a ng-click="evaluate_output(output)">evaluate</a>
+        </div>
+        <a ng-click="new_output(definition)">+Output</a>
+    </div>
+    <div class="span6">
+
+        <h3>Inputs</h3>
+        <div ng-repeat="input in definition.inputs">
+            <input ng-model="input.text">
+            <a ng-click="delete_input(input)">-</a>
+        </div>
+        <a ng-click="new_input(definition)">+Input</a>
+    </div>
+</div>
