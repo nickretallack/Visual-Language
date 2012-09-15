@@ -59,6 +59,9 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
             for nib in @inputs.concat @outputs
                 return nib if nib.id is id
 
+        get_call_inputs: -> @inputs
+        get_value_inputs: -> @inputs
+
         find_uses: ->
             graph for id, graph of all_definitions when graph instanceof Graph and graph.uses_definition @
 
@@ -494,6 +497,14 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
 
             return new_node
 
+    class BoundLambda
+        constructor: ({@node, @scope}) ->
+
+        call: (inputs, output_index, runtime, scope) ->
+            graph = @node.scope
+            output_nib = @node.implementation.outputs[output_index]
+            graph.evaluate_connection @scope, @node, output_nib, runtime
+
     class Lambda extends Graph
         constructor: ->
             super
@@ -501,6 +512,19 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
                 scope:@
                 text:'implementation'
                 id:@id
+
+        evaluate:(scope, node) ->
+            new BoundLambda
+                node:node
+                scope:scope
+
+        invoke: (output_nib, inputs, scope, node, runtime) ->
+            implementation = inputs[0]()
+            inputs = inputs[1..]
+            implementation.call inputs, 0, runtime, scope
+
+        get_call_inputs: ->
+            [@implementation_input].concat @inputs
 
     find_value = (text, type, collection=all_definitions) ->
         for id, thing of collection
@@ -585,7 +609,7 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
     class Call extends Node
         virtual_inputs: (the_scope, runtime) ->
             input_values = []
-            for input in @implementation.inputs
+            for input in @implementation.get_call_inputs()
                 do (input) =>
                     input_values.push _.memoize =>
                         the_scope.subroutine.evaluate_connection the_scope, @, input, runtime
@@ -621,7 +645,7 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
             @outputs = [value_output_nib]
 
         type:'value'
-        evaluate: -> @implementation.evaluate()
+        evaluate:(the_scope, output_nib, runtime)-> @implementation.evaluate the_scope, @
         subroutines_referenced: -> []
         get_inputs: -> []
         get_outputs: -> @outputs
@@ -697,7 +721,6 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
 
         if to_input
             [from,to] = [to,from]
-
 
         # delete other connections that are to this nib/node combination
         scope.delete_connections 'to', to.node, to.nib
