@@ -129,11 +129,11 @@ module.controller 'subroutine', ($scope, $routeParams, interpreter, $q) ->
 
     $scope.new_input =  ->
         definition.add_input()
-        async -> $('.subroutine-input:last input').focus()
+        async -> $('.subroutine-input:last input:first').focus()
 
     $scope.new_output =  ->
         definition.add_output()
-        async -> $('.subroutine-output:last input').focus()
+        async -> $('.subroutine-output:last input:first').focus()
 
     delete_nib = (nib, direction, type) ->
         uses = interpreter.find_nib_uses nib, direction

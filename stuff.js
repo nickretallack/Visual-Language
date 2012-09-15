@@ -182,13 +182,13 @@
     $scope.new_input = function() {
       definition.add_input();
       return async(function() {
-        return $('.subroutine-input:last input').focus();
+        return $('.subroutine-input:last input:first').focus();
       });
     };
     $scope.new_output = function() {
       definition.add_output();
       return async(function() {
-        return $('.subroutine-output:last input').focus();
+        return $('.subroutine-output:last input:first').focus();
       });
     };
     delete_nib = function(nib, direction, type) {

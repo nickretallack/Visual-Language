@@ -271,7 +271,7 @@
           var value;
           value = _.memoize(function() {
             var result;
-            result = prompt("Provide a JSON value for input " + input.index + ": \"" + input.text + "\"");
+            result = input.default_value ? input.default_value : prompt("Provide a JSON value for input " + input.index + ": \"" + input.text + "\"");
             if (result === null) {
               throw new Exit("cancelled execution");
             }
@@ -1193,7 +1193,7 @@
 
       function Nib(_arg) {
         var _ref, _ref1, _ref2;
-        _ref = _arg != null ? _arg : {}, this.scope = _ref.scope, this.text = _ref.text, this.id = _ref.id, this.index = _ref.index, this.n_ary = _ref.n_ary;
+        _ref = _arg != null ? _arg : {}, this.scope = _ref.scope, this.text = _ref.text, this.id = _ref.id, this.index = _ref.index, this.n_ary = _ref.n_ary, this.default_value = _ref.default_value;
         if (this.id !== null) {
           if ((_ref1 = this.id) == null) {
             this.id = UUID();
@@ -1212,7 +1212,8 @@
         return {
           text: this.text,
           id: this.id,
-          n_ary: this.n_ary
+          n_ary: this.n_ary,
+          default_value: this.default_value
         };
       };
 

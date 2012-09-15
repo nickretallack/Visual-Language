@@ -110,7 +110,9 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
             for input in @inputs
                 do (input) ->
                     value = _.memoize ->
-                        result = prompt "Provide a JSON value for input #{input.index}: \"#{input.text}\""
+                        result = if input.default_value then input.default_value
+                        else prompt "Provide a JSON value for input #{input.index}: \"#{input.text}\""
+
                         throw new Exit "cancelled execution" if result is null
                         try
                             return window.JSON.parse result
@@ -689,7 +691,7 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
     ### OTHER TYPES ###
 
     class Nib  # Abstract. Do not instantiate
-        constructor: ({@scope, @text, @id, @index, @n_ary}={}) ->
+        constructor: ({@scope, @text, @id, @index, @n_ary, @default_value}={}) ->
             # Null nib id is allowed for value nodes
             @id ?= UUID() unless @id is null
             @n_ary ?= false
@@ -700,6 +702,7 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
             text:@text
             id:@id
             n_ary:@n_ary
+            default_value:@default_value
 
     class Input extends Nib
     class Output extends Nib
@@ -827,6 +830,7 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
                 implementation_pass = []
                 for id, definition_data of data.definitions
 
+                    # small fixups
                     if definition_data.type is 'JSONLiteral'
                         definition_data.type = 'JSON'
                     else if definition_data.type is 'StringLiteral'
