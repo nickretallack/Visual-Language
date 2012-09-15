@@ -539,7 +539,7 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
         invoke: (output_nib, inputs, scope, node, runtime) ->
             implementation = inputs[0]()
             inputs = inputs[1..]
-            implementation.call inputs, 0, runtime, scope
+            implementation.call inputs, output_nib.index, runtime, scope
 
         get_call_inputs: ->
             [@implementation_input].concat @inputs

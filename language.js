@@ -915,7 +915,7 @@
         var implementation;
         implementation = inputs[0]();
         inputs = inputs.slice(1);
-        return implementation.call(inputs, 0, runtime, scope);
+        return implementation.call(inputs, output_nib.index, runtime, scope);
       };
 
       Lambda.prototype.get_call_inputs = function() {
