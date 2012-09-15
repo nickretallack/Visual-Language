@@ -518,8 +518,11 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
             unless connection
                 throw new NotConnected "Missing connection in #{@text} to node #{window.JSON.stringify(to_node)}"
             {node, nib} = connection.from
+
             if node is @node
-                return scope.inputs[nib.index]()
+                scope.inputs[nib.index]()
+            else if node instanceof Graph
+                @parent_scope.inputs[nib.index]()
             else
                 node.evaluate scope, nib, runtime
 

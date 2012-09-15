@@ -883,6 +883,8 @@
         _ref = connection.from, node = _ref.node, nib = _ref.nib;
         if (node === this.node) {
           return scope.inputs[nib.index]();
+        } else if (node instanceof Graph) {
+          return this.parent_scope.inputs[nib.index]();
         } else {
           return node.evaluate(scope, nib, runtime);
         }
