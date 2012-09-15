@@ -498,12 +498,30 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
             return new_node
 
     class BoundLambda
-        constructor: ({@node, @scope}) ->
+        constructor: ({@node, @parent_scope}) ->
 
         call: (inputs, output_index, runtime, scope) ->
+            scope =
+                subroutine:@
+                inputs:inputs
+                memos:{}
+
             graph = @node.scope
             output_nib = @node.implementation.outputs[output_index]
-            graph.evaluate_connection @scope, @node, output_nib, runtime
+            @evaluate_connection scope, @node, output_nib, runtime
+
+        evaluate_connection:(scope, to_node, to_nib, runtime) ->
+            """ Check if it touches one of our inputs.  If not, do what the graph would do.
+            Eventually we'll have a real scope in here.
+            """
+            connection = @parent_scope.subroutine.find_connection 'to', to_node, to_nib
+            unless connection
+                throw new NotConnected "Missing connection in #{@text} to node #{window.JSON.stringify(to_node)}"
+            {node, nib} = connection.from
+            if node is @node
+                return scope.inputs[nib.index]()
+            else
+                node.evaluate scope, nib, runtime
 
     class Lambda extends Graph
         constructor: ->
@@ -516,7 +534,7 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
         evaluate:(scope, node) ->
             new BoundLambda
                 node:node
-                scope:scope
+                parent_scope:scope
 
         invoke: (output_nib, inputs, scope, node, runtime) ->
             implementation = inputs[0]()

@@ -857,14 +857,35 @@
     BoundLambda = (function() {
 
       function BoundLambda(_arg) {
-        this.node = _arg.node, this.scope = _arg.scope;
+        this.node = _arg.node, this.parent_scope = _arg.parent_scope;
       }
 
       BoundLambda.prototype.call = function(inputs, output_index, runtime, scope) {
         var graph, output_nib;
+        scope = {
+          subroutine: this,
+          inputs: inputs,
+          memos: {}
+        };
         graph = this.node.scope;
         output_nib = this.node.implementation.outputs[output_index];
-        return graph.evaluate_connection(this.scope, this.node, output_nib, runtime);
+        return this.evaluate_connection(scope, this.node, output_nib, runtime);
+      };
+
+      BoundLambda.prototype.evaluate_connection = function(scope, to_node, to_nib, runtime) {
+        " Check if it touches one of our inputs.  If not, do what the graph would do.\nEventually we'll have a real scope in here.";
+
+        var connection, nib, node, _ref;
+        connection = this.parent_scope.subroutine.find_connection('to', to_node, to_nib);
+        if (!connection) {
+          throw new NotConnected("Missing connection in " + this.text + " to node " + (window.JSON.stringify(to_node)));
+        }
+        _ref = connection.from, node = _ref.node, nib = _ref.nib;
+        if (node === this.node) {
+          return scope.inputs[nib.index]();
+        } else {
+          return node.evaluate(scope, nib, runtime);
+        }
       };
 
       return BoundLambda;
@@ -886,7 +907,7 @@
       Lambda.prototype.evaluate = function(scope, node) {
         return new BoundLambda({
           node: node,
-          scope: scope
+          parent_scope: scope
         });
       };
 
