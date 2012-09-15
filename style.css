@@ -64,6 +64,8 @@ position:relative; z-index:20;}
 .string { background:gray; }
 .symbol { background:lime }
 .lambda.call {border:1px solid lightgray;}
+.lambda.value {z-index:0;}
+.node {z-index:1;}
 
 .subroutine-input input, .subroutine-output input {border:0; padding:0;}
 
