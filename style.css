@@ -128,7 +128,7 @@ ul {padding:0; margin:0;}
 .btn-toolbar {position:relative;}
 
 .lambda-canvas {
-    width:300px;
+    width:500px;
     height:150px;
     border:1px dotted gray;
     z-index:-1;
