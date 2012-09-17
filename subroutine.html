@@ -117,6 +117,7 @@
 <div ng-switch-when="code" id="builtin_editor">
     <input ng-model="definition.text" class="title" shrinky-input="definition | text_or_id" placeholder="{{definition.id}}">
     <div ng-include="'definition-options.html'"></div>
+    <label for="stateful"><input id="stateful" type="checkbox" ng-model="definition.stateful">Stateful</label>
     <div class="container-fluid">
         <div ng-include="'nibs-editor.html'"></div>
         <div class="row-fluid">

@@ -101,7 +101,7 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
             graph for id, graph of all_definitions when graph instanceof Graph and graph.uses_definition @
 
     class Subroutine extends Definition
-        constructor: ({inputs, outputs}={}) ->
+        constructor: ({inputs, outputs, @stateful}={}) ->
             super
             @inputs = []
             @outputs = []
@@ -637,7 +637,7 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
     class Call extends Node
         virtual_inputs: (the_scope, runtime) ->
             input_values = []
-            for input in @implementation.get_call_inputs()
+            for input in @get_inputs()
                 do (input) =>
                     input_values.push _.memoize =>
                         the_scope.subroutine.evaluate_connection the_scope, @, input, runtime
@@ -733,6 +733,8 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
                 internal:@to.internal
 
     value_output_nib = new Output scope:null, id:null, index:0
+    sequencer_input_nib = new Input scope:null, id:'sequencer', index:0
+    sequencer_output_nib = new Output scope:null, id:'sequencer', index:0
 
     is_input = (it) ->
         is_input_class = it.nib instanceof Input

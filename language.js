@@ -9,7 +9,7 @@
   module = angular.module('vislang');
 
   module.factory('interpreter', function($q, $http, $timeout, $rootScope) {
-    var BoundLambda, Call, Code, CodeSyntaxError, CoffeeScript, Connection, Definition, Exit, Graph, Input, InputError, JSON, JavaScript, Lambda, Literal, Nib, Node, NotConnected, NotImplemented, Output, Runtime, RuntimeException, Subroutine, Symbol, Text, Type, UnknownNode, Value, all_definitions, clone_endpoint, definition_class_map, definition_classes, dissociate_exception, eval_expression, execute, find_nib_uses, find_value, ignore_if_disconnected, is_input, load_implementation, load_implementation_v2, load_state, loaded, make_connection, make_index_map, make_value, node_class_map, node_classes, resurrect_node, save_state, schema_version, source_data, source_data_deferred, start_saving, value_output_nib;
+    var BoundLambda, Call, Code, CodeSyntaxError, CoffeeScript, Connection, Definition, Exit, Graph, Input, InputError, JSON, JavaScript, Lambda, Literal, Nib, Node, NotConnected, NotImplemented, Output, Runtime, RuntimeException, Subroutine, Symbol, Text, Type, UnknownNode, Value, all_definitions, clone_endpoint, definition_class_map, definition_classes, dissociate_exception, eval_expression, execute, find_nib_uses, find_value, ignore_if_disconnected, is_input, load_implementation, load_implementation_v2, load_state, loaded, make_connection, make_index_map, make_value, node_class_map, node_classes, resurrect_node, save_state, schema_version, sequencer_input_nib, sequencer_output_nib, source_data, source_data_deferred, start_saving, value_output_nib;
     schema_version = 2;
     eval_expression = function(expression) {
       return eval("(" + expression + ")");
@@ -250,7 +250,7 @@
 
       function Subroutine(_arg) {
         var data, inputs, outputs, _i, _j, _len, _len1, _ref, _ref1, _ref2;
-        _ref = _arg != null ? _arg : {}, inputs = _ref.inputs, outputs = _ref.outputs;
+        _ref = _arg != null ? _arg : {}, inputs = _ref.inputs, outputs = _ref.outputs, this.stateful = _ref.stateful;
         Subroutine.__super__.constructor.apply(this, arguments);
         this.inputs = [];
         this.outputs = [];
@@ -1093,7 +1093,7 @@
         var input, input_values, _fn, _i, _len, _ref,
           _this = this;
         input_values = [];
-        _ref = this.implementation.get_call_inputs();
+        _ref = this.get_inputs();
         _fn = function(input) {
           return input_values.push(_.memoize(function() {
             return the_scope.subroutine.evaluate_connection(the_scope, _this, input, runtime);
@@ -1291,6 +1291,16 @@
     value_output_nib = new Output({
       scope: null,
       id: null,
+      index: 0
+    });
+    sequencer_input_nib = new Input({
+      scope: null,
+      id: 'sequencer',
+      index: 0
+    });
+    sequencer_output_nib = new Output({
+      scope: null,
+      id: 'sequencer',
       index: 0
     });
     is_input = function(it) {
