@@ -70,10 +70,10 @@ position:relative; z-index:20;}
 .subroutine-input input, .subroutine-output input {border:0; padding:0;}
 
 #editor-options {
-    position:absolute; left:5px; top:0;
+    position:absolute; left:0; top:0; right:0;
 }
 
-.title {font-size:18pt; border:none;}
+.title {font-size:18pt; border:none; width:100%;}
 
 #new-input, #new-output {
     position:absolute;
