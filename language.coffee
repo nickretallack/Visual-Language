@@ -211,7 +211,6 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
                 stateful_input = last inputs
                 ignore_if_disconnected stateful_input
                 inputs = inputs[...-1]
-                return if output_nib.id is 'stateful_output'
 
             try
                 memo_function = @eval_code @memo_implementation
@@ -226,6 +225,7 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
             args = inputs.concat [output_nib.index, runtime]
             if scope and memo_function and node.id not of scope.memos
                 scope.memos[node.id] = memo_function args...
+            return if output_nib.id is 'stateful_output'
             return output_function (args.concat [scope?.memos[node.id]])...
 
     class CoffeeScript extends Code

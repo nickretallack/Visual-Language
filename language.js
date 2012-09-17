@@ -462,9 +462,6 @@
           stateful_input = last(inputs);
           ignore_if_disconnected(stateful_input);
           inputs = inputs.slice(0, -1);
-          if (output_nib.id === 'stateful_output') {
-            return;
-          }
         }
         try {
           memo_function = this.eval_code(this.memo_implementation);
@@ -482,6 +479,9 @@
         args = inputs.concat([output_nib.index, runtime]);
         if (scope && memo_function && !(node.id in scope.memos)) {
           scope.memos[node.id] = memo_function.apply(null, args);
+        }
+        if (output_nib.id === 'stateful_output') {
+          return;
         }
         return output_function.apply(null, args.concat([scope != null ? scope.memos[node.id] : void 0]));
       };
