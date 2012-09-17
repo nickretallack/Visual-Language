@@ -969,7 +969,7 @@
       for (id in collection) {
         thing = collection[id];
         if (thing instanceof type) {
-          if (thing.text === text) {
+          if (!thing.text && thing.value === text) {
             return thing;
           }
         }
@@ -981,11 +981,11 @@
         force_string = false;
       }
       implementation = user_input instanceof Definition ? user_input : force_string ? (find_value(user_input, Text)) || new Text({
-        text: user_input
+        value: user_input
       }) : (value = eval_expression(user_input), value instanceof String ? (find_value(value, Text)) || new Text({
-        text: value
+        value: value
       }) : (find_value(user_input, JSON)) || new JSON({
-        text: user_input
+        value: user_input
       }));
       return new Value({
         scope: scope,
@@ -1013,7 +1013,7 @@
       __extends(Literal, _super);
 
       function Literal(_arg) {
-        this.value = _arg.value;
+        this.value = (_arg != null ? _arg : {}).value;
         Literal.__super__.constructor.apply(this, arguments);
       }
 
@@ -1478,6 +1478,9 @@
             if ((_ref3 = definition_data.type) === 'JSON' || _ref3 === 'Text') {
               if ((_ref4 = definition_data.value) == null) {
                 definition_data.value = definition_data.text;
+              }
+              if (definition_data.value === definition_data.text) {
+                delete definition_data.text;
               }
             }
             the_class = definition_class_map[definition_data.type];

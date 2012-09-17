@@ -575,7 +575,7 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
     find_value = (text, type, collection=all_definitions) ->
         for id, thing of collection
             if thing instanceof type
-                if thing.text is text
+                if not thing.text and thing.value is text
                     return thing
 
 
@@ -584,13 +584,13 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
             user_input
         else
             if force_string
-                (find_value user_input, Text) or new Text text:user_input
+                (find_value user_input, Text) or new Text value:user_input
             else
                 value = eval_expression user_input
                 if value instanceof String
-                    (find_value value, Text) or new Text text:value
+                    (find_value value, Text) or new Text value:value
                 else
-                    (find_value user_input, JSON) or new JSON text:user_input
+                    (find_value user_input, JSON) or new JSON value:user_input
 
         new Value
             scope:scope
@@ -601,7 +601,7 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
         evaluate: -> @id
 
     class Literal extends Definition # Abstract
-        constructor: ({@value}) -> super
+        constructor: ({@value}=) -> super
         toJSON: ->
             _.extend super,
             value:@value
@@ -861,6 +861,8 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
 
                     if definition_data.type in ['JSON','Text']
                         definition_data.value ?= definition_data.text
+                        if definition_data.value is definition_data.text
+                            delete definition_data.text
 
                     the_class = definition_class_map[definition_data.type]
                     instance = new the_class definition_data

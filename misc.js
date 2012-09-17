@@ -18,4 +18,8 @@
     }
   };
 
+  RegExp.escape = function(s) {
+    return s.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&');
+  };
+
 }).call(this);

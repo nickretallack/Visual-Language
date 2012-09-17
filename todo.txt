@@ -34,6 +34,7 @@ For the instructions page:
 
 
 Next steps:
+    - fix shrinky-inputs not respecting length of id
     - not letting you remove nibs is annoying.  It should let you force it and delete connections.
     - rearrange nib ordering with drag and drop
     - rename @scope to @graph to reduce confusion

@@ -190,6 +190,18 @@ module.controller 'library', ($scope, $q, interpreter, $filter) ->
 
     $scope.is_literal = (thing) -> thing instanceof interpreter.Literal
 
+    $scope.search_filter = (item) ->
+        query = new RegExp(RegExp.escape $scope.search, 'i')
+        search_field = (field) -> string_contains item[field], query
+
+        return true if search_field 'text'
+        if item instanceof interpreter.Literal
+            return search_field 'value'
+        else if item instanceof interpreter.Code
+            return (search_field 'memo_implementation') or (search_field 'output_implementation')
+
+string_contains = (haystack, needle) -> ((haystack or '').search needle) != -1
+
 
 ### INTERACTION ###
 
