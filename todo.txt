@@ -1,3 +1,17 @@
+Now I have lambda abstractions.  This is awesome.  However, they're not perfect yet, since they don't know how to do memoize themselves and when to re-run things.  Currently they probably re-run the entire tree of things connected to them.  This isn't bad, but it could be better.
+
+Ideally, when you drag a node over a lambda, it should have its graph set to that lambda instead of the outer graph.  This could be abused, however, if you made a connection that left the lambda and then returned to it -- you'd be putting a bit of code on an island, telling it to be memoized in the outer scope even though it depends on data from the inner scope.  That wouldn't make sense.  I need to disallow this somehow.  Aha: I just have to disallow you from connecting an output inside the lambda to an input outside the lambda.  But what if you made a valid connection and then dragged it in so that it was invalid?  Perhaps instead I should highlight your nodes red and indicate the problem.
+
+
+
+
+
+
+
+Todo:
+    - rename @scope to @graph to reduce confusion
+
+
 New big step: long-running programs as instances.
 When you run a program, it needs two things: a graphical output and a log output.
 

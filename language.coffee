@@ -249,6 +249,9 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
                 return node.evaluate scope, nib, runtime
 
         find_connection: (direction, node, nib) ->
+            unless node? and nib?
+                console.log "what"
+                console.log "what"
             ### Use this to determine how nodes are connected ###
             for connection in @connections
                 if connection[direction].node.id is node.id and connection[direction].nib.id is nib.id
@@ -505,14 +508,13 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
     class BoundLambda
         constructor: ({@node, @parent_scope}) ->
 
-        call: (inputs, output_index, runtime, scope) ->
+        invoke: (output_nib, inputs, calling_scope, node, runtime) ->
             scope =
                 subroutine:@
                 inputs:inputs
                 memos:{}
 
             graph = @node.scope
-            output_nib = @node.implementation.outputs[output_index]
             @evaluate_connection scope, @node, output_nib, runtime
 
         evaluate_connection:(scope, to_node, to_nib, runtime) ->
@@ -547,7 +549,7 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
         invoke: (output_nib, inputs, scope, node, runtime) ->
             implementation = inputs[0]()
             inputs = inputs[1..]
-            implementation.call inputs, output_nib.index, runtime, scope
+            implementation.invoke output_nib, inputs, null, null, runtime
 
         get_call_inputs: ->
             [@implementation_input].concat @inputs

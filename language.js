@@ -545,10 +545,14 @@
       };
 
       Graph.prototype.find_connection = function(direction, node, nib) {
+        var connection, _i, _len, _ref;
+        if (!((node != null) && (nib != null))) {
+          console.log("what");
+          console.log("what");
+        }
         /* Use this to determine how nodes are connected
         */
 
-        var connection, _i, _len, _ref;
         _ref = this.connections;
         for (_i = 0, _len = _ref.length; _i < _len; _i++) {
           connection = _ref[_i];
@@ -863,15 +867,14 @@
         this.node = _arg.node, this.parent_scope = _arg.parent_scope;
       }
 
-      BoundLambda.prototype.call = function(inputs, output_index, runtime, scope) {
-        var graph, output_nib;
+      BoundLambda.prototype.invoke = function(output_nib, inputs, calling_scope, node, runtime) {
+        var graph, scope;
         scope = {
           subroutine: this,
           inputs: inputs,
           memos: {}
         };
         graph = this.node.scope;
-        output_nib = this.node.implementation.outputs[output_index];
         return this.evaluate_connection(scope, this.node, output_nib, runtime);
       };
 
@@ -920,7 +923,7 @@
         var implementation;
         implementation = inputs[0]();
         inputs = inputs.slice(1);
-        return implementation.call(inputs, output_nib.index, runtime, scope);
+        return implementation.invoke(output_nib, inputs, null, null, runtime);
       };
 
       Lambda.prototype.get_call_inputs = function() {
