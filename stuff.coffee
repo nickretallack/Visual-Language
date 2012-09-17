@@ -8,8 +8,8 @@ module.run ($rootScope) ->
 
 module.filter 'text_or_id', ->
     (obj) ->
-        if obj.text? then obj.text
-        else if obj.value? then obj.value
+        if obj.text then obj.text
+        else if obj.value then obj.value
         else obj.id
 
 module.filter 'is_valid_json', -> is_valid_json

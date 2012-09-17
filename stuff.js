@@ -16,9 +16,9 @@
 
   module.filter('text_or_id', function() {
     return function(obj) {
-      if (obj.text != null) {
+      if (obj.text) {
         return obj.text;
-      } else if (obj.value != null) {
+      } else if (obj.value) {
         return obj.value;
       } else {
         return obj.id;
