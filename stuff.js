@@ -26,6 +26,16 @@
     };
   });
 
+  module.filter('value_or_id', function() {
+    return function(obj) {
+      if (obj.value) {
+        return obj.value;
+      } else {
+        return obj.id;
+      }
+    };
+  });
+
   module.filter('is_valid_json', function() {
     return is_valid_json;
   });

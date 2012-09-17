@@ -12,6 +12,11 @@ module.filter 'text_or_id', ->
         else if obj.value then obj.value
         else obj.id
 
+module.filter 'value_or_id', ->
+    (obj) ->
+        if obj.value then obj.value
+        else obj.id
+
 module.filter 'is_valid_json', -> is_valid_json
 
 module.filter 'node_type', (interpreter) ->
