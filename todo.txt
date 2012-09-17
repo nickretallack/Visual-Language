@@ -4,14 +4,6 @@ Ideally, when you drag a node over a lambda, it should have its graph set to tha
 
 
 
-
-
-
-
-Todo:
-    - rename @scope to @graph to reduce confusion
-
-
 New big step: long-running programs as instances.
 When you run a program, it needs two things: a graphical output and a log output.
 
@@ -42,34 +34,40 @@ For the instructions page:
 
 
 Next steps:
+    - not letting you remove nibs is annoying.  It should let you force it and delete connections.
+    - rearrange nib ordering with drag and drop
+    - rename @scope to @graph to reduce confusion
+
+    - give lambda values draggable size
+    - instructions
     - make a game
-    - setup/teardown for timers, event handlers, globals, and elements
-    - vectors
-    - display graphics
+    - add memoization for idempotent things
     - copy-paste nodes
     - make json / string literals editable, and symbols renamable.
     - Allow a paragraph of explanation inside all definitions
-    - add the import/export system back
-    - write instructions
-    - some way of stopping/startinge the application --maybe it should be in a different window
     - add a node-creation menu for when you click on empty space
         - new [javascript | graph | literal]
         - search the library and insert [value | call]
 
-    - not letting you remove nibs is annoying.  It should let you force it and delete connections.
-    - rearrange nib ordering with drag and drop
     - edit individual nodes, and give the 'clone' option
     sort nibs in make_from based on their positions on the outside...
         how do you compare a node to a nib though?  Perhaps parent inputs are always first?
     - keyboard binding for delete
     - position/select nodes based on their centers instead of their corners
-    - click nibs to delete connections
+    - clicking nibs should give you the option to delete connections
     - "glob nibs" - one nib internally that is many nibs externally, var args.  This would be especially useful as it would enable a "list" function.
-    - "idempotent" checkbox that memoizes?
-    - "stateful" checkbox that adds extra null nibs.  Display those specially.
     - add 'bypass' option for selections that only have one input and output.  Connect around em.
+    - add the import/export system back
 
 done
+    - make values name-able.  Make their text default to their value if they have no name.  May require a schema update
+    - add sugar for sequencers(;) -- "stateful" checkbox that adds extra null nibs.  Display those specially.
+    - make function values acceptable in place of bound lambdas
+    - put a space for default/testing values next to inputs
+    - some way of stopping/starting the application --maybe it should be in a different window
+    - vectors
+    - display graphics
+    - setup/teardown for timers, event handlers, globals, and elements
     - delete button
     - list all the places a definition is used when you're editing it
     - display calls and values differently
