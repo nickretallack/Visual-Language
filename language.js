@@ -363,7 +363,6 @@
           data = {};
         }
         nib = new the_class(_.extend(data, {
-          scope: this,
           index: this[group].length
         }));
         this[group].push(nib);
@@ -633,7 +632,7 @@
       };
 
       Graph.prototype.add_node = function(node) {
-        node.scope = this;
+        node.graph = this;
         return this.nodes.push(node);
       };
 
@@ -741,7 +740,7 @@
         for (_j = 0, _len1 = internal_connections.length; _j < _len1; _j++) {
           connection = internal_connections[_j];
           new Connection({
-            scope: this,
+            graph: this,
             from: translate_endpoint(connection.from),
             to: translate_endpoint(connection.to)
           });
@@ -766,7 +765,7 @@
               });
             } else {
               new Connection({
-                scope: this,
+                graph: this,
                 from: clone_endpoint(connection.from),
                 to: translate_endpoint(inner_connection.to)
               });
@@ -800,7 +799,7 @@
         return _.values(node_mapping);
       };
 
-      Graph.prototype.make_from = function(old_scope, nodes) {
+      Graph.prototype.make_from = function(old_graph, nodes) {
         /* Build a subroutine out of nodes in another subroutine.
         */
 
@@ -812,7 +811,7 @@
           this.add_node(node);
         }
         new_node = new Call({
-          scope: old_scope,
+          graph: old_graph,
           position: V(0, 0),
           implementation: this
         });
@@ -863,7 +862,7 @@
               for (_m = 0, _len4 = group.length; _m < _len4; _m++) {
                 connection = group[_m];
                 data = {
-                  scope: this
+                  graph: this
                 };
                 data[direction] = clone_endpoint(connection[direction]);
                 data[other_direction] = {
@@ -902,7 +901,7 @@
           inputs: inputs,
           memos: {}
         };
-        graph = this.node.scope;
+        graph = this.node.graph;
         return this.evaluate_connection(scope, this.node, output_nib, runtime);
       };
 
@@ -934,7 +933,6 @@
       function Lambda() {
         Lambda.__super__.constructor.apply(this, arguments);
         this.implementation_input = new Input({
-          scope: this,
           text: 'implementation',
           id: this.id
         });
@@ -975,7 +973,7 @@
         }
       }
     };
-    make_value = function(scope, position, user_input, force_string) {
+    make_value = function(graph, position, user_input, force_string) {
       var implementation, value;
       if (force_string == null) {
         force_string = false;
@@ -988,7 +986,7 @@
         value: user_input
       }));
       return new Value({
-        scope: scope,
+        graph: graph,
         position: position,
         implementation: implementation
       });
@@ -1067,11 +1065,11 @@
 
       function Node(_arg) {
         var _ref, _ref1;
-        _ref = _arg != null ? _arg : {}, this.scope = _ref.scope, this.id = _ref.id, this.position = _ref.position, this.implementation = _ref.implementation;
+        _ref = _arg != null ? _arg : {}, this.graph = _ref.graph, this.id = _ref.id, this.position = _ref.position, this.implementation = _ref.implementation;
         if ((_ref1 = this.id) == null) {
           this.id = UUID();
         }
-        this.scope.nodes.push(this);
+        this.graph.nodes.push(this);
       }
 
       Node.prototype.get_nib_type = function(type) {
@@ -1083,8 +1081,8 @@
       };
 
       Node.prototype["delete"] = function() {
-        this.scope.delete_node_connections(this);
-        return this.scope.remove_node(this);
+        this.graph.delete_node_connections(this);
+        return this.graph.remove_node(this);
       };
 
       Node.prototype.toJSON = function() {
@@ -1220,7 +1218,7 @@
 
       function Nib(_arg) {
         var _ref, _ref1, _ref2;
-        _ref = _arg != null ? _arg : {}, this.scope = _ref.scope, this.text = _ref.text, this.id = _ref.id, this.index = _ref.index, this.n_ary = _ref.n_ary, this.default_value = _ref.default_value;
+        _ref = _arg != null ? _arg : {}, this.text = _ref.text, this.id = _ref.id, this.index = _ref.index, this.n_ary = _ref.n_ary, this.default_value = _ref.default_value;
         if (this.id !== null) {
           if ((_ref1 = this.id) == null) {
             this.id = UUID();
@@ -1273,11 +1271,11 @@
 
       function Connection(_arg) {
         var _base, _base1, _ref, _ref1, _ref2, _ref3;
-        _ref = _arg != null ? _arg : {}, this.scope = _ref.scope, this.from = _ref.from, this.to = _ref.to, this.id = _ref.id;
+        _ref = _arg != null ? _arg : {}, this.graph = _ref.graph, this.from = _ref.from, this.to = _ref.to, this.id = _ref.id;
         if ((_ref1 = this.id) == null) {
           this.id = UUID();
         }
-        this.scope.connections.push(this);
+        this.graph.connections.push(this);
         if ((_ref2 = (_base = this.to).index) == null) {
           _base.index = 0;
         }
@@ -1310,18 +1308,15 @@
 
     })();
     value_output_nib = new Output({
-      scope: null,
-      id: null,
+      id: 'value_output',
       index: 0
     });
     sequencer_input_nib = new Input({
-      scope: null,
       id: 'sequencer_input',
       index: 0,
       text: ';'
     });
     sequencer_output_nib = new Output({
-      scope: null,
       id: 'sequencer_output',
       index: 0,
       text: ';'
@@ -1335,7 +1330,7 @@
         return !is_input_class;
       }
     };
-    make_connection = function(scope, _arg) {
+    make_connection = function(graph, _arg) {
       var connector, from, from_input, to, to_input, _i, _len, _ref, _ref1;
       from = _arg.from, to = _arg.to;
       _ref = [to, from];
@@ -1353,9 +1348,9 @@
       if (to_input) {
         _ref1 = [to, from], from = _ref1[0], to = _ref1[1];
       }
-      scope.delete_connections('to', to.node, to.nib);
+      graph.delete_connections('to', to.node, to.nib);
       return new Connection({
-        scope: scope,
+        graph: graph,
         from: from,
         to: to
       });
@@ -1499,13 +1494,13 @@
           return all_definitions;
       }
     };
-    resurrect_node = function(scope, node_data) {
+    resurrect_node = function(graph, node_data) {
       var implementation, node, node_class, position;
       node_class = node_class_map[node_data.type];
       position = V(node_data.position);
       implementation = all_definitions[node_data.implementation_id];
       return node = new node_class({
-        scope: scope,
+        graph: graph,
         position: position,
         implementation: implementation,
         id: node_data.id
@@ -1560,7 +1555,7 @@
         }
         _results.push(new Connection({
           id: connection_data.id,
-          scope: graph,
+          graph: graph,
           from: {
             node: from_node,
             nib: from_nib,
@@ -1586,7 +1581,7 @@
             text: node.text
           }), subroutines[value.id] = value, value));
           new Value({
-            scope: subroutine,
+            graph: subroutine,
             position: position,
             implementation: implementation,
             id: node.id
@@ -1595,7 +1590,7 @@
           implementation = subroutines[node.implementation_id];
           if (implementation) {
             new Call({
-              scope: subroutine,
+              graph: subroutine,
               position: position,
               implementation: implementation,
               id: node.id
@@ -1627,7 +1622,7 @@
         }
         _results.push(new Connection({
           id: connection_data.id,
-          scope: subroutine,
+          graph: subroutine,
           from: {
             node: from_node,
             nib: from_nib

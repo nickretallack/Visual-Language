@@ -176,14 +176,14 @@ module.controller 'library', ($scope, $q, interpreter, $filter) ->
 
     $scope.use = (subroutine) ->
         new interpreter.Call
-            scope: $scope.$root.definition
+            graph: $scope.$root.definition
             position: V(0,0)
             implementation: subroutine
 
     $scope.new_symbol = (user_input) ->
         symbol = new interpreter.Symbol text:user_input
         new interpreter.Value
-            scope:$scope.$root.definition
+            graph:$scope.$root.definition
             position: V(0,0)
             implementation:symbol
 

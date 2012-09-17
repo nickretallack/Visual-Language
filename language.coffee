@@ -161,7 +161,6 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
 
         add_nib: (group, the_class, data={}) ->
             nib = new the_class _.extend data,
-                scope:@
                 index:@[group].length
             @[group].push nib
             nib
@@ -308,7 +307,7 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
             @nodes = _.without @nodes, node
 
         add_node: (node) ->
-            node.scope = @
+            node.graph = @
             @nodes.push node
 
         remove_connection: (connection) ->
@@ -406,7 +405,7 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
 
             for connection in internal_connections
                 new Connection
-                    scope:@
+                    graph:@
                     from:translate_endpoint connection.from
                     to:translate_endpoint connection.to
 
@@ -428,7 +427,7 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
                             middle_connection:inner_connection
                     else
                         new Connection
-                            scope:@
+                            graph:@
                             from:clone_endpoint connection.from
                             to:translate_endpoint inner_connection.to
 
@@ -455,7 +454,7 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
             return _.values node_mapping
 
 
-        make_from: (old_scope, nodes) ->
+        make_from: (old_graph, nodes) ->
             ### Build a subroutine out of nodes in another subroutine. ###
 
             # move the nodes
@@ -465,7 +464,7 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
 
             # create a node for this in the old parent
             new_node = new Call
-                scope:old_scope
+                graph:old_graph
                 position:V(0,0)
                 implementation:@
 
@@ -506,7 +505,7 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
                     for connection in group
                         # Create a new connection to the previous connection's target,
                         # which is now inside the new subroutine
-                        data = scope:@
+                        data = graph:@
                         data[direction] = clone_endpoint connection[direction]
                         data[other_direction] =
                             node:@
@@ -532,7 +531,7 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
                 inputs:inputs
                 memos:{}
 
-            graph = @node.scope
+            graph = @node.graph
             @evaluate_connection scope, @node, output_nib, runtime
 
         evaluate_connection:(scope, to_node, to_nib, runtime) ->
@@ -555,7 +554,6 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
         constructor: ->
             super
             @implementation_input = new Input
-                scope:@
                 text:'implementation'
                 id:@id
 
@@ -579,7 +577,7 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
                     return thing
 
 
-    make_value = (scope, position, user_input, force_string=false) ->
+    make_value = (graph, position, user_input, force_string=false) ->
         implementation = if user_input instanceof Definition
             user_input
         else
@@ -593,7 +591,7 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
                     (find_value user_input, JSON) or new JSON value:user_input
 
         new Value
-            scope:scope
+            graph:graph
             position: position
             implementation: implementation
 
@@ -601,7 +599,7 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
         evaluate: -> @id
 
     class Literal extends Definition # Abstract
-        constructor: ({@value}=) -> super
+        constructor: ({@value}={}) -> super
         toJSON: ->
             _.extend super,
             value:@value
@@ -629,16 +627,16 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
     ### NODE TYPES ###
 
     class Node extends Type# Abstract
-        constructor: ({@scope, @id, @position, @implementation}={})->
+        constructor: ({@graph, @id, @position, @implementation}={})->
             @id ?= UUID()
-            @scope.nodes.push @
+            @graph.nodes.push @
 
         get_nib_type: (type) ->
             if type is 'input' then @get_inputs() else @get_outputs()
 
         delete: ->
-            @scope.delete_node_connections @
-            @scope.remove_node @
+            @graph.delete_node_connections @
+            @graph.remove_node @
 
         toJSON: ->
             _.extend super,
@@ -712,7 +710,7 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
     ### OTHER TYPES ###
 
     class Nib  # Abstract. Do not instantiate
-        constructor: ({@scope, @text, @id, @index, @n_ary, @default_value}={}) ->
+        constructor: ({@text, @id, @index, @n_ary, @default_value}={}) ->
             # Null nib id is allowed for value nodes
             @id ?= UUID() unless @id is null
             @n_ary ?= false
@@ -729,9 +727,9 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
     class Output extends Nib
 
     class Connection
-        constructor:({@scope, @from, @to, @id}={}) ->
+        constructor:({@graph, @from, @to, @id}={}) ->
             @id ?= UUID()
-            @scope.connections.push @
+            @graph.connections.push @
             @to.index ?= 0
             @from.index ?= 0
             throw "WTF" unless @from instanceof Object and @to instanceof Object
@@ -748,15 +746,15 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
                 index:@to.node.index
                 internal:@to.internal
 
-    value_output_nib = new Output scope:null, id:null, index:0
-    sequencer_input_nib = new Input scope:null, id:'sequencer_input', index:0, text:';'
-    sequencer_output_nib = new Output scope:null, id:'sequencer_output', index:0, text:';'
+    value_output_nib = new Output id:'value_output', index:0
+    sequencer_input_nib = new Input id:'sequencer_input', index:0, text:';'
+    sequencer_output_nib = new Output id:'sequencer_output', index:0, text:';'
 
     is_input = (it) ->
         is_input_class = it.nib instanceof Input
         if it.node instanceof Graph or it.internal then is_input_class else not is_input_class
 
-    make_connection = (scope, {from, to}) ->
+    make_connection = (graph, {from, to}) ->
         # check if it's an internal connection on a lambda
         for connector in [to,from]
             if connector.node.implementation instanceof Lambda and connector.node instanceof Value and connector.nib isnt value_output_nib
@@ -770,10 +768,10 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
             [from,to] = [to,from]
 
         # delete other connections that are to this nib/node combination
-        scope.delete_connections 'to', to.node, to.nib
+        graph.delete_connections 'to', to.node, to.nib
 
         new Connection
-            scope: scope
+            graph: graph
             from: from
             to: to
 
@@ -876,13 +874,13 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
 
                 all_definitions
 
-    resurrect_node = (scope, node_data) ->
+    resurrect_node = (graph, node_data) ->
         node_class = node_class_map[node_data.type]
         position = V node_data.position
         implementation = all_definitions[node_data.implementation_id]
         # TODO: in case no implementation is found, create an unknown node
         node = new node_class
-            scope:scope
+            graph:graph
             position:position
             implementation:implementation
             id:node_data.id
@@ -918,7 +916,7 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
 
             new Connection
                 id: connection_data.id
-                scope: graph
+                graph: graph
                 from:
                     node: from_node
                     nib: from_nib
@@ -946,7 +944,7 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
                         value
 
                 new Value
-                    scope: subroutine
+                    graph: subroutine
                     position: position
                     implementation: implementation
                     id: node.id
@@ -954,7 +952,7 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
                 implementation = subroutines[node.implementation_id]
                 if implementation
                     new Call
-                        scope: subroutine
+                        graph: subroutine
                         position: position
                         implementation: implementation
                         id: node.id
@@ -974,7 +972,7 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
 
             new Connection
                 id: connection_data.id
-                scope: subroutine
+                graph: subroutine
                 from:
                     node: from_node
                     nib: from_nib

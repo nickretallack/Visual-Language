@@ -257,7 +257,7 @@
     };
     $scope.use = function(subroutine) {
       return new interpreter.Call({
-        scope: $scope.$root.definition,
+        graph: $scope.$root.definition,
         position: V(0, 0),
         implementation: subroutine
       });
@@ -268,7 +268,7 @@
         text: user_input
       });
       return new interpreter.Value({
-        scope: $scope.$root.definition,
+        graph: $scope.$root.definition,
         position: V(0, 0),
         implementation: symbol
       });
