@@ -1047,14 +1047,6 @@
         }
       };
 
-      Node.prototype.get_inputs = function() {
-        return this.implementation.inputs;
-      };
-
-      Node.prototype.get_outputs = function() {
-        return this.implementation.outputs;
-      };
-
       Node.prototype["delete"] = function() {
         this.scope.delete_node_connections(this);
         return this.scope.remove_node(this);

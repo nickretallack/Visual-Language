@@ -613,9 +613,6 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
         get_nib_type: (type) ->
             if type is 'input' then @get_inputs() else @get_outputs()
 
-        get_inputs: -> @implementation.inputs
-        get_outputs: -> @implementation.outputs
-
         delete: ->
             @scope.delete_node_connections @
             @scope.remove_node @
