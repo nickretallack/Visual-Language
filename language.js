@@ -412,12 +412,20 @@
         return this.inputs;
       };
 
+      Subroutine.prototype.add_stateful_nib = function(nib, nibs) {
+        if (!this.stateful) {
+          return nibs;
+        } else {
+          return nibs.concat([nib]);
+        }
+      };
+
       Subroutine.prototype.get_call_inputs = function() {
-        return this.inputs;
+        return this.add_stateful_nib(sequencer_input_nib, this.inputs);
       };
 
       Subroutine.prototype.get_call_outputs = function() {
-        return this.outputs;
+        return this.add_stateful_nib(sequencer_output_nib, this.outputs);
       };
 
       Subroutine.prototype.evaluate = function() {
@@ -1290,12 +1298,14 @@
     sequencer_input_nib = new Input({
       scope: null,
       id: 'sequencer',
-      index: 0
+      index: 0,
+      text: ';'
     });
     sequencer_output_nib = new Output({
       scope: null,
       id: 'sequencer',
-      index: 0
+      index: 0,
+      text: ';'
     });
     is_input = function(it) {
       var is_input_class;

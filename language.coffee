@@ -185,8 +185,14 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
         get_inputs: -> @outputs
         get_outputs: -> @inputs
 
-        get_call_inputs: -> @inputs
-        get_call_outputs: -> @outputs
+        add_stateful_nib: (nib, nibs) ->
+            unless @stateful
+                nibs
+            else
+                nibs.concat [nib]
+
+        get_call_inputs: -> @add_stateful_nib sequencer_input_nib, @inputs
+        get_call_outputs: -> @add_stateful_nib sequencer_output_nib, @outputs
 
         evaluate: -> @
 
@@ -730,8 +736,8 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
                 internal:@to.internal
 
     value_output_nib = new Output scope:null, id:null, index:0
-    sequencer_input_nib = new Input scope:null, id:'sequencer', index:0
-    sequencer_output_nib = new Output scope:null, id:'sequencer', index:0
+    sequencer_input_nib = new Input scope:null, id:'sequencer', index:0, text:';'
+    sequencer_output_nib = new Output scope:null, id:'sequencer', index:0, text:';'
 
     is_input = (it) ->
         is_input_class = it.nib instanceof Input
