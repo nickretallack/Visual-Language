@@ -996,46 +996,47 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
         loaded.resolve true
         start_saving() unless window.location.search is '?debug'
 
+    {
     # helpers
-    make_connection:make_connection
-    find_nib_uses:find_nib_uses
-    make_value:make_value
+    make_connection
+    find_nib_uses
+    make_value
     loaded:loaded.promise
 
     # exceptions
-    RuntimeException:RuntimeException
-    Exit:Exit
-    InputError:InputError
-    NotConnected:NotConnected
-    NotImplemented:NotImplemented
+    RuntimeException
+    Exit
+    InputError
+    NotConnected
+    NotImplemented
     BuiltinSyntaxError:CodeSyntaxError
 
     definition_types:definition_classes
-    Definition:Definition
+    Definition
 
     # subroutines
-    Subroutine:Subroutine
-    Graph:Graph
-    Code:Code
-    JavaScript:JavaScript
-    CoffeeScript:CoffeeScript
-    Lambda:Lambda
+    Subroutine
+    Graph
+    Code
+    JavaScript
+    CoffeeScript
+    Lambda
 
     # literals
-    Literal:Literal
-    JSON:JSON
-    Text:Text
-    Symbol:Symbol
+    Literal
+    JSON
+    Text
+    Symbol
 
     # nodes
-    Node:Node
-    Call:Call
-    Value:Value
+    Node
+    Call
+    Value
 
     # pieces
-    Input:Input
-    Output:Output
-    Connection:Connection
+    Input
+    Output
+    Connection
     subroutines:all_definitions
-    Runtime:Runtime
-
+    Runtime
+    }
