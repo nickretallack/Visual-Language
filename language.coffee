@@ -174,6 +174,7 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
             _.extend super,
                 inputs:@inputs
                 outputs:@outputs
+                stateful:@stateful
 
         # This bit seems confusing because a subroutine is used in two ways.
         # When referencing it as the implementation of a node, you'll want to access @inputs and @outputs.

@@ -392,7 +392,8 @@
       Subroutine.prototype.toJSON = function() {
         return _.extend(Subroutine.__super__.toJSON.apply(this, arguments), {
           inputs: this.inputs,
-          outputs: this.outputs
+          outputs: this.outputs,
+          stateful: this.stateful
         });
       };
 
