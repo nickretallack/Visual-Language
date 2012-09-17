@@ -15,6 +15,7 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
         node:endpoint.node
         nib:endpoint.nib
 
+    last = (list) -> list[list.length-1]
 
     ### EXCEPTION TYPES ###
 
@@ -206,6 +207,12 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
                 output_implementation:@output_implementation
 
         invoke: (output_nib, inputs, scope, node, runtime) ->
+            if @stateful
+                stateful_input = last inputs
+                ignore_if_disconnected stateful_input
+                inputs = inputs[...-1]
+                return if output_nib.id is 'stateful_output'
+
             try
                 memo_function = @eval_code @memo_implementation
                 output_function = @eval_code @output_implementation
@@ -737,8 +744,8 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
                 internal:@to.internal
 
     value_output_nib = new Output scope:null, id:null, index:0
-    sequencer_input_nib = new Input scope:null, id:'sequencer', index:0, text:';'
-    sequencer_output_nib = new Output scope:null, id:'sequencer', index:0, text:';'
+    sequencer_input_nib = new Input scope:null, id:'sequencer_input', index:0, text:';'
+    sequencer_output_nib = new Output scope:null, id:'sequencer_output', index:0, text:';'
 
     is_input = (it) ->
         is_input_class = it.nib instanceof Input

@@ -9,7 +9,7 @@
   module = angular.module('vislang');
 
   module.factory('interpreter', function($q, $http, $timeout, $rootScope) {
-    var BoundLambda, Call, Code, CodeSyntaxError, CoffeeScript, Connection, Definition, Exit, Graph, Input, InputError, JSON, JavaScript, Lambda, Literal, Nib, Node, NotConnected, NotImplemented, Output, Runtime, RuntimeException, Subroutine, Symbol, Text, Type, UnknownNode, Value, all_definitions, clone_endpoint, definition_class_map, definition_classes, dissociate_exception, eval_expression, execute, find_nib_uses, find_value, ignore_if_disconnected, is_input, load_implementation, load_implementation_v2, load_state, loaded, make_connection, make_index_map, make_value, node_class_map, node_classes, resurrect_node, save_state, schema_version, sequencer_input_nib, sequencer_output_nib, source_data, source_data_deferred, start_saving, value_output_nib;
+    var BoundLambda, Call, Code, CodeSyntaxError, CoffeeScript, Connection, Definition, Exit, Graph, Input, InputError, JSON, JavaScript, Lambda, Literal, Nib, Node, NotConnected, NotImplemented, Output, Runtime, RuntimeException, Subroutine, Symbol, Text, Type, UnknownNode, Value, all_definitions, clone_endpoint, definition_class_map, definition_classes, dissociate_exception, eval_expression, execute, find_nib_uses, find_value, ignore_if_disconnected, is_input, last, load_implementation, load_implementation_v2, load_state, loaded, make_connection, make_index_map, make_value, node_class_map, node_classes, resurrect_node, save_state, schema_version, sequencer_input_nib, sequencer_output_nib, source_data, source_data_deferred, start_saving, value_output_nib;
     schema_version = 2;
     eval_expression = function(expression) {
       return eval("(" + expression + ")");
@@ -28,6 +28,9 @@
         node: endpoint.node,
         nib: endpoint.nib
       };
+    };
+    last = function(list) {
+      return list[list.length - 1];
     };
     /* EXCEPTION TYPES
     */
@@ -454,7 +457,15 @@
       };
 
       Code.prototype.invoke = function(output_nib, inputs, scope, node, runtime) {
-        var args, memo_function, output_function;
+        var args, memo_function, output_function, stateful_input;
+        if (this.stateful) {
+          stateful_input = last(inputs);
+          ignore_if_disconnected(stateful_input);
+          inputs = inputs.slice(0, -1);
+          if (output_nib.id === 'stateful_output') {
+            return;
+          }
+        }
         try {
           memo_function = this.eval_code(this.memo_implementation);
           output_function = this.eval_code(this.output_implementation);
@@ -1298,13 +1309,13 @@
     });
     sequencer_input_nib = new Input({
       scope: null,
-      id: 'sequencer',
+      id: 'sequencer_input',
       index: 0,
       text: ';'
     });
     sequencer_output_nib = new Output({
       scope: null,
-      id: 'sequencer',
+      id: 'sequencer_output',
       index: 0,
       text: ';'
     });
