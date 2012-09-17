@@ -97,8 +97,10 @@
 </div>
 
 <div ng-switch-when="literal">
+    <input ng-model="definition.text" class="title" shrinky-input="
+    definition | text_or_id" placeholder="{{definition.id}}">
     <div ng-include="'definition-options.html'"></div>
-    <div ace syntax="{{definition | syntax}}" ng-model="definition.text" style="position:relative; width:100%; height:500px"></div>
+    <div ace syntax="{{definition | syntax}}" ng-model="definition.value" style="position:relative; width:100%; height:500px"></div>
 </div>
 
 <div ng-switch-when="symbol">

@@ -1012,9 +1012,16 @@
 
       __extends(Literal, _super);
 
-      function Literal() {
-        return Literal.__super__.constructor.apply(this, arguments);
+      function Literal(_arg) {
+        this.value = _arg.value;
+        Literal.__super__.constructor.apply(this, arguments);
       }
+
+      Literal.prototype.toJSON = function() {
+        return _.extend(Literal.__super__.toJSON.apply(this, arguments), {
+          value: this.value
+        });
+      };
 
       return Literal;
 
@@ -1028,7 +1035,7 @@
       }
 
       JSON.prototype.evaluate = function() {
-        return eval_expression(this.text);
+        return eval_expression(this.value);
       };
 
       return JSON;
@@ -1043,7 +1050,7 @@
       }
 
       Text.prototype.evaluate = function() {
-        return this.text;
+        return this.value;
       };
 
       return Text;
@@ -1415,7 +1422,7 @@
       return localStorage.state = window.JSON.stringify(state);
     };
     load_state = function(data) {
-      var builtin, builtin_data, definition_data, graph, id, implementation_pass, instance, second_pass, subroutine, subroutine_data, subroutines, the_class, transform_definition_data, transform_nib_data, _i, _j, _len, _len1, _ref, _ref1, _ref2, _ref3;
+      var builtin, builtin_data, definition_data, graph, id, implementation_pass, instance, second_pass, subroutine, subroutine_data, subroutines, the_class, transform_definition_data, transform_nib_data, _i, _j, _len, _len1, _ref, _ref1, _ref2, _ref3, _ref4, _ref5;
       switch (data.schema_version) {
         case 1:
           subroutines = {};
@@ -1468,6 +1475,11 @@
             } else if (definition_data.type === 'StringLiteral') {
               definition_data.type = 'Text';
             }
+            if ((_ref3 = definition_data.type) === 'JSON' || _ref3 === 'Text') {
+              if ((_ref4 = definition_data.value) == null) {
+                definition_data.value = definition_data.text;
+              }
+            }
             the_class = definition_class_map[definition_data.type];
             instance = new the_class(definition_data);
             if (instance instanceof Graph) {
@@ -1478,7 +1490,7 @@
             }
           }
           for (_j = 0, _len1 = implementation_pass.length; _j < _len1; _j++) {
-            _ref3 = implementation_pass[_j], graph = _ref3.graph, data = _ref3.data;
+            _ref5 = implementation_pass[_j], graph = _ref5.graph, data = _ref5.data;
             load_implementation_v2(graph, data);
           }
           return all_definitions;

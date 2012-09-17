@@ -18,6 +18,8 @@
     return function(obj) {
       if (obj.text != null) {
         return obj.text;
+      } else if (obj.value != null) {
+        return obj.value;
       } else {
         return obj.id;
       }

@@ -601,13 +601,18 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
         evaluate: -> @id
 
     class Literal extends Definition # Abstract
+        constructor: ({@value}) -> super
+        toJSON: ->
+            _.extend super,
+            value:@value
+
         #content_id: -> CryptoJS.SHA256(@text).toString(CryptoJS.enc.Base64)
 
     class JSON extends Literal
-        evaluate: -> eval_expression @text
+        evaluate: -> eval_expression @value
 
     class Text extends Literal
-        evaluate: -> @text
+        evaluate: -> @value
 
     definition_classes = [
         Graph
@@ -853,6 +858,9 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
                         definition_data.type = 'JSON'
                     else if definition_data.type is 'StringLiteral'
                         definition_data.type = 'Text'
+
+                    if definition_data.type in ['JSON','Text']
+                        definition_data.value ?= definition_data.text
 
                     the_class = definition_class_map[definition_data.type]
                     instance = new the_class definition_data
