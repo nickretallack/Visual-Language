@@ -99,6 +99,73 @@
       return CodeSyntaxError;
 
     })(RuntimeException);
+    /* RUNTIME
+    */
+
+    Runtime = (function() {
+
+      function Runtime(_arg) {
+        this.graphics_element = (_arg != null ? _arg : {}).graphics_element;
+        this.log_messages = [];
+        this.event_handlers = [];
+        this.timers = [];
+        this.state = {};
+      }
+
+      Runtime.prototype.cleanup = function() {
+        var handler, timer, _i, _j, _len, _len1, _ref, _ref1, _results;
+        _ref = this.event_handlers;
+        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+          handler = _ref[_i];
+          handler.element.removeEventListener(handler.handler);
+        }
+        _ref1 = this.timers;
+        _results = [];
+        for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
+          timer = _ref1[_j];
+          _results.push(clearTimeout(timer));
+        }
+        return _results;
+      };
+
+      Runtime.prototype.setInterval = function(handler, output_index, delay) {
+        var handle, timer,
+          _this = this;
+        handle = function() {
+          return $rootScope.$apply(function() {
+            return handler.call([], output_index, _this);
+          });
+        };
+        timer = setInterval(handle, delay);
+        return this.timers.push(timer);
+      };
+
+      Runtime.prototype.addEventListener = function(type, handler_subroutine, element, output_index) {
+        var handler,
+          _this = this;
+        if (output_index == null) {
+          output_index = 0;
+        }
+        handler = function(event) {
+          return $rootScope.$apply(function() {
+            return handler_subroutine.call([event], output_index, _this);
+          });
+        };
+        element.addEventListener(type, handler);
+        return this.event_handlers.push({
+          element: element,
+          handler: handler
+        });
+      };
+
+      Runtime.prototype.log = function(message) {
+        this.log_messages.unshift(message);
+        return console.log(message);
+      };
+
+      return Runtime;
+
+    })();
     /* DEFINITION TYPES
     */
 
@@ -177,70 +244,6 @@
       return Definition;
 
     })(Type);
-    Runtime = (function() {
-
-      function Runtime(_arg) {
-        this.graphics_element = (_arg != null ? _arg : {}).graphics_element;
-        this.log_messages = [];
-        this.event_handlers = [];
-        this.timers = [];
-        this.state = {};
-      }
-
-      Runtime.prototype.cleanup = function() {
-        var handler, timer, _i, _j, _len, _len1, _ref, _ref1, _results;
-        _ref = this.event_handlers;
-        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-          handler = _ref[_i];
-          handler.element.removeEventListener(handler.handler);
-        }
-        _ref1 = this.timers;
-        _results = [];
-        for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
-          timer = _ref1[_j];
-          _results.push(clearTimeout(timer));
-        }
-        return _results;
-      };
-
-      Runtime.prototype.setInterval = function(handler, output_index, delay) {
-        var handle, timer,
-          _this = this;
-        handle = function() {
-          return $rootScope.$apply(function() {
-            return handler.call([], output_index, _this);
-          });
-        };
-        timer = setInterval(handle, delay);
-        return this.timers.push(timer);
-      };
-
-      Runtime.prototype.addEventListener = function(type, handler_subroutine, element, output_index) {
-        var handler,
-          _this = this;
-        if (output_index == null) {
-          output_index = 0;
-        }
-        handler = function(event) {
-          return $rootScope.$apply(function() {
-            return handler_subroutine.call([event], output_index, _this);
-          });
-        };
-        element.addEventListener(type, handler);
-        return this.event_handlers.push({
-          element: element,
-          handler: handler
-        });
-      };
-
-      Runtime.prototype.log = function(message) {
-        this.log_messages.unshift(message);
-        return console.log(message);
-      };
-
-      return Runtime;
-
-    })();
     Subroutine = (function(_super) {
 
       __extends(Subroutine, _super);

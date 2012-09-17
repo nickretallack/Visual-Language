@@ -36,34 +36,7 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
     class CodeSyntaxError extends RuntimeException
         constructor: (@name, @exception) -> @message = "#{exception} in builtin \"#{@name}\": "
 
-    ### DEFINITION TYPES ###
-
-    class Type
-        toJSON: ->
-            type:@constructor.name
-
-    class Definition extends Type
-        constructor: ({@id, @text}={}) ->
-            @id ?= UUID()
-            all_definitions[@id] = @
-
-        fromJSON: -> @
-        initialize: -> @
-
-        toJSON: ->
-            _.extend super,
-                id:@id
-                text:@text
-
-        find_nib: (id) ->
-            for nib in @inputs.concat @outputs
-                return nib if nib.id is id
-
-        get_call_inputs: -> @inputs
-        get_value_inputs: -> @inputs
-
-        find_uses: ->
-            graph for id, graph of all_definitions when graph instanceof Graph and graph.uses_definition @
+    ### RUNTIME ###
 
     class Runtime
         constructor: ({@graphics_element}={}) ->
@@ -96,6 +69,36 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
         log: (message) ->
             @log_messages.unshift message
             console.log message
+
+
+    ### DEFINITION TYPES ###
+
+    class Type
+        toJSON: ->
+            type:@constructor.name
+
+    class Definition extends Type
+        constructor: ({@id, @text}={}) ->
+            @id ?= UUID()
+            all_definitions[@id] = @
+
+        fromJSON: -> @
+        initialize: -> @
+
+        toJSON: ->
+            _.extend super,
+                id:@id
+                text:@text
+
+        find_nib: (id) ->
+            for nib in @inputs.concat @outputs
+                return nib if nib.id is id
+
+        get_call_inputs: -> @inputs
+        get_value_inputs: -> @inputs
+
+        find_uses: ->
+            graph for id, graph of all_definitions when graph instanceof Graph and graph.uses_definition @
 
     class Subroutine extends Definition
         constructor: ({inputs, outputs}={}) ->
