@@ -184,6 +184,10 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
             if type is 'input' then @get_inputs() else @get_outputs()
         get_inputs: -> @outputs
         get_outputs: -> @inputs
+
+        get_call_inputs: -> @inputs
+        get_call_outputs: -> @outputs
+
         evaluate: -> @
 
     class Code extends Subroutine
@@ -644,12 +648,8 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
             input_values = @virtual_inputs the_scope, runtime
             return @implementation.invoke output_nib, input_values, the_scope, @, runtime
 
-        get_inputs: -> 
-            inputs = @implementation.inputs
-            if @implementation instanceof Lambda
-                [@implementation.implementation_input].concat inputs 
-            else inputs 
-        get_outputs: -> @implementation.outputs
+        get_inputs: -> @implementation.get_call_inputs()
+        get_outputs: -> @implementation.get_call_outputs()
 
         ###
         subroutines_referenced: ->

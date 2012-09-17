@@ -412,6 +412,14 @@
         return this.inputs;
       };
 
+      Subroutine.prototype.get_call_inputs = function() {
+        return this.inputs;
+      };
+
+      Subroutine.prototype.get_call_outputs = function() {
+        return this.outputs;
+      };
+
       Subroutine.prototype.evaluate = function() {
         return this;
       };
@@ -1105,17 +1113,11 @@
       };
 
       Call.prototype.get_inputs = function() {
-        var inputs;
-        inputs = this.implementation.inputs;
-        if (this.implementation instanceof Lambda) {
-          return [this.implementation.implementation_input].concat(inputs);
-        } else {
-          return inputs;
-        }
+        return this.implementation.get_call_inputs();
       };
 
       Call.prototype.get_outputs = function() {
-        return this.implementation.outputs;
+        return this.implementation.get_call_outputs();
       };
 
       /*
