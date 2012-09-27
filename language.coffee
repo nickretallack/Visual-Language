@@ -606,6 +606,12 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
         get_value_inputs: -> @inputs
         get_call_outputs: -> @inputs
 
+        evaluate: (scope, nib, input_values) ->
+            result = {}
+            for [value, nib] in _.zip input_values,@inputs
+                result[nib.text] = value()
+            result
+
     class Symbol extends Definition
         evaluate: -> @id
 
@@ -664,7 +670,6 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
             new_node.old_id = old_id
             new_node
 
-    class Call extends Node
         virtual_inputs: (the_scope, runtime) ->
             input_values = []
             for input in @get_inputs()
@@ -672,6 +677,8 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
                     input_values.push _.memoize =>
                         the_scope.subroutine.evaluate_connection the_scope, @, input, runtime
             return input_values
+
+    class Call extends Node
 
         evaluate: (the_scope, output_nib, runtime) ->
             input_values = @virtual_inputs the_scope, runtime
@@ -699,7 +706,9 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
             @outputs = [value_output_nib]
 
         type:'value'
-        evaluate:(the_scope, output_nib, runtime)-> @implementation.evaluate the_scope, @
+        evaluate:(the_scope, output_nib, runtime)->
+            input_values = @virtual_inputs the_scope, runtime
+            @implementation.evaluate the_scope, @, input_values
         subroutines_referenced: -> []
         get_inputs: -> @implementation.get_value_inputs()
         get_outputs: -> @outputs

@@ -1015,6 +1015,17 @@
         return this.inputs;
       };
 
+      Type.prototype.evaluate = function(scope, nib, input_values) {
+        var result, value, _i, _len, _ref, _ref1;
+        result = {};
+        _ref = _.zip(input_values, this.inputs);
+        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+          _ref1 = _ref[_i], value = _ref1[0], nib = _ref1[1];
+          result[nib.text] = value();
+        }
+        return result;
+      };
+
       return Type;
 
     })(Subroutine);
@@ -1130,18 +1141,7 @@
         return new_node;
       };
 
-      return Node;
-
-    })(BaseType);
-    Call = (function(_super) {
-
-      __extends(Call, _super);
-
-      function Call() {
-        return Call.__super__.constructor.apply(this, arguments);
-      }
-
-      Call.prototype.virtual_inputs = function(the_scope, runtime) {
+      Node.prototype.virtual_inputs = function(the_scope, runtime) {
         var input, input_values, _fn, _i, _len, _ref,
           _this = this;
         input_values = [];
@@ -1157,6 +1157,17 @@
         }
         return input_values;
       };
+
+      return Node;
+
+    })(BaseType);
+    Call = (function(_super) {
+
+      __extends(Call, _super);
+
+      function Call() {
+        return Call.__super__.constructor.apply(this, arguments);
+      }
 
       Call.prototype.evaluate = function(the_scope, output_nib, runtime) {
         var input_values;
@@ -1201,7 +1212,9 @@
       Value.prototype.type = 'value';
 
       Value.prototype.evaluate = function(the_scope, output_nib, runtime) {
-        return this.implementation.evaluate(the_scope, this);
+        var input_values;
+        input_values = this.virtual_inputs(the_scope, runtime);
+        return this.implementation.evaluate(the_scope, this, input_values);
       };
 
       Value.prototype.subroutines_referenced = function() {
