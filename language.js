@@ -1026,6 +1026,12 @@
         return result;
       };
 
+      Type.prototype.invoke = function(nib, input_values, scope, node, runtime) {
+        var it;
+        it = input_values[0]();
+        return it[nib.text];
+      };
+
       return Type;
 
     })(Subroutine);

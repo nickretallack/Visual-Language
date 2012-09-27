@@ -612,6 +612,10 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
                 result[nib.text] = value()
             result
 
+        invoke: (nib, input_values, scope, node, runtime) ->
+            it = input_values[0]()
+            it[nib.text]
+
     class Symbol extends Definition
         evaluate: -> @id
 
