@@ -74,11 +74,11 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
 
     ### DEFINITION TYPES ###
 
-    class Type
+    class BaseType
         toJSON: ->
             type:@constructor.name
 
-    class Definition extends Type
+    class Definition extends BaseType
         constructor: ({@id, @text}={}) ->
             @id ?= UUID()
             all_definitions[@id] = @
@@ -626,7 +626,7 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
 
     ### NODE TYPES ###
 
-    class Node extends Type# Abstract
+    class Node extends BaseType# Abstract
         constructor: ({@graph, @id, @position, @implementation}={})->
             @id ?= UUID()
             @graph.nodes.push @
