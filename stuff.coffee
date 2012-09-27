@@ -66,6 +66,8 @@ module.filter 'editor_type', (interpreter) ->
     (obj) ->
         if obj instanceof interpreter.Lambda
             'lambda'
+        else if obj instanceof interpreter.Type
+            'type'
         else if obj instanceof interpreter.Graph
             'graph'
         else if obj instanceof interpreter.Code

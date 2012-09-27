@@ -9,13 +9,5 @@
         </div>
         <a ng-click="new_output(definition)">+Output</a>
     </div>
-    <div class="span6">
-
-        <h3>Inputs</h3>
-        <div ng-repeat="input in definition.inputs">
-            <input ng-model="input.text">
-            <a ng-click="delete_input(input)">-</a>
-        </div>
-        <a ng-click="new_input(definition)">+Input</a>
-    </div>
+    <div class="span6" ng-include="'input_editor.html'"></div>
 </div>

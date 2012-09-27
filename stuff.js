@@ -91,6 +91,8 @@
     return function(obj) {
       if (obj instanceof interpreter.Lambda) {
         return 'lambda';
+      } else if (obj instanceof interpreter.Type) {
+        return 'type';
       } else if (obj instanceof interpreter.Graph) {
         return 'graph';
       } else if (obj instanceof interpreter.Code) {

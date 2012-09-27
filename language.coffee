@@ -595,6 +595,15 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
             position: position
             implementation: implementation
 
+    class Type extends Subroutine
+        constructor: ->
+            super
+            @type_input = new Input
+                text:''
+                id:@id
+
+        get_call_inputs: -> [@type_input]
+
     class Symbol extends Definition
         evaluate: -> @id
 
@@ -620,6 +629,7 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
         Text
         Symbol
         Lambda
+        Type
     ]
 
     definition_class_map = make_index_map definition_classes, 'name'
@@ -1021,6 +1031,7 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
     JavaScript
     CoffeeScript
     Lambda
+    Type
 
     # literals
     Literal

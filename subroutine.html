@@ -110,6 +110,13 @@
     </div>
 </div>
 
+<div ng-switch-when="type">
+    <div ng-include="'definition-options.html'"></div>
+    <div class="container-fluid">
+        <div class="span6" ng-include="'input_editor.html'"></div>
+    </div>
+</div>
+
 <div ng-switch-when="code" id="builtin_editor">
     <div ng-include="'definition-options.html'"></div>
     <label for="stateful"><input id="stateful" type="checkbox" ng-model="definition.stateful">Stateful</label>
