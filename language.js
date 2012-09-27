@@ -1579,13 +1579,9 @@
             });
           } else {
             nibs = node["get_" + nib_type]();
-            if (node instanceof Value) {
-              return nibs[0];
-            } else {
-              return _.find(nibs, function(nib) {
-                return nib.id === connector.nib;
-              });
-            }
+            return _.find(nibs, function(nib) {
+              return nib.id === connector.nib;
+            });
           }
         };
         from_nib = get_nib(from_node, connection_data['from'], 'outputs');

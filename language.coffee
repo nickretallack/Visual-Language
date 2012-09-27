@@ -925,10 +925,7 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
                     _.find nibs, (nib) -> nib.id is connector.nib
                 else
                     nibs = node["get_#{nib_type}"]()
-                    if node instanceof Value
-                        nibs[0]
-                    else
-                        _.find nibs, (nib) -> nib.id is connector.nib
+                    _.find nibs, (nib) -> nib.id is connector.nib
 
             from_nib = get_nib from_node, connection_data['from'], 'outputs'
             to_nib = get_nib to_node, connection_data['to'], 'inputs'
