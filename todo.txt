@@ -1,16 +1,37 @@
-Now I have lambda abstractions.  This is awesome.  However, they're not perfect yet, since they don't know how to do memoize themselves and when to re-run things.  Currently they probably re-run the entire tree of things connected to them.  This isn't bad, but it could be better.
 
-Ideally, when you drag a node over a lambda, it should have its graph set to that lambda instead of the outer graph.  This could be abused, however, if you made a connection that left the lambda and then returned to it -- you'd be putting a bit of code on an island, telling it to be memoized in the outer scope even though it depends on data from the inner scope.  That wouldn't make sense.  I need to disallow this somehow.  Aha: I just have to disallow you from connecting an output inside the lambda to an input outside the lambda.  But what if you made a valid connection and then dragged it in so that it was invalid?  Perhaps instead I should highlight your nodes red and indicate the problem.
+-- Brett Victor wrote a thing about learnable programming languages: http://worrydream.com/LearnableProgramming/
+* Read the vocabulary: arguments are all labeled and there's no hidden state, so we're good here.
+* Follow the flow: well things are all connected, and semicolons have an intuitive execution order, but not everything else does.  Fortunately, that shouldn't matter.  However, it would be good to have a timeline view like he shows.
+* See the state: I could make the global state visible somewhere, like next to the logging view.
+* Create by reacting: Functions can have default values.  Next step would be to make it automatically running your code while you're editing it.
+* Create by abstracting: Hell yes.  My program does this very well.
+* identity and metaphor: not sure.  This is more about the environment than the language.
+* decomposition: definitely
+* recomposition: You can easily make a parent program that combines two child programs.  Nothing can possibly collide, and they use event handlers so you don't have to mix any top level functions together like in processing.
+
+---
+
+problem 1 is mostly solved by labeled parameters.
+However, that does not give you a visual representation of what things are for. Hm.
+
+The next set of problems could be solved by a nice debugger.  Unfortunately the program can't run predictively without the user input, but given a default set of user input it should be able to go.  I should make such a debugger, which creates a table to represent the stack traces like bret's diagrams.
+
+The one about putting the parts out on the table is already done by my library.  It'd be nice to give them icons too though I guess.
+
+start constant, then vary.  That's something my environment could do really well!  I need to make some intractive picture drawing demos for it.  You can totally create a function by selecting stuff.
+
+Hm, how can I do recomposition?  Well, since I'm using JavaScript events you can stitch programs together by atteching new event handlers.  Because of this, two whole programs can be mixed together from the outside using their semicolons.  That is assuming the people who created it provided semicolons.  There should be a stateful checkbox on graphs too that just adds those nibs on either side.
+
+Oh dude!  Since I'm storing state in the runtime, I could totally allow you to pause the program, edit things, and then run it some more.
 
 
+It'd be nice to visualize all the data types.  Once a JSON is evaluated, we can figure out what type it is and visualize it accordingly.  Also if you use constructors then more complex types can be identified and visualized.  Perhaps when you create a type constructor, you could add some code that visualizes it.  Perhaps that code could make use of an html template.
 
-New big step: long-running programs as instances.
-When you run a program, it needs two things: a graphical output and a log output.
+It makes me sad that he would say visual programing is worthless.  My visual language handles a lot of the things he wants in a language.  It lets you connect variables like he shows.  It lets you create functions the way he does.
 
-For functions with multiple outputs, you should have the option to evaluate just one or all of them or a selection of them.
+So I've already put in a space for you to populate default values for functions.  I should make it so that if things aren't connected, these defaults are used.  Then you have something really easily.  I dunno how I could do drag and drop in the actual output though.  Perhaps just twiddling the values would be good enough.
 
-
-Oh my god.  What if I did the documentation entirely in the program?
+---------------
 
 
 For the instructions page:
@@ -34,44 +55,49 @@ For the instructions page:
 
 
 Next steps:
-    - fix shrinky-inputs not respecting length of id
+    - instructions page
+    - TYPES!
+    - click nibs and get contextual options on them
+    - edit individual nodes, and give the 'clone' option
+    - copy-paste nodes
     - not letting you remove nibs is annoying.  It should let you force it and delete connections.
     - rearrange nib ordering with drag and drop
-    - rename @scope to @graph to reduce confusion
-
-    - give lambda values draggable size
-    - instructions
-    - make a game
-    - add memoization for idempotent things
-    - copy-paste nodes
-    - make json / string literals editable, and symbols renamable.
+    - sort nibs in make_from based on their positions on the outside...
+        how do you compare a node to a nib though?  Perhaps parent inputs are always first?
     - Allow a paragraph of explanation inside all definitions
+
+big things
+    - make a game
+    - add the import/export system
     - add a node-creation menu for when you click on empty space
         - new [javascript | graph | literal]
         - search the library and insert [value | call]
 
-    - edit individual nodes, and give the 'clone' option
-    sort nibs in make_from based on their positions on the outside...
-        how do you compare a node to a nib though?  Perhaps parent inputs are always first?
-    - keyboard binding for delete
+less important
     - position/select nodes based on their centers instead of their corners
-    - clicking nibs should give you the option to delete connections
+    - keyboard binding for delete
+    - "idempotent" checkbox that memoizes?
     - "glob nibs" - one nib internally that is many nibs externally, var args.  This would be especially useful as it would enable a "list" function.
     - add 'bypass' option for selections that only have one input and output.  Connect around em.
-    - add the import/export system back
 
 done
-    - make values name-able.  Make their text default to their value if they have no name.  May require a schema update
-    - add sugar for sequencers(;) -- "stateful" checkbox that adds extra null nibs.  Display those specially.
-    - make function values acceptable in place of bound lambdas
-    - put a space for default/testing values next to inputs
     - some way of stopping/starting the application --maybe it should be in a different window
+    - make json / string literals editable, and symbols renamable.
+    - "stateful" checkbox that adds extra null nibs.  Display those specially.
     - vectors
     - display graphics
     - setup/teardown for timers, event handlers, globals, and elements
     - delete button
     - list all the places a definition is used when you're editing it
     - display calls and values differently
+
+
+New big step: long-running programs as instances.
+When you run a program, it needs two things: a graphical output and a log output.
+
+For functions with multiple outputs, you should have the option to evaluate just one or all of them or a selection of them.
+
+Oh my god.  What if I did the documentation entirely in the program?
 
 
 Stateful globals: a real problem. -- solved
