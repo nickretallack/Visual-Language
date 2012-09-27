@@ -96,7 +96,7 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
                 return nib if nib.id is id
 
         get_call_inputs: -> @inputs
-        get_value_inputs: -> @inputs
+        get_value_inputs: -> []
 
         find_uses: ->
             graph for id, graph of all_definitions when graph instanceof Graph and graph.uses_definition @
@@ -603,6 +603,8 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
                 id:@id
 
         get_call_inputs: -> [@type_input]
+        get_value_inputs: -> @inputs
+        get_call_outputs: -> @inputs
 
     class Symbol extends Definition
         evaluate: -> @id
@@ -699,7 +701,7 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
         type:'value'
         evaluate:(the_scope, output_nib, runtime)-> @implementation.evaluate the_scope, @
         subroutines_referenced: -> []
-        get_inputs: -> []
+        get_inputs: -> @implementation.get_value_inputs()
         get_outputs: -> @outputs
 
     class UnknownNode extends Node
@@ -762,7 +764,7 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
 
     is_input = (it) ->
         is_input_class = it.nib instanceof Input
-        if it.node instanceof Graph or it.internal then is_input_class else not is_input_class
+        if it.node instanceof Graph or (it.node instanceof Call and it.node.implementation instanceof Type) or it.internal then is_input_class else not is_input_class
 
     make_connection = (graph, {from, to}) ->
         # check if it's an internal connection on a lambda

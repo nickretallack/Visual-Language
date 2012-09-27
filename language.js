@@ -229,7 +229,7 @@
       };
 
       Definition.prototype.get_value_inputs = function() {
-        return this.inputs;
+        return [];
       };
 
       Definition.prototype.find_uses = function() {
@@ -1007,6 +1007,14 @@
         return [this.type_input];
       };
 
+      Type.prototype.get_value_inputs = function() {
+        return this.inputs;
+      };
+
+      Type.prototype.get_call_outputs = function() {
+        return this.inputs;
+      };
+
       return Type;
 
     })(Subroutine);
@@ -1201,7 +1209,7 @@
       };
 
       Value.prototype.get_inputs = function() {
-        return [];
+        return this.implementation.get_value_inputs();
       };
 
       Value.prototype.get_outputs = function() {
@@ -1343,7 +1351,7 @@
     is_input = function(it) {
       var is_input_class;
       is_input_class = it.nib instanceof Input;
-      if (it.node instanceof Graph || it.internal) {
+      if (it.node instanceof Graph || (it.node instanceof Call && it.node.implementation instanceof Type) || it.internal) {
         return is_input_class;
       } else {
         return !is_input_class;
