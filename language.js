@@ -1586,7 +1586,7 @@
           } else {
             nibs = node["get_" + nib_type]();
             return _.find(nibs, function(nib) {
-              return nib.id === connector.nib;
+              return nib.id === connector.nib || (nib.id === 'value_output' && connector.nib === null);
             });
           }
         };

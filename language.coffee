@@ -929,7 +929,7 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
                     _.find nibs, (nib) -> nib.id is connector.nib
                 else
                     nibs = node["get_#{nib_type}"]()
-                    _.find nibs, (nib) -> nib.id is connector.nib
+                    _.find nibs, (nib) -> nib.id is connector.nib or (nib.id is 'value_output' and connector.nib is null)
 
             from_nib = get_nib from_node, connection_data['from'], 'outputs'
             to_nib = get_nib to_node, connection_data['to'], 'inputs'
