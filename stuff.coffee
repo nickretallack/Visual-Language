@@ -146,12 +146,12 @@ module.controller 'subroutine', ($scope, $routeParams, interpreter, $q) ->
 
     delete_nib = (nib, direction, type) ->
         uses = interpreter.find_nib_uses nib, direction
-        names = (definition.text for id, definition of uses)
-        if names.length
-            message = "Can't delete this #{type}.  It is used in #{names.join ', '}"
-            alert message
-        else
-            definition["delete_#{type}"] nib
+        names = (def.text for id, def of uses)
+        #if names.length
+        #    message = "Can't delete this #{type}.  It is used in #{names.join ', '}"
+        #    alert message
+        #else
+        definition["delete_#{type}"] nib
 
     $scope.delete_input = (nib) ->
         delete_nib nib, 'to', 'input'

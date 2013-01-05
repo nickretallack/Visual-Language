@@ -29,7 +29,7 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
         constructor: -> @message = "Cancelled execution due to lack of input"
 
     class NotConnected extends RuntimeException
-        constructor: -> @message = "Something in the program is disconnected"
+        constructor: (@message="Something in the program is disconnected") ->
 
     class NotImplemented extends RuntimeException
         constructor: (@name) -> @message = "JavaScript \"#{@name}\" is not implemented"
@@ -204,11 +204,10 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
             _.extend super,
                 output_implementation:@output_implementation
 
-        invoke: (output_nib, inputs, scope, node, runtime) ->
+        invoke: (output_nib, inputs, scope={}, node={id:0}, runtime) ->
             if @stateful
                 stateful_input = last inputs
                 ignore_if_disconnected stateful_input
-                inputs = inputs[...-1]
 
             try
                 output_function = @eval_code @output_implementation
@@ -219,9 +218,20 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
 
             throw new NotImplemented @text unless output_function
 
-            args = inputs.concat [output_nib.index, runtime]
-            return if output_nib.id is 'stateful_output'
-            return output_function (args.concat [scope?.memos[node.id]])...
+            scope.memos ?= {}
+            scope.memos[node.id] ?= {}
+
+            meta =
+                output_index: output_nib.index
+                memo: scope.memos[node.id]
+                runtime: runtime
+
+            try
+                return output_function meta, inputs...
+            catch exception
+                if exception instanceof TypeError
+                    throw new CodeSyntaxError @text, exception
+                else throw exception
 
         get_content_id: ->
             {
@@ -265,7 +275,7 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
             ### This helper will follow a connection and evaluate whatever it finds ###
             connection = @find_connection 'to', to_node, to_nib
             unless connection
-                throw new NotConnected "Missing connection in #{@text} to node #{window.JSON.stringify(to_node)}"
+                throw new NotConnected """Missing connection in "#{@text}" to node "#{to_node.implementation.text}"."""
             {node, nib} = connection.from
             if node instanceof Graph
                 return scope.inputs[nib.index]()

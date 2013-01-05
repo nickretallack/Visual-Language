@@ -206,23 +206,18 @@
       });
     };
     delete_nib = function(nib, direction, type) {
-      var id, message, names, uses;
+      var def, id, names, uses;
       uses = interpreter.find_nib_uses(nib, direction);
       names = (function() {
         var _results;
         _results = [];
         for (id in uses) {
-          definition = uses[id];
-          _results.push(definition.text);
+          def = uses[id];
+          _results.push(def.text);
         }
         return _results;
       })();
-      if (names.length) {
-        message = "Can't delete this " + type + ".  It is used in " + (names.join(', '));
-        return alert(message);
-      } else {
-        return definition["delete_" + type](nib);
-      }
+      return definition["delete_" + type](nib);
     };
     $scope.delete_input = function(nib) {
       return delete_nib(nib, 'to', 'input');

@@ -3,8 +3,8 @@
   var module,
     __hasProp = {}.hasOwnProperty,
     __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; },
-    __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; },
-    __slice = [].slice;
+    __slice = [].slice,
+    __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
 
   module = angular.module('vislang');
 
@@ -70,8 +70,8 @@
 
       __extends(NotConnected, _super);
 
-      function NotConnected() {
-        this.message = "Something in the program is disconnected";
+      function NotConnected(message) {
+        this.message = message != null ? message : "Something in the program is disconnected";
       }
 
       return NotConnected;
@@ -454,11 +454,18 @@
       };
 
       Code.prototype.invoke = function(output_nib, inputs, scope, node, runtime) {
-        var args, output_function, stateful_input;
+        var meta, output_function, stateful_input, _base, _name, _ref, _ref1;
+        if (scope == null) {
+          scope = {};
+        }
+        if (node == null) {
+          node = {
+            id: 0
+          };
+        }
         if (this.stateful) {
           stateful_input = last(inputs);
           ignore_if_disconnected(stateful_input);
-          inputs = inputs.slice(0, -1);
         }
         try {
           output_function = this.eval_code(this.output_implementation);
@@ -472,11 +479,26 @@
         if (!output_function) {
           throw new NotImplemented(this.text);
         }
-        args = inputs.concat([output_nib.index, runtime]);
-        if (output_nib.id === 'stateful_output') {
-          return;
+        if ((_ref = scope.memos) == null) {
+          scope.memos = {};
         }
-        return output_function.apply(null, args.concat([scope != null ? scope.memos[node.id] : void 0]));
+        if ((_ref1 = (_base = scope.memos)[_name = node.id]) == null) {
+          _base[_name] = {};
+        }
+        meta = {
+          output_index: output_nib.index,
+          memo: scope.memos[node.id],
+          runtime: runtime
+        };
+        try {
+          return output_function.apply(null, [meta].concat(__slice.call(inputs)));
+        } catch (exception) {
+          if (exception instanceof TypeError) {
+            throw new CodeSyntaxError(this.text, exception);
+          } else {
+            throw exception;
+          }
+        }
       };
 
       Code.prototype.get_content_id = function() {
@@ -569,7 +591,7 @@
         var connection, nib, node, _ref;
         connection = this.find_connection('to', to_node, to_nib);
         if (!connection) {
-          throw new NotConnected("Missing connection in " + this.text + " to node " + (window.JSON.stringify(to_node)));
+          throw new NotConnected("Missing connection in \"" + this.text + "\" to node \"" + to_node.implementation.text + "\".");
         }
         _ref = connection.from, node = _ref.node, nib = _ref.nib;
         if (node instanceof Graph) {
