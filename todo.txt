@@ -1,3 +1,13 @@
+Next challenge is publishing.  You need to be able to publish your work and consume work published by others.  Once you can do that, you can share programs and build on the shoulders of others.
+
+When you publish a function, it and all of its dependencies each get a "published id".  They are each placed in files named after those IDs on the server.  I suppose the server needs to decide on this ID so that users cannot abuse the system.
+
+The language has no standard library.  The closest thing to a standard library it has are the functions I wrote myself.  I suppose functions could be tagged to participate in a collection of some sort though.  But those tags may belong to different users.
+
+
+
+
+
 
 -- Brett Victor wrote a thing about learnable programming languages: http://worrydream.com/LearnableProgramming/
 * Read the vocabulary: arguments are all labeled and there's no hidden state, so we're good here.

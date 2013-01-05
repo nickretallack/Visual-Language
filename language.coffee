@@ -198,11 +198,10 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
         evaluate: -> @
 
     class Code extends Subroutine
-        constructor: ({@memo_implementation, @output_implementation}={}) -> super
+        constructor: ({@output_implementation}={}) -> super
 
         toJSON: ->
             _.extend super,
-                memo_implementation:@memo_implementation
                 output_implementation:@output_implementation
 
         invoke: (output_nib, inputs, scope, node, runtime) ->
@@ -212,7 +211,6 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
                 inputs = inputs[...-1]
 
             try
-                memo_function = @eval_code @memo_implementation
                 output_function = @eval_code @output_implementation
             catch exception
                 if exception instanceof SyntaxError
@@ -222,16 +220,25 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
             throw new NotImplemented @text unless output_function
 
             args = inputs.concat [output_nib.index, runtime]
-            if scope and memo_function and node.id not of scope.memos
-                scope.memos[node.id] = memo_function args...
             return if output_nib.id is 'stateful_output'
             return output_function (args.concat [scope?.memos[node.id]])...
 
+        get_content_id: ->
+            {
+                implementation:@output_implementation
+                type:'code'
+                @language
+                inputs:@inputs.length
+                outputs:@outputs.length
+            }
+
     class CoffeeScript extends Code
         eval_code: (code) -> eval window.CoffeeScript.compile code, bare:true if code
+        language: 'coffeescript'
 
     class JavaScript extends Code
         eval_code: eval_expression
+        language: 'javascript'
 
     class Graph extends Subroutine
         constructor: ->
@@ -322,7 +329,19 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
             for node in @nodes
                 if node.implementation is definition
                     return true
-        
+
+        definitions_used: ->
+            definitions = {}
+            for node in @nodes
+                implementation = node.implementation
+                definitions[implementation.id] = implementation
+            definitions
+
+        #get_content_id: ->
+            # TODO: cull out unreachable dependencies
+            # 
+
+            #for 
 
         ### probably outdated
         get_dependencies: (dependencies={subroutines:{},builtins:{}}) ->
@@ -522,6 +541,59 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
 
             return new_node
 
+        ###
+        find_strongly_connected_components: (collected={}, index=0)->
+            @index = index
+            index += 1
+            collected[@id] = @
+            for id,definition of @definitions_used()
+                unless definition.index
+                    definition.find_strongly_connected_components collected, index
+                else
+        ###
+
+    strongly_connected_components = null
+    tarjan = ->
+        index = 0
+        stack = []
+        indexed = {}
+        lowlink = {}
+        components = []
+
+        strongconnect = (graph) ->
+            indexed[graph.id] = index
+            lowlink[graph.id] = index
+            index += 1
+
+            # Traverse and index
+            stack.push graph
+            for id,dependency of graph.definitions_used()
+                if dependency instanceof Graph
+                    if dependency.id not of indexed
+                        strongconnect dependency
+                        lowlink[graph.id] = Math.min lowlink[graph.id], lowlink[dependency.id]
+                    else if dependency in stack
+                        lowlink[graph.id] = Math.min lowlink[graph.id], indexed[dependency.id]
+
+            # See if we found a set
+            if lowlink[graph.id] is indexed[graph.id]
+                new_component = []
+                loop
+                    node = stack.pop()
+                    new_component.push node
+                    if node.id is graph.id
+                        if new_component.length > 1
+                            components.push new_component
+                        return
+
+        for id,definition of all_definitions
+            if definition instanceof Graph
+                if definition.id not in indexed
+                    strongconnect definition
+
+        strongly_connected_components = components
+        components
+
     class BoundLambda
         constructor: ({@node, @parent_scope}) ->
 
@@ -618,20 +690,37 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
 
     class Symbol extends Definition
         evaluate: -> @id
+        get_content_id: ->
+            {
+                type:'symbol'
+                @id
+            }
 
     class Literal extends Definition # Abstract
         constructor: ({@value}={}) -> super
         toJSON: ->
             _.extend super,
             value:@value
-
+        get_content_id: ->
+            {
+                @type
+                @value
+            }
         #content_id: -> CryptoJS.SHA256(@text).toString(CryptoJS.enc.Base64)
 
     class JSON extends Literal
+        type:'json'
         evaluate: -> eval_expression @value
+        get_content_id: ->
 
     class Text extends Literal
+        type:'text'
         evaluate: -> @value
+        get_content_id: ->
+            {
+                type:'text'
+                @value
+            }
 
     definition_classes = [
         Graph
@@ -1016,6 +1105,7 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
         for id, obj of load_state source_data
             all_definitions[id] = obj
         loaded.resolve true
+        console.log tarjan()
         start_saving() unless window.location.search is '?debug'
 
     {
@@ -1024,6 +1114,7 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
     find_nib_uses
     make_value
     loaded:loaded.promise
+    tarjan
 
     # exceptions
     RuntimeException
