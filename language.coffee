@@ -110,28 +110,35 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
             @add_output data for data in (outputs or [])
 
         user_inputs: ->
-            input_values = []
             for input in @inputs
-                do (input) ->
-                    value = _.memoize ->
-                        result = if input.default_value then input.default_value
-                        else prompt "Provide a JSON value for input #{input.index}: \"#{input.text}\""
-
-                        throw new Exit "cancelled execution" if result is null
-                        try
-                            return window.JSON.parse result
-                        catch exception
-                            if exception instanceof SyntaxError
-                                throw new InputError result
-                            else
-                                throw exception
-                    input_values.push value
-            input_values
+                do (input) -> ->
+                    result = if input.default_value then input.default_value
+                    else prompt "Provide a JSON value for input #{input.index}: \"#{input.text}\""
+                    throw new Exit "cancelled execution" if result is null
+                    try
+                        window.JSON.parse result
+                    catch exception
+                        if exception instanceof SyntaxError
+                            throw new InputError result
+                        else
+                            throw exception
 
         run: (nib, runtime) ->
-            input_values = @user_inputs()
+            child_scope = {}
+            scope =
+                runtime: runtime
+                parent_scope: null
+
+                nodes: child_scope
+                state: child_scope
+
+                output_values: {}
+                input_values: {}
+                lazy_input_values: @user_inputs()
+
             try
-                $timeout => execute runtime, => @invoke nib, input_values, null, null, runtime
+                $timeout => execute runtime, 
+                    => @invoke scope, nib # the magic
             catch exception
                 if exception instanceof InputError
                     runtime.log "Invalid JSON: #{exception.message}"
@@ -204,17 +211,29 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
             _.extend super,
                 output_implementation:@output_implementation
 
-        invoke: (output_nib, inputs, scope={}, node={id:0}, runtime) ->
-            if @stateful
-                stateful_input = last inputs
-                ignore_if_disconnected stateful_input
-
+        invoke: (scope, output_nib, node={id:0}) ->
+            # Parse
             try
                 output_function = @eval_code @output_implementation
             catch exception
                 if exception instanceof SyntaxError
                     throw new CodeSyntaxError @text, exception
                 else throw exception
+
+            # Run
+            try
+                return output_function scope, scope.input_values
+            catch exception
+                if exception instanceof TypeError
+                    throw new CodeSyntaxError @text, exception
+                else throw exception
+
+
+            ###
+            if @stateful
+                stateful_input = last inputs
+                ignore_if_disconnected stateful_input
+
 
             throw new NotImplemented @text unless output_function
 
@@ -232,6 +251,7 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
                 if exception instanceof TypeError
                     throw new CodeSyntaxError @text, exception
                 else throw exception
+            ###
 
         get_content_id: ->
             {
@@ -263,24 +283,21 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
 
         ### RUNNING ###
 
-        invoke: (output_nib, inputs, parent_scope, node, runtime) ->
-            ### Evaluates an output in a fresh scope ###
-            scope =
-                subroutine:@
-                inputs:inputs
-                memos:{}
-            @evaluate_connection scope, @, output_nib, runtime
+        invoke: (scope, output_nib) ->
+            @evaluate_connection scope, @, output_nib
 
-        evaluate_connection: (scope, to_node, to_nib, runtime) ->
+        evaluate_connection: (scope, to_node, to_nib) ->
             ### This helper will follow a connection and evaluate whatever it finds ###
             connection = @find_connection 'to', to_node, to_nib
             unless connection
                 throw new NotConnected """Missing connection in "#{@text}" to node "#{to_node.implementation.text}"."""
             {node, nib} = connection.from
             if node instanceof Graph
-                return scope.inputs[nib.index]()
+                unless nib.id of scope.input_values
+                    scope.input_values[nib.id] = scope.lazy_input_values[nib.index]()
+                scope.input_values[nib.index]
             else
-                return node.evaluate scope, nib, runtime
+                node.evaluate scope, nib
 
         find_connection: (direction, node, nib) ->
             unless node? and nib?
@@ -773,19 +790,38 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
             new_node.old_id = old_id
             new_node
 
-        virtual_inputs: (the_scope, runtime) ->
-            input_values = []
+        evaluate_connection: (scope, input) ->
+            @graph.evaluate_connection scope, @, input
+
+        virtual_inputs: (scope) ->
             for input in @get_inputs()
-                do (input) =>
-                    input_values.push _.memoize =>
-                        the_scope.subroutine.evaluate_connection the_scope, @, input, runtime
-            return input_values
+                do (input) => => @evaluate_connection scope, input
 
     class Call extends Node
 
-        evaluate: (the_scope, output_nib, runtime) ->
-            input_values = @virtual_inputs the_scope, runtime
-            return @implementation.invoke output_nib, input_values, the_scope, @, runtime
+        evaluate: (parent_scope, output_nib) ->
+            scope = parent_scope.nodes[@id]
+
+            unless scope?
+                child_scope = {}
+                scope = parent_scope.nodes[@id] =
+
+                    runtime: parent_scope.runtime
+
+                    parent_scope: parent_scope
+
+                    nodes: child_scope # makes sense for graphs
+                    state: child_scope # makes sense for code
+
+                    output_values: {}
+                    input_values: {}
+
+                scope.lazy_input_values = @virtual_inputs scope
+
+            unless output_nib.id of scope.output_values
+                scope.output_values[output_nib.id] = @implementation.invoke scope, output_nib, @
+
+            scope.output_values[output_nib.id]
 
         get_inputs: -> @implementation.get_call_inputs()
         get_outputs: -> @implementation.get_call_outputs()
@@ -809,9 +845,9 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
             @outputs = [value_output_nib]
 
         type:'value'
-        evaluate:(the_scope, output_nib, runtime)->
-            input_values = @virtual_inputs the_scope, runtime
-            @implementation.evaluate the_scope, @, input_values
+        evaluate:(parent_scope, output_nib)->
+            input_values = @virtual_inputs parent_scope
+            @implementation.evaluate parent_scope, @, input_values
         subroutines_referenced: -> []
         get_inputs: -> @implementation.get_value_inputs()
         get_outputs: -> @outputs

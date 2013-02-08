@@ -3,8 +3,8 @@
   var module,
     __hasProp = {}.hasOwnProperty,
     __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; },
-    __slice = [].slice,
-    __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
+    __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; },
+    __slice = [].slice;
 
   module = angular.module('vislang');
 
@@ -270,44 +270,50 @@
       }
 
       Subroutine.prototype.user_inputs = function() {
-        var input, input_values, _fn, _i, _len, _ref;
-        input_values = [];
+        var input, _i, _len, _ref, _results;
         _ref = this.inputs;
-        _fn = function(input) {
-          var value;
-          value = _.memoize(function() {
-            var result;
-            result = input.default_value ? input.default_value : prompt("Provide a JSON value for input " + input.index + ": \"" + input.text + "\"");
-            if (result === null) {
-              throw new Exit("cancelled execution");
-            }
-            try {
-              return window.JSON.parse(result);
-            } catch (exception) {
-              if (exception instanceof SyntaxError) {
-                throw new InputError(result);
-              } else {
-                throw exception;
-              }
-            }
-          });
-          return input_values.push(value);
-        };
+        _results = [];
         for (_i = 0, _len = _ref.length; _i < _len; _i++) {
           input = _ref[_i];
-          _fn(input);
+          _results.push((function(input) {
+            return function() {
+              var result;
+              result = input.default_value ? input.default_value : prompt("Provide a JSON value for input " + input.index + ": \"" + input.text + "\"");
+              if (result === null) {
+                throw new Exit("cancelled execution");
+              }
+              try {
+                return window.JSON.parse(result);
+              } catch (exception) {
+                if (exception instanceof SyntaxError) {
+                  throw new InputError(result);
+                } else {
+                  throw exception;
+                }
+              }
+            };
+          })(input));
         }
-        return input_values;
+        return _results;
       };
 
       Subroutine.prototype.run = function(nib, runtime) {
-        var input_values,
+        var child_scope, scope,
           _this = this;
-        input_values = this.user_inputs();
+        child_scope = {};
+        scope = {
+          runtime: runtime,
+          parent_scope: null,
+          nodes: child_scope,
+          state: child_scope,
+          output_values: {},
+          input_values: {},
+          lazy_input_values: this.user_inputs()
+        };
         try {
           return $timeout(function() {
             return execute(runtime, function() {
-              return _this.invoke(nib, input_values, null, null, runtime);
+              return _this.invoke(scope, nib);
             });
           });
         } catch (exception) {
@@ -453,19 +459,12 @@
         });
       };
 
-      Code.prototype.invoke = function(output_nib, inputs, scope, node, runtime) {
-        var meta, output_function, stateful_input, _base, _name, _ref, _ref1;
-        if (scope == null) {
-          scope = {};
-        }
+      Code.prototype.invoke = function(scope, output_nib, node) {
+        var output_function;
         if (node == null) {
           node = {
             id: 0
           };
-        }
-        if (this.stateful) {
-          stateful_input = last(inputs);
-          ignore_if_disconnected(stateful_input);
         }
         try {
           output_function = this.eval_code(this.output_implementation);
@@ -476,22 +475,8 @@
             throw exception;
           }
         }
-        if (!output_function) {
-          throw new NotImplemented(this.text);
-        }
-        if ((_ref = scope.memos) == null) {
-          scope.memos = {};
-        }
-        if ((_ref1 = (_base = scope.memos)[_name = node.id]) == null) {
-          _base[_name] = {};
-        }
-        meta = {
-          output_index: output_nib.index,
-          memo: scope.memos[node.id],
-          runtime: runtime
-        };
         try {
-          return output_function.apply(null, [meta].concat(__slice.call(inputs)));
+          return output_function(scope, scope.input_values);
         } catch (exception) {
           if (exception instanceof TypeError) {
             throw new CodeSyntaxError(this.text, exception);
@@ -499,6 +484,30 @@
             throw exception;
           }
         }
+        /*
+                    if @stateful
+                        stateful_input = last inputs
+                        ignore_if_disconnected stateful_input
+        
+        
+                    throw new NotImplemented @text unless output_function
+        
+                    scope.memos ?= {}
+                    scope.memos[node.id] ?= {}
+        
+                    meta =
+                        output_index: output_nib.index
+                        memo: scope.memos[node.id]
+                        runtime: runtime
+        
+                    try
+                        return output_function meta, inputs...
+                    catch exception
+                        if exception instanceof TypeError
+                            throw new CodeSyntaxError @text, exception
+                        else throw exception
+        */
+
       };
 
       Code.prototype.get_content_id = function() {
@@ -571,20 +580,11 @@
       */
 
 
-      Graph.prototype.invoke = function(output_nib, inputs, parent_scope, node, runtime) {
-        /* Evaluates an output in a fresh scope
-        */
-
-        var scope;
-        scope = {
-          subroutine: this,
-          inputs: inputs,
-          memos: {}
-        };
-        return this.evaluate_connection(scope, this, output_nib, runtime);
+      Graph.prototype.invoke = function(scope, output_nib) {
+        return this.evaluate_connection(scope, this, output_nib);
       };
 
-      Graph.prototype.evaluate_connection = function(scope, to_node, to_nib, runtime) {
+      Graph.prototype.evaluate_connection = function(scope, to_node, to_nib) {
         /* This helper will follow a connection and evaluate whatever it finds
         */
 
@@ -595,9 +595,12 @@
         }
         _ref = connection.from, node = _ref.node, nib = _ref.nib;
         if (node instanceof Graph) {
-          return scope.inputs[nib.index]();
+          if (!(nib.id in scope.input_values)) {
+            scope.input_values[nib.id] = scope.lazy_input_values[nib.index]();
+          }
+          return scope.input_values[nib.index];
         } else {
-          return node.evaluate(scope, nib, runtime);
+          return node.evaluate(scope, nib);
         }
       };
 
@@ -1279,21 +1282,24 @@
         return new_node;
       };
 
-      Node.prototype.virtual_inputs = function(the_scope, runtime) {
-        var input, input_values, _fn, _i, _len, _ref,
+      Node.prototype.evaluate_connection = function(scope, input) {
+        return this.graph.evaluate_connection(scope, this, input);
+      };
+
+      Node.prototype.virtual_inputs = function(scope) {
+        var input, _i, _len, _ref, _results,
           _this = this;
-        input_values = [];
         _ref = this.get_inputs();
-        _fn = function(input) {
-          return input_values.push(_.memoize(function() {
-            return the_scope.subroutine.evaluate_connection(the_scope, _this, input, runtime);
-          }));
-        };
+        _results = [];
         for (_i = 0, _len = _ref.length; _i < _len; _i++) {
           input = _ref[_i];
-          _fn(input);
+          _results.push((function(input) {
+            return function() {
+              return _this.evaluate_connection(scope, input);
+            };
+          })(input));
         }
-        return input_values;
+        return _results;
       };
 
       return Node;
@@ -1307,10 +1313,25 @@
         return Call.__super__.constructor.apply(this, arguments);
       }
 
-      Call.prototype.evaluate = function(the_scope, output_nib, runtime) {
-        var input_values;
-        input_values = this.virtual_inputs(the_scope, runtime);
-        return this.implementation.invoke(output_nib, input_values, the_scope, this, runtime);
+      Call.prototype.evaluate = function(parent_scope, output_nib) {
+        var child_scope, scope;
+        scope = parent_scope.nodes[this.id];
+        if (scope == null) {
+          child_scope = {};
+          scope = parent_scope.nodes[this.id] = {
+            runtime: parent_scope.runtime,
+            parent_scope: parent_scope,
+            nodes: child_scope,
+            state: child_scope,
+            output_values: {},
+            input_values: {}
+          };
+          scope.lazy_input_values = this.virtual_inputs(scope);
+        }
+        if (!(output_nib.id in scope.output_values)) {
+          scope.output_values[output_nib.id] = this.implementation.invoke(scope, output_nib, this);
+        }
+        return scope.output_values[output_nib.id];
       };
 
       Call.prototype.get_inputs = function() {
@@ -1349,10 +1370,10 @@
 
       Value.prototype.type = 'value';
 
-      Value.prototype.evaluate = function(the_scope, output_nib, runtime) {
+      Value.prototype.evaluate = function(parent_scope, output_nib) {
         var input_values;
-        input_values = this.virtual_inputs(the_scope, runtime);
-        return this.implementation.evaluate(the_scope, this, input_values);
+        input_values = this.virtual_inputs(parent_scope);
+        return this.implementation.evaluate(parent_scope, this, input_values);
       };
 
       Value.prototype.subroutines_referenced = function() {
