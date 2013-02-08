@@ -216,10 +216,16 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
                 output_implementation:@output_implementation
 
         invoke: (scope, output_nib, node={id:0}) ->
+            input_generators = scope.input_value_generators
+            if @stateful
+                stateful_input = last input_generators
+                input_generators = input_generators[...-1]
+                ignore_if_disconnected stateful_input
+
             meta =
                 runtime: scope.runtime
                 output_index: output_nib.index
-                inputs: scope.input_value_generators
+                inputs: input_generators
                 state: scope.nodes  # Reusing this space as it is analogous.
                                     # Code can use it as a scratch pad.
 
@@ -230,39 +236,15 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
                 if exception instanceof SyntaxError
                     throw new CodeSyntaxError @text, exception
                 else throw exception
+            throw new NotImplemented @text unless output_function
 
             # Run
             try
-                return output_function meta, scope.input_value_generators...
+                return output_function meta, input_generators...
             catch exception
                 if exception instanceof TypeError
                     throw new CodeSyntaxError @text, exception
                 else throw exception
-
-
-            ###
-            if @stateful
-                stateful_input = last inputs
-                ignore_if_disconnected stateful_input
-
-
-            throw new NotImplemented @text unless output_function
-
-            scope.memos ?= {}
-            scope.memos[node.id] ?= {}
-
-            meta =
-                output_index: output_nib.index
-                memo: scope.memos[node.id]
-                runtime: runtime
-
-            try
-                return output_function meta, inputs...
-            catch exception
-                if exception instanceof TypeError
-                    throw new CodeSyntaxError @text, exception
-                else throw exception
-            ###
 
         get_content_id: ->
             {

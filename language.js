@@ -459,16 +459,22 @@
       };
 
       Code.prototype.invoke = function(scope, output_nib, node) {
-        var meta, output_function;
+        var input_generators, meta, output_function, stateful_input;
         if (node == null) {
           node = {
             id: 0
           };
         }
+        input_generators = scope.input_value_generators;
+        if (this.stateful) {
+          stateful_input = last(input_generators);
+          input_generators = input_generators.slice(0, -1);
+          ignore_if_disconnected(stateful_input);
+        }
         meta = {
           runtime: scope.runtime,
           output_index: output_nib.index,
-          inputs: scope.input_value_generators,
+          inputs: input_generators,
           state: scope.nodes
         };
         try {
@@ -480,8 +486,11 @@
             throw exception;
           }
         }
+        if (!output_function) {
+          throw new NotImplemented(this.text);
+        }
         try {
-          return output_function.apply(null, [meta].concat(__slice.call(scope.input_value_generators)));
+          return output_function.apply(null, [meta].concat(__slice.call(input_generators)));
         } catch (exception) {
           if (exception instanceof TypeError) {
             throw new CodeSyntaxError(this.text, exception);
@@ -489,30 +498,6 @@
             throw exception;
           }
         }
-        /*
-                    if @stateful
-                        stateful_input = last inputs
-                        ignore_if_disconnected stateful_input
-        
-        
-                    throw new NotImplemented @text unless output_function
-        
-                    scope.memos ?= {}
-                    scope.memos[node.id] ?= {}
-        
-                    meta =
-                        output_index: output_nib.index
-                        memo: scope.memos[node.id]
-                        runtime: runtime
-        
-                    try
-                        return output_function meta, inputs...
-                    catch exception
-                        if exception instanceof TypeError
-                            throw new CodeSyntaxError @text, exception
-                        else throw exception
-        */
-
       };
 
       Code.prototype.get_content_id = function() {
