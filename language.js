@@ -3,8 +3,8 @@
   var module,
     __hasProp = {}.hasOwnProperty,
     __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; },
-    __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; },
-    __slice = [].slice;
+    __slice = [].slice,
+    __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
 
   module = angular.module('vislang');
 
@@ -276,9 +276,9 @@
         for (_i = 0, _len = _ref.length; _i < _len; _i++) {
           input = _ref[_i];
           _results.push((function(input) {
-            return function() {
-              var result;
-              result = input.default_value ? input.default_value : prompt("Provide a JSON value for input " + input.index + ": \"" + input.text + "\"");
+            return _.memoize(function() {
+              var input_name, result;
+              result = input.default_value ? input.default_value : (input_name = input.text ? "\"" + input.text + "\"" : "(nameless)", prompt("Provide a JSON value for input " + input.index + ": " + input_name));
               if (result === null) {
                 throw new Exit("cancelled execution");
               }
@@ -291,7 +291,7 @@
                   throw exception;
                 }
               }
-            };
+            });
           })(input));
         }
         return _results;
@@ -305,10 +305,9 @@
           runtime: runtime,
           parent_scope: null,
           nodes: child_scope,
-          state: child_scope,
           output_values: {},
           input_values: {},
-          lazy_input_values: this.user_inputs()
+          input_value_generators: this.user_inputs()
         };
         try {
           return $timeout(function() {
@@ -460,12 +459,18 @@
       };
 
       Code.prototype.invoke = function(scope, output_nib, node) {
-        var output_function;
+        var meta, output_function;
         if (node == null) {
           node = {
             id: 0
           };
         }
+        meta = {
+          runtime: scope.runtime,
+          output_index: output_nib.index,
+          inputs: scope.input_value_generators,
+          state: scope.nodes
+        };
         try {
           output_function = this.eval_code(this.output_implementation);
         } catch (exception) {
@@ -476,7 +481,7 @@
           }
         }
         try {
-          return output_function(scope, scope.input_values);
+          return output_function.apply(null, [meta].concat(__slice.call(scope.input_value_generators)));
         } catch (exception) {
           if (exception instanceof TypeError) {
             throw new CodeSyntaxError(this.text, exception);
@@ -595,10 +600,7 @@
         }
         _ref = connection.from, node = _ref.node, nib = _ref.nib;
         if (node instanceof Graph) {
-          if (!(nib.id in scope.input_values)) {
-            scope.input_values[nib.id] = scope.lazy_input_values[nib.index]();
-          }
-          return scope.input_values[nib.index];
+          return scope.input_value_generators[nib.index]();
         } else {
           return node.evaluate(scope, nib);
         }
@@ -852,7 +854,7 @@
           _this = this;
         for (_i = 0, _len = nodes.length; _i < _len; _i++) {
           node = nodes[_i];
-          old_scope.remove_node(node);
+          old_graph.remove_node(node);
           this.add_node(node);
         }
         new_node = new Call({
@@ -863,7 +865,7 @@
         inbound_connections = [];
         outbound_connections = [];
         contained_connections = [];
-        _ref = old_scope.connections;
+        _ref = old_graph.connections;
         for (_j = 0, _len1 = _ref.length; _j < _len1; _j++) {
           connection = _ref[_j];
           from_inside = (_ref1 = connection.from.node, __indexOf.call(nodes, _ref1) >= 0);
@@ -878,7 +880,7 @@
         }
         for (_k = 0, _len2 = contained_connections.length; _k < _len2; _k++) {
           connection = contained_connections[_k];
-          old_scope.remove_connection(connection);
+          old_graph.remove_connection(connection);
           this.add_connection(connection);
         }
         group_connections = function(connections) {
@@ -1283,7 +1285,7 @@
       };
 
       Node.prototype.evaluate_connection = function(scope, input) {
-        return this.graph.evaluate_connection(scope, this, input);
+        return this.graph.evaluate_connection(scope.parent_scope, this, input);
       };
 
       Node.prototype.virtual_inputs = function(scope) {
@@ -1326,7 +1328,7 @@
             output_values: {},
             input_values: {}
           };
-          scope.lazy_input_values = this.virtual_inputs(scope);
+          scope.input_value_generators = this.virtual_inputs(scope);
         }
         if (!(output_nib.id in scope.output_values)) {
           scope.output_values[output_nib.id] = this.implementation.invoke(scope, output_nib, this);

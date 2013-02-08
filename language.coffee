@@ -110,10 +110,15 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
             @add_output data for data in (outputs or [])
 
         user_inputs: ->
+            # TODO: these could be implemented to act as if they come from a Code node in a graph outside the called one
             for input in @inputs
-                do (input) -> ->
-                    result = if input.default_value then input.default_value
-                    else prompt "Provide a JSON value for input #{input.index}: \"#{input.text}\""
+                do (input) -> _.memoize ->
+                    result = if input.default_value
+                        input.default_value
+                    else
+                        input_name = if input.text then "\"#{input.text}\"" else "(nameless)"
+                        prompt "Provide a JSON value for input #{input.index}: #{input_name}"
+  
                     throw new Exit "cancelled execution" if result is null
                     try
                         window.JSON.parse result
@@ -130,11 +135,10 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
                 parent_scope: null
 
                 nodes: child_scope
-                state: child_scope
 
                 output_values: {}
                 input_values: {}
-                lazy_input_values: @user_inputs()
+                input_value_generators: @user_inputs()
 
             try
                 $timeout => execute runtime, 
@@ -212,6 +216,13 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
                 output_implementation:@output_implementation
 
         invoke: (scope, output_nib, node={id:0}) ->
+            meta =
+                runtime: scope.runtime
+                output_index: output_nib.index
+                inputs: scope.input_value_generators
+                state: scope.nodes  # Reusing this space as it is analogous.
+                                    # Code can use it as a scratch pad.
+
             # Parse
             try
                 output_function = @eval_code @output_implementation
@@ -222,7 +233,7 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
 
             # Run
             try
-                return output_function scope, scope.input_values
+                return output_function meta, scope.input_value_generators...
             catch exception
                 if exception instanceof TypeError
                     throw new CodeSyntaxError @text, exception
@@ -293,9 +304,10 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
                 throw new NotConnected """Missing connection in "#{@text}" to node "#{to_node.implementation.text}"."""
             {node, nib} = connection.from
             if node instanceof Graph
-                unless nib.id of scope.input_values
-                    scope.input_values[nib.id] = scope.lazy_input_values[nib.index]()
-                scope.input_values[nib.index]
+                #unless nib.id of scope.input_values
+                    #scope.input_values[nib.id] = scope.input_value_generators[nib.index]()
+                #scope.input_values[nib.id]
+                scope.input_value_generators[nib.index]()
             else
                 node.evaluate scope, nib
 
@@ -505,7 +517,7 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
 
             # move the nodes
             for node in nodes
-                old_scope.remove_node node
+                old_graph.remove_node node
                 @add_node node
 
             # create a node for this in the old parent
@@ -518,7 +530,7 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
             inbound_connections = []
             outbound_connections = []
             contained_connections = []
-            for connection in old_scope.connections
+            for connection in old_graph.connections
                 from_inside = connection.from.node in nodes
                 to_inside = connection.to.node in nodes
                 if from_inside and to_inside
@@ -530,7 +542,7 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
 
             # move the contained connections
             for connection in contained_connections
-                old_scope.remove_connection connection
+                old_graph.remove_connection connection
                 @add_connection connection
 
             group_connections = (connections) ->
@@ -791,7 +803,7 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
             new_node
 
         evaluate_connection: (scope, input) ->
-            @graph.evaluate_connection scope, @, input
+            @graph.evaluate_connection scope.parent_scope, @, input
 
         virtual_inputs: (scope) ->
             for input in @get_inputs()
@@ -816,7 +828,7 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
                     output_values: {}
                     input_values: {}
 
-                scope.lazy_input_values = @virtual_inputs scope
+                scope.input_value_generators = @virtual_inputs scope
 
             unless output_nib.id of scope.output_values
                 scope.output_values[output_nib.id] = @implementation.invoke scope, output_nib, @
