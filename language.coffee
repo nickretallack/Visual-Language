@@ -131,13 +131,14 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
         run: (nib, runtime) ->
             child_scope = {}
             scope =
+                graph: @
                 runtime: runtime
                 parent_scope: null
 
                 nodes: child_scope
 
                 output_values: {}
-                input_values: {}
+                #input_values: {}
                 input_value_generators: @user_inputs()
 
             try
@@ -285,7 +286,11 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
             unless connection
                 throw new NotConnected """Missing connection in "#{@text}" to node "#{to_node.implementation.text}"."""
             {node, nib} = connection.from
-            if node instanceof Graph
+
+            if node is scope.lambda_node
+                scope.lambda_value_generators[nib.index]()
+
+            else if node instanceof Graph
                 #unless nib.id of scope.input_values
                     #scope.input_values[nib.id] = scope.input_value_generators[nib.index]()
                 #scope.input_values[nib.id]
@@ -616,32 +621,19 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
         components
 
     class BoundLambda
-        constructor: ({@node, @parent_scope}) ->
+        constructor: ({@scope, @node}) ->
 
-        invoke: (output_nib, inputs, calling_scope, node, runtime) ->
-            scope =
-                subroutine:@
-                inputs:inputs
-                memos:{}
+        invoke: (output_nib, inputs) ->
+            ###
+            Graph.evaluate_connection checks for these values in the scope,
+            which provide inputs from the calling graph to the implementing graph.
+            NOTE: it may not be possible to use a lambda within a lambda this way.
+            ###
+            scope = angular.extend {}, @scope,
+                lambda_value_generators: inputs
+                lambda_node: @node
 
-            graph = @node.graph
-            @evaluate_connection scope, @node, output_nib, runtime
-
-        evaluate_connection:(scope, to_node, to_nib, runtime) ->
-            """ Check if it touches one of our inputs.  If not, do what the graph would do.
-            Eventually we'll have a real scope in here.
-            """
-            connection = @parent_scope.subroutine.find_connection 'to', to_node, to_nib
-            unless connection
-                throw new NotConnected "Missing connection in #{@text} to node #{window.JSON.stringify(to_node)}"
-            {node, nib} = connection.from
-
-            if node is @node
-                scope.inputs[nib.index]()
-            else if node instanceof Graph
-                @parent_scope.inputs[nib.index]()
-            else
-                node.evaluate scope, nib, runtime
+            @node.graph.evaluate_connection scope, @node, output_nib
 
     class Lambda extends Graph
         constructor: ->
@@ -651,14 +643,19 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
                 id:@id
 
         evaluate:(scope, node) ->
+            ###
+            This is called on lambda values, which are kinda like subgraphs.
+            It returns a callable that is bound to the scope it was defined in,
+            not the scope it will be called in.
+            ### 
             new BoundLambda
-                node:node
-                parent_scope:scope
+                node: node
+                scope: scope
 
-        invoke: (output_nib, inputs, scope, node, runtime) ->
+        invoke: (parent_scope, output_nib, node) ->
+            inputs = parent_scope.input_value_generators
             implementation = inputs[0]()
-            inputs = inputs[1..]
-            implementation.invoke output_nib, inputs, null, null, runtime
+            implementation.invoke output_nib, inputs[1..]
 
         get_call_inputs: ->
             [@implementation_input].concat @inputs
@@ -699,9 +696,9 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
         get_value_inputs: -> @inputs
         get_call_outputs: -> @inputs
 
-        evaluate: (scope, nib, input_values) ->
+        evaluate: (scope, nib) ->
             result = {}
-            for [value, nib] in _.zip input_values,@inputs
+            for [value, nib] in _.zip scope.input_value_generators,@inputs
                 result[nib.text] = value()
             result
 
@@ -784,12 +781,9 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
             new_node.old_id = old_id
             new_node
 
-        evaluate_connection: (scope, input) ->
-            @graph.evaluate_connection scope.parent_scope, @, input
-
         virtual_inputs: (scope) ->
             for input in @get_inputs()
-                do (input) => => @evaluate_connection scope, input
+                do (input) => => @graph.evaluate_connection scope, @, input
 
     class Call extends Node
 
@@ -799,7 +793,6 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
             unless scope?
                 child_scope = {}
                 scope = parent_scope.nodes[@id] =
-
                     runtime: parent_scope.runtime
 
                     parent_scope: parent_scope
@@ -810,7 +803,7 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
                     output_values: {}
                     input_values: {}
 
-                scope.input_value_generators = @virtual_inputs scope
+                scope.input_value_generators = @virtual_inputs parent_scope
 
             unless output_nib.id of scope.output_values
                 scope.output_values[output_nib.id] = @implementation.invoke scope, output_nib, @
@@ -840,8 +833,8 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
 
         type:'value'
         evaluate:(parent_scope, output_nib)->
-            input_values = @virtual_inputs parent_scope
-            @implementation.evaluate parent_scope, @, input_values
+            @implementation.evaluate parent_scope, @
+
         subroutines_referenced: -> []
         get_inputs: -> @implementation.get_value_inputs()
         get_outputs: -> @outputs

@@ -302,11 +302,11 @@
           _this = this;
         child_scope = {};
         scope = {
+          graph: this,
           runtime: runtime,
           parent_scope: null,
           nodes: child_scope,
           output_values: {},
-          input_values: {},
           input_value_generators: this.user_inputs()
         };
         try {
@@ -584,7 +584,9 @@
           throw new NotConnected("Missing connection in \"" + this.text + "\" to node \"" + to_node.implementation.text + "\".");
         }
         _ref = connection.from, node = _ref.node, nib = _ref.nib;
-        if (node instanceof Graph) {
+        if (node === scope.lambda_node) {
+          return scope.lambda_value_generators[nib.index]();
+        } else if (node instanceof Graph) {
           return scope.input_value_generators[nib.index]();
         } else {
           return node.evaluate(scope, nib);
@@ -986,36 +988,22 @@
     BoundLambda = (function() {
 
       function BoundLambda(_arg) {
-        this.node = _arg.node, this.parent_scope = _arg.parent_scope;
+        this.scope = _arg.scope, this.node = _arg.node;
       }
 
-      BoundLambda.prototype.invoke = function(output_nib, inputs, calling_scope, node, runtime) {
-        var graph, scope;
-        scope = {
-          subroutine: this,
-          inputs: inputs,
-          memos: {}
-        };
-        graph = this.node.graph;
-        return this.evaluate_connection(scope, this.node, output_nib, runtime);
-      };
+      BoundLambda.prototype.invoke = function(output_nib, inputs) {
+        /*
+                    Graph.evaluate_connection checks for these values in the scope,
+                    which provide inputs from the calling graph to the implementing graph.
+                    NOTE: it may not be possible to use a lambda within a lambda this way.
+        */
 
-      BoundLambda.prototype.evaluate_connection = function(scope, to_node, to_nib, runtime) {
-        " Check if it touches one of our inputs.  If not, do what the graph would do.\nEventually we'll have a real scope in here.";
-
-        var connection, nib, node, _ref;
-        connection = this.parent_scope.subroutine.find_connection('to', to_node, to_nib);
-        if (!connection) {
-          throw new NotConnected("Missing connection in " + this.text + " to node " + (window.JSON.stringify(to_node)));
-        }
-        _ref = connection.from, node = _ref.node, nib = _ref.nib;
-        if (node === this.node) {
-          return scope.inputs[nib.index]();
-        } else if (node instanceof Graph) {
-          return this.parent_scope.inputs[nib.index]();
-        } else {
-          return node.evaluate(scope, nib, runtime);
-        }
+        var scope;
+        scope = angular.extend({}, this.scope, {
+          lambda_value_generators: inputs,
+          lambda_node: this.node
+        });
+        return this.node.graph.evaluate_connection(scope, this.node, output_nib);
       };
 
       return BoundLambda;
@@ -1034,17 +1022,22 @@
       }
 
       Lambda.prototype.evaluate = function(scope, node) {
+        /*
+                    This is called on lambda values, which are kinda like subgraphs.
+                    It returns a callable that is bound to the scope it was defined in,
+                    not the scope it will be called in.
+        */
         return new BoundLambda({
           node: node,
-          parent_scope: scope
+          scope: scope
         });
       };
 
-      Lambda.prototype.invoke = function(output_nib, inputs, scope, node, runtime) {
-        var implementation;
+      Lambda.prototype.invoke = function(parent_scope, output_nib, node) {
+        var implementation, inputs;
+        inputs = parent_scope.input_value_generators;
         implementation = inputs[0]();
-        inputs = inputs.slice(1);
-        return implementation.invoke(output_nib, inputs, null, null, runtime);
+        return implementation.invoke(output_nib, inputs.slice(1));
       };
 
       Lambda.prototype.get_call_inputs = function() {
@@ -1110,10 +1103,10 @@
         return this.inputs;
       };
 
-      Type.prototype.evaluate = function(scope, nib, input_values) {
+      Type.prototype.evaluate = function(scope, nib) {
         var result, value, _i, _len, _ref, _ref1;
         result = {};
-        _ref = _.zip(input_values, this.inputs);
+        _ref = _.zip(scope.input_value_generators, this.inputs);
         for (_i = 0, _len = _ref.length; _i < _len; _i++) {
           _ref1 = _ref[_i], value = _ref1[0], nib = _ref1[1];
           result[nib.text] = value();
@@ -1269,10 +1262,6 @@
         return new_node;
       };
 
-      Node.prototype.evaluate_connection = function(scope, input) {
-        return this.graph.evaluate_connection(scope.parent_scope, this, input);
-      };
-
       Node.prototype.virtual_inputs = function(scope) {
         var input, _i, _len, _ref, _results,
           _this = this;
@@ -1282,7 +1271,7 @@
           input = _ref[_i];
           _results.push((function(input) {
             return function() {
-              return _this.evaluate_connection(scope, input);
+              return _this.graph.evaluate_connection(scope, _this, input);
             };
           })(input));
         }
@@ -1313,7 +1302,7 @@
             output_values: {},
             input_values: {}
           };
-          scope.input_value_generators = this.virtual_inputs(scope);
+          scope.input_value_generators = this.virtual_inputs(parent_scope);
         }
         if (!(output_nib.id in scope.output_values)) {
           scope.output_values[output_nib.id] = this.implementation.invoke(scope, output_nib, this);
@@ -1358,9 +1347,7 @@
       Value.prototype.type = 'value';
 
       Value.prototype.evaluate = function(parent_scope, output_nib) {
-        var input_values;
-        input_values = this.virtual_inputs(parent_scope);
-        return this.implementation.evaluate(parent_scope, this, input_values);
+        return this.implementation.evaluate(parent_scope, this);
       };
 
       Value.prototype.subroutines_referenced = function() {
