@@ -111,7 +111,7 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
 
         user_inputs: ->
             # TODO: these could be implemented to act as if they come from a Code node in a graph outside the called one
-            for input in @inputs
+            results = for input in @inputs
                 do (input) -> _.memoize ->
                     result = if input.default_value
                         input.default_value
@@ -127,6 +127,9 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
                             throw new InputError result
                         else
                             throw exception
+
+            results.push -> # for sequencer inputs
+            results
 
         run: (nib, runtime) ->
             child_scope = {}
@@ -229,6 +232,7 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
                 inputs: input_generators
                 state: scope.nodes  # Reusing this space as it is analogous.
                                     # Code can use it as a scratch pad.
+                is_sequencer: output_nib is sequencer_output_nib
 
             # Parse
             try
@@ -241,7 +245,8 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
 
             # Run
             try
-                return output_function meta, input_generators...
+                result = output_function meta, input_generators...
+                return result unless meta.is_sequencer
             catch exception
                 if exception instanceof TypeError
                     throw new CodeSyntaxError @text, exception
@@ -284,7 +289,8 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
             ### This helper will follow a connection and evaluate whatever it finds ###
             connection = @find_connection 'to', to_node, to_nib
             unless connection
-                throw new NotConnected """Missing connection in "#{@text}" to node "#{to_node.implementation.text}"."""
+                connection_text = if to_node.implementation? then to_node.implementation.text else to_node.text
+                throw new NotConnected """Missing connection in "#{@text}" to node "#{connection_text}"."""
             {node, nib} = connection.from
 
             if node is scope.lambda_node

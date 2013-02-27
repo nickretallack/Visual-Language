@@ -270,31 +270,36 @@
       }
 
       Subroutine.prototype.user_inputs = function() {
-        var input, _i, _len, _ref, _results;
-        _ref = this.inputs;
-        _results = [];
-        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-          input = _ref[_i];
-          _results.push((function(input) {
-            return _.memoize(function() {
-              var input_name, result;
-              result = input.default_value ? input.default_value : (input_name = input.text ? "\"" + input.text + "\"" : "(nameless)", prompt("Provide a JSON value for input " + input.index + ": " + input_name));
-              if (result === null) {
-                throw new Exit("cancelled execution");
-              }
-              try {
-                return window.JSON.parse(result);
-              } catch (exception) {
-                if (exception instanceof SyntaxError) {
-                  throw new InputError(result);
-                } else {
-                  throw exception;
+        var input, results;
+        results = (function() {
+          var _i, _len, _ref, _results;
+          _ref = this.inputs;
+          _results = [];
+          for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+            input = _ref[_i];
+            _results.push((function(input) {
+              return _.memoize(function() {
+                var input_name, result;
+                result = input.default_value ? input.default_value : (input_name = input.text ? "\"" + input.text + "\"" : "(nameless)", prompt("Provide a JSON value for input " + input.index + ": " + input_name));
+                if (result === null) {
+                  throw new Exit("cancelled execution");
                 }
-              }
-            });
-          })(input));
-        }
-        return _results;
+                try {
+                  return window.JSON.parse(result);
+                } catch (exception) {
+                  if (exception instanceof SyntaxError) {
+                    throw new InputError(result);
+                  } else {
+                    throw exception;
+                  }
+                }
+              });
+            })(input));
+          }
+          return _results;
+        }).call(this);
+        results.push(function() {});
+        return results;
       };
 
       Subroutine.prototype.run = function(nib, runtime) {
@@ -459,7 +464,7 @@
       };
 
       Code.prototype.invoke = function(scope, output_nib, node) {
-        var input_generators, meta, output_function, stateful_input;
+        var input_generators, meta, output_function, result, stateful_input;
         if (node == null) {
           node = {
             id: 0
@@ -475,7 +480,8 @@
           runtime: scope.runtime,
           output_index: output_nib.index,
           inputs: input_generators,
-          state: scope.nodes
+          state: scope.nodes,
+          is_sequencer: output_nib === sequencer_output_nib
         };
         try {
           output_function = this.eval_code(this.output_implementation);
@@ -490,7 +496,10 @@
           throw new NotImplemented(this.text);
         }
         try {
-          return output_function.apply(null, [meta].concat(__slice.call(input_generators)));
+          result = output_function.apply(null, [meta].concat(__slice.call(input_generators)));
+          if (!meta.is_sequencer) {
+            return result;
+          }
         } catch (exception) {
           if (exception instanceof TypeError) {
             throw new CodeSyntaxError(this.text, exception);
@@ -578,10 +587,11 @@
         /* This helper will follow a connection and evaluate whatever it finds
         */
 
-        var connection, nib, node, _ref;
+        var connection, connection_text, nib, node, _ref;
         connection = this.find_connection('to', to_node, to_nib);
         if (!connection) {
-          throw new NotConnected("Missing connection in \"" + this.text + "\" to node \"" + to_node.implementation.text + "\".");
+          connection_text = to_node.implementation != null ? to_node.implementation.text : to_node.text;
+          throw new NotConnected("Missing connection in \"" + this.text + "\" to node \"" + connection_text + "\".");
         }
         _ref = connection.from, node = _ref.node, nib = _ref.nib;
         if (node === scope.lambda_node) {
