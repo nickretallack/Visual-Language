@@ -307,7 +307,6 @@
           _this = this;
         child_scope = {};
         scope = {
-          graph: this,
           runtime: runtime,
           parent_scope: null,
           nodes: child_scope,
@@ -321,7 +320,7 @@
             });
           });
         } catch (exception) {
-          if (exception instanceof InputError) {
+          if (excepition instanceof InputError) {
             return runtime.log("Invalid JSON: " + exception.message);
           } else {
             throw exception;
@@ -1309,8 +1308,7 @@
             parent_scope: parent_scope,
             nodes: child_scope,
             state: child_scope,
-            output_values: {},
-            input_values: {}
+            output_values: {}
           };
           scope.input_value_generators = this.virtual_inputs(parent_scope);
         }

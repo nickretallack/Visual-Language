@@ -134,21 +134,19 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
         run: (nib, runtime) ->
             child_scope = {}
             scope =
-                graph: @
                 runtime: runtime
                 parent_scope: null
 
                 nodes: child_scope
 
                 output_values: {}
-                #input_values: {}
                 input_value_generators: @user_inputs()
 
             try
                 $timeout => execute runtime, 
                     => @invoke scope, nib # the magic
             catch exception
-                if exception instanceof InputError
+                if excepition instanceof InputError
                     runtime.log "Invalid JSON: #{exception.message}"
                 else
                     throw exception
@@ -297,9 +295,6 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
                 scope.lambda_value_generators[nib.index]()
 
             else if node instanceof Graph
-                #unless nib.id of scope.input_values
-                    #scope.input_values[nib.id] = scope.input_value_generators[nib.index]()
-                #scope.input_values[nib.id]
                 scope.input_value_generators[nib.index]()
             else
                 node.evaluate scope, nib
@@ -709,6 +704,7 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
             result
 
         invoke: (nib, input_values, scope, node, runtime) ->
+            # TODO: UPDATE THIS
             it = input_values[0]()
             it[nib.text]
 
@@ -800,14 +796,10 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
                 child_scope = {}
                 scope = parent_scope.nodes[@id] =
                     runtime: parent_scope.runtime
-
                     parent_scope: parent_scope
-
                     nodes: child_scope # makes sense for graphs
                     state: child_scope # makes sense for code
-
                     output_values: {}
-                    input_values: {}
 
                 scope.input_value_generators = @virtual_inputs parent_scope
 
