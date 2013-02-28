@@ -9,7 +9,7 @@
   module = angular.module('vislang');
 
   module.factory('interpreter', function($q, $http, $timeout, $rootScope) {
-    var BaseType, BoundLambda, Call, Code, CodeSyntaxError, CoffeeScript, Connection, Definition, Exit, Graph, Input, InputError, JSON, JavaScript, Lambda, Literal, Nib, Node, NotConnected, NotImplemented, Output, Runtime, RuntimeException, Subroutine, Symbol, Text, Type, UnknownNode, Value, all_definitions, clone_endpoint, definition_class_map, definition_classes, dissociate_exception, eval_expression, execute, find_nib_uses, find_value, ignore_if_disconnected, is_input, last, load_implementation, load_implementation_v2, load_state, loaded, make_connection, make_index_map, make_value, node_class_map, node_classes, resurrect_node, save_state, schema_version, sequencer_input_nib, sequencer_output_nib, source_data, source_data_deferred, start_saving, strongly_connected_components, tarjan, value_output_nib;
+    var BaseType, BoundLambda, Call, Code, CodeSyntaxError, CoffeeScript, Connection, Definition, Exit, Graph, Input, InputError, JSON, JavaScript, Lambda, Literal, Nib, Node, NotConnected, NotImplemented, Output, Runtime, RuntimeException, Subroutine, Symbol, Text, Type, UnboundLambdaException, UnknownNode, Value, all_definitions, clone_endpoint, definition_class_map, definition_classes, dissociate_exception, eval_expression, execute, find_nib_uses, find_value, ignore_if_disconnected, is_input, last, load_implementation, load_implementation_v2, load_state, loaded, make_connection, make_index_map, make_value, node_class_map, node_classes, resurrect_node, save_state, schema_version, sequencer_input_nib, sequencer_output_nib, source_data, source_data_deferred, start_saving, strongly_connected_components, tarjan, value_output_nib;
     schema_version = 2;
     eval_expression = function(expression) {
       return eval("(" + expression + ")");
@@ -100,6 +100,20 @@
       }
 
       return CodeSyntaxError;
+
+    })(RuntimeException);
+    /* Exception types that should never happen unless the IDE is borked
+    */
+
+    UnboundLambdaException = (function(_super) {
+
+      __extends(UnboundLambdaException, _super);
+
+      function UnboundLambdaException() {
+        return UnboundLambdaException.__super__.constructor.apply(this, arguments);
+      }
+
+      return UnboundLambdaException;
 
     })(RuntimeException);
     /* RUNTIME
@@ -574,6 +588,10 @@
         });
       };
 
+      Graph.prototype.get_name = function() {
+        return this.text;
+      };
+
       /* RUNNING
       */
 
@@ -586,15 +604,19 @@
         /* This helper will follow a connection and evaluate whatever it finds
         */
 
-        var connection, connection_text, nib, node, _ref;
+        var connection, connection_text, internal, nib, node, _ref;
         connection = this.find_connection('to', to_node, to_nib);
         if (!connection) {
           connection_text = to_node.implementation != null ? to_node.implementation.text : to_node.text;
           throw new NotConnected("Missing connection in \"" + this.text + "\" to node \"" + connection_text + "\".");
         }
-        _ref = connection.from, node = _ref.node, nib = _ref.nib;
-        if (node === scope.lambda_node) {
-          return scope.lambda_value_generators[nib.index]();
+        _ref = connection.from, node = _ref.node, nib = _ref.nib, internal = _ref.internal;
+        if (internal) {
+          if (node === scope.lambda_node) {
+            return scope.lambda_value_generators[nib.index]();
+          } else {
+            throw new UnboundLambdaException("Node '" + (to_node.get_name()) + "' tried to receive input from Lambda '" + (node.get_name()) + "' from outside its scope.");
+          }
         } else if (node instanceof Graph) {
           return scope.input_value_generators[nib.index]();
         } else {
@@ -1287,6 +1309,10 @@
         return _results;
       };
 
+      Node.prototype.get_name = function() {
+        return this.implementation.text;
+      };
+
       return Node;
 
     })(BaseType);
@@ -1571,7 +1597,7 @@
         return runtime.log(window.JSON.stringify(routine()));
       } catch (exception) {
         if (exception instanceof RuntimeException) {
-          return runtime.log("Error: " + exception.message);
+          return runtime.log("Error: " + exception.constructor.name + ": " + exception.message);
         } else {
           throw exception;
         }

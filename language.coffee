@@ -37,6 +37,10 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
     class CodeSyntaxError extends RuntimeException
         constructor: (@name, @exception) -> @message = "#{exception} in builtin \"#{@name}\": "
 
+    ### Exception types that should never happen unless the IDE is borked ###
+
+    class UnboundLambdaException extends RuntimeException
+
     ### RUNTIME ###
 
     class Runtime
@@ -278,6 +282,8 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
                 nodes:@nodes
                 connections:@connections
 
+        get_name: -> @text
+
         ### RUNNING ###
 
         invoke: (scope, output_nib) ->
@@ -289,10 +295,13 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
             unless connection
                 connection_text = if to_node.implementation? then to_node.implementation.text else to_node.text
                 throw new NotConnected """Missing connection in "#{@text}" to node "#{connection_text}"."""
-            {node, nib} = connection.from
+            {node, nib, internal} = connection.from
 
-            if node is scope.lambda_node
-                scope.lambda_value_generators[nib.index]()
+            if internal
+                if node is scope.lambda_node
+                    scope.lambda_value_generators[nib.index]()
+                else
+                    throw new UnboundLambdaException """Node '#{to_node.get_name()}' tried to receive input from Lambda '#{node.get_name()}' from outside its scope."""
 
             else if node instanceof Graph
                 scope.input_value_generators[nib.index]()
@@ -787,6 +796,8 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
             for input in @get_inputs()
                 do (input) => => @graph.evaluate_connection scope, @, input
 
+        get_name: -> @implementation.text
+
     class Call extends Node
 
         evaluate: (parent_scope, output_nib) ->
@@ -940,7 +951,7 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
             runtime.log window.JSON.stringify routine()
         catch exception
             if exception instanceof RuntimeException
-                runtime.log "Error: #{exception.message}"
+                runtime.log "Error: #{exception.constructor.name}: #{exception.message}"
             else throw exception
 
     ignore_if_disconnected = (procedure) ->
