@@ -257,7 +257,7 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
             try
                 output_function = @eval_code @output_implementation
             catch exception
-                if exception instanceof SyntaxError
+                if exception instanceof SyntaxError or exception instanceof Error
                     throw new CodeSyntaxError @text, exception
                 else throw exception
             throw new NotImplemented @text unless output_function

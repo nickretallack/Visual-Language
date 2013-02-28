@@ -528,7 +528,7 @@
         try {
           output_function = this.eval_code(this.output_implementation);
         } catch (exception) {
-          if (exception instanceof SyntaxError) {
+          if (exception instanceof SyntaxError || exception instanceof Error) {
             throw new CodeSyntaxError(this.text, exception);
           } else {
             throw exception;
