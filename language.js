@@ -9,7 +9,7 @@
   module = angular.module('vislang');
 
   module.factory('interpreter', function($q, $http, $timeout, $rootScope) {
-    var BaseType, BoundLambda, Call, Code, CodeSyntaxError, CoffeeScript, Connection, Definition, Exit, Graph, Input, InputError, JSON, JavaScript, Lambda, Literal, Nib, Node, NotConnected, NotImplemented, Output, Runtime, RuntimeException, Subroutine, Symbol, Text, Type, UnboundLambdaException, UnknownNode, Value, all_definitions, clone_endpoint, definition_class_map, definition_classes, dissociate_exception, eval_expression, execute, find_nib_uses, find_value, ignore_if_disconnected, is_input, last, load_implementation, load_implementation_v2, load_state, loaded, make_connection, make_index_map, make_value, node_class_map, node_classes, resurrect_node, save_state, schema_version, sequencer_input_nib, sequencer_output_nib, source_data, source_data_deferred, start_saving, strongly_connected_components, tarjan, value_output_nib;
+    var BaseType, BoundLambda, Call, Code, CodeSyntaxError, CoffeeScript, Connection, Definition, Exit, Graph, Input, InputError, JSON, JavaScript, Lambda, Literal, Nib, Node, NotConnected, NotImplemented, Output, Runtime, RuntimeException, Subroutine, Symbol, Text, Type, UnboundLambdaException, UnknownNode, Value, all_definitions, clone_endpoint, definition_class_map, definition_classes, dissociate_exception, eval_expression, execute, find_nib_uses, find_value, ignore_if_disconnected, is_input, last, load_implementation, load_implementation_v2, load_state, loaded, make_child_scope, make_connection, make_index_map, make_scope, make_value, node_class_map, node_classes, resurrect_node, save_state, schema_version, sequencer_input_nib, sequencer_output_nib, source_data, source_data_deferred, start_saving, strongly_connected_components, tarjan, value_output_nib;
     schema_version = 2;
     eval_expression = function(expression) {
       return eval("(" + expression + ")");
@@ -261,6 +261,34 @@
       return Definition;
 
     })(BaseType);
+    make_scope = function(_arg) {
+      var child_scope, inputs, parent_scope, runtime, _ref;
+      _ref = _arg != null ? _arg : {
+        inputs: [],
+        parent_scope: null
+      }, runtime = _ref.runtime, inputs = _ref.inputs, parent_scope = _ref.parent_scope;
+      child_scope = {};
+      return {
+        runtime: runtime,
+        inputs: inputs,
+        output_values: {},
+        nodes: child_scope,
+        state: child_scope,
+        parent_scope: parent_scope
+      };
+    };
+    make_child_scope = function(parent_scope, _arg) {
+      var inputs, scope;
+      inputs = (_arg != null ? _arg : {
+        inputs: []
+      }).inputs;
+      scope = make_scope({
+        runtime: parent_scope.runtime,
+        inputs: inputs,
+        parent_scope: parent_scope
+      });
+      return scope;
+    };
     Subroutine = (function(_super) {
 
       __extends(Subroutine, _super);
@@ -320,13 +348,10 @@
         var child_scope, scope,
           _this = this;
         child_scope = {};
-        scope = {
+        scope = make_scope({
           runtime: runtime,
-          parent_scope: null,
-          nodes: child_scope,
-          output_values: {},
-          input_value_generators: this.user_inputs()
-        };
+          inputs: this.user_inputs()
+        });
         try {
           return $timeout(function() {
             return execute(runtime, function() {
@@ -343,7 +368,7 @@
       };
 
       Subroutine.prototype.call = function(inputs, output_index, runtime) {
-        var input, nib, wrapped_inputs, _fn, _i, _len;
+        var input, nib, scope, wrapped_inputs, _fn, _i, _len;
         if (output_index == null) {
           output_index = 0;
         }
@@ -358,7 +383,11 @@
           input = inputs[_i];
           _fn(input);
         }
-        return this.invoke(nib, wrapped_inputs, null, null, runtime);
+        scope = make_scope({
+          runtime: runtime,
+          inputs: wrapped_inputs
+        });
+        return this.invoke(scope, nib);
       };
 
       Subroutine.prototype.delete_nib = function(nib, group) {
@@ -483,7 +512,7 @@
             id: 0
           };
         }
-        input_generators = scope.input_value_generators;
+        input_generators = scope.inputs;
         if (this.stateful) {
           stateful_input = last(input_generators);
           input_generators = input_generators.slice(0, -1);
@@ -618,7 +647,7 @@
             throw new UnboundLambdaException("Node '" + (to_node.get_name()) + "' tried to receive input from Lambda '" + (node.get_name()) + "' from outside its scope.");
           }
         } else if (node instanceof Graph) {
-          return scope.input_value_generators[nib.index]();
+          return scope.inputs[nib.index]();
         } else {
           return node.evaluate(scope, nib);
         }
@@ -1066,7 +1095,7 @@
 
       Lambda.prototype.invoke = function(parent_scope, output_nib, node) {
         var implementation, inputs;
-        inputs = parent_scope.input_value_generators;
+        inputs = parent_scope.inputs;
         implementation = inputs[0]();
         return implementation.invoke(output_nib, inputs.slice(1));
       };
@@ -1137,7 +1166,7 @@
       Type.prototype.evaluate = function(scope, nib) {
         var result, value, _i, _len, _ref, _ref1;
         result = {};
-        _ref = _.zip(scope.input_value_generators, this.inputs);
+        _ref = _.zip(scope.inputs, this.inputs);
         for (_i = 0, _len = _ref.length; _i < _len; _i++) {
           _ref1 = _ref[_i], value = _ref1[0], nib = _ref1[1];
           result[nib.text] = value();
@@ -1325,18 +1354,12 @@
       }
 
       Call.prototype.evaluate = function(parent_scope, output_nib) {
-        var child_scope, scope;
+        var scope;
         scope = parent_scope.nodes[this.id];
         if (scope == null) {
-          child_scope = {};
-          scope = parent_scope.nodes[this.id] = {
-            runtime: parent_scope.runtime,
-            parent_scope: parent_scope,
-            nodes: child_scope,
-            state: child_scope,
-            output_values: {}
-          };
-          scope.input_value_generators = this.virtual_inputs(parent_scope);
+          scope = parent_scope.nodes[this.id] = make_child_scope(parent_scope, {
+            inputs: this.virtual_inputs(parent_scope)
+          });
         }
         if (!(output_nib.id in scope.output_values)) {
           scope.output_values[output_nib.id] = this.implementation.invoke(scope, output_nib, this);

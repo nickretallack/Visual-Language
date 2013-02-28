@@ -105,6 +105,23 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
         find_uses: ->
             graph for id, graph of all_definitions when graph instanceof Graph and graph.uses_definition @
 
+    make_scope = ({runtime, inputs, parent_scope}={inputs:[], parent_scope:null}) ->
+        child_scope = {}
+
+        runtime: runtime
+        inputs: inputs
+        output_values: {}
+        nodes: child_scope # makes sense for graphs
+        state: child_scope # makes sense for code
+        parent_scope: parent_scope
+
+    make_child_scope = (parent_scope, {inputs}={inputs:[]}) ->
+        scope = make_scope
+            runtime: parent_scope.runtime
+            inputs: inputs
+            parent_scope: parent_scope
+        scope
+
     class Subroutine extends Definition
         constructor: ({inputs, outputs, @stateful}={}) ->
             super
@@ -137,14 +154,9 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
 
         run: (nib, runtime) ->
             child_scope = {}
-            scope =
+            scope = make_scope
                 runtime: runtime
-                parent_scope: null
-
-                nodes: child_scope
-
-                output_values: {}
-                input_value_generators: @user_inputs()
+                inputs: @user_inputs()
 
             try
                 $timeout => execute runtime, 
@@ -162,7 +174,12 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
             for input in inputs
                 do (input) ->
                     wrapped_inputs.push -> input
-            @invoke nib, wrapped_inputs, null, null, runtime
+
+            scope = make_scope
+                runtime: runtime
+                inputs: wrapped_inputs
+
+            @invoke scope, nib
 
         delete_nib: (nib, group) ->
             @[group] = _.without @[group], nib
@@ -222,7 +239,7 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
                 output_implementation:@output_implementation
 
         invoke: (scope, output_nib, node={id:0}) ->
-            input_generators = scope.input_value_generators
+            input_generators = scope.inputs
             if @stateful
                 stateful_input = last input_generators
                 input_generators = input_generators[...-1]
@@ -304,7 +321,7 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
                     throw new UnboundLambdaException """Node '#{to_node.get_name()}' tried to receive input from Lambda '#{node.get_name()}' from outside its scope."""
 
             else if node instanceof Graph
-                scope.input_value_generators[nib.index]()
+                scope.inputs[nib.index]()
             else
                 node.evaluate scope, nib
 
@@ -663,7 +680,7 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
                 scope: scope
 
         invoke: (parent_scope, output_nib, node) ->
-            inputs = parent_scope.input_value_generators
+            inputs = parent_scope.inputs
             implementation = inputs[0]()
             implementation.invoke output_nib, inputs[1..]
 
@@ -708,7 +725,7 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
 
         evaluate: (scope, nib) ->
             result = {}
-            for [value, nib] in _.zip scope.input_value_generators,@inputs
+            for [value, nib] in _.zip scope.inputs,@inputs
                 result[nib.text] = value()
             result
 
@@ -804,15 +821,8 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
             scope = parent_scope.nodes[@id]
 
             unless scope?
-                child_scope = {}
-                scope = parent_scope.nodes[@id] =
-                    runtime: parent_scope.runtime
-                    parent_scope: parent_scope
-                    nodes: child_scope # makes sense for graphs
-                    state: child_scope # makes sense for code
-                    output_values: {}
-
-                scope.input_value_generators = @virtual_inputs parent_scope
+                scope = parent_scope.nodes[@id] = make_child_scope parent_scope,
+                    inputs: @virtual_inputs parent_scope
 
             unless output_nib.id of scope.output_values
                 scope.output_values[output_nib.id] = @implementation.invoke scope, output_nib, @
