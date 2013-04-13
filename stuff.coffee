@@ -134,7 +134,10 @@ module.controller 'subroutine', ($scope, $routeParams, interpreter, $q) ->
         runtime = new interpreter.Runtime
             graphics_element:$ "<div></div>"
         $scope.$root.runtime = runtime
-        definition.run output, runtime
+        window.runtime = runtime
+        thread = runtime.new_thread()
+        definition.run output, thread
+        console.log runtime
 
     $scope.new_input =  ->
         definition.add_input()

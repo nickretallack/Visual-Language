@@ -186,12 +186,15 @@
       return definition = $scope.$root.definition = interpreter.subroutines[$routeParams.id];
     });
     $scope.evaluate_output = function(output) {
-      var runtime;
+      var runtime, thread;
       runtime = new interpreter.Runtime({
         graphics_element: $("<div></div>")
       });
       $scope.$root.runtime = runtime;
-      return definition.run(output, runtime);
+      window.runtime = runtime;
+      thread = runtime.new_thread();
+      definition.run(output, thread);
+      return console.log(runtime);
     };
     $scope.new_input = function() {
       definition.add_input();

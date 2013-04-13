@@ -43,12 +43,25 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
 
     ### RUNTIME ###
 
+    class Thread
+        constructor: (@runtime, @id) ->
+            @traces = []
+
+        trace: (scope, connection) ->
+            @traces.push
+                scope: scope
+                connection: connection
+
+        log: (message) ->
+            @runtime.log message, @id
+
     class Runtime
         constructor: ({@graphics_element}={}) ->
             @log_messages = []
             @event_handlers = []
             @timers = []
             @state = {}
+            @threads = []
 
         cleanup: ->
             for handler in @event_handlers
@@ -71,9 +84,15 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
                 element:element
                 handler:handler
 
-        log: (message) ->
-            @log_messages.unshift message
-            console.log message
+        log: (message, id=0) ->
+            formatted_message = "Thread #{id}: #{message}"
+            @log_messages.unshift formatted_message
+            console.log formatted_message
+
+        new_thread: ->
+            thread = new Thread @, @threads.length
+            @threads.push thread
+            thread
 
 
     ### DEFINITION TYPES ###
@@ -313,6 +332,8 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
                 connection_text = if to_node.implementation? then to_node.implementation.text else to_node.text
                 throw new NotConnected """Missing connection in "#{@text}" to node "#{connection_text}"."""
             {node, nib, internal} = connection.from
+
+            scope.runtime.trace scope, connection
 
             if internal
                 if node is scope.lambda_node
@@ -1157,7 +1178,7 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
         for id, obj of load_state source_data
             all_definitions[id] = obj
         loaded.resolve true
-        console.log tarjan()
+        #console.log tarjan()
         start_saving() unless window.location.search is '?debug'
 
     {

@@ -9,7 +9,7 @@
   module = angular.module('vislang');
 
   module.factory('interpreter', function($q, $http, $timeout, $rootScope) {
-    var BaseType, BoundLambda, Call, Code, CodeSyntaxError, CoffeeScript, Connection, Definition, Exit, Graph, Input, InputError, JSON, JavaScript, Lambda, Literal, Nib, Node, NotConnected, NotImplemented, Output, Runtime, RuntimeException, Subroutine, Symbol, Text, Type, UnboundLambdaException, UnknownNode, Value, all_definitions, clone_endpoint, definition_class_map, definition_classes, dissociate_exception, eval_expression, execute, find_nib_uses, find_value, ignore_if_disconnected, is_input, last, load_implementation, load_implementation_v2, load_state, loaded, make_child_scope, make_connection, make_index_map, make_scope, make_value, node_class_map, node_classes, resurrect_node, save_state, schema_version, sequencer_input_nib, sequencer_output_nib, source_data, source_data_deferred, start_saving, strongly_connected_components, tarjan, value_output_nib;
+    var BaseType, BoundLambda, Call, Code, CodeSyntaxError, CoffeeScript, Connection, Definition, Exit, Graph, Input, InputError, JSON, JavaScript, Lambda, Literal, Nib, Node, NotConnected, NotImplemented, Output, Runtime, RuntimeException, Subroutine, Symbol, Text, Thread, Type, UnboundLambdaException, UnknownNode, Value, all_definitions, clone_endpoint, definition_class_map, definition_classes, dissociate_exception, eval_expression, execute, find_nib_uses, find_value, ignore_if_disconnected, is_input, last, load_implementation, load_implementation_v2, load_state, loaded, make_child_scope, make_connection, make_index_map, make_scope, make_value, node_class_map, node_classes, resurrect_node, save_state, schema_version, sequencer_input_nib, sequencer_output_nib, source_data, source_data_deferred, start_saving, strongly_connected_components, tarjan, value_output_nib;
     schema_version = 2;
     eval_expression = function(expression) {
       return eval("(" + expression + ")");
@@ -119,6 +119,28 @@
     /* RUNTIME
     */
 
+    Thread = (function() {
+
+      function Thread(runtime, id) {
+        this.runtime = runtime;
+        this.id = id;
+        this.traces = [];
+      }
+
+      Thread.prototype.trace = function(scope, connection) {
+        return this.traces.push({
+          scope: scope,
+          connection: connection
+        });
+      };
+
+      Thread.prototype.log = function(message) {
+        return this.runtime.log(message, this.id);
+      };
+
+      return Thread;
+
+    })();
     Runtime = (function() {
 
       function Runtime(_arg) {
@@ -127,6 +149,7 @@
         this.event_handlers = [];
         this.timers = [];
         this.state = {};
+        this.threads = [];
       }
 
       Runtime.prototype.cleanup = function() {
@@ -175,9 +198,21 @@
         });
       };
 
-      Runtime.prototype.log = function(message) {
-        this.log_messages.unshift(message);
-        return console.log(message);
+      Runtime.prototype.log = function(message, id) {
+        var formatted_message;
+        if (id == null) {
+          id = 0;
+        }
+        formatted_message = "Thread " + id + ": " + message;
+        this.log_messages.unshift(formatted_message);
+        return console.log(formatted_message);
+      };
+
+      Runtime.prototype.new_thread = function() {
+        var thread;
+        thread = new Thread(this, this.threads.length);
+        this.threads.push(thread);
+        return thread;
       };
 
       return Runtime;
@@ -640,6 +675,7 @@
           throw new NotConnected("Missing connection in \"" + this.text + "\" to node \"" + connection_text + "\".");
         }
         _ref = connection.from, node = _ref.node, nib = _ref.nib, internal = _ref.internal;
+        scope.runtime.trace(scope, connection);
         if (internal) {
           if (node === scope.lambda_node) {
             return scope.lambda_value_generators[nib.index]();
@@ -1880,7 +1916,6 @@
         all_definitions[id] = obj;
       }
       loaded.resolve(true);
-      console.log(tarjan());
       if (window.location.search !== '?debug') {
         return start_saving();
       }
