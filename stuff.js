@@ -189,7 +189,7 @@
     };
   });
 
-  module.controller('subroutine', function($scope, $routeParams, interpreter, $q) {
+  module.controller('subroutine', function($scope, $routeParams, interpreter, $q, $location) {
     var definition, delete_nib;
     definition = null;
     $q.when(interpreter.loaded, function() {
@@ -247,13 +247,15 @@
     $scope.next = function() {
       if ($scope.debug_step < $scope.runtime.threads[0].traces.length - 1) {
         $scope.$root.debug_step += 1;
-        return $scope.update_debug_step();
+        $scope.update_debug_step();
+        return $location.path("" + $scope.current_debug_step.graph.id);
       }
     };
     $scope.previous = function() {
       if ($scope.debug_step > 0) {
         $scope.$root.debug_step -= 1;
-        return $scope.update_debug_step();
+        $scope.update_debug_step();
+        return $location.path("" + $scope.current_debug_step.graph.id);
       }
     };
     $scope.update_debug_step = function() {

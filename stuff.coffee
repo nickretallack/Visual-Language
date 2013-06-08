@@ -132,7 +132,7 @@ module.directive 'runtimeGraphics', (interpreter) ->
         runtime = scope.$eval attributes.runtimeGraphics
         element.append runtime.graphics_element
 
-module.controller 'subroutine', ($scope, $routeParams, interpreter, $q) ->
+module.controller 'subroutine', ($scope, $routeParams, interpreter, $q, $location) ->
     definition = null
     $q.when interpreter.loaded, ->
         definition = $scope.$root.definition = interpreter.subroutines[$routeParams.id]
@@ -179,10 +179,12 @@ module.controller 'subroutine', ($scope, $routeParams, interpreter, $q) ->
         if $scope.debug_step < $scope.runtime.threads[0].traces.length - 1
             $scope.$root.debug_step += 1
             $scope.update_debug_step()
+            $location.path "#{$scope.current_debug_step.graph.id}"
     $scope.previous = ->
         if $scope.debug_step > 0
             $scope.$root.debug_step -= 1
             $scope.update_debug_step()
+            $location.path "#{$scope.current_debug_step.graph.id}"
 
     $scope.update_debug_step = ->
         $scope.$root.current_debug_step = $scope.runtime?.threads[0].traces[$scope.debug_step]
