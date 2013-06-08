@@ -1353,17 +1353,17 @@
       };
 
       Node.prototype.virtual_inputs = function(scope) {
-        var input, _i, _len, _ref, _results,
+        var sink, _i, _len, _ref, _results,
           _this = this;
-        _ref = this.get_node_sources();
+        _ref = this.get_node_sinks();
         _results = [];
         for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-          input = _ref[_i];
-          _results.push((function(input) {
+          sink = _ref[_i];
+          _results.push((function(sink) {
             return function() {
-              return _this.graph.evaluate_connection(scope, _this, input);
+              return _this.graph.evaluate_connection(scope, _this, sink);
             };
-          })(input));
+          })(sink));
         }
         return _results;
       };

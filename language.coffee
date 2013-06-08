@@ -834,8 +834,8 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
             new_node
 
         virtual_inputs: (scope) ->
-            for input in @get_node_sources()
-                do (input) => => @graph.evaluate_connection scope, @, input
+            for sink in @get_node_sinks()
+                do (sink) => => @graph.evaluate_connection scope, @, sink
 
         get_name: -> @implementation.text
 
