@@ -674,7 +674,7 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
         strongly_connected_components = components
         components
 
-    class BoundLambda
+    class BoundLambda extends BaseType
         constructor: ({@scope, @node}) ->
 
         invoke: (output_nib, inputs) ->
@@ -688,6 +688,8 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
                 lambda_node: @node
 
             @node.graph.evaluate_connection scope, @node, output_nib
+
+        get_name: -> @node.get_name()
 
     class Lambda extends Graph
         constructor: ->
@@ -1202,6 +1204,7 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
 
     definition_types:definition_classes
     Definition
+    BaseType
 
     # subroutines
     Subroutine

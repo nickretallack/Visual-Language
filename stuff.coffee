@@ -6,6 +6,13 @@ window.delay = (time, procedure) -> setTimeout procedure, time
 module.run ($rootScope) ->
     $rootScope.search = ''
 
+module.filter 'value_representation', (interpreter) ->
+    (obj) ->
+        if obj instanceof interpreter.BaseType
+            "<#{obj.constructor.name}: \"#{obj.get_name()}\">"
+        else
+            obj
+
 module.filter 'text_or_id', ->
     (obj) ->
         if obj.text then obj.text

@@ -148,7 +148,7 @@
     <div ng-switch-when="true" id="debugger" controller="debugger">
         <a ng-click="previous()">previous</a> | 
         <a ng-click="next()">next</a>
-        This connection's value: {{current_debug_step.value}}
+        This connection's value: {{current_debug_step.value|value_representation}}
     </div>
 </div>
 

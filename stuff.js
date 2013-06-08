@@ -14,6 +14,16 @@
     return $rootScope.search = '';
   });
 
+  module.filter('value_representation', function(interpreter) {
+    return function(obj) {
+      if (obj instanceof interpreter.BaseType) {
+        return "<" + obj.constructor.name + ": \"" + (obj.get_name()) + "\">";
+      } else {
+        return obj;
+      }
+    };
+  });
+
   module.filter('text_or_id', function() {
     return function(obj) {
       if (obj.text) {

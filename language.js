@@ -1083,7 +1083,9 @@
       strongly_connected_components = components;
       return components;
     };
-    BoundLambda = (function() {
+    BoundLambda = (function(_super) {
+
+      __extends(BoundLambda, _super);
 
       function BoundLambda(_arg) {
         this.scope = _arg.scope, this.node = _arg.node;
@@ -1104,9 +1106,13 @@
         return this.node.graph.evaluate_connection(scope, this.node, output_nib);
       };
 
+      BoundLambda.prototype.get_name = function() {
+        return this.node.get_name();
+      };
+
       return BoundLambda;
 
-    })();
+    })(BaseType);
     Lambda = (function(_super) {
 
       __extends(Lambda, _super);
@@ -1928,6 +1934,7 @@
       BuiltinSyntaxError: CodeSyntaxError,
       definition_types: definition_classes,
       Definition: Definition,
+      BaseType: BaseType,
       Subroutine: Subroutine,
       Graph: Graph,
       Code: Code,
