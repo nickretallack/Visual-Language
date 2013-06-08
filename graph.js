@@ -245,7 +245,7 @@
         nib_offset = canvas_offset.minus(nib_center);
         canvas = $element.find('canvas')[0];
         connection_state = function(connection) {
-          if ($scope["debugger"] && connection === $scope.current_debug_step.connection) {
+          if ($scope["debugger"] && $scope.runtime.definition === subroutine && connection === $scope.current_debug_step.connection) {
             return $scope.current_debug_step.state;
           }
         };

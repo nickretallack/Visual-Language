@@ -140,6 +140,7 @@ module.controller 'subroutine', ($scope, $routeParams, interpreter, $q) ->
     $scope.evaluate_output = (output) ->
         runtime = new interpreter.Runtime
             graphics_element:$ "<div></div>"
+            definition: definition
         $scope.$root.runtime = runtime
         window.runtime = runtime
         thread = runtime.new_thread()
@@ -172,22 +173,23 @@ module.controller 'subroutine', ($scope, $routeParams, interpreter, $q) ->
 
     $scope.debug = (runtime) ->
         $scope.$root.debugger = true
-        $scope.debug_step = 0
+        $scope.$root.debug_step = 0
         $scope.update_debug_step()
     $scope.next = ->
         if $scope.debug_step < $scope.runtime.threads[0].traces.length - 1
-            $scope.debug_step += 1
+            $scope.$root.debug_step += 1
             $scope.update_debug_step()
     $scope.previous = ->
         if $scope.debug_step > 0
-            $scope.debug_step -= 1
+            $scope.$root.debug_step -= 1
             $scope.update_debug_step()
 
     $scope.update_debug_step = ->
-        $scope.current_debug_step = $scope.runtime?.threads[0].traces[$scope.debug_step]
+        $scope.$root.current_debug_step = $scope.runtime?.threads[0].traces[$scope.debug_step]
         #if $scope.current_debug_step.graph != $scope.s
         $scope.$broadcast "redraw-graph"
 
+    $scope.update_debug_step()
 
 
 module.config ($routeProvider) ->

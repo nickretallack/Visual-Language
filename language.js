@@ -141,7 +141,8 @@
     Runtime = (function() {
 
       function Runtime(_arg) {
-        this.graphics_element = (_arg != null ? _arg : {}).graphics_element;
+        var _ref;
+        _ref = _arg != null ? _arg : {}, this.graphics_element = _ref.graphics_element, this.definition = _ref.definition;
         this.log_messages = [];
         this.event_handlers = [];
         this.timers = [];

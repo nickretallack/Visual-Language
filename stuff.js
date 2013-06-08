@@ -198,7 +198,8 @@
     $scope.evaluate_output = function(output) {
       var runtime, thread;
       runtime = new interpreter.Runtime({
-        graphics_element: $("<div></div>")
+        graphics_element: $("<div></div>"),
+        definition: definition
       });
       $scope.$root.runtime = runtime;
       window.runtime = runtime;
@@ -240,26 +241,27 @@
     };
     $scope.debug = function(runtime) {
       $scope.$root["debugger"] = true;
-      $scope.debug_step = 0;
+      $scope.$root.debug_step = 0;
       return $scope.update_debug_step();
     };
     $scope.next = function() {
       if ($scope.debug_step < $scope.runtime.threads[0].traces.length - 1) {
-        $scope.debug_step += 1;
+        $scope.$root.debug_step += 1;
         return $scope.update_debug_step();
       }
     };
     $scope.previous = function() {
       if ($scope.debug_step > 0) {
-        $scope.debug_step -= 1;
+        $scope.$root.debug_step -= 1;
         return $scope.update_debug_step();
       }
     };
-    return $scope.update_debug_step = function() {
+    $scope.update_debug_step = function() {
       var _ref;
-      $scope.current_debug_step = (_ref = $scope.runtime) != null ? _ref.threads[0].traces[$scope.debug_step] : void 0;
+      $scope.$root.current_debug_step = (_ref = $scope.runtime) != null ? _ref.threads[0].traces[$scope.debug_step] : void 0;
       return $scope.$broadcast("redraw-graph");
     };
+    return $scope.update_debug_step();
   });
 
   module.config(function($routeProvider) {

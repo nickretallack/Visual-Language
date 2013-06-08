@@ -54,7 +54,7 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
             @runtime.log message, @id
 
     class Runtime
-        constructor: ({@graphics_element}={}) ->
+        constructor: ({@graphics_element, @definition}={}) ->
             @log_messages = []
             @event_handlers = []
             @timers = []
