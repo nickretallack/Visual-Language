@@ -132,7 +132,7 @@ module.directive 'runtimeGraphics', (interpreter) ->
         runtime = scope.$eval attributes.runtimeGraphics
         element.append runtime.graphics_element
 
-module.controller 'subroutine', ($scope, $routeParams, interpreter, $q, $location) ->
+module.controller 'subroutine', ($scope, $routeParams, interpreter, $q) ->
     definition = null
     $q.when interpreter.loaded, ->
         definition = $scope.$root.definition = interpreter.subroutines[$routeParams.id]
@@ -170,29 +170,31 @@ module.controller 'subroutine', ($scope, $routeParams, interpreter, $q, $locatio
     $scope.delete_output = (nib) ->
         delete_nib nib, 'from', 'output'
 
-
-    $scope.debug = (runtime) ->
-        $scope.$root.debugger = true
+module.controller 'debugger', ($scope, $location) ->
+    $scope.debug = ->
         $scope.$root.debug_step = 0
-        $scope.update_debug_step()
+        $scope.$root.debugger = true
+        $scope.update_trace()
+
+    $scope.stop_debugging = ->
+        $scope.$root.debugger = false
+
     $scope.next = ->
         if $scope.debug_step < $scope.runtime.threads[0].traces.length - 1
             $scope.$root.debug_step += 1
-            $scope.update_debug_step()
-            $location.path "#{$scope.current_debug_step.graph.id}"
+            $scope.update_trace()
     $scope.previous = ->
         if $scope.debug_step > 0
             $scope.$root.debug_step -= 1
-            $scope.update_debug_step()
-            $location.path "#{$scope.current_debug_step.graph.id}"
+            $scope.update_trace()
 
-    $scope.update_debug_step = ->
-        $scope.$root.current_debug_step = $scope.runtime?.threads[0].traces[$scope.debug_step]
-        #if $scope.current_debug_step.graph != $scope.s
-        $scope.$broadcast "redraw-graph"
-
-    $scope.update_debug_step()
-
+    $scope.update_trace = ->
+        $scope.current_trace = $scope.runtime?.threads[0].traces[$scope.debug_step]
+        new_location = "/#{$scope.current_trace.graph.id}"
+        if $location.path() is new_location
+            $scope.$broadcast "redraw-graph"
+        else
+            $location.path new_location
 
 module.config ($routeProvider) ->
     $routeProvider.when '/:id', controller:'subroutine', templateUrl:"subroutine.html"

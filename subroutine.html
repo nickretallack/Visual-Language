@@ -145,10 +145,11 @@
 </div>
 
 <div ng-switch="!!debugger">
-    <div ng-switch-when="true" id="debugger" controller="debugger">
+    <div ng-switch-when="true" id="debugger">
+        <a ng-click="stop_debugging()">stop</a> |
         <a ng-click="previous()">previous</a> | 
         <a ng-click="next()">next</a>
-        This connection's value: {{current_debug_step.value|value_representation}}
+        This connection's value: {{current_trace.value|value_representation}}
     </div>
 </div>
 

@@ -245,8 +245,12 @@
         nib_offset = canvas_offset.minus(nib_center);
         canvas = $element.find('canvas')[0];
         connection_state = function(connection) {
-          if ($scope["debugger"] && connection === $scope.current_debug_step.connection) {
-            return $scope.current_debug_step.state;
+          var trace;
+          if ($scope["debugger"]) {
+            trace = $scope.current_trace;
+            if (connection === trace.connection) {
+              return trace.state;
+            }
           }
         };
         this.draw = draw = function() {

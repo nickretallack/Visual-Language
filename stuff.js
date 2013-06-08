@@ -189,7 +189,7 @@
     };
   });
 
-  module.controller('subroutine', function($scope, $routeParams, interpreter, $q, $location) {
+  module.controller('subroutine', function($scope, $routeParams, interpreter, $q) {
     var definition, delete_nib;
     definition = null;
     $q.when(interpreter.loaded, function() {
@@ -236,34 +236,42 @@
     $scope.delete_input = function(nib) {
       return delete_nib(nib, 'to', 'input');
     };
-    $scope.delete_output = function(nib) {
+    return $scope.delete_output = function(nib) {
       return delete_nib(nib, 'from', 'output');
     };
-    $scope.debug = function(runtime) {
-      $scope.$root["debugger"] = true;
+  });
+
+  module.controller('debugger', function($scope, $location) {
+    $scope.debug = function() {
       $scope.$root.debug_step = 0;
-      return $scope.update_debug_step();
+      $scope.$root["debugger"] = true;
+      return $scope.update_trace();
+    };
+    $scope.stop_debugging = function() {
+      return $scope.$root["debugger"] = false;
     };
     $scope.next = function() {
       if ($scope.debug_step < $scope.runtime.threads[0].traces.length - 1) {
         $scope.$root.debug_step += 1;
-        $scope.update_debug_step();
-        return $location.path("" + $scope.current_debug_step.graph.id);
+        return $scope.update_trace();
       }
     };
     $scope.previous = function() {
       if ($scope.debug_step > 0) {
         $scope.$root.debug_step -= 1;
-        $scope.update_debug_step();
-        return $location.path("" + $scope.current_debug_step.graph.id);
+        return $scope.update_trace();
       }
     };
-    $scope.update_debug_step = function() {
-      var _ref;
-      $scope.$root.current_debug_step = (_ref = $scope.runtime) != null ? _ref.threads[0].traces[$scope.debug_step] : void 0;
-      return $scope.$broadcast("redraw-graph");
+    return $scope.update_trace = function() {
+      var new_location, _ref;
+      $scope.current_trace = (_ref = $scope.runtime) != null ? _ref.threads[0].traces[$scope.debug_step] : void 0;
+      new_location = "/" + $scope.current_trace.graph.id;
+      if ($location.path() === new_location) {
+        return $scope.$broadcast("redraw-graph");
+      } else {
+        return $location.path(new_location);
+      }
     };
-    return $scope.update_debug_step();
   });
 
   module.config(function($routeProvider) {

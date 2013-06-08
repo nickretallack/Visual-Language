@@ -175,8 +175,10 @@ module.directive 'graph', ($location) ->
         canvas = $element.find('canvas')[0]
 
         connection_state = (connection) ->
-            if $scope.debugger and connection is $scope.current_debug_step.connection
-                $scope.current_debug_step.state
+            if $scope.debugger
+                trace = $scope.current_trace
+                trace.state if connection is trace.connection
+                    
 
         @draw = draw = => async =>
             if subroutine
