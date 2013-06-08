@@ -175,11 +175,13 @@ module.controller 'subroutine', ($scope, $routeParams, interpreter, $q) ->
         $scope.debug_step = 0
         $scope.update_debug_step()
     $scope.next = ->
-        $scope.debug_step += 1
-        $scope.update_debug_step()
+        if $scope.debug_step < $scope.runtime.threads[0].traces.length - 1
+            $scope.debug_step += 1
+            $scope.update_debug_step()
     $scope.previous = ->
-        $scope.debug_step -= 1
-        $scope.update_debug_step()
+        if $scope.debug_step > 0
+            $scope.debug_step -= 1
+            $scope.update_debug_step()
 
     $scope.update_debug_step = ->
         $scope.current_debug_step = $scope.runtime?.threads[0].traces[$scope.debug_step]

@@ -244,12 +244,16 @@
       return $scope.update_debug_step();
     };
     $scope.next = function() {
-      $scope.debug_step += 1;
-      return $scope.update_debug_step();
+      if ($scope.debug_step < $scope.runtime.threads[0].traces.length - 1) {
+        $scope.debug_step += 1;
+        return $scope.update_debug_step();
+      }
     };
     $scope.previous = function() {
-      $scope.debug_step -= 1;
-      return $scope.update_debug_step();
+      if ($scope.debug_step > 0) {
+        $scope.debug_step -= 1;
+        return $scope.update_debug_step();
+      }
     };
     return $scope.update_debug_step = function() {
       var _ref;
