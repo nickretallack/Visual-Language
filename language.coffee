@@ -116,8 +116,8 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
             for nib in @inputs.concat @outputs
                 return nib if nib.id is id
 
-        get_call_inputs: -> @inputs
-        get_value_inputs: -> []
+        get_call_sinks: -> @inputs
+        get_value_sinks: -> []
 
         find_uses: ->
             graph for id, graph of all_definitions when graph instanceof Graph and graph.uses_definition @
@@ -227,24 +227,20 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
                 outputs:@outputs
                 stateful:@stateful
 
-        # This bit seems confusing because a subroutine is used in two ways.
-        # When referencing it as the implementation of a node, you'll want to access @inputs and @outputs.
-        # However, when accessing it as a node itself, these are reversed.
-        # This is because inputs on the inside are outputs on the outside and visa versa.
-        # These functions follow the same protocol as the functions of the same name on Node classes
-        get_nib_type: (type) ->
-            if type is 'input' then @get_inputs() else @get_outputs()
-        get_inputs: -> @outputs
-        get_outputs: -> @inputs
+        # These return the nibs that should be used as sources or sinks when this object
+        # is used as a node in the grid.
+        get_node_sources: -> @inputs
+        get_node_sinks: -> @outputs
+
+        # These return nibs for when this object is used as the implementation of a node.
+        get_call_sinks: -> @add_stateful_nib sequencer_input_nib, @inputs
+        get_call_sources: -> @add_stateful_nib sequencer_output_nib, @outputs
 
         add_stateful_nib: (nib, nibs) ->
             unless @stateful
                 nibs
             else
                 nibs.concat [nib]
-
-        get_call_inputs: -> @add_stateful_nib sequencer_input_nib, @inputs
-        get_call_outputs: -> @add_stateful_nib sequencer_output_nib, @outputs
 
         evaluate: -> @
 
@@ -715,7 +711,7 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
             implementation = inputs[0]()
             implementation.invoke output_nib, inputs[1..]
 
-        get_call_inputs: ->
+        get_call_sinks: ->
             [@implementation_input].concat @inputs
 
     find_value = (text, type, collection=all_definitions) ->
@@ -750,9 +746,9 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
                 text:''
                 id:@id
 
-        get_call_inputs: -> [@type_input]
-        get_value_inputs: -> @inputs
-        get_call_outputs: -> @inputs
+        get_call_sinks: -> [@type_input]
+        get_value_sinks: -> @inputs
+        get_call_sources: -> @inputs
 
         evaluate: (scope, nib) ->
             result = {}
@@ -819,9 +815,6 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
             @id ?= UUID()
             @graph.nodes.push @
 
-        get_nib_type: (type) ->
-            if type is 'input' then @get_inputs() else @get_outputs()
-
         delete: ->
             @graph.delete_node_connections @
             @graph.remove_node @
@@ -841,7 +834,7 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
             new_node
 
         virtual_inputs: (scope) ->
-            for input in @get_inputs()
+            for input in @get_node_sources()
                 do (input) => => @graph.evaluate_connection scope, @, input
 
         get_name: -> @implementation.text
@@ -860,8 +853,8 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
 
             scope.output_values[output_nib.id]
 
-        get_inputs: -> @implementation.get_call_inputs()
-        get_outputs: -> @implementation.get_call_outputs()
+        get_node_sinks: -> @implementation.get_call_sinks()
+        get_node_sources: -> @implementation.get_call_sources()
 
         ###
         subroutines_referenced: ->
@@ -886,8 +879,8 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
             @implementation.evaluate parent_scope, @
 
         subroutines_referenced: -> []
-        get_inputs: -> @implementation.get_value_inputs()
-        get_outputs: -> @outputs
+        get_node_sinks: -> @implementation.get_value_sinks()
+        get_node_sources: -> @outputs
 
     class UnknownNode extends Node
         constructor:(@position, type, text, @id) ->
@@ -1097,14 +1090,14 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
 
             get_nib = (node, connector, nib_type) ->
                 if connector.internal
-                    nibs = node.implementation["get_#{nib_type}"]()
+                    nibs = node.implementation["get_node_#{nib_type}"]()
                     _.find nibs, (nib) -> nib.id is connector.nib
                 else
-                    nibs = node["get_#{nib_type}"]()
+                    nibs = node["get_node_#{nib_type}"]()
                     _.find nibs, (nib) -> nib.id is connector.nib or (nib.id is 'value_output' and connector.nib is null)
 
-            from_nib = get_nib from_node, connection_data['from'], 'outputs'
-            to_nib = get_nib to_node, connection_data['to'], 'inputs'
+            from_nib = get_nib from_node, connection_data['from'], 'sources'
+            to_nib = get_nib to_node, connection_data['to'], 'sinks'
 
             console.log "Broken connection!", connection_data, from_node, to_node, from_nib, to_nib unless from_node and to_node and from_nib and to_nib
 
@@ -1159,8 +1152,8 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
 
             from_node = get_node connection_data.output
             to_node = get_node connection_data.input
-            from_nib = from_node.get_outputs()[connection_data.output.index]
-            to_nib = to_node.get_inputs()[connection_data.input.index]
+            from_nib = from_node.get_node_sources()[connection_data.output.index]
+            to_nib = to_node.get_node_sinks()[connection_data.input.index]
 
             console.log "Broken connection!", connection_data, from_node, to_node, from_nib, to_nib unless from_node and to_node and from_nib and to_nib
 

@@ -32,7 +32,7 @@
         <div ng-switch="(node.implementation | isa:'Lambda') && (node | isa: 'Value')">
             <div ng-switch-when="true" class="lambda">
 
-                <ul class="unstyled"><li ng-repeat="output in node.get_outputs()" class="output">
+                <ul class="unstyled"><li ng-repeat="output in node.get_node_sources()" class="output">
                     <div nib="output" node="node"></div>
                     {{output.text}}
                 </li></ul>
@@ -57,7 +57,7 @@
             </div>
 
             <div ng-switch-default>
-                <ul class="unstyled"><li ng-repeat="output in node.get_outputs()" class="output">
+                <ul class="unstyled"><li ng-repeat="output in node.get_node_sources()" class="output">
                 	<div nib="output" node="node"></div>
                 	{{output.text}}
                 </li></ul>
@@ -65,7 +65,7 @@
                 <div class="node-title">{{node.implementation | text_or_id}}</div>
 
                 <ul class="unstyled">
-                    <li ng-repeat="input in node.get_inputs()" class="input">
+                    <li ng-repeat="input in node.get_node_sinks()" class="input">
                     <ul class="unstyled"><li ng-repeat="index in [0]">
                     	{{input.text}}
                     	<div nib="input" index="index" node="node"></div>

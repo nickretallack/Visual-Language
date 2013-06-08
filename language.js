@@ -270,11 +270,11 @@
         }
       };
 
-      Definition.prototype.get_call_inputs = function() {
+      Definition.prototype.get_call_sinks = function() {
         return this.inputs;
       };
 
-      Definition.prototype.get_value_inputs = function() {
+      Definition.prototype.get_value_sinks = function() {
         return [];
       };
 
@@ -483,20 +483,20 @@
         });
       };
 
-      Subroutine.prototype.get_nib_type = function(type) {
-        if (type === 'input') {
-          return this.get_inputs();
-        } else {
-          return this.get_outputs();
-        }
+      Subroutine.prototype.get_node_sources = function() {
+        return this.inputs;
       };
 
-      Subroutine.prototype.get_inputs = function() {
+      Subroutine.prototype.get_node_sinks = function() {
         return this.outputs;
       };
 
-      Subroutine.prototype.get_outputs = function() {
-        return this.inputs;
+      Subroutine.prototype.get_call_sinks = function() {
+        return this.add_stateful_nib(sequencer_input_nib, this.inputs);
+      };
+
+      Subroutine.prototype.get_call_sources = function() {
+        return this.add_stateful_nib(sequencer_output_nib, this.outputs);
       };
 
       Subroutine.prototype.add_stateful_nib = function(nib, nibs) {
@@ -505,14 +505,6 @@
         } else {
           return nibs.concat([nib]);
         }
-      };
-
-      Subroutine.prototype.get_call_inputs = function() {
-        return this.add_stateful_nib(sequencer_input_nib, this.inputs);
-      };
-
-      Subroutine.prototype.get_call_outputs = function() {
-        return this.add_stateful_nib(sequencer_output_nib, this.outputs);
       };
 
       Subroutine.prototype.evaluate = function() {
@@ -1146,7 +1138,7 @@
         return implementation.invoke(output_nib, inputs.slice(1));
       };
 
-      Lambda.prototype.get_call_inputs = function() {
+      Lambda.prototype.get_call_sinks = function() {
         return [this.implementation_input].concat(this.inputs);
       };
 
@@ -1197,15 +1189,15 @@
         });
       }
 
-      Type.prototype.get_call_inputs = function() {
+      Type.prototype.get_call_sinks = function() {
         return [this.type_input];
       };
 
-      Type.prototype.get_value_inputs = function() {
+      Type.prototype.get_value_sinks = function() {
         return this.inputs;
       };
 
-      Type.prototype.get_call_outputs = function() {
+      Type.prototype.get_call_sources = function() {
         return this.inputs;
       };
 
@@ -1337,14 +1329,6 @@
         this.graph.nodes.push(this);
       }
 
-      Node.prototype.get_nib_type = function(type) {
-        if (type === 'input') {
-          return this.get_inputs();
-        } else {
-          return this.get_outputs();
-        }
-      };
-
       Node.prototype["delete"] = function() {
         this.graph.delete_node_connections(this);
         return this.graph.remove_node(this);
@@ -1371,7 +1355,7 @@
       Node.prototype.virtual_inputs = function(scope) {
         var input, _i, _len, _ref, _results,
           _this = this;
-        _ref = this.get_inputs();
+        _ref = this.get_node_sources();
         _results = [];
         for (_i = 0, _len = _ref.length; _i < _len; _i++) {
           input = _ref[_i];
@@ -1413,12 +1397,12 @@
         return scope.output_values[output_nib.id];
       };
 
-      Call.prototype.get_inputs = function() {
-        return this.implementation.get_call_inputs();
+      Call.prototype.get_node_sinks = function() {
+        return this.implementation.get_call_sinks();
       };
 
-      Call.prototype.get_outputs = function() {
-        return this.implementation.get_call_outputs();
+      Call.prototype.get_node_sources = function() {
+        return this.implementation.get_call_sources();
       };
 
       /*
@@ -1457,11 +1441,11 @@
         return [];
       };
 
-      Value.prototype.get_inputs = function() {
-        return this.implementation.get_value_inputs();
+      Value.prototype.get_node_sinks = function() {
+        return this.implementation.get_value_sinks();
       };
 
-      Value.prototype.get_outputs = function() {
+      Value.prototype.get_node_sources = function() {
         return this.outputs;
       };
 
@@ -1809,19 +1793,19 @@
         get_nib = function(node, connector, nib_type) {
           var nibs;
           if (connector.internal) {
-            nibs = node.implementation["get_" + nib_type]();
+            nibs = node.implementation["get_node_" + nib_type]();
             return _.find(nibs, function(nib) {
               return nib.id === connector.nib;
             });
           } else {
-            nibs = node["get_" + nib_type]();
+            nibs = node["get_node_" + nib_type]();
             return _.find(nibs, function(nib) {
               return nib.id === connector.nib || (nib.id === 'value_output' && connector.nib === null);
             });
           }
         };
-        from_nib = get_nib(from_node, connection_data['from'], 'outputs');
-        to_nib = get_nib(to_node, connection_data['to'], 'inputs');
+        from_nib = get_nib(from_node, connection_data['from'], 'sources');
+        to_nib = get_nib(to_node, connection_data['to'], 'sinks');
         if (!(from_node && to_node && from_nib && to_nib)) {
           console.log("Broken connection!", connection_data, from_node, to_node, from_nib, to_nib);
         }
@@ -1887,8 +1871,8 @@
         };
         from_node = get_node(connection_data.output);
         to_node = get_node(connection_data.input);
-        from_nib = from_node.get_outputs()[connection_data.output.index];
-        to_nib = to_node.get_inputs()[connection_data.input.index];
+        from_nib = from_node.get_node_sources()[connection_data.output.index];
+        to_nib = to_node.get_node_sinks()[connection_data.input.index];
         if (!(from_node && to_node && from_nib && to_nib)) {
           console.log("Broken connection!", connection_data, from_node, to_node, from_nib, to_nib);
         }
