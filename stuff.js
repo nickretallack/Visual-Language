@@ -225,8 +225,26 @@
     $scope.delete_input = function(nib) {
       return delete_nib(nib, 'to', 'input');
     };
-    return $scope.delete_output = function(nib) {
+    $scope.delete_output = function(nib) {
       return delete_nib(nib, 'from', 'output');
+    };
+    $scope.debug = function(runtime) {
+      $scope.$root["debugger"] = true;
+      $scope.debug_step = 0;
+      return $scope.update_debug_step();
+    };
+    $scope.next = function() {
+      $scope.debug_step += 1;
+      return $scope.update_debug_step();
+    };
+    $scope.previous = function() {
+      $scope.debug_step -= 1;
+      return $scope.update_debug_step();
+    };
+    return $scope.update_debug_step = function() {
+      var _ref;
+      $scope.current_debug_step = (_ref = $scope.runtime) != null ? _ref.threads[0].traces[$scope.debug_step] : void 0;
+      return $scope.$broadcast("redraw-graph");
     };
   });
 
@@ -337,7 +355,7 @@
     return window.JSON.stringify(obj, void 0, 2);
   };
 
-  module.controller('Controller', function($scope, $http, $location, interpreter, $q) {
+  module.controller('controller', function($scope, $http, $location, interpreter, $q) {
     var make_something;
     $scope.tab_click = function(tab) {
       return $scope.$root.overlay = $scope.$root.overlay === tab ? null : tab;

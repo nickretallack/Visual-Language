@@ -132,5 +132,25 @@
 </div>
 </div>
 
+
+<div ng-switch="!!runtime && !debugger">
+    <div ng-switch-when="true" id="runtime">
+        <a ng-click="quit_runtime(runtime)">Stop</a>
+        <a ng-click="debug(runtime)">Debug</a>
+        <ul id="console">
+            <li ng-repeat="message in runtime.log_messages | limitTo:20" reverse="true">{{message}}</li>
+        </ul>
+        <div id="graphics" runtime-graphics="runtime"></div>
+    </div>
+</div>
+
+<div ng-switch="!!debugger">
+    <div ng-switch-when="true" id="debugger" controller="debugger">
+        <a ng-click="previous()">previous</a> | 
+        <a ng-click="next()">next</a>
+        This connection's value: {{current_debug_step.value}}
+    </div>
+</div>
+
 </div>
 

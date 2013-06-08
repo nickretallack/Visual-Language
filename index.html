@@ -29,7 +29,7 @@
 <script src="graph.js"></script>
 </head>
 
-<body ng-controller="Controller">
+<body ng-controller="controller">
 
 <nav class="navbar navbar-fixed-top">
     <div class="navbar-inner">
@@ -90,16 +90,6 @@
     <td><a ng-click="use_value(subroutine)">value</a>
 </tr>
 </table>
-</div>
-
-<div ng-switch="!!runtime">
-    <div ng-switch-when="true" id="runtime">
-        <a ng-click="quit_runtime(runtime)">Stop</a>
-        <ul id="console">
-            <li ng-repeat="message in runtime.log_messages | limitTo:20" reverse="true">{{message}}</li>
-        </ul>
-        <div id="graphics" runtime-graphics="runtime"></div>
-    </div>
 </div>
 
 </body>

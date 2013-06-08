@@ -174,6 +174,10 @@ module.directive 'graph', ($location) ->
         nib_offset = canvas_offset.minus nib_center
         canvas = $element.find('canvas')[0]
 
+        connection_state = (connection) ->
+            if $scope.debugger and connection is $scope.current_debug_step.connection
+                $scope.current_debug_step.state
+
         @draw = draw = => async =>
             if subroutine
                 line_height = 16
@@ -182,7 +186,12 @@ module.directive 'graph', ($location) ->
                 for connection in subroutine.connections
                     input_element = @nib_views[nib_index connection.from]
                     output_element = @nib_views[nib_index connection.to]
-                    
+
+                    c.strokeStyle = switch connection_state connection
+                        when 'visiting' then 'rgb(0,255,0)'
+                        when 'evaluated' then 'rgb(0,0,255)'
+                        else 'rgb(0,0,0)'
+
                     if input_element?.length and output_element?.length
                         input_position = V(input_element.offset()).subtract nib_offset
                         output_position = V(output_element.offset()).subtract nib_offset

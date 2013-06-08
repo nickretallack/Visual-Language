@@ -56,7 +56,7 @@
     return {
       link: function(scope, element, attributes) {},
       controller: function($scope, $element, $attrs, interpreter) {
-        var $$element, canvas, canvas_offset, draw, get_bounds, header_height, in_box, nib_center, nib_offset, resize_canvas, subroutine, transform_the_position,
+        var $$element, canvas, canvas_offset, connection_state, draw, get_bounds, header_height, in_box, nib_center, nib_offset, resize_canvas, subroutine, transform_the_position,
           _this = this;
         $element = $($element).find('#graph');
         $$element = $($element);
@@ -244,6 +244,11 @@
         canvas_offset = V(0, header_height);
         nib_offset = canvas_offset.minus(nib_center);
         canvas = $element.find('canvas')[0];
+        connection_state = function(connection) {
+          if ($scope["debugger"] && connection === $scope.current_debug_step.connection) {
+            return $scope.current_debug_step.state;
+          }
+        };
         this.draw = draw = function() {
           return async(function() {
             var c, connection, end_position, input_element, input_position, line_height, nib_position, output_element, output_position, view, _i, _len, _ref;
@@ -256,6 +261,16 @@
                 connection = _ref[_i];
                 input_element = _this.nib_views[nib_index(connection.from)];
                 output_element = _this.nib_views[nib_index(connection.to)];
+                c.strokeStyle = (function() {
+                  switch (connection_state(connection)) {
+                    case 'visiting':
+                      return 'rgb(0,255,0)';
+                    case 'evaluated':
+                      return 'rgb(0,0,255)';
+                    default:
+                      return 'rgb(0,0,0)';
+                  }
+                })();
                 if ((input_element != null ? input_element.length : void 0) && (output_element != null ? output_element.length : void 0)) {
                   input_position = V(input_element.offset()).subtract(nib_offset);
                   output_position = V(output_element.offset()).subtract(nib_offset);

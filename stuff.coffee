@@ -163,6 +163,24 @@ module.controller 'subroutine', ($scope, $routeParams, interpreter, $q) ->
         delete_nib nib, 'from', 'output'
 
 
+    $scope.debug = (runtime) ->
+        $scope.$root.debugger = true
+        $scope.debug_step = 0
+        $scope.update_debug_step()
+    $scope.next = ->
+        $scope.debug_step += 1
+        $scope.update_debug_step()
+    $scope.previous = ->
+        $scope.debug_step -= 1
+        $scope.update_debug_step()
+
+    $scope.update_debug_step = ->
+        $scope.current_debug_step = $scope.runtime?.threads[0].traces[$scope.debug_step]
+        #if $scope.current_debug_step.graph != $scope.s
+        $scope.$broadcast "redraw-graph"
+
+
+
 module.config ($routeProvider) ->
     $routeProvider.when '/:id', controller:'subroutine', templateUrl:"subroutine.html"
     $routeProvider.when '/:id/run', controller:'subroutine', templateUrl:'run.html'
@@ -235,7 +253,7 @@ valid_json = (json) ->
 
 pretty_json = (obj) -> window.JSON.stringify obj, undefined, 2
 
-module.controller 'Controller', ($scope, $http, $location, interpreter, $q) ->
+module.controller 'controller', ($scope, $http, $location, interpreter, $q) ->
     $scope.tab_click = (tab) ->
         $scope.$root.overlay = if $scope.$root.overlay is tab then null else tab
 

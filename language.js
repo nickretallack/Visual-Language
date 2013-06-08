@@ -127,11 +127,8 @@
         this.traces = [];
       }
 
-      Thread.prototype.trace = function(scope, connection) {
-        return this.traces.push({
-          scope: scope,
-          connection: connection
-        });
+      Thread.prototype.trace = function(log) {
+        return this.traces.push(log);
       };
 
       Thread.prototype.log = function(message) {
@@ -668,25 +665,38 @@
         /* This helper will follow a connection and evaluate whatever it finds
         */
 
-        var connection, connection_text, internal, nib, node, _ref;
+        var connection, connection_text, internal, nib, node, result, _ref;
         connection = this.find_connection('to', to_node, to_nib);
         if (!connection) {
           connection_text = to_node.implementation != null ? to_node.implementation.text : to_node.text;
           throw new NotConnected("Missing connection in \"" + this.text + "\" to node \"" + connection_text + "\".");
         }
         _ref = connection.from, node = _ref.node, nib = _ref.nib, internal = _ref.internal;
-        scope.runtime.trace(scope, connection);
+        scope.runtime.trace({
+          scope: scope,
+          graph: this,
+          connection: connection,
+          state: 'visiting'
+        });
         if (internal) {
           if (node === scope.lambda_node) {
-            return scope.lambda_value_generators[nib.index]();
+            result = scope.lambda_value_generators[nib.index]();
           } else {
             throw new UnboundLambdaException("Node '" + (to_node.get_name()) + "' tried to receive input from Lambda '" + (node.get_name()) + "' from outside its scope.");
           }
         } else if (node instanceof Graph) {
-          return scope.inputs[nib.index]();
+          result = scope.inputs[nib.index]();
         } else {
-          return node.evaluate(scope, nib);
+          result = node.evaluate(scope, nib);
         }
+        scope.runtime.trace({
+          scope: scope,
+          graph: this,
+          connection: connection,
+          state: 'evaluated',
+          value: result
+        });
+        return result;
       };
 
       Graph.prototype.find_connection = function(direction, node, nib) {

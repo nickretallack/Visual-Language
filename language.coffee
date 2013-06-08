@@ -47,10 +47,8 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
         constructor: (@runtime, @id) ->
             @traces = []
 
-        trace: (scope, connection) ->
-            @traces.push
-                scope: scope
-                connection: connection
+        trace: (log) ->
+            @traces.push log
 
         log: (message) ->
             @runtime.log message, @id
@@ -333,18 +331,30 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
                 throw new NotConnected """Missing connection in "#{@text}" to node "#{connection_text}"."""
             {node, nib, internal} = connection.from
 
-            scope.runtime.trace scope, connection
+            scope.runtime.trace
+                scope: scope
+                graph: @
+                connection: connection
+                state: 'visiting'
 
             if internal
                 if node is scope.lambda_node
-                    scope.lambda_value_generators[nib.index]()
+                    result = scope.lambda_value_generators[nib.index]()
                 else
                     throw new UnboundLambdaException """Node '#{to_node.get_name()}' tried to receive input from Lambda '#{node.get_name()}' from outside its scope."""
 
             else if node instanceof Graph
-                scope.inputs[nib.index]()
+                result = scope.inputs[nib.index]()
             else
-                node.evaluate scope, nib
+                result = node.evaluate scope, nib
+
+            scope.runtime.trace
+                scope: scope
+                graph: @
+                connection: connection
+                state: 'evaluated'
+                value: result
+            return result
 
         find_connection: (direction, node, nib) ->
             unless node? and nib?
