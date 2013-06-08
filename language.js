@@ -135,6 +135,16 @@
         return this.runtime.log(message, this.id);
       };
 
+      Thread.prototype.addEventListener = function() {
+        var _ref;
+        return (_ref = this.runtime).addEventListener.apply(_ref, arguments);
+      };
+
+      Thread.prototype.setInterval = function() {
+        var _ref;
+        return (_ref = this.runtime).setInterval.apply(_ref, arguments);
+      };
+
       return Thread;
 
     })();
@@ -171,7 +181,7 @@
           _this = this;
         handle = function() {
           return $rootScope.$apply(function() {
-            return handler.call([], output_index, _this);
+            return handler.call([], output_index, _this.new_thread());
           });
         };
         timer = setInterval(handle, delay);
@@ -179,14 +189,15 @@
       };
 
       Runtime.prototype.addEventListener = function(type, handler_subroutine, element, output_index) {
-        var handler,
+        var handler, thread,
           _this = this;
         if (output_index == null) {
           output_index = 0;
         }
+        thread = this.new_thread();
         handler = function(event) {
           return $rootScope.$apply(function() {
-            return handler_subroutine.call([event], output_index, _this);
+            return handler_subroutine.call([event], output_index, thread);
           });
         };
         element.addEventListener(type, handler);

@@ -1,4 +1,5 @@
 todo:
+-- make debugger work even in exceptional scenarios
 (done) - make debugger independent of subroutine controller.  It needs to remember where it is across subroutines.
 
 - make sure the function gets run, even if it's just for the sequencer.

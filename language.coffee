@@ -53,6 +53,11 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
         log: (message) ->
             @runtime.log message, @id
 
+        addEventListener: ->
+            @runtime.addEventListener arguments...
+        setInterval: ->
+            @runtime.setInterval arguments...
+
     class Runtime
         constructor: ({@graphics_element, @definition}={}) ->
             @log_messages = []
@@ -70,13 +75,14 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
 
         setInterval: (handler, output_index, delay) ->
             handle = => $rootScope.$apply =>
-                handler.call [], output_index, @
+                handler.call [], output_index, @new_thread()
             timer = setInterval handle, delay
             @timers.push timer
 
         addEventListener: (type, handler_subroutine, element, output_index=0) ->
+            thread = @new_thread()
             handler = (event) => $rootScope.$apply =>
-                handler_subroutine.call [event], output_index, @
+                handler_subroutine.call [event], output_index, thread
             element.addEventListener type, handler
             @event_handlers.push
                 element:element
