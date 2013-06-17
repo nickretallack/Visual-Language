@@ -11,7 +11,10 @@ module.filter 'value_representation', (interpreter) ->
         if obj instanceof interpreter.BaseType
             "<#{obj.constructor.name}: \"#{obj.get_name()}\">"
         else
-            obj
+            try
+                JSON.stringify obj
+            catch
+                "(unprintable)"
 
 module.filter 'text_or_id', ->
     (obj) ->

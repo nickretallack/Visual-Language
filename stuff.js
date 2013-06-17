@@ -19,7 +19,7 @@
       if (obj instanceof interpreter.BaseType) {
         return "<" + obj.constructor.name + ": \"" + (obj.get_name()) + "\">";
       } else {
-        return obj;
+        return JSON.stringify(obj);
       }
     };
   });

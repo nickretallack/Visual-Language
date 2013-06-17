@@ -46,6 +46,8 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
     class Thread
         constructor: (@runtime, @id) ->
             @traces = []
+            @state = @runtime.state
+            @graphics_element = @runtime.graphics_element
 
         trace: (log) ->
             @traces.push log
@@ -54,9 +56,9 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
             @runtime.log message, @id
 
         addEventListener: ->
-            @runtime.addEventListener arguments...
+            @runtime.addEventListener @, arguments...
         setInterval: ->
-            @runtime.setInterval arguments...
+            @runtime.setInterval @, arguments...
 
     class Runtime
         constructor: ({@graphics_element, @definition}={}) ->
@@ -73,14 +75,15 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
             for timer in @timers
                 clearTimeout timer
 
-        setInterval: (handler, output_index, delay) ->
+        setInterval: (thread, handler, output_index, delay) ->
+            #thread = @new_thread()
             handle = => $rootScope.$apply =>
-                handler.call [], output_index, @new_thread()
+                handler.call [], output_index, thread
             timer = setInterval handle, delay
             @timers.push timer
 
-        addEventListener: (type, handler_subroutine, element, output_index=0) ->
-            thread = @new_thread()
+        addEventListener: (thread, type, handler_subroutine, element, output_index=0) ->
+            #thread = @new_thread()
             handler = (event) => $rootScope.$apply =>
                 handler_subroutine.call [event], output_index, thread
             element.addEventListener type, handler

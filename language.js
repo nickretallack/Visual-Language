@@ -125,6 +125,8 @@
         this.runtime = runtime;
         this.id = id;
         this.traces = [];
+        this.state = this.runtime.state;
+        this.graphics_element = this.runtime.graphics_element;
       }
 
       Thread.prototype.trace = function(log) {
@@ -137,12 +139,12 @@
 
       Thread.prototype.addEventListener = function() {
         var _ref;
-        return (_ref = this.runtime).addEventListener.apply(_ref, arguments);
+        return (_ref = this.runtime).addEventListener.apply(_ref, [this].concat(__slice.call(arguments)));
       };
 
       Thread.prototype.setInterval = function() {
         var _ref;
-        return (_ref = this.runtime).setInterval.apply(_ref, arguments);
+        return (_ref = this.runtime).setInterval.apply(_ref, [this].concat(__slice.call(arguments)));
       };
 
       return Thread;
@@ -176,25 +178,24 @@
         return _results;
       };
 
-      Runtime.prototype.setInterval = function(handler, output_index, delay) {
+      Runtime.prototype.setInterval = function(thread, handler, output_index, delay) {
         var handle, timer,
           _this = this;
         handle = function() {
           return $rootScope.$apply(function() {
-            return handler.call([], output_index, _this.new_thread());
+            return handler.call([], output_index, thread);
           });
         };
         timer = setInterval(handle, delay);
         return this.timers.push(timer);
       };
 
-      Runtime.prototype.addEventListener = function(type, handler_subroutine, element, output_index) {
-        var handler, thread,
+      Runtime.prototype.addEventListener = function(thread, type, handler_subroutine, element, output_index) {
+        var handler,
           _this = this;
         if (output_index == null) {
           output_index = 0;
         }
-        thread = this.new_thread();
         handler = function(event) {
           return $rootScope.$apply(function() {
             return handler_subroutine.call([event], output_index, thread);
