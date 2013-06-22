@@ -268,6 +268,8 @@
                   }
                 }
               }
+            }
+            if ($scope.dragging.length || $scope.drawing) {
               return draw();
             }
           });

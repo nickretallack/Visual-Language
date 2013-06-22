@@ -187,6 +187,8 @@ module.directive 'graph', ($location) ->
                     if is_lambda_value node 
                         for child_node in node.children
                             update_position child_node
+
+            if $scope.dragging.length or $scope.drawing
                 draw()
 
         #$element.bind 'keydown', (event) ->
