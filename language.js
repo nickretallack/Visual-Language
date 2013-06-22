@@ -1104,19 +1104,21 @@
         this.scope = _arg.scope, this.node = _arg.node;
       }
 
-      BoundLambda.prototype.invoke = function(output_nib, inputs) {
-        /*
-                    Graph.evaluate_connection checks for these values in the scope,
-                    which provide inputs from the calling graph to the implementing graph.
-                    NOTE: it may not be possible to use a lambda within a lambda this way.
+      BoundLambda.prototype.invoke = function(output_nib, inputs, calling_scope) {
+        /* TODO - Re-evaluate this comment
+        Graph.evaluate_connection checks for these values in the scope,
+        which provide inputs from the calling graph to the implementing graph.
+        NOTE: it may not be possible to use a lambda within a lambda this way.
         */
 
-        var scope;
-        scope = angular.extend({}, this.scope, {
+        var defining_scope;
+        defining_scope = this.scope;
+        calling_scope.nodes.__proto__ = defining_scope.nodes;
+        angular.extend(calling_scope, {
           lambda_value_generators: inputs,
           lambda_node: this.node
         });
-        return this.node.graph.evaluate_connection(scope, this.node, output_nib);
+        return this.node.graph.evaluate_connection(calling_scope, this.node, output_nib);
       };
 
       BoundLambda.prototype.get_name = function() {
@@ -1150,11 +1152,11 @@
         });
       };
 
-      Lambda.prototype.invoke = function(parent_scope, output_nib, node) {
+      Lambda.prototype.invoke = function(calling_scope, output_nib, node) {
         var implementation, inputs;
-        inputs = parent_scope.inputs;
+        inputs = calling_scope.inputs;
         implementation = inputs[0]();
-        return implementation.invoke(output_nib, inputs.slice(1));
+        return implementation.invoke(output_nib, inputs.slice(1), calling_scope);
       };
 
       Lambda.prototype.get_call_sinks = function() {

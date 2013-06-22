@@ -346,6 +346,7 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
                 if node is scope.lambda_node
                     result = scope.lambda_value_generators[nib.index]()
                 else
+                    # TODO: this error doesn't need to exist.  Make it impossible to make this kind of connection instead.
                     throw new UnboundLambdaException """Node '#{to_node.get_name()}' tried to receive input from Lambda '#{node.get_name()}' from outside its scope."""
 
             else if node instanceof Graph
@@ -686,17 +687,25 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
     class BoundLambda extends BaseType
         constructor: ({@scope, @node}) ->
 
-        invoke: (output_nib, inputs) ->
-            ###
+        invoke: (output_nib, inputs, calling_scope) ->
+            ### TODO - Re-evaluate this comment
             Graph.evaluate_connection checks for these values in the scope,
             which provide inputs from the calling graph to the implementing graph.
             NOTE: it may not be possible to use a lambda within a lambda this way.
             ###
-            scope = angular.extend {}, @scope,
+
+            # Nodes inside a lambda value can reach nodes from the defining scope.
+            defining_scope = @scope
+            calling_scope.nodes.__proto__ = defining_scope.nodes
+
+            # Nodes inside a lambda can reach the lambda's input sources,
+            # in addition to the parent graph's.
+            angular.extend calling_scope, 
                 lambda_value_generators: inputs
                 lambda_node: @node
 
-            @node.graph.evaluate_connection scope, @node, output_nib
+            # We now follow a connection from the node's output sinks in its defining graph.
+            @node.graph.evaluate_connection calling_scope, @node, output_nib
 
         get_name: -> @node.get_name()
 
@@ -717,10 +726,10 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
                 node: node
                 scope: scope
 
-        invoke: (parent_scope, output_nib, node) ->
-            inputs = parent_scope.inputs
+        invoke: (calling_scope, output_nib, node) ->
+            inputs = calling_scope.inputs
             implementation = inputs[0]()
-            implementation.invoke output_nib, inputs[1..]
+            implementation.invoke output_nib, inputs[1..], calling_scope
 
         get_call_sinks: ->
             [@implementation_input].concat @inputs
@@ -854,7 +863,6 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
 
         evaluate: (parent_scope, output_nib) ->
             scope = parent_scope.nodes[@id]
-
             unless scope?
                 scope = parent_scope.nodes[@id] = make_child_scope parent_scope,
                     inputs: @virtual_inputs parent_scope
@@ -894,6 +902,7 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
         get_node_sinks: -> @implementation.get_value_sinks()
         get_node_sources: -> @outputs
 
+        # For lambdas
         add_child: (node) ->
             node.lambda_node = @
             @children.push node
