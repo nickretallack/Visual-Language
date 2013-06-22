@@ -19,7 +19,11 @@
       if (obj instanceof interpreter.BaseType) {
         return "<" + obj.constructor.name + ": \"" + (obj.get_name()) + "\">";
       } else {
-        return JSON.stringify(obj);
+        try {
+          return JSON.stringify(obj);
+        } catch (error) {
+          return "(unprintable)";
+        }
       }
     };
   });
@@ -197,6 +201,7 @@
     });
     $scope.evaluate_output = function(output) {
       var runtime, thread;
+      $scope.stop_debugging();
       runtime = new interpreter.Runtime({
         graphics_element: $("<div></div>"),
         definition: definition

@@ -13,7 +13,7 @@ module.filter 'value_representation', (interpreter) ->
         else
             try
                 JSON.stringify obj
-            catch
+            catch error
                 "(unprintable)"
 
 module.filter 'text_or_id', ->
@@ -141,6 +141,7 @@ module.controller 'subroutine', ($scope, $routeParams, interpreter, $q) ->
         definition = $scope.$root.definition = interpreter.subroutines[$routeParams.id]
 
     $scope.evaluate_output = (output) ->
+        $scope.stop_debugging()
         runtime = new interpreter.Runtime
             graphics_element:$ "<div></div>"
             definition: definition
