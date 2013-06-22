@@ -49,11 +49,13 @@ position:relative; z-index:20;}
 
 .node-title {white-space:normal; max-width:120px;}
 
-.node.call {border:none; border-radius:5px;}
+.node.call {border:0px solid black; border-radius:5px;}
 .node.call .node-title {font-weight:bold; text-align:center;}
 
 .node.value { border:1px dotted black; }
 .node.value .node-title {font-weight:normal; overflow:hidden; max-width:500px; word-break:break-all;}
+
+.node.in-lambda {border-width:3px !important;}
 
 .node.value {}
 
@@ -149,4 +151,5 @@ label {
 
 #title-row {
     display: inline-block; /* works around a clickability issue in chrome */
+    width: 100%;
 }

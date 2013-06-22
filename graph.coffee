@@ -137,15 +137,18 @@ module.directive 'graph', ($location) ->
             $scope.boxing = $scope.mouse_position
 
 
-        lambda_size = V 500, 150
+        lambda_size = V 150, 500
+
+        collides_with_lambda = (dragging_node) ->
+            for node in subroutine.nodes
+                if (node instanceof interpreter.Value) and (node.implementation instanceof interpreter.Lambda)
+                    if in_box dragging_node.position, node.position, node.position.plus lambda_size
+                        return node
 
         $element.bind 'mouseup', (event) -> $scope.$apply ->
             # attach nodes to the first lambda it collides with
             for dragging_node in $scope.dragging
-                for node in subroutine.nodes
-                    if (node instanceof interpreter.Value) and (node.implementation instanceof interpreter.Lambda)
-                        if in_box dragging_node.position, node.position, node.position.plus lambda_size
-                            dragging_node.lambda = node
+                dragging_node.lambda = collides_with_lambda dragging_node
 
             $scope.dragging = []
 
@@ -168,7 +171,7 @@ module.directive 'graph', ($location) ->
             mouse_delta = $scope.mouse_position.minus new_mouse_position
             $scope.mouse_position = new_mouse_position
 
-            if $scope.dragging
+            if $scope.dragging.length
                 for node in $scope.dragging
                     node.position = node.position.plus V -mouse_delta.y, -mouse_delta.x
                 draw()

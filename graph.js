@@ -56,7 +56,7 @@
     return {
       link: function(scope, element, attributes) {},
       controller: function($scope, $element, $attrs, interpreter) {
-        var $$element, canvas, canvas_offset, connection_state, draw, get_bounds, header_height, in_box, lambda_size, nib_center, nib_offset, resize_canvas, subroutine, transform_the_position,
+        var $$element, canvas, canvas_offset, collides_with_lambda, connection_state, draw, get_bounds, header_height, in_box, lambda_size, nib_center, nib_offset, resize_canvas, subroutine, transform_the_position,
           _this = this;
         $element = $($element).find('#graph');
         $$element = $($element);
@@ -195,22 +195,26 @@
             return $scope.boxing = $scope.mouse_position;
           });
         });
-        lambda_size = V(500, 150);
+        lambda_size = V(150, 500);
+        collides_with_lambda = function(dragging_node) {
+          var node, _i, _len, _ref;
+          _ref = subroutine.nodes;
+          for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+            node = _ref[_i];
+            if ((node instanceof interpreter.Value) && (node.implementation instanceof interpreter.Lambda)) {
+              if (in_box(dragging_node.position, node.position, node.position.plus(lambda_size))) {
+                return node;
+              }
+            }
+          }
+        };
         $element.bind('mouseup', function(event) {
           return $scope.$apply(function() {
-            var dragging_node, newly_selected, node, _i, _j, _k, _len, _len1, _len2, _ref, _ref1;
+            var dragging_node, newly_selected, node, _i, _j, _len, _len1, _ref;
             _ref = $scope.dragging;
             for (_i = 0, _len = _ref.length; _i < _len; _i++) {
               dragging_node = _ref[_i];
-              _ref1 = subroutine.nodes;
-              for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
-                node = _ref1[_j];
-                if ((node instanceof interpreter.Value) && (node.implementation instanceof interpreter.Lambda)) {
-                  if (in_box(dragging_node.position, node.position, node.position.plus(lambda_size))) {
-                    dragging_node.lambda = node;
-                  }
-                }
-              }
+              dragging_node.lambda = collides_with_lambda(dragging_node);
             }
             $scope.dragging = [];
             if ($scope.boxing) {
@@ -218,8 +222,8 @@
                 return in_box(transform_the_position(node.position), $scope.boxing, $scope.mouse_position);
               });
               if (event.shiftKey) {
-                for (_k = 0, _len2 = newly_selected.length; _k < _len2; _k++) {
-                  node = newly_selected[_k];
+                for (_j = 0, _len1 = newly_selected.length; _j < _len1; _j++) {
+                  node = newly_selected[_j];
                   if (__indexOf.call($scope.selection, node) < 0) {
                     $scope.selection.push(node);
                   }
@@ -239,7 +243,7 @@
             new_mouse_position = (V(event.clientX, event.clientY)).minus(canvas_offset);
             mouse_delta = $scope.mouse_position.minus(new_mouse_position);
             $scope.mouse_position = new_mouse_position;
-            if ($scope.dragging) {
+            if ($scope.dragging.length) {
               _ref = $scope.dragging;
               for (_i = 0, _len = _ref.length; _i < _len; _i++) {
                 node = _ref[_i];
