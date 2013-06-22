@@ -139,16 +139,22 @@ module.directive 'graph', ($location) ->
 
         lambda_size = V 150, 500
 
+        is_lambda_value = (node) -> (node instanceof interpreter.Value) and (node.implementation instanceof interpreter.Lambda)
+
         collides_with_lambda = (dragging_node) ->
             for node in subroutine.nodes
-                if (node instanceof interpreter.Value) and (node.implementation instanceof interpreter.Lambda)
+                if is_lambda_value node
                     if in_box dragging_node.position, node.position, node.position.plus lambda_size
                         return node
 
         $element.bind 'mouseup', (event) -> $scope.$apply ->
             # attach nodes to the first lambda it collides with
             for dragging_node in $scope.dragging
-                dragging_node.lambda = collides_with_lambda dragging_node
+                lambda = collides_with_lambda dragging_node
+                if lambda
+                    lambda.add_child dragging_node
+                else if dragging_node.lambda_node
+                    dragging_node.lambda_node.remove_child dragging_node
 
             $scope.dragging = []
 
@@ -170,10 +176,17 @@ module.directive 'graph', ($location) ->
             new_mouse_position = (V event.clientX, event.clientY).minus canvas_offset
             mouse_delta = $scope.mouse_position.minus new_mouse_position
             $scope.mouse_position = new_mouse_position
+            mouse_delta = V -mouse_delta.y, -mouse_delta.x
+
+            update_position = (node) ->
+                node.position = node.position.plus mouse_delta
 
             if $scope.dragging.length
                 for node in $scope.dragging
-                    node.position = node.position.plus V -mouse_delta.y, -mouse_delta.x
+                    update_position node
+                    if is_lambda_value node 
+                        for child_node in node.children
+                            update_position child_node
                 draw()
 
         #$element.bind 'keydown', (event) ->

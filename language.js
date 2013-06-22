@@ -1448,6 +1448,7 @@
       function Value() {
         Value.__super__.constructor.apply(this, arguments);
         this.outputs = [value_output_nib];
+        this.children = [];
       }
 
       Value.prototype.type = 'value';
@@ -1466,6 +1467,16 @@
 
       Value.prototype.get_node_sources = function() {
         return this.outputs;
+      };
+
+      Value.prototype.add_child = function(node) {
+        node.lambda_node = this;
+        return this.children.push(node);
+      };
+
+      Value.prototype.remove_child = function(node) {
+        node.lambda_node = null;
+        return this.children = _.without(this.children, node);
       };
 
       return Value;

@@ -56,7 +56,7 @@
     return {
       link: function(scope, element, attributes) {},
       controller: function($scope, $element, $attrs, interpreter) {
-        var $$element, canvas, canvas_offset, collides_with_lambda, connection_state, draw, get_bounds, header_height, in_box, lambda_size, nib_center, nib_offset, resize_canvas, subroutine, transform_the_position,
+        var $$element, canvas, canvas_offset, collides_with_lambda, connection_state, draw, get_bounds, header_height, in_box, is_lambda_value, lambda_size, nib_center, nib_offset, resize_canvas, subroutine, transform_the_position,
           _this = this;
         $element = $($element).find('#graph');
         $$element = $($element);
@@ -196,12 +196,15 @@
           });
         });
         lambda_size = V(150, 500);
+        is_lambda_value = function(node) {
+          return (node instanceof interpreter.Value) && (node.implementation instanceof interpreter.Lambda);
+        };
         collides_with_lambda = function(dragging_node) {
           var node, _i, _len, _ref;
           _ref = subroutine.nodes;
           for (_i = 0, _len = _ref.length; _i < _len; _i++) {
             node = _ref[_i];
-            if ((node instanceof interpreter.Value) && (node.implementation instanceof interpreter.Lambda)) {
+            if (is_lambda_value(node)) {
               if (in_box(dragging_node.position, node.position, node.position.plus(lambda_size))) {
                 return node;
               }
@@ -210,11 +213,16 @@
         };
         $element.bind('mouseup', function(event) {
           return $scope.$apply(function() {
-            var dragging_node, newly_selected, node, _i, _j, _len, _len1, _ref;
+            var dragging_node, lambda, newly_selected, node, _i, _j, _len, _len1, _ref;
             _ref = $scope.dragging;
             for (_i = 0, _len = _ref.length; _i < _len; _i++) {
               dragging_node = _ref[_i];
-              dragging_node.lambda = collides_with_lambda(dragging_node);
+              lambda = collides_with_lambda(dragging_node);
+              if (lambda) {
+                lambda.add_child(dragging_node);
+              } else if (dragging_node.lambda_node) {
+                dragging_node.lambda_node.remove_child(dragging_node);
+              }
             }
             $scope.dragging = [];
             if ($scope.boxing) {
@@ -239,15 +247,26 @@
         $scope.mouse_position = V(0, 0);
         $element.bind('mousemove', function(event) {
           return $scope.$apply(function() {
-            var mouse_delta, new_mouse_position, node, _i, _len, _ref;
+            var child_node, mouse_delta, new_mouse_position, node, update_position, _i, _j, _len, _len1, _ref, _ref1;
             new_mouse_position = (V(event.clientX, event.clientY)).minus(canvas_offset);
             mouse_delta = $scope.mouse_position.minus(new_mouse_position);
             $scope.mouse_position = new_mouse_position;
+            mouse_delta = V(-mouse_delta.y, -mouse_delta.x);
+            update_position = function(node) {
+              return node.position = node.position.plus(mouse_delta);
+            };
             if ($scope.dragging.length) {
               _ref = $scope.dragging;
               for (_i = 0, _len = _ref.length; _i < _len; _i++) {
                 node = _ref[_i];
-                node.position = node.position.plus(V(-mouse_delta.y, -mouse_delta.x));
+                update_position(node);
+                if (is_lambda_value(node)) {
+                  _ref1 = node.children;
+                  for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
+                    child_node = _ref1[_j];
+                    update_position(child_node);
+                  }
+                }
               }
               return draw();
             }

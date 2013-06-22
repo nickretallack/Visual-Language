@@ -884,6 +884,7 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
         constructor: ->
             super
             @outputs = [value_output_nib]
+            @children = []
 
         type:'value'
         evaluate:(parent_scope, output_nib)->
@@ -892,6 +893,15 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
         subroutines_referenced: -> []
         get_node_sinks: -> @implementation.get_value_sinks()
         get_node_sources: -> @outputs
+
+        add_child: (node) ->
+            node.lambda_node = @
+            @children.push node
+
+        remove_child: (node) ->
+            node.lambda_node = null
+            @children = _.without @children, node
+
 
     class UnknownNode extends Node
         constructor:(@position, type, text, @id) ->
