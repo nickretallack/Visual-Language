@@ -56,7 +56,7 @@
     return {
       link: function(scope, element, attributes) {},
       controller: function($scope, $element, $attrs, interpreter) {
-        var $$element, canvas, canvas_offset, connection_state, draw, get_bounds, header_height, in_box, nib_center, nib_offset, resize_canvas, subroutine, transform_the_position,
+        var $$element, canvas, canvas_offset, connection_state, draw, get_bounds, header_height, in_box, lambda_size, nib_center, nib_offset, resize_canvas, subroutine, transform_the_position,
           _this = this;
         $element = $($element).find('#graph');
         $$element = $($element);
@@ -186,7 +186,6 @@
         };
         in_box = function(point, point1, point2) {
           var bounds, _ref, _ref1;
-          point = transform_the_position(point);
           bounds = get_bounds(point1, point2);
           return (bounds.left < (_ref = point.x) && _ref < bounds.right) && (bounds.top < (_ref1 = point.y) && _ref1 < bounds.bottom);
         };
@@ -196,17 +195,31 @@
             return $scope.boxing = $scope.mouse_position;
           });
         });
+        lambda_size = V(500, 150);
         $element.bind('mouseup', function(event) {
           return $scope.$apply(function() {
-            var newly_selected, node, _i, _len;
+            var dragging_node, newly_selected, node, _i, _j, _k, _len, _len1, _len2, _ref, _ref1;
+            _ref = $scope.dragging;
+            for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+              dragging_node = _ref[_i];
+              _ref1 = subroutine.nodes;
+              for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
+                node = _ref1[_j];
+                if ((node instanceof interpreter.Value) && (node.implementation instanceof interpreter.Lambda)) {
+                  if (in_box(dragging_node.position, node.position, node.position.plus(lambda_size))) {
+                    dragging_node.lambda = node;
+                  }
+                }
+              }
+            }
             $scope.dragging = [];
             if ($scope.boxing) {
               newly_selected = _.filter(subroutine.nodes, function(node) {
-                return in_box(node.position, $scope.boxing, $scope.mouse_position);
+                return in_box(transform_the_position(node.position), $scope.boxing, $scope.mouse_position);
               });
               if (event.shiftKey) {
-                for (_i = 0, _len = newly_selected.length; _i < _len; _i++) {
-                  node = newly_selected[_i];
+                for (_k = 0, _len2 = newly_selected.length; _k < _len2; _k++) {
+                  node = newly_selected[_k];
                   if (__indexOf.call($scope.selection, node) < 0) {
                     $scope.selection.push(node);
                   }

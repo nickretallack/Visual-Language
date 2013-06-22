@@ -129,7 +129,6 @@ module.directive 'graph', ($location) ->
                 height:"#{bounds.height}px"
 
         in_box = (point, point1, point2) ->
-            point = transform_the_position point
             bounds = get_bounds point1, point2
             bounds.left < point.x < bounds.right and bounds.top < point.y < bounds.bottom
 
@@ -137,11 +136,21 @@ module.directive 'graph', ($location) ->
         $element.bind 'mousedown', (event) -> $scope.$apply ->
             $scope.boxing = $scope.mouse_position
 
+
+        lambda_size = V 500, 150
+
         $element.bind 'mouseup', (event) -> $scope.$apply ->
+            # attach nodes to the first lambda it collides with
+            for dragging_node in $scope.dragging
+                for node in subroutine.nodes
+                    if (node instanceof interpreter.Value) and (node.implementation instanceof interpreter.Lambda)
+                        if in_box dragging_node.position, node.position, node.position.plus lambda_size
+                            dragging_node.lambda = node
+
             $scope.dragging = []
 
             if $scope.boxing
-                newly_selected = _.filter subroutine.nodes, (node) -> in_box node.position, $scope.boxing, $scope.mouse_position
+                newly_selected = _.filter subroutine.nodes, (node) -> in_box (transform_the_position node.position), $scope.boxing, $scope.mouse_position
                 if event.shiftKey
                     for node in newly_selected
                         if node not in $scope.selection
