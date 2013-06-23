@@ -167,7 +167,7 @@
         _ref = this.event_handlers;
         for (_i = 0, _len = _ref.length; _i < _len; _i++) {
           handler = _ref[_i];
-          handler.element.removeEventListener(handler.handler);
+          handler.element.removeEventListener(handler.type, handler.handler);
         }
         _ref1 = this.timers;
         _results = [];
@@ -204,7 +204,8 @@
         element.addEventListener(type, handler);
         return this.event_handlers.push({
           element: element,
-          handler: handler
+          handler: handler,
+          type: type
         });
       };
 

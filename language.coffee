@@ -70,7 +70,7 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
 
         cleanup: ->
             for handler in @event_handlers
-                handler.element.removeEventListener handler.handler
+                handler.element.removeEventListener handler.type, handler.handler
 
             for timer in @timers
                 clearTimeout timer
@@ -87,9 +87,7 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
             handler = (event) => $rootScope.$apply =>
                 handler_subroutine.call [event], output_index, thread
             element.addEventListener type, handler
-            @event_handlers.push
-                element:element
-                handler:handler
+            @event_handlers.push {element, handler, type}
 
         log: (message, id=0) ->
             formatted_message = "Thread #{id}: #{message}"
