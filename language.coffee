@@ -99,6 +99,21 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
             @threads.push thread
             thread
 
+        run: (nib) ->
+            thread = @new_thread()
+
+            @scope = make_scope
+                runtime: thread
+                inputs: @definition.user_inputs()
+
+            try
+                $timeout => execute runtime, 
+                    => @definition.invoke @scope, nib # the magic
+            catch exception
+                if excepition instanceof InputError
+                    runtime.log "Invalid JSON: #{exception.message}"
+                else
+                    throw exception
 
     ### DEFINITION TYPES ###
 
@@ -175,21 +190,6 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
 
             results.push -> # for sequencer inputs
             results
-
-        run: (nib, runtime) ->
-            child_scope = {}
-            scope = make_scope
-                runtime: runtime
-                inputs: @user_inputs()
-
-            try
-                $timeout => execute runtime, 
-                    => @invoke scope, nib # the magic
-            catch exception
-                if excepition instanceof InputError
-                    runtime.log "Invalid JSON: #{exception.message}"
-                else
-                    throw exception
 
         call: (inputs, output_index=0, runtime) ->
             # This is how programs are meant to deal with subroutine literals

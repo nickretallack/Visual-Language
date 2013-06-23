@@ -200,17 +200,15 @@
       return definition = $scope.$root.definition = interpreter.subroutines[$routeParams.id];
     });
     $scope.evaluate_output = function(output) {
-      var runtime, thread;
+      var runtime;
       $scope.stop_debugging();
       runtime = new interpreter.Runtime({
         graphics_element: $("<div></div>"),
         definition: definition
       });
-      $scope.$root.runtime = runtime;
-      window.runtime = runtime;
-      thread = runtime.new_thread();
-      definition.run(output, thread);
-      return console.log(runtime);
+      $scope.$root.runtime = window.runtime = runtime;
+      console.log(runtime);
+      return runtime.run(output);
     };
     $scope.new_input = function() {
       definition.add_input();

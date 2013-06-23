@@ -226,6 +226,29 @@
         return thread;
       };
 
+      Runtime.prototype.run = function(nib) {
+        var thread,
+          _this = this;
+        thread = this.new_thread();
+        this.scope = make_scope({
+          runtime: thread,
+          inputs: this.definition.user_inputs()
+        });
+        try {
+          return $timeout(function() {
+            return execute(runtime, function() {
+              return _this.definition.invoke(_this.scope, nib);
+            });
+          });
+        } catch (exception) {
+          if (excepition instanceof InputError) {
+            return runtime.log("Invalid JSON: " + exception.message);
+          } else {
+            throw exception;
+          }
+        }
+      };
+
       return Runtime;
 
     })();
@@ -388,29 +411,6 @@
         }).call(this);
         results.push(function() {});
         return results;
-      };
-
-      Subroutine.prototype.run = function(nib, runtime) {
-        var child_scope, scope,
-          _this = this;
-        child_scope = {};
-        scope = make_scope({
-          runtime: runtime,
-          inputs: this.user_inputs()
-        });
-        try {
-          return $timeout(function() {
-            return execute(runtime, function() {
-              return _this.invoke(scope, nib);
-            });
-          });
-        } catch (exception) {
-          if (excepition instanceof InputError) {
-            return runtime.log("Invalid JSON: " + exception.message);
-          } else {
-            throw exception;
-          }
-        }
       };
 
       Subroutine.prototype.call = function(inputs, output_index, runtime) {
