@@ -248,6 +248,7 @@
 
   module.controller('debugger', function($scope, $location) {
     $scope.debug = function() {
+      $scope.$root.runtime.cleanup();
       $scope.$root.debug_step = 0;
       $scope.$root["debugger"] = true;
       return $scope.update_trace();

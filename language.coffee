@@ -906,8 +906,9 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
 
         # For lambdas
         add_child: (node) ->
-            node.lambda_node = @
-            @children.push node
+            unless node in @children
+                node.lambda_node = @
+                @children.push node
 
         remove_child: (node) ->
             node.lambda_node = null

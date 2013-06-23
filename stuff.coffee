@@ -176,6 +176,7 @@ module.controller 'subroutine', ($scope, $routeParams, interpreter, $q) ->
 
 module.controller 'debugger', ($scope, $location) ->
     $scope.debug = ->
+        $scope.$root.runtime.cleanup()
         $scope.$root.debug_step = 0
         $scope.$root.debugger = true
         $scope.update_trace()

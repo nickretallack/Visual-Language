@@ -1484,8 +1484,10 @@
       };
 
       Value.prototype.add_child = function(node) {
-        node.lambda_node = this;
-        return this.children.push(node);
+        if (__indexOf.call(this.children, node) < 0) {
+          node.lambda_node = this;
+          return this.children.push(node);
+        }
       };
 
       Value.prototype.remove_child = function(node) {
