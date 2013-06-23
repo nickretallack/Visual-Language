@@ -362,6 +362,10 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
                 value: result
             return result
 
+        find_node: (id) ->
+            for node in @nodes
+                return node if node.id is id
+
         find_connection: (direction, node, nib) ->
             unless node? and nib?
                 console.log "what"
@@ -911,6 +915,9 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
             node.lambda_node = null
             @children = _.without @children, node
 
+        toJSON: ->
+            _.extend super,
+                children: (child.id for child in @children)
 
     class UnknownNode extends Node
         constructor:(@position, type, text, @id) ->
@@ -1099,17 +1106,33 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
         position = V node_data.position
         implementation = all_definitions[node_data.implementation_id]
         # TODO: in case no implementation is found, create an unknown node
-        node = new node_class
-            graph:graph
-            position:position
-            implementation:implementation
-            id:node_data.id
-        # Automatically populates graph.nodes
+        # Instantiating the node automatically populates graph.nodes
+        node = new node_class {
+            graph
+            position
+            implementation
+            id: node_data.id
+        }
+        # Save these for lambda membership stage
+        node.child_ids = node_data.children
+        node
+
+    is_lambda_value = (node) -> (node instanceof Value) and (node.implementation instanceof Lambda)
 
     load_implementation_v2 = (graph, data) ->
+        # Nodes
         for node_data in data.nodes
             resurrect_node graph, node_data
 
+        # Lambda Membership
+        for node in graph.nodes
+            if is_lambda_value node
+                for child_id in node.child_ids
+                    if child_id
+                        child_node = node.graph.find_node child_id
+                        node.add_child child_node
+
+        # Connections
         for connection_data in data.connections
             get_node = (direction) ->
                 id = connection_data[direction].node
@@ -1221,6 +1244,7 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
     make_value
     loaded:loaded.promise
     tarjan
+    is_lambda_value
 
     # exceptions
     RuntimeException

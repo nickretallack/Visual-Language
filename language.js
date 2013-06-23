@@ -9,7 +9,7 @@
   module = angular.module('vislang');
 
   module.factory('interpreter', function($q, $http, $timeout, $rootScope) {
-    var BaseType, BoundLambda, Call, Code, CodeSyntaxError, CoffeeScript, Connection, Definition, Exit, Graph, Input, InputError, JSON, JavaScript, Lambda, Literal, Nib, Node, NotConnected, NotImplemented, Output, Runtime, RuntimeException, Subroutine, Symbol, Text, Thread, Type, UnboundLambdaException, UnknownNode, Value, all_definitions, clone_endpoint, definition_class_map, definition_classes, dissociate_exception, eval_expression, execute, find_nib_uses, find_value, ignore_if_disconnected, is_input, last, load_implementation, load_implementation_v2, load_state, loaded, make_child_scope, make_connection, make_index_map, make_scope, make_value, node_class_map, node_classes, resurrect_node, save_state, schema_version, sequencer_input_nib, sequencer_output_nib, source_data, source_data_deferred, start_saving, strongly_connected_components, tarjan, value_output_nib;
+    var BaseType, BoundLambda, Call, Code, CodeSyntaxError, CoffeeScript, Connection, Definition, Exit, Graph, Input, InputError, JSON, JavaScript, Lambda, Literal, Nib, Node, NotConnected, NotImplemented, Output, Runtime, RuntimeException, Subroutine, Symbol, Text, Thread, Type, UnboundLambdaException, UnknownNode, Value, all_definitions, clone_endpoint, definition_class_map, definition_classes, dissociate_exception, eval_expression, execute, find_nib_uses, find_value, ignore_if_disconnected, is_input, is_lambda_value, last, load_implementation, load_implementation_v2, load_state, loaded, make_child_scope, make_connection, make_index_map, make_scope, make_value, node_class_map, node_classes, resurrect_node, save_state, schema_version, sequencer_input_nib, sequencer_output_nib, source_data, source_data_deferred, start_saving, strongly_connected_components, tarjan, value_output_nib;
     schema_version = 2;
     eval_expression = function(expression) {
       return eval("(" + expression + ")");
@@ -702,6 +702,17 @@
           value: result
         });
         return result;
+      };
+
+      Graph.prototype.find_node = function(id) {
+        var node, _i, _len, _ref;
+        _ref = this.nodes;
+        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+          node = _ref[_i];
+          if (node.id === id) {
+            return node;
+          }
+        }
       };
 
       Graph.prototype.find_connection = function(direction, node, nib) {
@@ -1481,6 +1492,22 @@
         return this.children = _.without(this.children, node);
       };
 
+      Value.prototype.toJSON = function() {
+        var child;
+        return _.extend(Value.__super__.toJSON.apply(this, arguments), {
+          children: (function() {
+            var _i, _len, _ref, _results;
+            _ref = this.children;
+            _results = [];
+            for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+              child = _ref[_i];
+              _results.push(child.id);
+            }
+            return _results;
+          }).call(this)
+        });
+      };
+
       return Value;
 
     })(Node);
@@ -1791,24 +1818,43 @@
       node_class = node_class_map[node_data.type];
       position = V(node_data.position);
       implementation = all_definitions[node_data.implementation_id];
-      return node = new node_class({
+      node = new node_class({
         graph: graph,
         position: position,
         implementation: implementation,
         id: node_data.id
       });
+      node.child_ids = node_data.children;
+      return node;
+    };
+    is_lambda_value = function(node) {
+      return (node instanceof Value) && (node.implementation instanceof Lambda);
     };
     load_implementation_v2 = function(graph, data) {
-      var connection_data, from_nib, from_node, get_nib, get_node, node_data, to_nib, to_node, _i, _j, _len, _len1, _ref, _ref1, _results;
+      var child_id, child_node, connection_data, from_nib, from_node, get_nib, get_node, node, node_data, to_nib, to_node, _i, _j, _k, _l, _len, _len1, _len2, _len3, _ref, _ref1, _ref2, _ref3, _results;
       _ref = data.nodes;
       for (_i = 0, _len = _ref.length; _i < _len; _i++) {
         node_data = _ref[_i];
         resurrect_node(graph, node_data);
       }
-      _ref1 = data.connections;
-      _results = [];
+      _ref1 = graph.nodes;
       for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
-        connection_data = _ref1[_j];
+        node = _ref1[_j];
+        if (is_lambda_value(node)) {
+          _ref2 = node.child_ids;
+          for (_k = 0, _len2 = _ref2.length; _k < _len2; _k++) {
+            child_id = _ref2[_k];
+            if (child_id) {
+              child_node = node.graph.find_node(child_id);
+              node.add_child(child_node);
+            }
+          }
+        }
+      }
+      _ref3 = data.connections;
+      _results = [];
+      for (_l = 0, _len3 = _ref3.length; _l < _len3; _l++) {
+        connection_data = _ref3[_l];
         get_node = function(direction) {
           var id;
           id = connection_data[direction].node;
@@ -1952,6 +1998,7 @@
       make_value: make_value,
       loaded: loaded.promise,
       tarjan: tarjan,
+      is_lambda_value: is_lambda_value,
       RuntimeException: RuntimeException,
       Exit: Exit,
       InputError: InputError,

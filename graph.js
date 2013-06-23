@@ -56,7 +56,7 @@
     return {
       link: function(scope, element, attributes) {},
       controller: function($scope, $element, $attrs, interpreter) {
-        var $$element, canvas, canvas_offset, collides_with_lambda, connection_state, draw, get_bounds, header_height, in_box, is_lambda_value, lambda_size, nib_center, nib_offset, resize_canvas, subroutine, transform_the_position,
+        var $$element, canvas, canvas_offset, collides_with_lambda, connection_state, draw, get_bounds, header_height, in_box, lambda_size, nib_center, nib_offset, resize_canvas, subroutine, transform_the_position,
           _this = this;
         $element = $($element).find('#graph');
         $$element = $($element);
@@ -196,15 +196,12 @@
           });
         });
         lambda_size = V(150, 500);
-        is_lambda_value = function(node) {
-          return (node instanceof interpreter.Value) && (node.implementation instanceof interpreter.Lambda);
-        };
         collides_with_lambda = function(dragging_node) {
           var node, _i, _len, _ref;
           _ref = subroutine.nodes;
           for (_i = 0, _len = _ref.length; _i < _len; _i++) {
             node = _ref[_i];
-            if (is_lambda_value(node)) {
+            if (interpreter.is_lambda_value(node)) {
               if (in_box(dragging_node.position, node.position, node.position.plus(lambda_size))) {
                 return node;
               }
@@ -260,7 +257,7 @@
               for (_i = 0, _len = _ref.length; _i < _len; _i++) {
                 node = _ref[_i];
                 update_position(node);
-                if (is_lambda_value(node)) {
+                if (interpreter.is_lambda_value(node)) {
                   _ref1 = node.children;
                   for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
                     child_node = _ref1[_j];

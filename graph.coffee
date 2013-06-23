@@ -139,11 +139,9 @@ module.directive 'graph', ($location) ->
 
         lambda_size = V 150, 500
 
-        is_lambda_value = (node) -> (node instanceof interpreter.Value) and (node.implementation instanceof interpreter.Lambda)
-
         collides_with_lambda = (dragging_node) ->
             for node in subroutine.nodes
-                if is_lambda_value node
+                if interpreter.is_lambda_value node
                     if in_box dragging_node.position, node.position, node.position.plus lambda_size
                         return node
 
@@ -184,7 +182,7 @@ module.directive 'graph', ($location) ->
             if $scope.dragging.length
                 for node in $scope.dragging
                     update_position node
-                    if is_lambda_value node 
+                    if interpreter.is_lambda_value node 
                         for child_node in node.children
                             update_position child_node
 
