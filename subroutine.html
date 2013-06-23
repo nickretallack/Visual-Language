@@ -6,7 +6,7 @@
 <div id="graph">
     <canvas id="connections" connections="definition"></canvas>
     <div id="selection" ng-style="selection_style()"></div>
-    <div class="subroutine-input" ng-repeat="input in definition.inputs" ng-style="{'top':(($index+1) * editor_size.y / (definition.inputs.length+1)) + 'px'}">
+    <div class="subroutine-input source" ng-repeat="input in definition.inputs" ng-style="{'top':(($index+1) * editor_size.y / (definition.inputs.length+1)) + 'px'}">
         <div nib="input" node="definition"></div>
         <input ng-model="input.text" shrinky-input="input.text">
         <a ng-click="delete_input(input)">-</a>
@@ -14,7 +14,7 @@
     </div>
     <a id="new-input" ng-click="new_input(subroutine)">+Input</a>
 
-    <div class="subroutine-output" ng-repeat="output in definition.outputs" ng-style="{'top':(($index+1) * editor_size.y / (definition.outputs.length+1)) + 'px'}">
+    <div class="subroutine-output sink" ng-repeat="output in definition.outputs" ng-style="{'top':(($index+1) * editor_size.y / (definition.outputs.length+1)) + 'px'}">
         <a ng-click="delete_output(output)">-</a>
         <input ng-model="output.text" shrinky-input="output.text">
         <div nib="output" node="definition"></div>
@@ -35,13 +35,13 @@
         <div ng-switch="(node.implementation | isa:'Lambda') && (node | isa: 'Value')">
             <div ng-switch-when="true" class="lambda">
 
-                <ul class="unstyled"><li ng-repeat="output in node.get_node_sources()" class="output">
-                    <div nib="output" node="node"></div>
-                    {{output.text}}
+                <ul class="unstyled"><li ng-repeat="source in node.get_node_sources()" class="source">
+                    <div nib="source" node="node"></div>
+                    {{source.text}}
                 </li></ul>
 
                 <div class="inner-lambda">
-                    <ul class="unstyled"><li ng-repeat="output in node.implementation.outputs" class="output">
+                    <ul class="unstyled"><li ng-repeat="output in node.implementation.outputs" class="sink">
                         {{output.text}}
                         <div nib="output" node="node"></div>
                     </li></ul>
@@ -50,7 +50,7 @@
                     </div>
 
                     <ul class="unstyled">
-                        <li ng-repeat="input in node.implementation.inputs" class="input">
+                        <li ng-repeat="input in node.implementation.inputs" class="source">
                         <ul class="unstyled"><li ng-repeat="index in [0]">
                             <div nib="input" index="index" node="node"></div>
                             {{input.text}}
@@ -60,18 +60,18 @@
             </div>
 
             <div ng-switch-default>
-                <ul class="unstyled"><li ng-repeat="output in node.get_node_sources()" class="output">
-                	<div nib="output" node="node"></div>
-                	{{output.text}}
+                <ul class="unstyled"><li ng-repeat="source in node.get_node_sources()" class="source">
+                	<div nib="source" node="node"></div>
+                	{{source.text}}
                 </li></ul>
 
                 <div class="node-title">{{node.implementation | text_or_id}}</div>
 
                 <ul class="unstyled">
-                    <li ng-repeat="input in node.get_node_sinks()" class="input">
+                    <li ng-repeat="sink in node.get_node_sinks()" class="sink">
                     <ul class="unstyled"><li ng-repeat="index in [0]">
-                    	{{input.text}}
-                    	<div nib="input" index="index" node="node"></div>
+                    	{{sink.text}}
+                    	<div nib="sink" index="index" node="node"></div>
                     </li></ul>
                 </li></ul>
             </div>
