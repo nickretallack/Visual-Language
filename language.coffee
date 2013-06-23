@@ -1128,8 +1128,8 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
         for node in graph.nodes
             if is_lambda_value node
                 for child_id in node.child_ids
-                    if child_id
-                        child_node = node.graph.find_node child_id
+                    child_node = node.graph.find_node child_id
+                    if child_node
                         node.add_child child_node
 
         # Connections

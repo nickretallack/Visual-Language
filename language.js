@@ -1844,8 +1844,8 @@
           _ref2 = node.child_ids;
           for (_k = 0, _len2 = _ref2.length; _k < _len2; _k++) {
             child_id = _ref2[_k];
-            if (child_id) {
-              child_node = node.graph.find_node(child_id);
+            child_node = node.graph.find_node(child_id);
+            if (child_node) {
               node.add_child(child_node);
             }
           }
