@@ -59,6 +59,13 @@ textarea {display:block}
     background: gray;
 }
 
+.source .value {
+    position: absolute;
+    left: -50px;
+    width: 40px;
+    text-align: right;
+}
+
 .sink .nib {
     margin-right:-8px;
     margin-left:0;
