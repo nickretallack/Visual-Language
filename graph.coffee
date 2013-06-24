@@ -75,6 +75,11 @@ module.directive 'graph', ($location) ->
         $scope.edit_node = (node) ->
             $location.path "/#{node.implementation.id}"
 
+            # update debugger
+            new_debugger_scope = $scope.$root.debugger_scope?.nodes[node.id]
+            if new_debugger_scope?
+                $scope.$root.debugger_scope = new_debugger_scope
+
         $scope.can_bust_selected_node = ->
             $scope.selection.length is 1 and $scope.selection[0].implementation instanceof interpreter.Graph
         $scope.bust_selected_node = ->

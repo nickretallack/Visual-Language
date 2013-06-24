@@ -110,7 +110,12 @@
           return $scope.selection.length === 1;
         };
         $scope.edit_node = function(node) {
-          return $location.path("/" + node.implementation.id);
+          var new_debugger_scope, _ref;
+          $location.path("/" + node.implementation.id);
+          new_debugger_scope = (_ref = $scope.$root.debugger_scope) != null ? _ref.nodes[node.id] : void 0;
+          if (new_debugger_scope != null) {
+            return $scope.$root.debugger_scope = new_debugger_scope;
+          }
         };
         $scope.can_bust_selected_node = function() {
           return $scope.selection.length === 1 && $scope.selection[0].implementation instanceof interpreter.Graph;

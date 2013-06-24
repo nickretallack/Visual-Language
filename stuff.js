@@ -246,6 +246,7 @@
 
   module.controller('debugger', function($scope, $location) {
     $scope.debug = function() {
+      $scope.$root.debugger_scope = $scope.$root.runtime.scope;
       $scope.$root.runtime.cleanup();
       $scope.$root.debug_step = 0;
       $scope.$root["debugger"] = true;

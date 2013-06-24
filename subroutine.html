@@ -61,7 +61,7 @@
 
             <div ng-switch-default>
                 <ul class="unstyled"><li ng-repeat="source in node.get_node_sources()" class="source">
-                    <div class="value">{{runtime.scope.nodes[node.id].output_values[source.id]}}</div>
+                    <div class="value">{{debugger_scope.nodes[node.id].output_values[source.id]}}</div>
                 	<div nib="source" node="node"></div>
                 	{{source.text}}
                 </li></ul>
