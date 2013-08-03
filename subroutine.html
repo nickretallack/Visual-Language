@@ -150,6 +150,7 @@
 
 <div ng-switch="!!debugger">
     <div ng-switch-when="true" id="debugger">
+        <a ng-click="debugger_up()">up</a> |
         <a ng-click="stop_debugging()">stop</a> |
         <a ng-click="previous()">previous</a> | 
         <a ng-click="next()">next</a>

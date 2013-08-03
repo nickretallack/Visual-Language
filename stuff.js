@@ -253,7 +253,15 @@
       return $scope.update_trace();
     };
     $scope.stop_debugging = function() {
-      return $scope.$root["debugger"] = false;
+      $scope.$root["debugger"] = false;
+      return $scope.$root.debugger_scope = null;
+    };
+    $scope.debugger_up = function() {
+      var parent_scope;
+      parent_scope = $scope.$root.debugger_scope.parent_scope;
+      if (parent_scope != null) {
+        return $scope.$root.debugger_scope = parent_scope;
+      }
     };
     $scope.next = function() {
       if ($scope.debug_step < $scope.runtime.threads[0].traces.length - 1) {

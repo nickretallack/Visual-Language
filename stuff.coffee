@@ -183,6 +183,12 @@ module.controller 'debugger', ($scope, $location) ->
 
     $scope.stop_debugging = ->
         $scope.$root.debugger = false
+        $scope.$root.debugger_scope = null
+
+    $scope.debugger_up = ->
+        parent_scope = $scope.$root.debugger_scope.parent_scope
+        if parent_scope?
+            $scope.$root.debugger_scope = parent_scope
 
     $scope.next = ->
         if $scope.debug_step < $scope.runtime.threads[0].traces.length - 1
