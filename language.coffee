@@ -1125,7 +1125,7 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
 
         # Lambda Membership
         for node in graph.nodes
-            if is_lambda_value node
+            if (is_lambda_value node) and node.child_ids
                 for child_id in node.child_ids
                     child_node = node.graph.find_node child_id
                     if child_node

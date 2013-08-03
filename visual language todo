@@ -1,0 +1,22 @@
+todo next
+-- ui stuff I guess?
+-- debugger improvements
+
+The debugger could use a lot of work.  I'd like it to be like a time series thing, like Bret Victor's example.
+
+
+Left to right would represent time.  It would be full of colored cells that represent asks, insides, and receives.
+
+ask: (currently green) a sink asks a source for information
+receive: (currently blue) a sink receives information from a source
+inside: stuff is occurring at a lower stack frame than this one.  Click on this to see what's inside.
+
+When you click on an inside, it flips open to reveal things that happened inside that definition.  This stretches out the time series to show all those things.
+
+What should it look like when an event handler is spawned?  Well, it's pretty much like another root program, so perhaps it could look like one.  However, it should definitely be grouped by its handler.  That is, you should be able to flip open "this event handler", and inside you would see time series' for every time it was called.
+
+Then again, the debugger should look just like the source code.  It should just annotate it with the values.  The values that travel on each connection could be overlayed on those connections.  You could double-click on a function to enter stack frames.  While in the debugger, it would keep track of the stack level you are currently at.  But how would you go up?  I guess there should be an "up out" button somewhere that shows up while debugging, to go to the parent.
+
+Now, how do I gather the data so that this is possible?  Well, I guess I could just keep all the scopes, since they remember all their output values already.  Yeah, ok.  When you create a child scope, the parent should know about it, right?  Yep, it already records that in the nodes.  Hm.  I don't need a stepping debugger at all.  I can just display all that data on top.
+
+The UI component of this is to position elements in the middle of all these connections.  Or...  actually, that would be redundant.  We only need to display the numbers next to the sources, really.  So lets do that.
