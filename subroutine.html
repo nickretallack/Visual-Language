@@ -142,7 +142,7 @@
         <a ng-click="quit_runtime(runtime)">Stop</a>
         <a ng-click="debug(runtime)">Debug</a>
         <ul id="console">
-            <li ng-repeat="message in runtime.log_messages | limitTo:20" reverse="true">{{message}}</li>
+            <li ng-repeat="message in runtime.log_messages | limitTo:20 track by $index" reverse="true">{{message}}</li>
         </ul>
         <div id="graphics" runtime-graphics="runtime"></div>
     </div>
