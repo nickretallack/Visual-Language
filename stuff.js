@@ -477,7 +477,3 @@
   });
 
 }).call(this);
-
-/*
-//@ sourceMappingURL=stuff.map
-*/

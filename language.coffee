@@ -172,7 +172,9 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
         user_inputs: ->
             # TODO: these could be implemented to act as if they come from a Code node in a graph outside the called one
             results = for input in @inputs
-                do (input) -> _.memoize ->
+                console.log "an input: #{input} #{input.text}"
+                do (input) -> ->
+                    console.log "memoized #{input} #{input.text} with default value #{input.default_value}"
                     result = if input.default_value
                         input.default_value
                     else
@@ -702,7 +704,14 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
 
             # Nodes inside a lambda can reach the lambda's input sources,
             # in addition to the parent graph's.
-            angular.extend calling_scope, 
+            angular.extend calling_scope,
+                # Inputs changes purpose.  The 'inputs' that come in on this object
+                # are inputs to the function: that is, the implementation and the other input values.
+                # When we run the value in its defining scope, the graph inputs that are 
+                # relevant are the defining graph's inputs, instead.
+                inputs: defining_scope.inputs
+
+                # This is how we get at the lambda's inputs.
                 lambda_value_generators: inputs
                 lambda_node: @node
 

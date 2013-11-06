@@ -374,9 +374,11 @@
           _results = [];
           for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
             input = _ref1[_i];
+            console.log("an input: " + input + " " + input.text);
             _results.push((function(input) {
-              return _.memoize(function() {
+              return function() {
                 var exception, input_name, result;
+                console.log("memoized " + input + " " + input.text + " with default value " + input.default_value);
                 result = input.default_value ? input.default_value : (input_name = input.text ? "\"" + input.text + "\"" : "(nameless)", prompt("Provide a JSON value for input " + input.index + ": " + input_name));
                 if (result === null) {
                   throw new Exit("cancelled execution");
@@ -391,7 +393,7 @@
                     throw exception;
                   }
                 }
-              });
+              };
             })(input));
           }
           return _results;
@@ -1109,6 +1111,7 @@
         defining_scope = this.scope;
         calling_scope.nodes.__proto__ = defining_scope.nodes;
         angular.extend(calling_scope, {
+          inputs: defining_scope.inputs,
           lambda_value_generators: inputs,
           lambda_node: this.node
         });
@@ -2013,7 +2016,3 @@
   });
 
 }).call(this);
-
-/*
-//@ sourceMappingURL=language.map
-*/

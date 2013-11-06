@@ -11,7 +11,3 @@
   app.listen(5000);
 
 }).call(this);
-
-/*
-//@ sourceMappingURL=server.map
-*/

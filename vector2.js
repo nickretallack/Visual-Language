@@ -113,7 +113,3 @@
   };
 
 }).call(this);
-
-/*
-//@ sourceMappingURL=vector2.map
-*/

@@ -114,7 +114,3 @@
   };
 
 }).call(this);
-
-/*
-//@ sourceMappingURL=vector.map
-*/
