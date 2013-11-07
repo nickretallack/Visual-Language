@@ -149,7 +149,8 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
 
         runtime: runtime
         inputs: inputs
-        output_values: {}
+        input_values: {} # inputs of the graph
+        output_values: {} # outputs of functions
         nodes: child_scope # makes sense for graphs
         state: child_scope # makes sense for code
         parent_scope: parent_scope
@@ -350,7 +351,9 @@ module.factory 'interpreter', ($q, $http, $timeout, $rootScope) ->
                     throw new UnboundLambdaException """Node '#{to_node.get_name()}' tried to receive input from Lambda '#{node.get_name()}' from outside its scope."""
 
             else if node instanceof Graph
-                result = scope.inputs[nib.index]()
+                if nib.index not of scope.input_values
+                    scope.input_values[nib.index] = scope.inputs[nib.index]()
+                result = scope.input_values[nib.index]
             else
                 result = node.evaluate scope, nib
 

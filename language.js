@@ -327,6 +327,7 @@
       return {
         runtime: runtime,
         inputs: inputs,
+        input_values: {},
         output_values: {},
         nodes: child_scope,
         state: child_scope,
@@ -678,7 +679,10 @@
             throw new UnboundLambdaException("Node '" + (to_node.get_name()) + "' tried to receive input from Lambda '" + (node.get_name()) + "' from outside its scope.");
           }
         } else if (node instanceof Graph) {
-          result = scope.inputs[nib.index]();
+          if (!(nib.index in scope.input_values)) {
+            scope.input_values[nib.index] = scope.inputs[nib.index]();
+          }
+          result = scope.input_values[nib.index];
         } else {
           result = node.evaluate(scope, nib);
         }
