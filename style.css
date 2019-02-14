@@ -5,6 +5,9 @@
 	bottom: 0;
 }
 #tools {
+	overflow: auto;
+}
+#tools {
 	right: 0;
 	width: 300px;
 }
